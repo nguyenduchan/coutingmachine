@@ -1,0 +1,16 @@
+Fixed spiral mang-doc + recirculation (no idle leftovers on disc)
+track_ref=https://www.youtube.com/shorts/ioa9o-LLHCA
+scoop=paddle_reload_onto_track  reject_then_reorient_exit
+steps=6000 omega=3.2 n_screws=14
+exited_upright=14
+exited_any=14
+on_chute_now=0
+dropped_off_chute=14
+idle_on_disc_now=0
+peak_exited=14
+peak_on_chute=6
+peak_dropped=14
+peak_idle_on_disc=3
+peak_climbed_high=12
+reject_cycles=6
+SUCCESS=True

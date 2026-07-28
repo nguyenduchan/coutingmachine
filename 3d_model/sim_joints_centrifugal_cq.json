@@ -1,0 +1,31 @@
+{
+  "mechanism": "fixed_spiral_inclined_track_rotary_disc",
+  "vibration": false,
+  "track_geometry_ref": "https://www.youtube.com/shorts/ioa9o-LLHCA",
+  "behavior_ref": "https://www.youtube.com/shorts/oszvi08exHI",
+  "drive_ref": "https://www.youtube.com/shorts/jGgILsgO2yY",
+  "lift": "fixed_helical_trough_on_bowl_wall",
+  "reject": "wrong_pose_falls_inward_off_track_back_to_disc",
+  "exit_z_mm": 68.0,
+  "spiral_turns": 2.5,
+  "track_w_mm": 14.0,
+  "moving_parts": [
+    "conical_disc",
+    "drive_hub"
+  ],
+  "fixed_parts": [
+    "base",
+    "bowl",
+    "spiral_track",
+    "rim_rail_gate",
+    "outlet_chute",
+    "lid",
+    "motor_clamp"
+  ],
+  "acceptance": [
+    "visible inclined spiral trough (mang doc) on bowl wall",
+    "screws climb track to elevated rim",
+    "correct pose slides out chute tip",
+    "wrong pose falls back onto disc"
+  ]
+}

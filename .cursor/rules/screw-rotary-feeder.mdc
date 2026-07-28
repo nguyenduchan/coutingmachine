@@ -1,0 +1,14 @@
+---
+description: Fixed spiral inclined track (mang doc) like RNA bowl; rotary disc drive
+alwaysApply: true
+---
+
+# Spiral inclined track bowl feeder
+
+## Visible geometry (must exist)
+- Fixed **helical inclined trough** on bowl wall — like [RNA spring bowl](https://www.youtube.com/shorts/ioa9o-LLHCA)
+- CAD part: `spiral_track`; sim: dense teal track segments
+- Wrong pose falls back to disc; correct → chute → fall off tip
+
+## Drive
+Rotary disc + paddles only — **no vibration** (unlike RNA spring video drive)

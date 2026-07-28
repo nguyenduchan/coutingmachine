@@ -1,0 +1,70 @@
+{
+  "units": "mm",
+  "outlet_count": 4,
+  "pocket_count": 12,
+  "index_angle_deg": 30.0,
+  "screws_per_index": 4,
+  "outlet_angles_deg": [
+    0.0,
+    90.0,
+    180.0,
+    270.0
+  ],
+  "revolute_joints": [
+    {
+      "name": "disc_drive",
+      "parts": [
+        "drive_hub",
+        "rotary_disc"
+      ],
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "origin_mm": [
+        0,
+        0,
+        8.0
+      ]
+    }
+  ],
+  "fixed_parts": [
+    "base_plate",
+    "bowl",
+    "cover",
+    "brush_arm",
+    "outlet_chute_0",
+    "outlet_chute_1",
+    "outlet_chute_2",
+    "outlet_chute_3"
+  ],
+  "sensors": [
+    {
+      "name": "count_ir_0",
+      "outlet_index": 0,
+      "angle_deg": 0.0,
+      "note": "optical fork on outlet_chute sensor slot"
+    },
+    {
+      "name": "count_ir_1",
+      "outlet_index": 1,
+      "angle_deg": 90.0,
+      "note": "optical fork on outlet_chute sensor slot"
+    },
+    {
+      "name": "count_ir_2",
+      "outlet_index": 2,
+      "angle_deg": 180.0,
+      "note": "optical fork on outlet_chute sensor slot"
+    },
+    {
+      "name": "count_ir_3",
+      "outlet_index": 3,
+      "angle_deg": 270.0,
+      "note": "optical fork on outlet_chute sensor slot"
+    }
+  ],
+  "reference": "https://www.youtube.com/shorts/V1ai93n3C1I",
+  "notes": "Multi-outlet parallel discharge multiplies counting throughput. Industrial vibratory bowls use multi-track exits similarly; this design uses a rotary disc with synchronized drop windows."
+}

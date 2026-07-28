@@ -1,0 +1,74 @@
+{
+  "mechanism": "rotary_archimedes_spiral",
+  "drive": "continuous_rotation_only",
+  "vibration": false,
+  "motor": {
+    "recommended": "GB37-24V-30RPM",
+    "class": "GB37 / JGB37-520 (center shaft)",
+    "voltage_v": 24.0,
+    "speed_rpm": 30,
+    "shaft_d_mm": 6.0,
+    "shaft_type": "D-shaft CENTERED (reject eccentric)",
+    "mount": "6x M3 on PCD 31.0 mm",
+    "bearing": "626ZZ 6x19x6 under hub",
+    "note_screws": "M3 into gearbox face max 3 mm deep",
+    "plc": "FX3U-24MT",
+    "plc_drive": "Share 24VDC PSU with FX3U-24MT. Switch motor with relay (e.g. OMRON G2R) or MOSFET module from PLC Y transistor output \u2014 do not power motor directly from Y."
+  },
+  "moving_parts": [
+    "rotor_spiral",
+    "drive_hub",
+    "shaft_collar"
+  ],
+  "fixed_parts": [
+    "base",
+    "motor_clamp",
+    "frame_riser",
+    "bowl",
+    "outlet_ring",
+    "lid"
+  ],
+  "bom_hardware": [
+    "1x GB37 24V ~30RPM center D-shaft 6mm",
+    "1x 24VDC PSU (shared with FX3U-24MT)",
+    "1x relay or MOSFET motor driver (PLC Y \u2192 coil/input)",
+    "1x 626ZZ bearing",
+    "6x M3x8 (motor to base, engage gearbox \u22643mm)",
+    "1x M3 set screw (drive hub)",
+    "1x M3 set screw (shaft collar)",
+    "4x M5 bolt+nut (frame feet)",
+    "6x M3 (bowl to base)"
+  ],
+  "revolute_joint": {
+    "name": "rotor_z",
+    "parts": [
+      "rotor_spiral",
+      "drive_hub",
+      "shaft_collar"
+    ],
+    "axis": [
+      0,
+      0,
+      1
+    ],
+    "origin_mm": [
+      0,
+      0,
+      10.0
+    ]
+  },
+  "frame_mount": {
+    "pattern": "4 feet at 45/135/225/315 deg",
+    "span_mm": 130.0,
+    "hole": "M5 slot",
+    "optional": "frame_riser x4 if deck needs motor clearance"
+  },
+  "print_clearance_flight_to_bowl_mm": 1.0,
+  "outlet_count": 4,
+  "outlet_angles_deg": [
+    0.0,
+    90.0,
+    180.0,
+    270.0
+  ]
+}
