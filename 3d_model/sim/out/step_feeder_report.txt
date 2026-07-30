@@ -1,0 +1,8 @@
+Screw Step Feeder (corrected)
+ref=https://www.youtube.com/watch?v=3xHK0rISSmk
+layout=screws_in_hopper + green_staircase + NEMA17_cam_drive
+n_steps=3 stroke_mm=16.0 screws=16
+counted=16 peak_on_stairs=2
+drive=NEMA17 + eccentric_cam + follower + guide_rods
+steps=12000
+SUCCESS=True

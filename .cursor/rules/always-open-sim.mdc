@@ -1,0 +1,17 @@
+---
+description: Always reopen the physics simulation GUI after every user turn
+alwaysApply: true
+---
+
+# Always reopen the simulation after each question
+
+After finishing work for **every** user message that relates to this project (answers, fixes, reviews, or “just checking”):
+
+1. Stop any previous sim process for this project if needed (old `python step_drive_pybullet.py` / Blender).
+2. **Start the current simulation GUI again** so the user can see it immediately.
+3. Default sim (contact + gravity):  
+   `python 3d_model/sim/step_drive_pybullet.py --gui`  
+   Working directory: `3d_model/sim`
+4. Only use Blender instead if that turn’s deliverable was specifically a `.blend` rebuild.
+
+Do this without waiting for the user to ask to open the sim.

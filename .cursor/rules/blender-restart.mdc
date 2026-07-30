@@ -1,0 +1,14 @@
+---
+description: Always restart Blender with the newly built .blend after model/sim edits
+alwaysApply: true
+---
+
+# Blender: always reopen new model
+
+After any change that rebuilds or updates a Blender simulation / `.blend` file:
+
+1. Rebuild the scene (run the relevant `blender --background --python ...` script if needed).
+2. **Kill** any existing Blender process for that project, then **Start-Process** the updated `.blend` so the user sees the new model — not a stale open file.
+3. Prefer the primary output for the current task (e.g. `3d_model/sim/out/step_drive_4plate.blend`).
+
+Do this every time without waiting for the user to ask.

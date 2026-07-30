@@ -1,0 +1,81 @@
+{
+  "mechanism": "alternating_dual_cam_step_feeder",
+  "reference_video": "https://www.youtube.com/watch?v=3xHK0rISSmk",
+  "cycle_doc": "README_STEP_CYCLE.md",
+  "units": "mm",
+  "stroke_mm": 16.0,
+  "eccentricity_mm": 8.0,
+  "group_A": {
+    "plates": [
+      0,
+      2
+    ],
+    "cam_phase_deg": 0,
+    "z_law": "z=(S/2)*(1-cos(theta))"
+  },
+  "group_B": {
+    "plates": [
+      1,
+      3
+    ],
+    "cam_phase_deg": 180,
+    "z_law": "z=(S/2)*(1-cos(theta+pi))"
+  },
+  "joints": [
+    {
+      "name": "cam_shaft",
+      "type": "revolute",
+      "axis": [
+        1,
+        0,
+        0
+      ],
+      "parts": [
+        "drive_hub",
+        "cam_A",
+        "cam_B"
+      ],
+      "motor": "JGY370 worm gearbox continuous (\u00d86 D-shaft)"
+    },
+    {
+      "name": "yoke_A_z",
+      "type": "prismatic",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "stroke_mm": 16.0,
+      "parts": [
+        "yoke_group_A"
+      ],
+      "phase_deg": 0
+    },
+    {
+      "name": "yoke_B_z",
+      "type": "prismatic",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "stroke_mm": 16.0,
+      "parts": [
+        "yoke_group_B"
+      ],
+      "phase_deg": 180
+    }
+  ],
+  "motor": {
+    "model": "JGY370",
+    "gearbox_mm": [
+      46.0,
+      32.0,
+      25.0
+    ],
+    "shaft_d_mm": 6.0,
+    "notes": "Self-locking worm; pick RPM ~30-60 for feeder cadence"
+  },
+  "handoff": "plates meet mid-stroke when |z_A-z_B|~0 (theta~90/270)",
+  "notes": "Dual eccentric cams 180 deg apart produce rhythmic alternating lift matching the YouTube step feeder. One JGY370 motor, two yokes, linear guides."
+}

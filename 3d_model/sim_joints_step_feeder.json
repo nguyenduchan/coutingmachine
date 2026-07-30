@@ -1,0 +1,73 @@
+{
+  "mechanism": "screw_step_feeder",
+  "reference_video": "https://www.youtube.com/watch?v=3xHK0rISSmk",
+  "units": "mm",
+  "form_factor": "desktop_3d_print",
+  "printer": "Bambu P1S 256x256x256",
+  "n_stages": 4,
+  "stroke_mm": 15.0,
+  "step_rise_mm": 14.0,
+  "rail_slot_w_mm": 4.0,
+  "screw": {
+    "head_d": 6.5,
+    "shank_d": 3.2,
+    "shank_l": 12.0
+  },
+  "joints": [
+    {
+      "name": "move_plates_z",
+      "type": "prismatic",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "stroke_mm": 15.0,
+      "parts": [
+        "move_plates"
+      ],
+      "drive": "cam_on_nema17"
+    },
+    {
+      "name": "cam_rotation",
+      "type": "revolute",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "parts": [
+        "cam",
+        "drive_hub"
+      ]
+    }
+  ],
+  "fixed_parts": [
+    "base",
+    "hopper",
+    "fixed_steps",
+    "orientation_rail",
+    "outlet_chute",
+    "lid",
+    "motor_clamp",
+    "guide_rod"
+  ],
+  "flow": [
+    "bulk_in_hopper",
+    "move_plates_lift",
+    "rest_on_fixed_shelves",
+    "transfer_to_orientation_rail",
+    "single_file_shank_in_slot",
+    "ir_count",
+    "outlet_chute"
+  ],
+  "notes": "Industrial step feeder: reciprocating plates lift screws from hopper to linear rail. Vibration only optional on rail \u2014 not used in hopper. Desktop scale for 3D print; use PETG for plates, optional \u00d86 steel guide rods.",
+  "drive": {
+    "motor": "NEMA17",
+    "cam": "eccentric",
+    "stroke_mm": 15,
+    "guides": "\u00d86 x2",
+    "follower": "slot_on_move_plates"
+  },
+  "layout": "screws_in_hopper + green_staircase YZ"
+}

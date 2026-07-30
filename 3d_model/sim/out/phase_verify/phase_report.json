@@ -1,0 +1,106 @@
+{
+  "motor_rpm": 30.0,
+  "stroke_cm": 2.0,
+  "analytic": [
+    {
+      "theta_deg": 0,
+      "zA_cm": 0.0,
+      "zB_cm": 2.0,
+      "sum_cm": 2.0,
+      "equal_mid": false,
+      "phase": "P0  \u03b8=0\u00b0  A=DAY  B=DINH  (A nhan bulk)"
+    },
+    {
+      "theta_deg": 45,
+      "zA_cm": 0.2929,
+      "zB_cm": 1.7071,
+      "sum_cm": 2.0,
+      "equal_mid": false,
+      "phase": "P0\u219290  A len / B xuong"
+    },
+    {
+      "theta_deg": 90,
+      "zA_cm": 1.0,
+      "zB_cm": 1.0,
+      "sum_cm": 2.0,
+      "equal_mid": true,
+      "phase": "P90 \u03b8=90\u00b0 HAND-OFF  A\u2194B mep ngang"
+    },
+    {
+      "theta_deg": 135,
+      "zA_cm": 1.7071,
+      "zB_cm": 0.2929,
+      "sum_cm": 2.0,
+      "equal_mid": false,
+      "phase": "P90\u2192180 A len dinh / B ve day"
+    },
+    {
+      "theta_deg": 180,
+      "zA_cm": 2.0,
+      "zB_cm": 0.0,
+      "sum_cm": 2.0,
+      "equal_mid": false,
+      "phase": "P180 \u03b8=180\u00b0 A=DINH B=DAY  (A \u2192 funnel/rail)"
+    },
+    {
+      "theta_deg": 225,
+      "zA_cm": 1.7071,
+      "zB_cm": 0.2929,
+      "sum_cm": 2.0,
+      "equal_mid": false,
+      "phase": "P180\u2192270 A xuong / B len"
+    },
+    {
+      "theta_deg": 270,
+      "zA_cm": 1.0,
+      "zB_cm": 1.0,
+      "sum_cm": 2.0,
+      "equal_mid": true,
+      "phase": "P270 \u03b8=270\u00b0 HAND-OFF  A\u2194B mep ngang"
+    },
+    {
+      "theta_deg": 315,
+      "zA_cm": 0.2929,
+      "zB_cm": 1.7071,
+      "sum_cm": 2.0,
+      "equal_mid": false,
+      "phase": "P270\u2192360 A ve day / B len dinh"
+    }
+  ],
+  "animated_yokes": [
+    {
+      "theta_deg": 0,
+      "frame": 61,
+      "yokeA_stroke": -0.0,
+      "yokeB_stroke": 2.0,
+      "err_cm": 0.0,
+      "phase": "P0  \u03b8=0\u00b0  A=DAY  B=DINH  (A nhan bulk)"
+    },
+    {
+      "theta_deg": 90,
+      "frame": 76,
+      "yokeA_stroke": 1.0,
+      "yokeB_stroke": 1.0,
+      "err_cm": 0.0,
+      "phase": "P90 \u03b8=90\u00b0 HAND-OFF  A\u2194B mep ngang"
+    },
+    {
+      "theta_deg": 180,
+      "frame": 91,
+      "yokeA_stroke": 2.0,
+      "yokeB_stroke": -0.0,
+      "err_cm": 0.0,
+      "phase": "P180 \u03b8=180\u00b0 A=DINH B=DAY  (A \u2192 funnel/rail)"
+    },
+    {
+      "theta_deg": 270,
+      "frame": 106,
+      "yokeA_stroke": 1.0,
+      "yokeB_stroke": 1.0,
+      "err_cm": 0.0,
+      "phase": "P270 \u03b8=270\u00b0 HAND-OFF  A\u2194B mep ngang"
+    }
+  ],
+  "pass": true,
+  "notes": "At \u03b8=0: A bottom B top; \u03b8=90/270 hand-off equal; \u03b8=180 A top feeds rail; gold screws form single-file on rail."
+}

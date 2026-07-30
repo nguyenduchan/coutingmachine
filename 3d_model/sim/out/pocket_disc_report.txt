@@ -1,0 +1,7 @@
+Pocket-disc indexing feeder simulation
+disc_od_mm=140 pockets=12 index_deg=30.0
+screws_spawned=10 counted_drops=10
+steps=3600
+SUCCESS=True
+video=C:\workspace\embedded\CountingMachine\3d_model\sim\out\pocket_disc_sim.mp4
+gif=C:\workspace\embedded\CountingMachine\3d_model\sim\out\pocket_disc_sim.gif

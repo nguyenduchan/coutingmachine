@@ -1,0 +1,7 @@
+J1 FIXED: motor+mount+ribs parent FRAME — liền base
+J2 REVOLUTE: D-shaft↔coupling↔drive trong bearing gắn FRAME
+J3 KEYED: cam+key+pin parent ShaftSpin — liền trục
+J5: guide+foot+brace+TopRail parent FRAME — liền khung
+J4 CONTACT: pin xuyên rãnh yoke (geometry overlap) + constraint Fz
+J6 BOLTED: spine+carrier+stub+cheek+plate parent yoke — không khe
+VERIFY: yokeΔZ=1.164 plateΔZ=1.164 (cùng chuỗi lực)

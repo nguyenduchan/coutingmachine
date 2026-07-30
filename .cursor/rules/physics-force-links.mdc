@@ -1,0 +1,23 @@
+---
+description: Contact-only force transfer + gravity in physics sims
+alwaysApply: true
+---
+
+# Physics: contact force + gravity
+
+## Laws the sim must obey
+1. Two bodies exchange force/moment **only while in contact** (collision normals/friction).
+2. **No contact ⇒ no force** between those bodies (no invisible P2P across air gaps for drive).
+3. **Gravity always on** (`g = -9.81`) for all dynamic bodies.
+
+## Implementation
+Prefer `3d_model/sim/step_drive_pybullet.py`:
+- Motor shaft/cams = kinematic actuator
+- Followers lifted by **cam contact only**
+- Verify with `getContactPoints` / gap checks in `out/step_drive_metrics.json`
+
+```
+python 3d_model/sim/step_drive_pybullet.py --gui
+```
+
+Check: `pass`, `illegal_force_while_separated == 0`, `free_fall_delta_z_m > 0`.

@@ -1,0 +1,13 @@
+{
+  "method": "pybullet_contact_only_plus_gravity",
+  "gravity": -9.81,
+  "follower_A_z_span_m": 0.038847951668835826,
+  "follower_B_z_span_m": 0.005284523629613139,
+  "illegal_force_while_separated": 0,
+  "touch_with_force_samples": 240,
+  "push_max_force_separated_N": 0.0,
+  "push_max_force_touching_N": 0.7071618411671486,
+  "free_fall_delta_z_m": 0.0710100213140272,
+  "frames": 200,
+  "pass": true
+}
