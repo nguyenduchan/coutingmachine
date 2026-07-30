@@ -1,0 +1,41 @@
+---
+description: Freeze JGB37 motor + L_Bracket_Mount_Frame pose and datasheet params
+alwaysApply: true
+---
+
+# Frozen: JGB37_520_Motor + L_Bracket_Mount_Frame
+
+Do **not** change pose, placement math, or datasheet parameters of the motor or mount in later edits unless the user **explicitly** asks to move/resize them.
+
+## Locked parts
+- FreeCAD object / solid: `JGB37_520_Motor` (script: `make_motor`, `place_motor_vertical`)
+- FreeCAD object / solid: `L_Bracket_Mount_Frame` (script: `make_l_bracket_mount_core`, `make_housing_with_mount`, `apply_motor_face_holes`)
+- Source of truth: `3d_model/freecad/show_jgb37_gui.py`
+
+## Locked placement (do not rewrite)
+- Shaft **+Z**; eccentric corrected by `translate(0, -SHAFT_OFFSET, 0)` then `face_z`
+- `face_z = SHELF_Z - 8.0 - COUPLER_L` (same as `FACE_Z`)
+- Gearbox axis world XY: `(0, -SHAFT_OFFSET)`; shaft axis: `(0, 0)`
+- Mount is **one solid with housing** — no separate bolted socket/keys to the box
+- Mount face holes must stay identical to motor via `motor_face_holes_world()` / `apply_motor_face_holes()`
+
+## Locked datasheet constants (do not “tweak”)
+- `SHAFT_OFFSET = 7.0`
+- `GB_D, GB_L = 37.0, 26.5`
+- `MOUNT_PCD = 31.0`
+- Face holes: angles `i * 60°`, diameters **Ø3.0** (even i) / **Ø4.0** (odd i)
+- `BOSS_D, BOSS_H = 12.0, 6.0`; shaft Ø6 D-flat as in script
+- `MOUNT_TOP_T = 6.0` (flange thickness) unless user asks to change thickness only
+
+## Allowed without moving motor/mount
+- Housing cosmetics, disc/gate/sensor/drawer, vents on mount **walls** (not new lid holes near PCD)
+- Materials, colors, transparency, docs
+- Bugfixes that restore these locked values if they were accidentally changed
+
+## Not allowed
+- Re-centering the shaft, changing `SHAFT_OFFSET`, or new `face_z` formulas
+- New lid “vent” holes near PCD (they look like wrong motor holes)
+- Splitting mount back into a separate part bolted to the frame
+- “Improving” motor/mount pose while working on unrelated features
+
+If a task seems to require moving them, **ask the user first**.

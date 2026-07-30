@@ -7,8 +7,8 @@ Bolted plates = FIXED to follower (permanent assembly contact)
 Demos: free_fall (gravity); pusher hits pushed (force only while contacting)
 
 Follower A Z span = 3.88 cm (cam contact lift)
-Follower B Z span = 0.53 cm
-Contact rule cam-follower: separated_samples_ok=658, ILLEGAL_force_while_separated=0, touch_with_force=240
+Follower B Z span = 0.41 cm
+Contact rule cam-follower: separated_samples_ok=334, ILLEGAL_force_while_separated=0, touch_with_force=173
 Push demo: max force when separated=0.000 N, when touching=0.707 N
 Gravity free_fall: z0=0.080 -> z1=0.009 fell=True
 PASS contact_rule=True push=True gravity=True lift=True

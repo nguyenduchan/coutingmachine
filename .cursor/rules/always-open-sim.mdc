@@ -1,17 +1,16 @@
 ---
-description: Always reopen the physics simulation GUI after every user turn
+description: Do not auto-open PyBullet; FreeCAD reopen is in freecad-restart.mdc
 alwaysApply: true
 ---
 
-# Always reopen the simulation after each question
+# Viewer policy
 
-After finishing work for **every** user message that relates to this project (answers, fixes, reviews, or “just checking”):
+## Do NOT auto-open PyBullet
+- **Never** start `step_drive_pybullet.py` (or other PyBullet GUIs) after every user message.
+- Only open PyBullet when the user **explicitly asks**, or when actively debugging that sim.
 
-1. Stop any previous sim process for this project if needed (old `python step_drive_pybullet.py` / Blender).
-2. **Start the current simulation GUI again** so the user can see it immediately.
-3. Default sim (contact + gravity):  
-   `python 3d_model/sim/step_drive_pybullet.py --gui`  
-   Working directory: `3d_model/sim`
-4. Only use Blender instead if that turn’s deliverable was specifically a `.blend` rebuild.
+## FreeCAD
+- Follow `freecad-restart.mdc`: after every FreeCAD/CAD model change, kill FreeCAD and reopen the latest show script / `.FCStd`.
 
-Do this without waiting for the user to ask to open the sim.
+## Blender
+- Follow `blender-restart.mdc` only when that turn rebuilds a `.blend`.

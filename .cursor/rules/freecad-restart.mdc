@@ -1,0 +1,24 @@
+---
+description: Always kill and reopen FreeCAD with the latest model after CAD changes
+alwaysApply: true
+---
+
+# FreeCAD: always reopen / reload latest model
+
+After **any** change that rebuilds or updates a FreeCAD model (`.FCStd`, show script, or Part geometry):
+
+1. Rebuild if needed (run the show/build script, e.g. `show_jgy370_gui.py`).
+2. **Kill** any existing FreeCAD process for this project (`freecad` / `FreeCAD` / `freecadcmd`).
+3. **Start-Process** FreeCAD again so the user sees the **new** model — not a stale open document.
+4. Prefer launching the show script (rebuilds + displays) over opening a possibly stale `.FCStd` alone:
+   - Script: `3d_model/freecad/show_jgb37_gui.py`
+   - Doc: `3d_model/freecad/out/jgb37_motor_bracket.FCStd`
+   - Exe: `%LOCALAPPDATA%\Programs\FreeCAD 1.1\bin\freecad.exe`
+
+```powershell
+Get-Process -Name freecad,FreeCAD,freecadcmd -ErrorAction SilentlyContinue | Stop-Process -Force
+Start-Process -FilePath "$env:LOCALAPPDATA\Programs\FreeCAD 1.1\bin\freecad.exe" `
+  -ArgumentList "c:\workspace\embedded\CountingMachine\3d_model\freecad\show_jgb37_gui.py"
+```
+
+Do this every time without waiting for the user to ask.
