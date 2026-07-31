@@ -1,0 +1,29 @@
+---
+description: When splitting a FreeCAD part, small pieces must be children of the original parent
+alwaysApply: true
+---
+
+# FreeCAD: split parts → children of original component
+
+Whenever the user asks to **chia nhỏ / split** a FreeCAD component into smaller pieces:
+
+1. Keep the **original name as the parent** (`App::Part`), e.g. `Outer_Guide_Arc`.
+2. Create each small solid as a **child** `Part::Feature` under that parent (same pattern as `Outer_Guide_Floor` + `Outer_Guide_Wall_*` under `Outer_Guide_Arc`).
+3. Do **not** leave split pieces as flat top-level objects only — always `add_group(doc, OriginalName, child_objs)`.
+4. Children stay separately editable (delete / tweak / later Union); parent owns the tree folder + optional Placement.
+
+## Pattern (see `show_jgb37_gui.py`)
+
+```python
+child_objs = [add_part(doc, child_name, shape, color) for ...]
+add_group(doc, "Original_Component_Name", child_objs)  # App::Part parent
+```
+
+## Naming
+
+- Parent: keep the name the user already knows (`Outer_Guide_Arc`, …).
+- Children: `ParentStem_Role` or `ParentStem_Wall_000` style — clear, sortable.
+
+## After the change
+
+Follow `freecad-restart.mdc`: kill FreeCAD and reopen `show_jgb37_gui.py`.

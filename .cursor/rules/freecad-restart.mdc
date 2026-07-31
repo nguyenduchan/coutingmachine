@@ -1,19 +1,43 @@
 ---
-description: After every FreeCAD/CAD edit, kill FreeCAD and reopen show_jgb37_gui.py
+description: Always reload FreeCAD show model at end of every CAD-related answer
 alwaysApply: true
 ---
 
-# FreeCAD: always reload show model when edits finish
+# FreeCAD: always reload show model at end of answer
 
-**Mandatory end-of-turn step** — do not wait for the user to ask.
+**Mandatory last step of the turn** — do not wait for the user to ask.
 
-Whenever this turn changes FreeCAD CAD (geometry, placement, materials, `show_jgb37_gui.py`, `.FCStd`, or related freecad scripts), before ending the turn:
+Whenever this turn changes or discusses the FreeCAD model the user is viewing (`show_jgb37_gui.py`, `.FCStd`, geometry under `3d_model/freecad/`), **before finishing the user-facing answer**:
 
-1. Finish the code/model edits.
-2. **Kill** all FreeCAD processes: `freecad`, `FreeCAD`, `freecadcmd`.
-3. **Start-Process** FreeCAD with the show script (rebuilds + displays). Prefer the script over opening a stale `.FCStd` alone.
+1. Finish code/model edits first.
+2. **Save** the current FreeCAD document so user Placement / visibility are on disk (see below).
+3. **Kill** all FreeCAD processes: `freecad`, `FreeCAD`, `freecadcmd`.
+4. **Start-Process** FreeCAD with the show script (rebuilds + restores Placement via `apply_preserved_state`).
 
-## Paths (this machine / repo)
+Do this at the **end of every such answer** so the user never stares at a stale window.
+
+## Save before kill (required)
+
+User may have moved/hidden parts. Before `Stop-Process`, send **Ctrl+S** to the FreeCAD window:
+
+```powershell
+Add-Type -AssemblyName System.Windows.Forms
+$p = Get-Process -Name freecad,FreeCAD -ErrorAction SilentlyContinue | Select-Object -First 1
+if ($p -and $p.MainWindowHandle -ne 0) {
+  Add-Type @"
+using System; using System.Runtime.InteropServices;
+public class FcWin {
+  [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
+}
+"@
+  [FcWin]::SetForegroundWindow($p.MainWindowHandle) | Out-Null
+  Start-Sleep -Milliseconds 300
+  [System.Windows.Forms.SendKeys]::SendWait("^s")
+  Start-Sleep -Seconds 1
+}
+```
+
+## Paths
 
 - Script: `d:\Project\coutingmachine\3d_model\freecad\show_jgb37_gui.py`
 - Doc: `d:\Project\coutingmachine\3d_model\freecad\out\jgb37_motor_bracket.FCStd`
@@ -22,18 +46,10 @@ Whenever this turn changes FreeCAD CAD (geometry, placement, materials, `show_jg
 ```powershell
 Get-Process -Name freecad,FreeCAD,freecadcmd -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Process -FilePath "$env:LOCALAPPDATA\Programs\FreeCAD 1.1\bin\freecad.exe" `
-  -ArgumentList "d:\Project\coutingmachine\3d_model\freecad\show_jgb37_gui.py"
+  -ArgumentList "`"d:\Project\coutingmachine\3d_model\freecad\show_jgb37_gui.py`""
 ```
-
-## When it applies
-
-- Any edit under `3d_model/freecad/`
-- Any change that updates the FreeCAD model the user is viewing
-- Even “small” tweaks (color, transparency, hole, dimension)
 
 ## When it does NOT apply
 
-- Pure docs / git / non-CAD work with no FreeCAD model change
+- Pure docs / git / non-CAD work with no FreeCAD model involvement
 - User explicitly says not to reopen FreeCAD
-
-Never leave a stale FreeCAD window as the user’s view of the model.

@@ -1,0 +1,28 @@
+---
+description: Every CAD turn re-read saved .FCStd Placement/visibility — never JSON caches
+alwaysApply: true
+---
+
+# CAD: mỗi câu hỏi đọc lại model đã lưu; không dùng JSON tự lưu
+
+## Source of truth (only)
+- Saved FreeCAD file: `3d_model/freecad/out/jgb37_motor_bracket.FCStd`
+  - `Document.xml` → Placement
+  - `GuiDocument.xml` → Visibility
+- Optionally: live open FreeCAD document **before** rebuild (same session)
+
+## Forbidden
+- Do **not** create or read agent-made state files (`.json`, sidecar caches, “placement dumps”, chat memory of old coords) to decide pose/visibility.
+- Do **not** trust conversation-summary coordinates over the current `.FCStd`.
+
+## Every user question that touches CAD
+1. **Re-read** the saved `.FCStd` (unzip/parse or open) **in this turn** before editing.
+2. Note non-identity Placements and hidden parts.
+3. Edit **shape only**; keep those Placement / Visibility values.
+4. Rebuild via `show_jgb37_gui.py` which re-applies state from the **FCStd / open doc** (`apply_preserved_state`) — not from any JSON.
+5. Before FreeCAD kill/restart: **Ctrl+S** so disk `.FCStd` is current (see `freecad-restart.mdc`).
+
+## Do not
+- Change `EXIT_TRAY_ARC_CX/CY`, `EXIT_Y`, or other anchors unless user **explicitly** asks to move.
+- Force show/hide sectors in code; user hides in GUI.
+- Move motor / mount (`jgb37-mount-freeze.mdc`).

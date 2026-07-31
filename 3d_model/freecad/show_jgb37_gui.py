@@ -14,6 +14,8 @@ Launch:
 from __future__ import annotations
 
 import math
+import re
+import zipfile
 from pathlib import Path
 
 import FreeCAD as App
@@ -171,8 +173,13 @@ BEARING_OD, BEARING_ID, BEARING_H = 19.0, 6.0, 6.0  # 626ZZ
 COUPLER_OD, COUPLER_L = 18.0, 25.0
 HUB_D, HUB_H = 36.0, 12.0
 
-# Housing: taller so JGB37 sits fully inside (motor/bracket pose unchanged)
-BOX_W, BOX_D = 280.0, 260.0
+# Housing footprint = Outer_Guide_Arc envelope (+ small pad)
+# Outer_Guide side = boreØ + 2*GUIDE_WALL ≈ 224.5
+GUIDE_WALL = 12.0
+_OUTER_GUIDE_SIDE = (DISC_D + 0.5) + 2.0 * GUIDE_WALL
+BOX_PAD = 6.0  # clearance around Outer_Guide
+BOX_W = _OUTER_GUIDE_SIDE + 2.0 * BOX_PAD  # ~236.5 — khớp Outer_Guide
+BOX_D = _OUTER_GUIDE_SIDE + 2.0 * BOX_PAD
 BOX_T = 4.0
 # Keep SAME placement rule as before: face_z = SHELF_Z - 8 - COUPLER_L
 # Raise shelf so motor body (below face) clears floor.
@@ -183,9 +190,56 @@ TOP_Z = BOX_H
 SPAN = TOP_Z - SHELF_Z
 FACE_Z = SHELF_Z - 8.0 - COUPLER_L  # identical formula as previous place_motor_vertical
 
-# Manual gate: knob on raised tower LEFT of disc; single-file channel to -X
-GATE_GAP = 11.0
-KNOB_D, KNOB_H = 32.0, 16.0
+# Manual lining-up gate (YouTube: "Lining up mechanism 1")
+GATE_GAP = 11.0  # nominal set width (slightly > pill OD)
+GATE_GAP_MAX = 20.0
+GATE_BEVEL = 18.0
+KNOB_D, KNOB_H = 28.0, 14.0
+JAW_T = 4.0
+JAW_LEN = 42.0
+EXIT_Y = 55.0  # gap throat (unchanged with tray freeze)
+# Exit tray — Left straight | Right = 1/4 Ø10cm + straight
+# FROZEN placement (do not change unless user explicitly asks to move):
+EXIT_TRAY_ARC_D = 100.0  # đường kính 10 cm
+EXIT_TRAY_ARC_R = EXIT_TRAY_ARC_D / 2.0  # 50 mm
+EXIT_TRAY_CH_W = 12.0
+EXIT_TRAY_STRAIGHT_LEN = 65.0
+EXIT_TRAY_WALL_H = 20.0
+EXIT_TRAY_FLOOR_T = 2.5
+EXIT_TRAY_WALL_T = 3.0
+# Đế rộng hơn thành theo chiều ngang (mỗi bên) — shape only
+EXIT_TRAY_FLOOR_SIDE_PAD = 20.0
+# Thành ngắn lại: mép trước tường cách cạnh ngang trước của đế 3 cm — shape only
+EXIT_TRAY_WALL_FRONT_CLEAR = 30.0
+EXIT_TRAY_ARC_CX = -50.0  # local shape anchor (move tray via App::Part Placement)
+EXIT_TRAY_ARC_CY = 50.0  # local shape anchor
+# Recirculation: leave rim path open so pills can skip gap and go another loop
+EXIT_TRAY_RECYC_GAP = 14.0  # mm open at left-wall tip vs sealed-against-guard
+EXIT_TRAY_DISC_CLEAR = 1.2  # tray must not occupy disc interior (r < disc/2 + this)
+EXIT_TRAY_ARC_A0 = 130.0  # shorten right arc (was 90) — open upstream rim
+EXIT_TRAY_ARC_A1 = 180.0
+# Gap curved guard (Ø10cm, concentric with exit tray right arc)
+GAP_CURVE_T = 4.0  # radial thickness of Gap_Curve_Guard
+GAP_CURVE_A0, GAP_CURVE_A1 = 95.0, 175.0
+# Max radial open from hug pose (2 cm) — left wall tip meets guard at this stroke
+GAP_CURVE_STROKE_MAX = 20.0  # mm
+GAP_RACK_MODULE = 1.5  # printable rack/pinion module
+GAP_PINION_TEETH = 16
+GAP_RAIL_CLEAR = 0.4  # slide clearance rack↔rail (mm)
+GAP_RAIL_WALL = 2.5  # rail wall / lip thickness
+# Exit press / reject: ép viên vào khe hoặc cho trượt vòng lại
+PRESS_FINGER_H = 9.0  # above disc (≈ 1 pill high)
+PRESS_FINGER_T = 2.2
+PRESS_TIP_R = 3.5
+PRESS_BYPASS_DR = 14.0  # how far inward overflow is guided
+
+
+
+
+
+
+
+
 
 
 def _cyl_z(d: float, h: float, z0: float, x=0.0, y=0.0) -> Part.Shape:
@@ -196,11 +250,10 @@ def _cyl_z(d: float, h: float, z0: float, x=0.0, y=0.0) -> Part.Shape:
 
 def make_box_frame() -> Part.Shape:
     """
-    Rx-4 style body: shell, circular well for disc, internal bearing shelf,
-    front opening for collection drawer.
+    Housing sized to Outer_Guide_Arc footprint (centered on disc axis).
     """
-    ox = -BOX_W / 2 + 15
-    oy = -BOX_D / 2
+    ox = -BOX_W / 2.0
+    oy = -BOX_D / 2.0
     outer = Part.makeBox(BOX_W, BOX_D, BOX_H)
     outer.translate(App.Vector(ox, oy, 0))
 
@@ -211,18 +264,23 @@ def make_box_frame() -> Part.Shape:
     lid = Part.makeBox(BOX_W, BOX_D, BOX_T)
     lid.translate(App.Vector(ox, oy, TOP_Z))
     lid = lid.cut(_cyl_z(DISC_D + 8, BOX_T + 2, TOP_Z - 1))
-    notch = Part.makeBox(40, 50, BOX_T + 2)
-    notch.translate(App.Vector(-DISC_D / 2 - 35, -25, TOP_Z - 1))
+    # Front-left notch for exit tray
+    notch = Part.makeBox(50, 55, BOX_T + 2)
+    notch.translate(App.Vector(-DISC_D / 2 - 40, -BOX_D / 2 - 1, TOP_Z - 1))
     lid = lid.cut(notch)
 
     shelf = Part.makeBox(BOX_W - 2 * BOX_T - 4, BOX_D - 2 * BOX_T - 4, BOX_T)
     shelf.translate(App.Vector(ox + BOX_T + 2, oy + BOX_T + 2, SHELF_Z))
     shelf = shelf.cut(_cyl_z(BEARING_OD + 0.3, BOX_T + 1, SHELF_Z - 0.5))
 
-    drawer_cut = Part.makeBox(100, 25, 55)
-    drawer_cut.translate(App.Vector(-DISC_D / 2 - 30, oy + BOX_D - BOX_T - 5, 25))
+    drawer_cut = Part.makeBox(90, 22, 50)
+    drawer_cut.translate(App.Vector(-45, oy + BOX_D - BOX_T - 4, 25))
     shell = shell.cut(drawer_cut)
 
+    print(
+        "Housing BOX=%.1fx%.1f (Outer_Guide side=%.1f + pad=%.1f)"
+        % (BOX_W, BOX_D, _OUTER_GUIDE_SIDE, BOX_PAD)
+    )
     return shell.fuse(lid).fuse(shelf)
 
 
@@ -488,64 +546,772 @@ def make_center_hub(z0: float) -> Part.Shape:
     return hub.cut(_cyl_z(DRIVE_SHAFT_D + 0.2, HUB_H + 1, z0 + DISC_T - 0.5))
 
 
+def _guide_dims():
+    """Outer_guide envelope: wall, bore Ø, outer side length."""
+    wall = GUIDE_WALL
+    bore_d = DISC_D + 0.5
+    side = bore_d + 2.0 * wall
+    return wall, bore_d, side
+
+
+def _annular_sector(
+    r_in: float, r_out: float, deg0: float, deg1: float, z0: float, h: float
+) -> Part.Shape:
+    """Solid ring sector [deg0, deg1] deg, CCW from +X, extruded along +Z."""
+    a0 = math.radians(deg0)
+    a1 = math.radians(deg1)
+    n = max(3, int(round(abs(deg1 - deg0))))
+    outer = [
+        App.Vector(r_out * math.cos(a0 + (a1 - a0) * i / n), r_out * math.sin(a0 + (a1 - a0) * i / n), z0)
+        for i in range(n + 1)
+    ]
+    inner = [
+        App.Vector(r_in * math.cos(a1 - (a1 - a0) * i / n), r_in * math.sin(a1 - (a1 - a0) * i / n), z0)
+        for i in range(n + 1)
+    ]
+    wire = Part.makePolygon(outer + inner + [outer[0]])
+    return Part.Face(wire).extrude(App.Vector(0, 0, h))
+
+
+def make_outer_guide_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
+    """
+    Split Outer_guide into editable components:
+      - Outer_Guide_Floor: one circular base disc (shaft hole)
+      - Outer_Guide_Wall_xxx: wall ring sectors every 10° (full 360°)
+
+    Hide/delete unwanted wall sectors in FreeCAD (e.g. exit), then Fuse later.
+    """
+    wall, bore_d, _side = _guide_dims()
+    r_in = bore_d / 2.0
+    r_out = r_in + wall
+    floor_t = DISC_T
+    z_floor = z_disc - floor_t
+    wall_h = 26.0
+    step = 10  # degrees
+
+    parts: list[tuple[str, Part.Shape, tuple]] = []
+
+    # 1) Circular floor disc
+    floor = _cyl_z(2.0 * r_out, floor_t, z_floor)
+    floor = floor.cut(_cyl_z(DRIVE_SHAFT_D + 0.3, floor_t + 2.0, z_floor - 1.0))
+    parts.append(("Outer_Guide_Floor", _keep_largest_solid(floor.removeSplitter()), (0.18, 0.18, 0.2)))
+
+    # 2) Wall sectors every 10° — full circle (hide unwanted sectors in FreeCAD later)
+    for i in range(0, 360, step):
+        seg = _annular_sector(r_in, r_out, float(i), float(i + step), z_disc, wall_h)
+        name = "Outer_Guide_Wall_%03d" % i
+        parts.append((name, _keep_largest_solid(seg.removeSplitter()), (0.12, 0.12, 0.14)))
+
+    print(
+        "Outer_guide split: Floor + %d wall sectors @ %d° (full circle)"
+        % (len(parts) - 1, step)
+    )
+    return parts
+
+
 def make_outer_guide_arc(z_disc: float) -> Part.Shape:
+    """Fused Outer_guide (compat). Prefer make_outer_guide_parts for editing."""
+    fused = None
+    for _name, shape, _color in make_outer_guide_parts(z_disc):
+        fused = shape if fused is None else fused.fuse(shape)
+    return _keep_largest_solid(fused.removeSplitter())
+
+
+def _cyl_along_xy(
+    x0: float,
+    y0: float,
+    z0: float,
+    ux: float,
+    uy: float,
+    length: float,
+    radius: float,
+) -> Part.Shape:
+    """Cylinder starting at (x0,y0,z0), axis along unit (ux,uy) in XY."""
+    c = Part.makeCylinder(radius, length)
+    c.rotate(App.Vector(0, 0, 0), App.Vector(0, 1, 0), 90)  # +Z → +X
+    ang = math.degrees(math.atan2(uy, ux))
+    c.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), ang)
+    c.translate(App.Vector(x0, y0, z0))
+    return c
+
+
+def _involute_pinion(
+    module: float,
+    teeth: int,
+    thickness: float,
+    bore: float,
+) -> Part.Shape:
+    """Simple printable spur gear (approx teeth as radial boxes)."""
+    pd = module * float(teeth)
+    tip_r = pd / 2.0 + module
+    root_r = max(bore / 2.0 + 1.0, pd / 2.0 - 1.25 * module)
+    tooth_h = tip_r - root_r
+    tooth_w = max(0.8, 0.5 * math.pi * module)
+    hub = Part.makeCylinder(root_r, thickness)
+    gear = hub
+    for i in range(teeth):
+        a = math.radians(i * 360.0 / teeth)
+        t = Part.makeBox(tooth_h + 0.2, tooth_w, thickness)
+        t.translate(App.Vector(root_r - 0.1, -tooth_w / 2.0, 0.0))
+        t.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), math.degrees(a))
+        gear = gear.fuse(t)
+    if bore > 0.5:
+        gear = gear.cut(Part.makeCylinder(bore / 2.0, thickness + 2.0))
+    return _keep_largest_solid(gear.removeSplitter())
+
+
+def _make_rack(
+    module: float,
+    n_teeth: int,
+    width: float,
+    height: float,
+    stem_w: float,
+    stem_h: float,
+    flange_w: float,
+    flange_h: float,
+) -> tuple[Part.Shape, float]:
     """
-    Partial black curved baffle on far side of disc (NOT full ring).
-    From video: arc along +X / +Y perimeter, opposite exit.
+    Removable rack: bar + side teeth (+Y) + T-foot under bar.
+    Local: +X length, body Y in [0, width], Z in [0, height];
+    T-foot below Z=0. Returns (shape, length).
     """
-    z0 = z_disc
-    h = 22.0
-    t = 4.0
-    outer = _cyl_z(DISC_D + 2 * t, h, z0)
-    inner = _cyl_z(DISC_D + 0.5, h + 1, z0 - 0.5)
-    ring = outer.cut(inner)
-    # Keep only ~150° arc on +X side (away from -X exit)
-    cut = Part.makeBox(DISC_D + 40, DISC_D + 40, h + 2)
-    cut.translate(App.Vector(-(DISC_D + 40), -(DISC_D + 20), z0 - 1))
-    return ring.cut(cut)
+    pitch = math.pi * module
+    length = n_teeth * pitch + pitch
+    tooth_h = 1.5 * module
+    tooth_w = max(0.8, 0.5 * math.pi * module)
+    bar = Part.makeBox(length, width, height)
+    # T-foot: stem then wide flange (anti-lift / anti-twist in rail)
+    stem = Part.makeBox(length, stem_w, stem_h)
+    stem.translate(App.Vector(0.0, (width - stem_w) / 2.0, -stem_h))
+    flange = Part.makeBox(length, flange_w, flange_h)
+    flange.translate(
+        App.Vector(0.0, (width - flange_w) / 2.0, -(stem_h + flange_h))
+    )
+    rack = bar.fuse(stem).fuse(flange)
+    for i in range(n_teeth):
+        x = pitch * 0.5 + i * pitch - tooth_w / 2.0
+        t = Part.makeBox(tooth_w, tooth_h + 0.1, height * 0.9)
+        t.translate(App.Vector(x, width - 0.05, height * 0.05))
+        rack = rack.fuse(t)
+    # Pull tab at outer (+X) end — grab to slide rack out of open rail
+    tab = Part.makeBox(8.0, width + 2.0, height * 0.55)
+    tab.translate(App.Vector(length - 1.0, -1.0, height * 0.2))
+    rack = rack.fuse(tab)
+    # Carrier tongue at inner (−X): seats in guard socket (radial slide-in)
+    tongue = Part.makeBox(7.0, width + 2.0, height)
+    tongue.translate(App.Vector(-5.0, -1.0, 0.0))
+    rack = rack.fuse(tongue)
+    return _keep_largest_solid(rack.removeSplitter()), length
+
+
+def _make_rack_rail(
+    length: float,
+    rack_w: float,
+    rack_h: float,
+    stem_w: float,
+    stem_h: float,
+    flange_w: float,
+    flange_h: float,
+    clear: float,
+    wall: float,
+    tooth_h: float,
+) -> Part.Shape:
+    """
+    T-slot rail along +X. Open at outer (+X) end so Gap_Rack slides out.
+    -Y wall full height; +Y wall low (teeth + pinion mesh stay clear).
+    Local origin: rack body Y in [0, rack_w], Z in [0, rack_h] (same as rack).
+    """
+    foot_h = stem_h + flange_h
+    # Outer envelope
+    out_w = max(flange_w, rack_w) + 2.0 * wall + 2.0 * clear
+    out_h = foot_h + rack_h + wall
+    y0 = (rack_w - out_w) / 2.0
+    z0 = -(foot_h + clear)
+    body = Part.makeBox(length, out_w, out_h)
+    body.translate(App.Vector(0.0, y0, z0))
+
+    # T-cavity: wide flange pocket + stem neck + body tunnel
+    cav_fl_w = flange_w + 2.0 * clear
+    cav_fl_h = flange_h + clear
+    cav_st_w = stem_w + 2.0 * clear
+    cav_st_h = stem_h + clear
+    cav_bd_w = rack_w + 2.0 * clear
+    cav_bd_h = rack_h + clear + 0.5
+    # open through +X (length + overhang) so rack can exit outer end
+    cav_len = length + 4.0
+
+    fl = Part.makeBox(cav_len, cav_fl_w, cav_fl_h)
+    fl.translate(
+        App.Vector(-2.0, (rack_w - cav_fl_w) / 2.0, -(stem_h + flange_h) - clear * 0.5)
+    )
+    st = Part.makeBox(cav_len, cav_st_w, cav_st_h)
+    st.translate(
+        App.Vector(-2.0, (rack_w - cav_st_w) / 2.0, -stem_h - clear * 0.5)
+    )
+    bd = Part.makeBox(cav_len, cav_bd_w, cav_bd_h)
+    bd.translate(App.Vector(-2.0, -clear, -clear * 0.5))
+    # Mesh window on +Y: open teeth side for pinion (full rail length)
+    win = Part.makeBox(cav_len, tooth_h + wall + 4.0, rack_h + 2.0)
+    win.translate(App.Vector(-2.0, rack_w - 1.0, -1.0))
+
+    rail = body.cut(fl).cut(st).cut(bd).cut(win)
+    return _keep_largest_solid(rail.removeSplitter())
+
+
+def _padded_bb(shape: Part.Shape, pad: float = 1.5) -> Part.Shape:
+    """Axis-aligned pad around shape BoundBox (clearance cutter)."""
+    bb = shape.BoundBox
+    b = Part.makeBox(
+        bb.XLength + 2.0 * pad,
+        bb.YLength + 2.0 * pad,
+        bb.ZLength + 2.0 * pad,
+    )
+    b.translate(App.Vector(bb.XMin - pad, bb.YMin - pad, bb.ZMin - pad))
+    return b
+
+
+def _radial_stroke_clearance(
+    shape: Part.Shape,
+    ux: float,
+    uy: float,
+    stroke: float,
+    pad: float = 1.5,
+    steps: int = 8,
+) -> Part.Shape:
+    """Fuse padded copies along radial travel 0..stroke (guarantees free motion)."""
+    fused = None
+    for i in range(steps + 1):
+        s = shape.copy()
+        d = stroke * float(i) / float(steps)
+        if d != 0.0:
+            s.translate(App.Vector(ux * d, uy * d, 0.0))
+        pad_s = _padded_bb(s, pad)
+        fused = pad_s if fused is None else fused.fuse(pad_s)
+    return fused.removeSplitter()
+
+
+def _fuse_significant_solids(shape: Part.Shape, min_vol: float = 30.0) -> Part.Shape:
+    """Keep all sizable solids after heavy clearance cuts (not only largest)."""
+    solids = [s for s in shape.Solids if s.Volume >= min_vol]
+    if not solids:
+        return _keep_largest_solid(shape)
+    out = solids[0]
+    for s in solids[1:]:
+        out = out.fuse(s)
+    return out.removeSplitter()
+
+
+def _make_drive_box(
+    lx: float,
+    ly: float,
+    z0: float,
+    z1: float,
+    wall: float,
+    bot_t: float,
+    top_t: float,
+    shaft_xy: tuple[float, float],
+    shaft_d: float,
+    motion_cuts: list[tuple[float, float, float, float, float, float]],
+    ang: float,
+    ox: float,
+    oy: float,
+) -> Part.Shape:
+    """
+    Enclosure around pinion. Local box → rotate(ang) → translate(ox,oy).
+    Shaft holes on bottom + top. motion_cuts open rack/guard tunnels.
+    """
+    sx, sy = shaft_xy
+    h = z1 - z0
+    outer = Part.makeBox(lx, ly, h)
+    outer.translate(App.Vector(-lx / 2.0, -ly / 2.0, z0))
+    iw = lx - 2.0 * wall
+    id_ = ly - 2.0 * wall
+    ih = h - bot_t - top_t
+    if iw > 2.0 and id_ > 2.0 and ih > 2.0:
+        inner = Part.makeBox(iw, id_, ih)
+        inner.translate(App.Vector(-iw / 2.0, -id_ / 2.0, z0 + bot_t))
+        box = outer.cut(inner)
+    else:
+        box = outer
+    br = shaft_d / 2.0 + 0.25
+    bot_hole = Part.makeCylinder(br, bot_t + 2.0)
+    bot_hole.translate(App.Vector(sx, sy, z0 - 1.0))
+    top_hole = Part.makeCylinder(br, top_t + 2.0)
+    top_hole.translate(App.Vector(sx, sy, z1 - top_t - 1.0))
+    box = box.cut(bot_hole).cut(top_hole)
+    for x0, y0, length, width, z_lo, z_hi in motion_cuts:
+        zh = max(z_hi - z_lo, 1.0)
+        cut = Part.makeBox(length, width, zh)
+        cut.translate(App.Vector(x0, y0 - width / 2.0, z_lo))
+        box = box.cut(cut)
+    box.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), ang)
+    box.translate(App.Vector(ox, oy, 0.0))
+    return box
+
+
+def make_lining_up_gap_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
+    """
+    Gap_Lining_Up: rack + pinion in enclosed drive box.
+
+      Gap_Curve_Guard — curved Ø10cm barrier + socket for rack tongue
+      Gap_Rack_Rail — fixed T-slot; open outer end → rack removable
+      Gap_Rack — T-foot bar in rail
+      Gap_Drive_Box — shell; dual shaft holes; grooves for rack+guard travel
+      Gap_Pinion + shaft + knob — vertical axis, dual-bearing
+
+    Geometry mates Exit_Guide_Tray in world via FCStd Placements.
+    """
+    _pls, _vis, _ = load_state_from_fcstd(FCSTD)
+    tray_pl = _pls.get("Exit_Guide_Tray")
+    gap_pl = _pls.get("Gap_Lining_Up")
+    tpx = float(tray_pl.Base.x) if tray_pl is not None else 0.0
+    tpy = float(tray_pl.Base.y) if tray_pl is not None else 0.0
+    gpx = float(gap_pl.Base.x) if gap_pl is not None else 0.0
+    gpy = float(gap_pl.Base.y) if gap_pl is not None else 0.0
+    acx = EXIT_TRAY_ARC_CX + tpx - gpx
+    acy = EXIT_TRAY_ARC_CY + tpy - gpy
+
+    ra = EXIT_TRAY_ARC_R
+    tray_wt = EXIT_TRAY_WALL_T
+    r_hug = ra + tray_wt
+    curve_t = GAP_CURVE_T
+    a0, a1 = GAP_CURVE_A0, GAP_CURVE_A1
+    amid = 0.5 * (a0 + a1)
+    rad = math.radians(amid)
+    ux, uy = math.cos(rad), math.sin(rad)
+    px_hat, py_hat = -uy, ux
+    ang = math.degrees(math.atan2(uy, ux))
+
+    z_wall = z_disc + DISC_T
+    wh = EXIT_TRAY_WALL_H
+    jaw_h = DISC_T + 2.0
+
+    module = GAP_RACK_MODULE
+    pitch = math.pi * module
+    pinion_teeth = GAP_PINION_TEETH
+    pd = module * float(pinion_teeth)
+    tip_r = pd / 2.0 + module
+    rack_n = max(8, int(math.ceil(GAP_CURVE_STROKE_MAX / pitch)) + 4)
+    rack_w = 8.0
+    rack_h = 8.0
+    stem_w, stem_h = 4.0, 2.5
+    flange_w, flange_h = 12.0, 2.0
+    pinion_t = rack_h
+    pinion_bore = 6.0
+    tooth_h = 1.5 * module
+    clear = GAP_RAIL_CLEAR
+    wall = GAP_RAIL_WALL
+
+    grey = (0.92, 0.92, 0.93)
+    jaw_c = (0.85, 0.88, 0.9)
+    slide_c = (0.95, 0.55, 0.15)
+    gear_c = (0.55, 0.55, 0.58)
+    rail_c = (0.75, 0.78, 0.82)
+    knob_c = (0.05, 0.05, 0.05)
+
+    # Curved barrier + open socket for removable rack tongue
+    guard = _annular_sector(r_hug, r_hug + curve_t, a0, a1, z_wall, wh)
+    guard.translate(App.Vector(acx, acy, 0.0))
+
+    r_tip = r_hug + curve_t
+    rack_z = z_wall + wh * 0.35
+    rack, rack_len = _make_rack(
+        module, rack_n, rack_w, rack_h, stem_w, stem_h, flange_w, flange_h
+    )
+    # place rack: local body Y [0,w] → center on ray by -w/2
+    def _place_on_ray(shape: Part.Shape, r0: float) -> Part.Shape:
+        s = shape.copy()
+        s.translate(App.Vector(0.0, -rack_w / 2.0, rack_z))
+        s.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), ang)
+        s.translate(App.Vector(acx + r0 * ux, acy + r0 * uy, 0.0))
+        return s
+
+    rack = _place_on_ray(rack, r_tip)
+
+    # Guard socket: pocket open radially out + slightly up so tongue slides in/out
+    sock_w = rack_w + 2.0 + 2.0 * clear
+    sock_h = rack_h + 2.0 * clear
+    sock_d = 6.0
+    socket = Part.makeBox(sock_d + 2.0, sock_w + 4.0, sock_h + 3.0)
+    socket.translate(App.Vector(0.0, -(sock_w + 4.0) / 2.0, rack_z - 1.5))
+    socket.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), ang)
+    socket.translate(App.Vector(acx + (r_tip - 1.0) * ux, acy + (r_tip - 1.0) * uy, 0.0))
+    cav = Part.makeBox(sock_d + 4.0, sock_w, sock_h)
+    cav.translate(App.Vector(-1.0, -sock_w / 2.0, rack_z))
+    cav.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), ang)
+    cav.translate(App.Vector(acx + (r_tip - 2.0) * ux, acy + (r_tip - 2.0) * uy, 0.0))
+    socket = socket.cut(cav)
+    guard = guard.fuse(socket)
+
+    # Fixed T-rail: covers stroke + rack length; open at outer end
+    rail_len = rack_len + GAP_CURVE_STROKE_MAX + 10.0
+    rail = _make_rack_rail(
+        rail_len,
+        rack_w,
+        rack_h,
+        stem_w,
+        stem_h,
+        flange_w,
+        flange_h,
+        clear,
+        wall,
+        tooth_h,
+    )
+    rail = _place_on_ray(rail, r_tip - 2.0)
+
+    # Pinion beside rack at mid-stroke
+    r_mesh = r_tip + GAP_CURVE_STROKE_MAX * 0.5
+    y_off = rack_w / 2.0 + tooth_h + tip_r - 0.4
+    px = acx + r_mesh * ux + y_off * px_hat
+    py = acy + r_mesh * uy + y_off * py_hat
+    pinion_z = rack_z
+    pinion = _involute_pinion(module, pinion_teeth, pinion_t, pinion_bore)
+    pinion.translate(App.Vector(px, py, pinion_z))
+
+    # Drive box sits mainly on pinion side; open toward rack/guard
+    box_wall = 3.0
+    box_bot_t = 4.0
+    box_top_t = 4.0
+    foot_h = stem_h + flange_h
+    box_z0 = rack_z - foot_h - clear - box_bot_t
+    box_z1 = pinion_z + pinion_t + 8.0 + box_top_t
+    stroke = GAP_CURVE_STROKE_MAX
+    # Shift box toward pinion (+perp) so guard arc does not sit inside walls
+    local_cy = y_off * 0.15
+    lx = 2.0 * tip_r + stroke + rack_len * 0.35 + 24.0
+    ly = tip_r * 2.0 + y_off + 18.0
+    box_ox = px + local_cy * px_hat
+    box_oy = py + local_cy * py_hat
+    shaft_local = (0.0, -local_cy)
+    rack_local_y = -(y_off + local_cy)
+    # Wide open bay on rack/guard side (−Y local) through full height
+    rack_tun_w = ly  # open entire rack-facing half
+    rack_tun_z0 = min(box_z0, z_wall) - 2.0
+    rack_tun_z1 = max(box_z1, z_wall + wh) + 2.0
+    open_bay = (
+        -lx / 2.0 - 6.0,
+        rack_local_y - ly * 0.25,
+        lx + 12.0,
+        ly * 0.85,
+        rack_tun_z0,
+        rack_tun_z1,
+    )
+    # Through tunnel for rack body + teeth + T-foot (full stroke + remove)
+    rack_path_w = max(flange_w, rack_w) + tooth_h + 2.0 * wall + 8.0
+    rack_path = (
+        -lx / 2.0 - 6.0,
+        rack_local_y + tooth_h * 0.4,
+        lx + 12.0,
+        rack_path_w,
+        box_z0 - 2.0,
+        rack_z + rack_h + 4.0,
+    )
+    drive_box = _make_drive_box(
+        lx,
+        ly,
+        box_z0,
+        box_z1,
+        box_wall,
+        box_bot_t,
+        box_top_t,
+        shaft_local,
+        pinion_bore,
+        [open_bay, rack_path],
+        ang,
+        box_ox,
+        box_oy,
+    )
+    # Boolean: cut swept volumes of guard + rack over 0..20 mm (true free stroke)
+    guard_clear = _radial_stroke_clearance(guard, ux, uy, stroke, pad=2.0, steps=10)
+    rack_clear = _radial_stroke_clearance(
+        rack, ux, uy, stroke + 8.0, pad=1.5, steps=10
+    )
+    drive_box = drive_box.cut(guard_clear).cut(rack_clear)
+    drive_box = _fuse_significant_solids(drive_box.removeSplitter())
+
+    # Shaft spans bottom bearing -> top bearing -> knob above lid
+    shaft_z0 = box_z0 - 1.0
+    shaft_z1 = box_z1 + 2.0
+    shaft_h = shaft_z1 - shaft_z0
+    pshaft = Part.makeCylinder(pinion_bore / 2.0 - 0.15, shaft_h)
+    pshaft.translate(App.Vector(px, py, shaft_z0))
+    kz = box_z1 + 1.0
+    knob = Part.makeCylinder(KNOB_D / 2.0, KNOB_H)
+    knob.translate(App.Vector(px, py, kz))
+    for i in range(12):
+        a = math.radians(i * 30)
+        fx = px + (KNOB_D / 2.0 - 1.2) * math.cos(a)
+        fy = py + (KNOB_D / 2.0 - 1.2) * math.sin(a)
+        flute = Part.makeCylinder(2.0, KNOB_H + 1.0)
+        flute.translate(App.Vector(fx, fy, kz - 0.5))
+        knob = knob.cut(flute)
+
+    _wall, bore_d, _side = _guide_dims()
+    x_rim = -bore_d / 2.0
+    fixed = Part.makeBox(JAW_T, JAW_LEN, jaw_h)
+    fixed.translate(
+        App.Vector(x_rim - 8.0, EXIT_Y - JAW_LEN / 2.0, z_disc)
+    )
+
+    print(
+        "Gap_Lining_Up: drive box clearance-swept | rack free stroke %.0fmm | "
+        "M%.1f ARC_C=(%.1f,%.1f)"
+        % (GAP_CURVE_STROKE_MAX, module, acx, acy)
+    )
+    return [
+        ("Gap_Drive_Box", drive_box, grey),
+        ("Gap_Fixed_Jaw", _keep_largest_solid(fixed.removeSplitter()), jaw_c),
+        (
+            "Gap_Curve_Guard",
+            _keep_largest_solid(guard.removeSplitter()),
+            slide_c,
+        ),
+        ("Gap_Rack_Rail", rail, rail_c),
+        ("Gap_Rack", rack, gear_c),
+        ("Gap_Pinion", pinion, gear_c),
+        ("Gap_Pinion_Shaft", pshaft.removeSplitter(), knob_c),
+        ("Gap_Knob", _keep_largest_solid(knob.removeSplitter()), knob_c),
+    ]
+
+
+def make_lining_up_gap_mechanism(z_disc: float):
+    """Back-compat: box, fixed, guard, rack, knob."""
+    by_name = {n: sh for n, sh, _c in make_lining_up_gap_parts(z_disc)}
+    return (
+        by_name["Gap_Drive_Box"],
+        by_name["Gap_Fixed_Jaw"],
+        by_name["Gap_Curve_Guard"],
+        by_name["Gap_Rack"],
+        by_name["Gap_Knob"],
+    )
 
 
 def make_manual_gate_assembly(z_disc: float):
+    """Back-compat wrapper → lining-up gap mechanism parts."""
+    mount, fixed, slide, screw, knob = make_lining_up_gap_mechanism(z_disc)
+    body = mount.fuse(fixed)
+    return body, knob, screw, slide
+
+
+def _box_along_xy(
+    x0: float,
+    y0: float,
+    ux: float,
+    uy: float,
+    length: float,
+    width: float,
+    height: float,
+    z0: float,
+) -> Part.Shape:
+    """Axis-aligned box in local frame: +X=length along (ux,uy), +Y=width."""
+    b = Part.makeBox(length, width, height)
+    b.translate(App.Vector(0.0, -width / 2.0, z0))
+    ang = math.degrees(math.atan2(uy, ux))
+    b.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), ang)
+    b.translate(App.Vector(x0, y0, 0.0))
+    return b
+
+
+
+def _tray_disc_center_local() -> tuple[float, float]:
+    """Disc axis (world 0,0) expressed in Exit_Guide_Tray local coords."""
+    _pls, _vis, _ = load_state_from_fcstd(FCSTD)
+    tray_pl = _pls.get("Exit_Guide_Tray")
+    tpx = float(tray_pl.Base.x) if tray_pl is not None else 0.0
+    tpy = float(tray_pl.Base.y) if tray_pl is not None else 0.0
+    return (-tpx, -tpy)
+
+
+def _cut_disc_keepout(
+    shape: Part.Shape,
+    z0: float,
+    h: float,
+    disc_xy: tuple[float, float],
+    r_clear: float,
+) -> Part.Shape:
+    """Remove tray material that sits on the disc (blocks recirculation)."""
+    cx, cy = disc_xy
+    cut = Part.makeCylinder(r_clear, h + 4.0)
+    cut.translate(App.Vector(cx, cy, z0 - 2.0))
+    try:
+        out = shape.cut(cut)
+    except Exception:
+        return shape
+    if not out.Solids:
+        return shape
+    return _keep_largest_solid(out.removeSplitter())
+
+
+def make_exit_tray_floor_basic_parts(
+    z_disc: float,
+) -> list[tuple[str, Part.Shape, tuple]]:
     """
-    Manual Gate (video): raised white tower + black knurled knob on TOP.
-    Knob moves radial gate → sets single-file gap into clear channel (-X).
+    Exit_Tray_Floor children — basic geometry only.
+    Disc keep-out: no floor paving on the turntable (recirculation free).
+    Move whole tray via Exit_Guide_Tray Placement (restored from FCStd).
     """
     z0 = z_disc + DISC_T
-    # Raised white housing (tower) near exit, slightly +Y of channel
-    tower = Part.makeBox(55, 45, 48)
-    tower.translate(App.Vector(-DISC_D / 2 - 15, 15, z0))
-    # Hollow underside over disc
-    under = Part.makeBox(40, 35, 20)
-    under.translate(App.Vector(-DISC_D / 2 - 5, 18, z0 - 1))
-    tower = tower.cut(under)
+    ft = EXIT_TRAY_FLOOR_T
+    wt = EXIT_TRAY_WALL_T
+    ra = EXIT_TRAY_ARC_R
+    ch = EXIT_TRAY_CH_W
+    sl = EXIT_TRAY_STRAIGHT_LEN
+    pad_x = EXIT_TRAY_FLOOR_SIDE_PAD
+    front_clr = EXIT_TRAY_WALL_FRONT_CLEAR
+    acx, acy = EXIT_TRAY_ARC_CX, EXIT_TRAY_ARC_CY
+    clear_c = (0.55, 0.85, 0.95)
+    disc_xy = _tray_disc_center_local()
+    r_keep = DISC_D / 2.0 + EXIT_TRAY_DISC_CLEAR
 
-    # Black knurled knob on TOP of tower
-    kx, ky = -DISC_D / 2 + 10, 35
-    knob = _cyl_z(KNOB_D, KNOB_H, z0 + 48, kx, ky)
-    for i in range(10):
-        a = math.radians(i * 36)
-        fx = kx + (KNOB_D / 2 - 0.8) * math.cos(a)
-        fy = ky + (KNOB_D / 2 - 0.8) * math.sin(a)
-        knob = knob.cut(_cyl_z(2.8, KNOB_H + 1, z0 + 47.5, fx, fy))
+    x_right = acx - ra
+    y_arc_top = acy + ra
+    y_join = acy
+    y_floor_front = y_join - sl
+    y_wall_front = y_floor_front + front_clr
+    x_left = x_right - ch - wt
+    x_right_wall = x_right - wt / 2.0
+    x_ch0 = x_left + wt / 2.0
+    x_ch1 = x_right_wall - wt / 2.0
+    x0 = x_left - wt / 2.0 - pad_x
+    x1 = x_right + wt + pad_x
+    floor_w = x1 - x0
 
-    # Vertical adjust shaft
-    screw = _cyl_z(5.0, 55, z0 + 5, kx, ky)
+    def box_xy(x_lo, x_hi, y_lo, y_hi) -> Part.Shape:
+        b = Part.makeBox(max(0.5, x_hi - x_lo), max(0.5, y_hi - y_lo), ft)
+        b.translate(App.Vector(x_lo, y_lo, z0))
+        return b
 
-    # Sliding gate leaf — creates GATE_GAP channel along -X exit
-    gate = Part.makeBox(3.0, 55.0, 18.0)
-    gate.translate(App.Vector(-GATE_GAP / 2 - 3, -20, z0 + 1))
-    # Fixed guide opposite
-    guide = Part.makeBox(3.0, 55.0, 18.0)
-    guide.translate(App.Vector(GATE_GAP / 2, -20, z0 + 1))
-    # Rotate channel to -X: currently along Y; need along -X from rim
-    # Rebuild gate at exit on -X side
-    gate = Part.makeBox(50.0, 3.0, 18.0)
-    gate.translate(App.Vector(-DISC_D / 2 - 5, GATE_GAP / 2, z0 + 1))
-    guide = Part.makeBox(50.0, 3.0, 18.0)
-    guide.translate(App.Vector(-DISC_D / 2 - 5, -GATE_GAP / 2 - 3, z0 + 1))
+    rect_front = box_xy(x0, x1, y_floor_front - 2.0, y_wall_front)
+    rect_left = box_xy(x0, x_ch0, y_wall_front, y_arc_top + 2.0)
+    rect_right = box_xy(x_ch1, x1, y_wall_front, y_join + 2.0)
 
-    body = tower.fuse(gate).fuse(guide)
-    return body, knob, screw
+    sq = min(18.0, floor_w * 0.35, front_clr + 4.0)
+    square = Part.makeBox(sq, sq, ft)
+    square.translate(App.Vector(x0 + 1.0, y_floor_front - 1.0, z0))
+
+    # Ring only on channel-outer side; then disc keep-out
+    r_ch_out = ra + ch
+    r_out = ra + ch + 2.0 * wt + pad_x
+    ring = _annular_sector(
+        r_ch_out, r_out, EXIT_TRAY_ARC_A0, EXIT_TRAY_ARC_A1, z0, ft
+    )
+    ring.translate(App.Vector(acx, acy, 0.0))
+
+    parts_raw = [
+        ("Exit_Tray_Floor_Rect_Front", rect_front, clear_c),
+        ("Exit_Tray_Floor_Rect_Left", rect_left, clear_c),
+        ("Exit_Tray_Floor_Rect_Right", rect_right, clear_c),
+        ("Exit_Tray_Floor_Square", square, clear_c),
+        ("Exit_Tray_Floor_Ring_Sector", ring, clear_c),
+    ]
+    # Drop Floor_Disc washer — it paved ARC_C on top of the turntable
+    out = []
+    for name, sh, col in parts_raw:
+        cut = _cut_disc_keepout(sh, z0, ft + 2.0, disc_xy, r_keep)
+        if cut is None or not getattr(cut, "Solids", None):
+            continue
+        if cut.Volume < 50.0:
+            continue
+        out.append((name, cut.removeSplitter(), col))
+
+    print(
+        "Exit_Tray_Floor: disc keep-out r=%.1f @ local=(%.1f,%.1f) | "
+        "%d pieces | tray Placement movable"
+        % (r_keep, disc_xy[0], disc_xy[1], len(out))
+    )
+    return out
+
+
+def make_exit_guide_tray_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
+    """
+    Exit tray walls. Right arc shortened + disc keep-out so rim recirculation
+    stays open. Left tip stops short of sealing against Curve_Guard
+    (EXIT_TRAY_RECYC_GAP). Move tray: Transform Exit_Guide_Tray (Placement saved).
+    """
+    z0 = z_disc + DISC_T
+    wh = EXIT_TRAY_WALL_H
+    wt = EXIT_TRAY_WALL_T
+    ra = EXIT_TRAY_ARC_R
+    ch = EXIT_TRAY_CH_W
+    sl = EXIT_TRAY_STRAIGHT_LEN
+    front_clr = EXIT_TRAY_WALL_FRONT_CLEAR
+    acx, acy = EXIT_TRAY_ARC_CX, EXIT_TRAY_ARC_CY
+    clear_c = (0.55, 0.85, 0.95)
+    disc_xy = _tray_disc_center_local()
+    r_keep = DISC_D / 2.0 + EXIT_TRAY_DISC_CLEAR
+
+    x_right = acx - ra
+    y_arc_top = acy + ra
+    y_join = acy
+    y_floor_front = y_join - sl
+    y_wall_front = y_floor_front + front_clr
+    x_left = x_right - ch - wt
+    x_right_wall = x_right - wt / 2.0
+    x_left_inner = x_left + wt / 2.0
+
+    # Tip meets max-open guard, then back off for recirculation gap
+    r_touch = ra + wt + GAP_CURVE_T + GAP_CURVE_STROKE_MAX
+    dx = x_left_inner - acx
+    y_left_hi = y_arc_top
+    if abs(dx) < r_touch - 1e-6:
+        dy = math.sqrt(max(0.0, r_touch * r_touch - dx * dx))
+        y_touch = acy + dy
+        ang = math.degrees(math.atan2(y_touch - acy, dx))
+        if ang < 0:
+            ang += 360.0
+        if GAP_CURVE_A0 - 5.0 <= ang <= GAP_CURVE_A1 + 5.0:
+            y_left_hi = min(y_arc_top, y_touch) - EXIT_TRAY_RECYC_GAP
+        print(
+            "Exit_Tray_Wall_Left: tip y=%.1f (recyc gap %.0fmm vs guard touch)"
+            % (y_left_hi, EXIT_TRAY_RECYC_GAP)
+        )
+
+    def wall_vert(xc: float, y0w: float, y1: float) -> Part.Shape:
+        y_lo, y_hi = min(y0w, y1), max(y0w, y1)
+        if y_hi - y_lo < 1.0:
+            y_hi = y_lo + 1.0
+        b = Part.makeBox(wt, y_hi - y_lo, wh)
+        b.translate(App.Vector(xc - wt / 2.0, y_lo, z0))
+        return b
+
+    w_left = wall_vert(x_left, y_wall_front, y_left_hi)
+    arc = _annular_sector(
+        ra, ra + wt, EXIT_TRAY_ARC_A0, EXIT_TRAY_ARC_A1, z0, wh
+    )
+    arc.translate(App.Vector(acx, acy, 0.0))
+    w_right_st = wall_vert(x_right_wall, y_wall_front, y_join + 0.5)
+
+    # Walls: do NOT full disc-cut (arc/gap live near rim). Open recirculation via
+    # shortened left tip + upstream arc start. Optional light trim of deep interior.
+    r_inner = DISC_D / 2.0 - 18.0  # only clear deep interior, keep rim channel
+    w_left = _cut_disc_keepout(w_left, z0, wh + 2.0, disc_xy, r_inner)
+    arc = _cut_disc_keepout(arc, z0, wh + 2.0, disc_xy, r_inner)
+    w_right_st = _cut_disc_keepout(w_right_st, z0, wh + 2.0, disc_xy, r_inner)
+
+    print(
+        "Exit_Guide_Tray walls: ARC %.0f-%.0f deg | left recyc gap %.0fmm | "
+        "Placement movable (Transform Exit_Guide_Tray)"
+        % (EXIT_TRAY_ARC_A0, EXIT_TRAY_ARC_A1, EXIT_TRAY_RECYC_GAP)
+    )
+    return [
+        ("Exit_Tray_Wall_Left", w_left.removeSplitter(), clear_c),
+        ("Exit_Tray_Wall_Right_Arc", arc.removeSplitter(), clear_c),
+        (
+            "Exit_Tray_Wall_Right_Straight",
+            w_right_st.removeSplitter(),
+            clear_c,
+        ),
+    ]
+
+
+def make_exit_guide_tray(z_disc: float) -> Part.Shape:
+    """Fused tray (compat). Prefer floor + wall parts + parent groups."""
+    fused = None
+    for _n, sh, _c in make_exit_tray_floor_basic_parts(z_disc):
+        fused = sh if fused is None else fused.fuse(sh)
+    for _n, sh, _c in make_exit_guide_tray_parts(z_disc):
+        fused = sh if fused is None else fused.fuse(sh)
+    return _keep_largest_solid(fused.removeSplitter())
 
 
 def make_clear_exit_cover(z_disc: float) -> Part.Shape:
@@ -609,6 +1375,421 @@ def make_control_panel() -> Part.Shape:
     return panel
 
 
+# ---- Split assemblies → basic geometry children (box / cylinder / sector) ----
+
+def make_motor_parts() -> list[tuple[str, Part.Shape, tuple]]:
+    """JGB37 children as basic solids; same world pose as place_motor_vertical."""
+    c = (0.75, 0.75, 0.78)
+    gb = Part.makeCylinder(GB_D / 2, GB_L)
+    gb.translate(App.Vector(0, 0, -GB_L))
+    for i in range(6):
+        a = math.radians(i * 60)
+        x = (MOUNT_PCD / 2) * math.cos(a)
+        y = (MOUNT_PCD / 2) * math.sin(a)
+        d = 3.0 if (i % 2 == 0) else 4.0
+        depth = 3.5 if (i % 2 == 0) else GB_L
+        hole = Part.makeCylinder(d / 2, depth)
+        hole.translate(App.Vector(x, y, -depth))
+        gb = gb.cut(hole)
+
+    boss = Part.makeCylinder(BOSS_D / 2, BOSS_H)
+    boss.translate(App.Vector(0, SHAFT_OFFSET, 0))
+
+    shaft = Part.makeCylinder(SHAFT_D / 2, SHAFT_L)
+    shaft.translate(App.Vector(0, SHAFT_OFFSET, BOSS_H))
+    flat = Part.makeBox(SHAFT_D + 2, 4.0, SHAFT_FLAT_L + 0.2)
+    flat.translate(
+        App.Vector(
+            -SHAFT_D / 2 - 1,
+            SHAFT_OFFSET + SHAFT_FLAT / 2,
+            BOSS_H + SHAFT_L - SHAFT_FLAT_L,
+        )
+    )
+    shaft = shaft.cut(flat)
+
+    can = Part.makeCylinder(CAN_D / 2, CAN_L)
+    can.translate(App.Vector(0, 0, -GB_L - CAN_L))
+    rear = Part.makeCylinder(REAR_BOSS_D / 2, REAR_BOSS_H)
+    rear.translate(App.Vector(0, 0, -GB_L - CAN_L - REAR_BOSS_H))
+
+    terms = []
+    for sx, tag in ((-1.0, "L"), (1.0, "R")):
+        t = Part.makeBox(TERM_W, TERM_T, TERM_L)
+        t.translate(
+            App.Vector(
+                sx * TERM_PITCH / 2 - TERM_W / 2,
+                -TERM_T / 2,
+                -GB_L - CAN_L - TERM_L,
+            )
+        )
+        terms.append(("JGB37_Terminal_%s" % tag, place_motor_vertical(t), c))
+
+    parts = [
+        ("JGB37_Gearbox", place_motor_vertical(gb), c),
+        ("JGB37_Boss", place_motor_vertical(boss), c),
+        ("JGB37_Shaft", place_motor_vertical(shaft), c),
+        ("JGB37_Can", place_motor_vertical(can), c),
+        ("JGB37_Rear_Boss", place_motor_vertical(rear), c),
+    ] + terms
+    return [(n, _keep_largest_solid(s.removeSplitter()), col) for n, s, col in parts]
+
+
+def make_hole_align_pin_parts(face_z: float) -> list[tuple[str, Part.Shape, tuple]]:
+    c = (1.0, 0.15, 0.05)
+    parts = []
+    for i, (x, y, d) in enumerate(motor_face_holes_world()):
+        pin = Part.makeCylinder(max(d / 2.0 - 0.35, 0.6), MOUNT_TOP_T + GB_L * 0.35)
+        pin.translate(App.Vector(x, y, face_z - GB_L * 0.25))
+        parts.append(("Hole_Align_Pin_%d" % i, pin.removeSplitter(), c))
+    return parts
+
+
+def make_housing_mount_parts(face_z: float) -> list[tuple[str, Part.Shape, tuple]]:
+    """
+    L_Bracket_Mount_Frame children: housing shell/lid/shelf + mount boxes.
+    Pose / hole pattern unchanged (jgb37-mount-freeze).
+    """
+    hc = (0.85, 0.88, 0.86)
+    ox = -BOX_W / 2.0
+    oy = -BOX_D / 2.0
+    outer = Part.makeBox(BOX_W, BOX_D, BOX_H)
+    outer.translate(App.Vector(ox, oy, 0))
+    inner = Part.makeBox(BOX_W - 2 * BOX_T, BOX_D - 2 * BOX_T, BOX_H - BOX_T + 1)
+    inner.translate(App.Vector(ox + BOX_T, oy + BOX_T, BOX_T))
+    shell = outer.cut(inner)
+    drawer_cut = Part.makeBox(90, 22, 50)
+    drawer_cut.translate(App.Vector(-45, oy + BOX_D - BOX_T - 4, 25))
+    shell = shell.cut(drawer_cut)
+
+    lid = Part.makeBox(BOX_W, BOX_D, BOX_T)
+    lid.translate(App.Vector(ox, oy, TOP_Z))
+    lid = lid.cut(_cyl_z(DISC_D + 8, BOX_T + 2, TOP_Z - 1))
+    notch = Part.makeBox(50, 55, BOX_T + 2)
+    notch.translate(App.Vector(-DISC_D / 2 - 40, -BOX_D / 2 - 1, TOP_Z - 1))
+    lid = lid.cut(notch)
+
+    shelf = Part.makeBox(BOX_W - 2 * BOX_T - 4, BOX_D - 2 * BOX_T - 4, BOX_T)
+    shelf.translate(App.Vector(ox + BOX_T + 2, oy + BOX_T + 2, SHELF_Z))
+    shelf = shelf.cut(_cyl_z(BEARING_OD + 0.3, BOX_T + 1, SHELF_Z - 0.5))
+
+    L = mount_layout(face_z)
+    gx, gy = L["gx"], L["gy"]
+    inner_m, wall = L["inner"], L["wall"]
+    outer_w, outer_d = L["outer_w"], L["outer_d"]
+    mox, moy = L["ox"], L["oy"]
+    z_bot, z_lid = L["z_bot"], L["z_lid"]
+    cav_h = face_z - z_bot
+    half_w = BR_W / 2.0
+    cy = half_w
+
+    stem = Part.makeBox(outer_w, outer_d, z_lid - BOX_T)
+    stem.translate(App.Vector(mox, moy, BOX_T))
+    cavity = Part.makeBox(inner_m, inner_m, cav_h)
+    cavity.translate(App.Vector(gx - inner_m / 2.0, gy - inner_m / 2.0, z_bot))
+    stem = stem.cut(cavity)
+    tunnel = Part.makeBox(inner_m + 1.0, outer_d + 50.0, cav_h)
+    tunnel.translate(
+        App.Vector(gx - (inner_m + 1.0) / 2.0, gy - inner_m / 2.0 - 50.0, z_bot)
+    )
+    stem = stem.cut(tunnel)
+    if z_bot > BOX_T + 1.0:
+        under = Part.makeBox(inner_m + 1.0, outer_d + 50.0, z_bot - BOX_T)
+        under.translate(
+            App.Vector(gx - (inner_m + 1.0) / 2.0, gy - inner_m / 2.0 - 50.0, BOX_T)
+        )
+        stem = stem.cut(under)
+    vent_h = cav_h * 0.55
+    vent_z0 = z_bot + (cav_h - vent_h) * 0.5
+    vw, vd = 12.0, wall + 6.0
+    for dx, dy, sx, sy in (
+        (gx + inner_m / 2.0 - 1.0, gy - vw / 2.0, vd, vw),
+        (gx - inner_m / 2.0 - vd + 1.0, gy - vw / 2.0, vd, vw),
+        (gx - vw / 2.0, gy + inner_m / 2.0 - 1.0, vw, vd),
+    ):
+        v = Part.makeBox(sx, sy, vent_h)
+        v.translate(App.Vector(dx, dy, vent_z0))
+        stem = stem.cut(v)
+
+    edges = [
+        Part.LineSegment(App.Vector(-half_w, 0, 0), App.Vector(half_w, 0, 0)).toShape(),
+        Part.LineSegment(
+            App.Vector(half_w, 0, 0), App.Vector(half_w, BR_VERT_H - half_w, 0)
+        ).toShape(),
+        Part.Arc(
+            App.Vector(half_w, BR_VERT_H - half_w, 0),
+            App.Vector(0, BR_VERT_H, 0),
+            App.Vector(-half_w, BR_VERT_H - half_w, 0),
+        ).toShape(),
+        Part.LineSegment(
+            App.Vector(-half_w, BR_VERT_H - half_w, 0), App.Vector(-half_w, 0, 0)
+        ).toShape(),
+    ]
+    mount_lid = Part.Face(Part.Wire(edges)).extrude(App.Vector(0, 0, MOUNT_TOP_T))
+    mount_lid.translate(App.Vector(0, -SHAFT_OFFSET - cy, face_z))
+    mount_lid = apply_motor_face_holes(mount_lid, face_z)
+
+    braces = []
+    for i, px in enumerate((mox - MOUNT_BRACE_W, mox + outer_w)):
+        brace = Part.makeBox(MOUNT_BRACE_W, outer_d, SHELF_Z - BOX_T)
+        brace.translate(App.Vector(px, moy, BOX_T))
+        braces.append(("Mount_Brace_%d" % i, brace, hc))
+
+    web = Part.makeBox(outer_w + 2.0 * MOUNT_BRACE_W, wall, SHELF_Z - BOX_T)
+    web.translate(App.Vector(mox - MOUNT_BRACE_W, moy + outer_d - wall, BOX_T))
+
+    pad_w = outer_w + 2.0 * MOUNT_BRACE_W + 20.0
+    pad_d = outer_d + 12.0
+    pad = Part.makeBox(pad_w, pad_d, 3.0)
+    pad.translate(App.Vector(gx - pad_w / 2.0, moy - 2.0, BOX_T))
+
+    parts = [
+        ("Housing_Shell", _keep_largest_solid(shell.removeSplitter()), hc),
+        ("Housing_Lid", _keep_largest_solid(lid.removeSplitter()), hc),
+        ("Housing_Shelf", _keep_largest_solid(shelf.removeSplitter()), hc),
+        ("Mount_Stem", _keep_largest_solid(stem.removeSplitter()), hc),
+        ("Mount_Lid", _keep_largest_solid(mount_lid.removeSplitter()), hc),
+        ("Mount_Web", web.removeSplitter(), hc),
+        ("Mount_Floor_Pad", pad.removeSplitter(), hc),
+    ] + [(n, s.removeSplitter(), col) for n, s, col in braces]
+    return parts
+
+
+def make_coupler_parts(z0: float) -> list[tuple[str, Part.Shape, tuple]]:
+    c = (0.85, 0.55, 0.15)
+    body = _cyl_z(COUPLER_OD, COUPLER_L, z0).cut(
+        _cyl_z(DRIVE_SHAFT_D + 0.2, COUPLER_L + 1, z0 - 0.5)
+    )
+    return [("Coupler_Body", _keep_largest_solid(body.removeSplitter()), c)]
+
+
+def make_drive_shaft_parts(z0: float, length: float) -> list[tuple[str, Part.Shape, tuple]]:
+    return [("Shaft_Cylinder", _cyl_z(DRIVE_SHAFT_D, length, z0), (0.55, 0.55, 0.6))]
+
+
+def make_bearing_parts(name_prefix: str, z0: float) -> list[tuple[str, Part.Shape, tuple]]:
+    c = (0.15, 0.45, 0.85)
+    race = _cyl_z(BEARING_OD, BEARING_H, z0).cut(
+        _cyl_z(BEARING_ID + 0.05, BEARING_H + 0.2, z0 - 0.1)
+    )
+    return [("%s_Race" % name_prefix, _keep_largest_solid(race.removeSplitter()), c)]
+
+
+def make_disc_parts(z0: float) -> list[tuple[str, Part.Shape, tuple]]:
+    c = (0.95, 0.95, 0.95)
+    disc = _cyl_z(DISC_D, DISC_T, z0).cut(
+        _cyl_z(DRIVE_SHAFT_D + 0.1, DISC_T + 1, z0 - 0.5)
+    )
+    return [("Disc_Plate", _keep_largest_solid(disc.removeSplitter()), c)]
+
+
+def make_center_hub_parts(z0: float) -> list[tuple[str, Part.Shape, tuple]]:
+    c = (0.08, 0.08, 0.08)
+    hub = _cyl_z(HUB_D, HUB_H, z0 + DISC_T)
+    for i in range(12):
+        a = math.radians(i * 30)
+        hx = (HUB_D / 2 - 2) * math.cos(a)
+        hy = (HUB_D / 2 - 2) * math.sin(a)
+        hub = hub.cut(_cyl_z(4.0, HUB_H + 1, z0 + DISC_T - 0.5, hx, hy))
+    hub = hub.cut(_cyl_z(DRIVE_SHAFT_D + 0.2, HUB_H + 1, z0 + DISC_T - 0.5))
+    return [("Hub_Body", _keep_largest_solid(hub.removeSplitter()), c)]
+
+
+
+def make_exit_press_guide_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
+    """
+    Exit_Press_Guide — ép viên vào khe thoát hoặc cho trượt vòng tiếp.
+
+      Press_Mount       — giá cố định sát thành ngoài, phía thượng nguồn khe
+      Press_Hinge       — khớp / trụ lò xo (minh họa đàn hồi)
+      Press_Finger_Leaf — lá mỏng hướng vào miệng khe (ép single-file)
+      Press_Tip_Pad     — đầu mềm tiếp xúc viên
+      Press_Bypass_Rail — thành lệch trong: viên không vào khe → đi vòng lại
+
+    Giả định đĩa quay CCW (nhìn từ trên): viên theo vành → miệng khe.
+    """
+    z0 = z_disc + DISC_T
+    r_rim = (DISC_D + 0.5) / 2.0
+    a_mouth = math.degrees(math.atan2(float(EXIT_Y), -r_rim))
+    a_mount = a_mouth - 34.0  # upstream of mouth
+    a_tip = a_mouth - 6.0
+
+    mount_c = (0.55, 0.58, 0.62)
+    leaf_c = (0.35, 0.55, 0.75)
+    tip_c = (0.85, 0.45, 0.15)  # soft pad look
+    bypass_c = (0.2, 0.65, 0.55)
+
+    # Mount boss on outer-guide bore face
+    r_m = r_rim + 1.5
+    mx = r_m * math.cos(math.radians(a_mount))
+    my = r_m * math.sin(math.radians(a_mount))
+    mount = Part.makeBox(14.0, 18.0, PRESS_FINGER_H + 6.0)
+    mount.translate(App.Vector(-7.0, -9.0, z0))
+    mount.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), a_mount + 90.0)
+    mount.translate(App.Vector(mx, my, 0.0))
+
+    # Hinge pin (vertical) — spring/compliance cue
+    hx = (r_rim - 1.0) * math.cos(math.radians(a_mount))
+    hy = (r_rim - 1.0) * math.sin(math.radians(a_mount))
+    hinge = Part.makeCylinder(2.5, PRESS_FINGER_H + 4.0)
+    hinge.translate(App.Vector(hx, hy, z0 - 1.0))
+
+    # Finger leaf: mount → tip, lightly inside rim, tapered
+    r_t = r_rim - 2.5
+    tx = r_t * math.cos(math.radians(a_tip))
+    ty = r_t * math.sin(math.radians(a_tip))
+    dx, dy = tx - hx, ty - hy
+    flen = math.hypot(dx, dy)
+    ux, uy = dx / flen, dy / flen
+    # slight inward bias so tip presses toward gap mouth, not wall
+    nx, ny = -uy, ux  # left of travel (toward center if CCW along rim)
+    # check toward origin
+    if (hx + nx) ** 2 + (hy + ny) ** 2 > hx * hx + hy * hy:
+        nx, ny = -nx, -ny
+
+    leaf = Part.makeBox(flen, PRESS_FINGER_T, PRESS_FINGER_H)
+    leaf.translate(App.Vector(0.0, -PRESS_FINGER_T / 2.0, z0 + 0.4))
+    leaf.rotate(
+        App.Vector(0, 0, 0),
+        App.Vector(0, 0, 1),
+        math.degrees(math.atan2(uy, ux)),
+    )
+    leaf.translate(App.Vector(hx, hy, 0.0))
+    # taper: cut outer corner so tip is thinner (slip-past friendly)
+    taper = Part.makeBox(flen * 0.45, PRESS_FINGER_T + 2.0, PRESS_FINGER_H + 2.0)
+    taper.translate(App.Vector(flen * 0.55, -PRESS_FINGER_T / 2.0 - 1.0, z0 - 0.5))
+    taper.rotate(
+        App.Vector(0, 0, 0),
+        App.Vector(0, 0, 1),
+        math.degrees(math.atan2(uy, ux)),
+    )
+    taper.translate(App.Vector(hx + 1.2 * nx, hy + 1.2 * ny, 0.0))
+    leaf = leaf.cut(taper)
+
+    # Soft tip pad at end of finger
+    tip = Part.makeSphere(PRESS_TIP_R)
+    tip.translate(App.Vector(tx + 1.0 * nx, ty + 1.0 * ny, z0 + PRESS_TIP_R + 0.3))
+
+    # Bypass rail: short inner fence — overflow slides inside finger → recirculate
+    r_b0 = r_rim - PRESS_BYPASS_DR - 4.0
+    r_b1 = r_rim - PRESS_BYPASS_DR + 2.0
+    bypass = _annular_sector(
+        r_b0, r_b1, a_mount - 5.0, a_mouth + 8.0, z0, 6.0
+    )
+    # lead-in chamfer block at upstream end (helps pills peel inward)
+    a_in = math.radians(a_mount - 2.0)
+    lead = Part.makeBox(10.0, 5.0, 5.0)
+    lead.translate(App.Vector(0.0, -2.5, z0))
+    lead.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), a_mount + 40.0)
+    lead.translate(
+        App.Vector(
+            (r_b1 - 1.0) * math.cos(a_in),
+            (r_b1 - 1.0) * math.sin(a_in),
+            0.0,
+        )
+    )
+
+    # Throat funnel wall: narrow channel ~GATE_GAP toward exit (outer side of finger)
+    funnel_w = GATE_GAP + 1.5
+    funnel = Part.makeBox(22.0, 3.0, PRESS_FINGER_H)
+    # place just outside tip, guiding into gap
+    a_f = math.radians(a_mouth - 2.0)
+    fx = (r_rim - 1.0) * math.cos(a_f)
+    fy = (r_rim - 1.0) * math.sin(a_f)
+    funnel.translate(App.Vector(0.0, -1.5, z0 + 0.3))
+    funnel.rotate(
+        App.Vector(0, 0, 0),
+        App.Vector(0, 0, 1),
+        a_mouth - 90.0,
+    )
+    funnel.translate(App.Vector(fx, fy, 0.0))
+
+    print(
+        "Exit_Press_Guide: mouth@%.0f deg mount@%.0f deg | finger->gap | bypass r=%.0f | "
+        "GATE_GAP=%.1f"
+        % (a_mouth, a_mount, (r_b0 + r_b1) / 2.0, GATE_GAP)
+    )
+    return [
+        ("Press_Mount", _keep_largest_solid(mount.removeSplitter()), mount_c),
+        ("Press_Hinge", hinge.removeSplitter(), mount_c),
+        ("Press_Finger_Leaf", _keep_largest_solid(leaf.removeSplitter()), leaf_c),
+        ("Press_Tip_Pad", tip.removeSplitter(), tip_c),
+        (
+            "Press_Bypass_Rail",
+            _keep_largest_solid(bypass.fuse(lead).removeSplitter()),
+            bypass_c,
+        ),
+        ("Press_Funnel_Wall", funnel.removeSplitter(), leaf_c),
+    ]
+
+
+def make_clear_exit_cover_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
+    c = (0.7, 0.85, 0.95)
+    z0 = z_disc + DISC_T + 1
+    cover = Part.makeBox(70, GATE_GAP + 16, 2.5)
+    cover.translate(App.Vector(-DISC_D / 2 - 25, -(GATE_GAP + 16) / 2, z0 + 18))
+    w1 = Part.makeBox(70, 2, 16)
+    w1.translate(App.Vector(-DISC_D / 2 - 25, GATE_GAP / 2 + 4, z0 + 2))
+    w2 = Part.makeBox(70, 2, 16)
+    w2.translate(App.Vector(-DISC_D / 2 - 25, -GATE_GAP / 2 - 6, z0 + 2))
+    return [
+        ("Clear_Cover_Top", cover, c),
+        ("Clear_Cover_Wall_A", w1, c),
+        ("Clear_Cover_Wall_B", w2, c),
+    ]
+
+
+def make_separator_tab_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
+    blade = Part.makeBox(35, 6, 8)
+    blade.translate(App.Vector(-DISC_D / 2 + 25, -3, z_disc + DISC_T + 2))
+    return [("Separator_Blade", blade, (0.15, 0.15, 0.15))]
+
+
+def make_outlet_chute_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
+    c = (0.45, 0.45, 0.48)
+    z0 = z_disc + DISC_T
+    chute = Part.makeBox(30, 28, 40)
+    chute.translate(App.Vector(-DISC_D / 2 - 55, -14, z0 - 15))
+    hollow = Part.makeBox(24, 22, 38)
+    hollow.translate(App.Vector(-DISC_D / 2 - 52, -11, z0 - 14))
+    body = chute.cut(hollow)
+    return [("Chute_Body", _keep_largest_solid(body.removeSplitter()), c)]
+
+
+def make_sensor_fork_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
+    c = (0.05, 0.05, 0.05)
+    z0 = z_disc + DISC_T + 3
+    x0 = -DISC_D / 2 - 35
+    left = Part.makeBox(8, 3, 20)
+    left.translate(App.Vector(x0, GATE_GAP / 2 + 2, z0))
+    right = Part.makeBox(8, 3, 20)
+    right.translate(App.Vector(x0, -GATE_GAP / 2 - 5, z0))
+    top = Part.makeBox(8, GATE_GAP + 10, 3)
+    top.translate(App.Vector(x0, -GATE_GAP / 2 - 5, z0 + 17))
+    return [
+        ("Sensor_Arm_L", left, c),
+        ("Sensor_Arm_R", right, c),
+        ("Sensor_Bridge", top, c),
+    ]
+
+
+def make_collection_drawer_parts() -> list[tuple[str, Part.Shape, tuple]]:
+    c = (0.75, 0.85, 0.9)
+    d = Part.makeBox(95, 65, 40)
+    d.translate(App.Vector(-DISC_D / 2 - 40, BOX_D / 2 - 75, 28))
+    inn = Part.makeBox(87, 55, 32)
+    inn.translate(App.Vector(-DISC_D / 2 - 36, BOX_D / 2 - 68, 34))
+    return [("Drawer_Shell", _keep_largest_solid(d.cut(inn).removeSplitter()), c)]
+
+
+def make_control_panel_parts() -> list[tuple[str, Part.Shape, tuple]]:
+    c = (0.15, 0.18, 0.35)
+    panel = Part.makeBox(95, 6, 70)
+    panel.translate(App.Vector(15, -BOX_D / 2 - 2, BOX_H - 75))
+    disp = Part.makeBox(40, 4, 18)
+    disp.translate(App.Vector(25, -BOX_D / 2 - 1, BOX_H - 55))
+    return [("Panel_Bezel", _keep_largest_solid(panel.cut(disp).removeSplitter()), c)]
+
+
 def add_part(doc, name, shape, color, transparency=0):
     obj = doc.addObject("Part::Feature", name)
     obj.Shape = shape
@@ -620,7 +1801,193 @@ def add_part(doc, name, shape, color, transparency=0):
     return obj
 
 
+def add_group(doc, name, children, use_part=True):
+    """
+    Parent folder in the FreeCAD tree; children stay editable solids.
+    App::Part  → assembly (has Placement; move whole group)
+    App::DocumentObjectGroup → simple tree folder
+    """
+    typ = "App::Part" if use_part else "App::DocumentObjectGroup"
+    grp = doc.addObject(typ, name)
+    kids = [c for c in children if c is not None]
+    if hasattr(grp, "addObjects"):
+        grp.addObjects(kids)
+    else:
+        grp.Group = kids
+    return grp
+
+
+def _placement_copy(pl: App.Placement) -> App.Placement:
+    return App.Placement(App.Vector(pl.Base), App.Rotation(pl.Rotation))
+
+
+def _placement_is_identity(pl: App.Placement, tol: float = 1e-6) -> bool:
+    b = pl.Base
+    if abs(b.x) > tol or abs(b.y) > tol or abs(b.z) > tol:
+        return False
+    # Identity rotation ≈ angle 0
+    try:
+        ang = abs(pl.Rotation.Angle)
+    except Exception:
+        return True
+    return ang < 1e-6 or abs(ang - 2.0 * math.pi) < 1e-6
+
+
+def capture_open_document_state() -> tuple[
+    dict[str, App.Placement], dict[str, bool], set[str]
+]:
+    """Read Placement + Visibility from any currently open FreeCAD docs (user may have moved/hidden)."""
+    placements: dict[str, App.Placement] = {}
+    visibility: dict[str, bool] = {}
+    part_names: set[str] = set()
+    for doc_name in list(App.listDocuments().keys()):
+        doc = App.getDocument(doc_name)
+        for obj in doc.Objects:
+            if obj.TypeId == "App::Part":
+                part_names.add(obj.Name)
+            if hasattr(obj, "Placement"):
+                placements[obj.Name] = _placement_copy(obj.Placement)
+            vo = getattr(obj, "ViewObject", None)
+            if vo is not None and hasattr(vo, "Visibility"):
+                visibility[obj.Name] = bool(vo.Visibility)
+    return placements, visibility, part_names
+
+
+def load_state_from_fcstd(
+    path: Path,
+) -> tuple[dict[str, App.Placement], dict[str, bool], set[str]]:
+    """
+    Parse last-saved FCStd so rebuild can keep user Placement / Visibility.
+    Source of truth = this .FCStd only (never a sidecar JSON).
+    Returns (placements, visibility, names that were App::Part).
+    """
+    placements: dict[str, App.Placement] = {}
+    visibility: dict[str, bool] = {}
+    part_names: set[str] = set()
+    if not path.is_file():
+        return placements, visibility, part_names
+    try:
+        with zipfile.ZipFile(path, "r") as zf:
+            names = set(zf.namelist())
+            if "Document.xml" in names:
+                xml = zf.read("Document.xml").decode("utf-8", errors="replace")
+                for t, n in re.findall(
+                    r'<Object type="([^"]+)" name="([^"]+)"', xml
+                ):
+                    if t == "App::Part":
+                        part_names.add(n)
+                for m in re.finditer(
+                    r'<Object\b[^>]*\bname="([^"]+)"[^>]*>.*?</Object>',
+                    xml,
+                    flags=re.DOTALL,
+                ):
+                    oname = m.group(1)
+                    block = m.group(0)
+                    pm = re.search(
+                        r'<Property name="Placement"[^>]*>\s*<PropertyPlacement\s+([^/]+)/>',
+                        block,
+                    )
+                    if not pm:
+                        continue
+                    attrs = dict(re.findall(r'(\w+)="([^"]*)"', pm.group(1)))
+                    try:
+                        px = float(attrs.get("Px", 0))
+                        py = float(attrs.get("Py", 0))
+                        pz = float(attrs.get("Pz", 0))
+                        q0 = float(attrs.get("Q0", 0))
+                        q1 = float(attrs.get("Q1", 0))
+                        q2 = float(attrs.get("Q2", 0))
+                        q3 = float(attrs.get("Q3", 1))
+                    except ValueError:
+                        continue
+                    placements[oname] = App.Placement(
+                        App.Vector(px, py, pz),
+                        App.Rotation(q0, q1, q2, q3),
+                    )
+            if "GuiDocument.xml" in names:
+                gxml = zf.read("GuiDocument.xml").decode("utf-8", errors="replace")
+                for m in re.finditer(
+                    r'<ViewProvider\b[^>]*\bname="([^"]+)"[^>]*>.*?</ViewProvider>',
+                    gxml,
+                    flags=re.DOTALL,
+                ):
+                    oname = m.group(1)
+                    vm = re.search(
+                        r'<Property name="Visibility"[^>]*>\s*<Bool value="(true|false)"/>',
+                        m.group(0),
+                    )
+                    if vm:
+                        visibility[oname] = vm.group(1) == "true"
+    except Exception as exc:
+        print("load_state_from_fcstd: skip (%s)" % exc)
+    return placements, visibility, part_names
+
+
+def apply_preserved_state(
+    doc,
+    placements: dict[str, App.Placement],
+    visibility: dict[str, bool],
+    prior_part_names: set[str] | None = None,
+) -> None:
+    """
+    Re-apply user Placement / Visibility after geometry rebuild.
+
+    Placement: only for assemblies the user typically Transform's as a group,
+    and only if they were already App::Part in the previous FCStd.
+    Children are authored in world coordinates — do not apply leftover
+    Part::Feature Placement (e.g. motor) onto new App::Part parents.
+    """
+    # Geometry of these parents is world-posed in children; parent Placement
+    # is the user's Transform offset relative to that design pose.
+    # Exit_Guide_Tray Placement is free — Transform in GUI; restored each rebuild
+    allow_placement = {"Exit_Guide_Tray", "Gap_Lining_Up"}
+    prior = prior_part_names or set()
+    moved = []
+    for name, pl in placements.items():
+        obj = doc.getObject(name)
+        if obj is None or not hasattr(obj, "Placement"):
+            continue
+        if obj.TypeId != "App::Part":
+            continue
+        if name not in allow_placement or name not in prior:
+            continue
+        if _placement_is_identity(pl):
+            continue
+        obj.Placement = _placement_copy(pl)
+        b = pl.Base
+        moved.append("%s->(%.2f,%.2f,%.2f)" % (name, b.x, b.y, b.z))
+    hidden = []
+    for name, vis in visibility.items():
+        obj = doc.getObject(name)
+        if obj is None:
+            continue
+        vo = getattr(obj, "ViewObject", None)
+        if vo is None or not hasattr(vo, "Visibility"):
+            continue
+        vo.Visibility = vis
+        if not vis:
+            hidden.append(name)
+    if moved:
+        print("Preserved Placement: " + "; ".join(moved))
+    else:
+        print("Preserved Placement: (none)")
+    if hidden:
+        print("Preserved hidden: " + ", ".join(hidden))
+
+
 def main() -> None:
+    # 1) Live open docs (same FreeCAD session) win over disk
+    # 2) Else last-saved FCStd — user may have Transform'd then saved / agent Ctrl+S
+    live_pl, live_vis, live_parts = capture_open_document_state()
+    disk_pl, disk_vis, disk_parts = load_state_from_fcstd(FCSTD)
+    placements = {**disk_pl, **live_pl}
+    visibility = {**disk_vis, **live_vis}
+    prior_parts = disk_parts | live_parts
+    if live_pl:
+        print("Captured state from open document(s): %d objects" % len(live_pl))
+    elif disk_pl:
+        print("Captured state from FCStd on disk: %d objects" % len(disk_pl))
+
     for name in list(App.listDocuments().keys()):
         App.closeDocument(name)
 
@@ -632,58 +1999,56 @@ def main() -> None:
     z_shaft0 = z_coupler + 5.0
     shaft_len = (z_disc + DISC_T + HUB_H) - z_shaft0 + 2.0
 
-    motor_p = place_motor_vertical(make_motor())
-    # Mount grown into housing — single printable / molded body
-    frame = make_housing_with_mount(face_z)
-    align_pins = make_hole_align_pins(face_z)
+    assemblies: list[tuple[str, list, int]] = [
+        ("L_Bracket_Mount_Frame", make_housing_mount_parts(face_z), 35),
+        ("Hole_Align_Pins", make_hole_align_pin_parts(face_z), 0),
+        ("JGB37_520_Motor", make_motor_parts(), 0),
+        ("Flexible_Coupler", make_coupler_parts(z_coupler), 0),
+        ("Disc_Shaft", make_drive_shaft_parts(z_shaft0, shaft_len), 0),
+        ("Bearing_Upper", make_bearing_parts("Bearing_Upper", TOP_Z - 1), 0),
+        (
+            "Bearing_Lower",
+            make_bearing_parts("Bearing_Lower", SHELF_Z + (BOX_T - BEARING_H) / 2),
+            0,
+        ),
+        ("Turntable_Disc", make_disc_parts(z_disc), 0),
+        ("Center_Hub", make_center_hub_parts(z_disc), 0),
+        ("Outer_Guide_Arc", make_outer_guide_parts(z_disc), 0),
+        ("Gap_Lining_Up", make_lining_up_gap_parts(z_disc), 0),
+        ("Exit_Press_Guide", make_exit_press_guide_parts(z_disc), 0),
+        ("Clear_Exit_Cover", make_clear_exit_cover_parts(z_disc), 60),
+        ("Separator_Tab", make_separator_tab_parts(z_disc), 0),
+        ("Outlet_Chute", make_outlet_chute_parts(z_disc), 0),
+        ("IR_Sensor_Fork", make_sensor_fork_parts(z_disc), 0),
+        ("Collection_Drawer", make_collection_drawer_parts(), 50),
+        ("Control_Panel", make_control_panel_parts(), 0),
+    ]
 
-    brg_u = make_bearing(TOP_Z - 1)
-    brg_l = make_bearing(SHELF_Z + (BOX_T - BEARING_H) / 2)
-    coupler = make_coupler(z_coupler)
-    shaft = make_drive_shaft(z_shaft0, shaft_len)
-    disc = make_disc(z_disc)
-    hub = make_center_hub(z_disc)
-    guide = make_outer_guide_arc(z_disc)
-    gate_body, knob, screw = make_manual_gate_assembly(z_disc)
-    clear = make_clear_exit_cover(z_disc)
-    sep = make_separator_tab(z_disc)
-    chute = make_outlet_chute(z_disc)
-    sensor = make_sensor_fork(z_disc)
-    drawer = make_collection_drawer()
-    panel = make_control_panel()
+    counts = []
+    for parent, specs, tr in assemblies:
+        kids = [
+            add_part(doc, n, sh, col, transparency=tr) for n, sh, col in specs
+        ]
+        add_group(doc, parent, kids)
+        counts.append("%s(%d)" % (parent, len(kids)))
 
-    mbb = motor_p.BoundBox
-    print(
-        f"Box H={BOX_H:.0f} | motor Z=[{mbb.ZMin:.1f},{mbb.ZMax:.1f}] "
-        f"inside={'YES' if mbb.ZMin >= BOX_T - 0.05 else 'NO'} | "
-        f"Housing+mount=ONE continuous solid"
-    )
+    # Exit_Guide_Tray: nested Exit_Tray_Floor (basic solids) + walls
+    floor_objs = [
+        add_part(doc, n, sh, col, transparency=55)
+        for n, sh, col in make_exit_tray_floor_basic_parts(z_disc)
+    ]
+    floor_grp = add_group(doc, "Exit_Tray_Floor", floor_objs)
+    wall_objs = [
+        add_part(doc, n, sh, col, transparency=55)
+        for n, sh, col in make_exit_guide_tray_parts(z_disc)
+    ]
+    add_group(doc, "Exit_Guide_Tray", [floor_grp] + wall_objs)
+    counts.append("Exit_Guide_Tray(Floor %d + walls %d)" % (len(floor_objs), len(wall_objs)))
 
-    add_part(
-        doc,
-        "L_Bracket_Mount_Frame",
-        frame,
-        (0.85, 0.88, 0.86),
-        transparency=35,
-    )  # housing + mount = one solid
-    add_part(doc, "Hole_Align_Pins", align_pins, (1.0, 0.15, 0.05))  # must pass through motor+flange
-    add_part(doc, "JGB37_520_Motor", motor_p, (0.75, 0.75, 0.78))
-    add_part(doc, "Flexible_Coupler", coupler, (0.85, 0.55, 0.15))
-    add_part(doc, "Disc_Shaft", shaft, (0.55, 0.55, 0.6))
-    add_part(doc, "Bearing_Upper", brg_u, (0.15, 0.45, 0.85))
-    add_part(doc, "Bearing_Lower", brg_l, (0.15, 0.45, 0.85))
-    add_part(doc, "Turntable_Disc", disc, (0.95, 0.95, 0.95))
-    add_part(doc, "Center_Hub", hub, (0.08, 0.08, 0.08))
-    add_part(doc, "Outer_Guide_Arc", guide, (0.12, 0.12, 0.14))
-    add_part(doc, "Manual_Gate_Tower", gate_body, (0.92, 0.92, 0.93))
-    add_part(doc, "Gap_Knob_TOP", knob, (0.05, 0.05, 0.05))
-    add_part(doc, "Gap_Screw", screw, (0.55, 0.55, 0.58))
-    add_part(doc, "Clear_Exit_Cover", clear, (0.7, 0.85, 0.95), transparency=60)
-    add_part(doc, "Separator_Tab", sep, (0.15, 0.15, 0.15))
-    add_part(doc, "Outlet_Chute", chute, (0.45, 0.45, 0.48))
-    add_part(doc, "IR_Sensor_Fork", sensor, (0.05, 0.05, 0.05))
-    add_part(doc, "Collection_Drawer", drawer, (0.75, 0.85, 0.9), transparency=50)
-    add_part(doc, "Control_Panel", panel, (0.15, 0.18, 0.35))
+    print("Assemblies -> basic children: " + ", ".join(counts))
+    print("GATE_GAP=%.1fmm | Placement restore = App::Part only" % GATE_GAP)
+
+    apply_preserved_state(doc, placements, visibility, prior_parts)
 
     doc.recompute()
     doc.saveAs(str(FCSTD))
