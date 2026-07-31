@@ -10,7 +10,7 @@ alwaysApply: true
 - Only open PyBullet when the user **explicitly asks**, or when actively debugging that sim.
 
 ## FreeCAD
-- Follow `freecad-restart.mdc`: after every FreeCAD/CAD model change, kill FreeCAD and reopen the latest show script / `.FCStd`.
+- Follow `freecad-restart.mdc`: after **every** FreeCAD/CAD edit in a turn, kill FreeCAD and reopen `show_jgb37_gui.py` before ending — no exceptions unless the user says not to.
 
 ## Blender
 - Follow `blender-restart.mdc` only when that turn rebuilds a `.blend`.

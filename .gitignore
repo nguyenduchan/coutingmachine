@@ -14,3 +14,33 @@
 *.m2ts
 *.vob
 *.ogv
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Blender / FreeCAD backups
+*.blend1
+*.FCBak
+
+# Installers
+*.exe
+3d_model/sim/out/fusion_install/
+
+# Sim / render frame dumps
+3d_model/sim/out/frames_drive_link/
+3d_model/sim/out/ref_frames/
+3d_model/sim/out/compare_frames/
+3d_model/sim/out/phase_verify/
+3d_model/sim/frames_pocket/
+3d_model/sim/frames_drive_phys/
+
+# Sim out rebuildable binaries
+3d_model/sim/out/*.blend
+3d_model/sim/out/*.blend1
+3d_model/sim/out/*.gif
+3d_model/sim/out/*.png
+
+# Preview renders
+3d_model/preview/
+3d_model/preview_cq/

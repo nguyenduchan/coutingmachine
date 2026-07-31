@@ -1,24 +1,39 @@
 ---
-description: Always kill and reopen FreeCAD with the latest model after CAD changes
+description: After every FreeCAD/CAD edit, kill FreeCAD and reopen show_jgb37_gui.py
 alwaysApply: true
 ---
 
-# FreeCAD: always reopen / reload latest model
+# FreeCAD: always reload show model when edits finish
 
-After **any** change that rebuilds or updates a FreeCAD model (`.FCStd`, show script, or Part geometry):
+**Mandatory end-of-turn step** — do not wait for the user to ask.
 
-1. Rebuild if needed (run the show/build script, e.g. `show_jgy370_gui.py`).
-2. **Kill** any existing FreeCAD process for this project (`freecad` / `FreeCAD` / `freecadcmd`).
-3. **Start-Process** FreeCAD again so the user sees the **new** model — not a stale open document.
-4. Prefer launching the show script (rebuilds + displays) over opening a possibly stale `.FCStd` alone:
-   - Script: `3d_model/freecad/show_jgb37_gui.py`
-   - Doc: `3d_model/freecad/out/jgb37_motor_bracket.FCStd`
-   - Exe: `%LOCALAPPDATA%\Programs\FreeCAD 1.1\bin\freecad.exe`
+Whenever this turn changes FreeCAD CAD (geometry, placement, materials, `show_jgb37_gui.py`, `.FCStd`, or related freecad scripts), before ending the turn:
+
+1. Finish the code/model edits.
+2. **Kill** all FreeCAD processes: `freecad`, `FreeCAD`, `freecadcmd`.
+3. **Start-Process** FreeCAD with the show script (rebuilds + displays). Prefer the script over opening a stale `.FCStd` alone.
+
+## Paths (this machine / repo)
+
+- Script: `d:\Project\coutingmachine\3d_model\freecad\show_jgb37_gui.py`
+- Doc: `d:\Project\coutingmachine\3d_model\freecad\out\jgb37_motor_bracket.FCStd`
+- Exe: `%LOCALAPPDATA%\Programs\FreeCAD 1.1\bin\freecad.exe`
 
 ```powershell
 Get-Process -Name freecad,FreeCAD,freecadcmd -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Process -FilePath "$env:LOCALAPPDATA\Programs\FreeCAD 1.1\bin\freecad.exe" `
-  -ArgumentList "c:\workspace\embedded\CountingMachine\3d_model\freecad\show_jgb37_gui.py"
+  -ArgumentList "d:\Project\coutingmachine\3d_model\freecad\show_jgb37_gui.py"
 ```
 
-Do this every time without waiting for the user to ask.
+## When it applies
+
+- Any edit under `3d_model/freecad/`
+- Any change that updates the FreeCAD model the user is viewing
+- Even “small” tweaks (color, transparency, hole, dimension)
+
+## When it does NOT apply
+
+- Pure docs / git / non-CAD work with no FreeCAD model change
+- User explicitly says not to reopen FreeCAD
+
+Never leave a stale FreeCAD window as the user’s view of the model.
