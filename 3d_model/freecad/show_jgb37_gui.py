@@ -218,6 +218,7 @@ _LID_BOT = _LID_CFG["plan"].get("bottom_plate", {})
 LID_BOTTOM_EN = bool(_LID_BOT.get("enabled", True))
 LID_BOTTOM_T = float(_LID_BOT.get("thickness", LID_TOP_T))
 LID_BOTTOM_DISC_CLR = float(_LID_BOT.get("disc_clearance", 0.5))
+LID_BOTTOM_OPEN_CHUTE = bool(_LID_BOT.get("open_over_chute", True))
 _LID_FILL = _LID_CFG["plan"].get("annulus_fill", {})
 LID_FILL_EN = bool(_LID_FILL.get("enabled", True))
 # Exit tray — Left straight | Right = 1/4 Ø10cm + straight
@@ -597,7 +598,8 @@ def make_outer_guide_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]
       - Outer_Guide_Floor: one circular base disc (shaft hole)
       - Outer_Guide_Wall_xxx: wall ring sectors every 10° (full 360°)
 
-    Hide/delete unwanted wall sectors in FreeCAD (e.g. exit), then Fuse later.
+    Where the lid straight chute crosses the ring, those wall sectors are
+    cut open (GUIDE.cut_straight_chute) so the channel is not blocked.
     """
     wall, bore_d, _side = _guide_dims()
     r_in = bore_d / 2.0
@@ -614,15 +616,52 @@ def make_outer_guide_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]
     floor = floor.cut(_cyl_z(DRIVE_SHAFT_D + 0.3, floor_t + 2.0, z_floor - 1.0))
     parts.append(("Outer_Guide_Floor", _keep_largest_solid(floor.removeSplitter()), (0.18, 0.18, 0.2)))
 
-    # 2) Wall sectors every 10° — full circle (hide unwanted sectors in FreeCAD later)
+    # Chute cutout prism (expanded) — punches through ring where red chute crosses
+    chute_cutter = None
+    guide_cfg = BX.GUIDE
+    if bool(guide_cfg.get("cut_straight_chute", True)):
+        try:
+            plan = _lid_plan_points()
+            pad = float(guide_cfg.get("chute_cut_pad", 1.0))
+            n_in, n_out = plan["n_in"], plan["n_out"]
+            e_in, e_out = plan["e_in"], plan["e_out"]
+            # Expand chute polygon outward by pad (along ±X) so wall thickness clears
+            x_lo = min(float(n_in[0]), float(n_out[0]), float(e_in[0]), float(e_out[0])) - pad
+            x_hi = max(float(n_in[0]), float(n_out[0]), float(e_in[0]), float(e_out[0])) + pad
+            y_hi = max(float(n_in[1]), float(n_out[1])) + pad
+            y_lo = min(float(e_in[1]), float(e_out[1])) - pad
+            chute_xy = [
+                (x_hi, y_hi),
+                (x_hi, y_lo),
+                (x_lo, y_lo),
+                (x_lo, y_hi),
+            ]
+            chute_cutter = _prism_from_xy(chute_xy, z_disc - 1.0, wall_h + 2.0)
+        except Exception as exc:
+            print("Outer_Guide chute cut skipped:", exc)
+            chute_cutter = None
+
+    # 2) Wall sectors every 10° — cut open where chute crosses
+    cut_n = 0
     for i in range(0, 360, step):
         seg = _annular_sector(r_in, r_out, float(i), float(i + step), z_disc, wall_h)
+        if chute_cutter is not None:
+            try:
+                before = float(seg.Volume)
+                seg = seg.cut(chute_cutter).removeSplitter()
+                if float(seg.Volume) < before - 1.0:
+                    cut_n += 1
+            except Exception:
+                pass
+        kept = _fuse_significant_solids(seg, min_vol=0.5)
+        if kept is None or not kept.Solids:
+            continue  # sector fully removed by chute cut
         name = "Outer_Guide_Wall_%03d" % i
-        parts.append((name, _keep_largest_solid(seg.removeSplitter()), (0.12, 0.12, 0.14)))
+        parts.append((name, kept, (0.12, 0.12, 0.14)))
 
     print(
-        "Outer_guide split: Floor + %d wall sectors @ %d° (full circle)"
-        % (len(parts) - 1, step)
+        "Outer_guide split: Floor + %d wall sectors @ %d° | chute_cut sectors=%d"
+        % (len(parts) - 1, step, cut_n)
     )
     return parts
 
@@ -1664,6 +1703,28 @@ def _lid_z_underside(z_disc: float) -> float:
     return z_disc + DISC_T + LID_DISC_CLEAR
 
 
+def _arc_out_pts_wide_tip(plan: dict) -> list:
+    """
+    Lid_Wall_Arc_Out path: keep arc_out pose; only extend wide-mouth tip +X
+    toward the Ø20 cm rim (does not move w_out / recompute the arc).
+    """
+    pts = [tuple(p) for p in plan["arc_out"]]
+    if not pts:
+        return pts
+    tip_inset = float(
+        _LID_CFG["plan"]["funnel_walls"].get("arc_out_wide_tip_inset", 0.5)
+    )
+    tip_x = float(plan["r_disc"]) - tip_inset
+    x0, y0 = float(pts[0][0]), float(pts[0][1])
+    if tip_x > x0 + 1e-6:
+        print(
+            "Lid_Wall_Arc_Out: tip only %.1f → %.1f (+X); arc body unchanged"
+            % (x0, tip_x)
+        )
+        return [(tip_x, y0)] + pts
+    return pts
+
+
 def _lid_square_minus_disc(
     xl: float,
     xr: float,
@@ -1682,25 +1743,104 @@ def _lid_square_minus_disc(
 
 def make_lid_bottom_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
     """
-    Lid_Bottom — underside at disc top + 0.5 mm; open over disc cylinder.
-    Plate grows upward from that plane.
+    Lid_Bottom — underside at disc top + 0.5 mm; open over disc + chute,
+    but sealed under Rim_Pocket and Deck_S_Rim (same XY as those top pieces).
     """
+    from box_settings import lid_rim_pocket_xy
+
     if not LID_BOTTOM_EN:
         return []
     plan = _lid_plan_points()
     z0 = _lid_z_underside(z_disc)  # bottom face = disc top + clear
     bot_c = (0.55, 0.62, 0.70)
+    rim_c = (0.72, 0.78, 0.55)
+    deck_c = (0.62, 0.70, 0.78)
     xl, xr = float(plan["box_xl"]), float(plan["box_xr"])
     yb, yt = float(plan["box_yb"]), float(plan["box_yt"])
     hole_d = DISC_D + LID_BOTTOM_DISC_CLR
+    r_disc = float(plan["r_disc"])
+    y_mouth = float(plan["y_mouth"])
+    x_in = float(plan["x_inner"])
 
     floor = _lid_square_minus_disc(xl, xr, yb, yt, z0, LID_BOTTOM_T, hole_d)
+    chute_cut = False
+    chute_xy = [plan["n_in"], plan["e_in"], plan["e_out"], plan["n_out"]]
+    if LID_BOTTOM_OPEN_CHUTE and floor is not None and floor.Solids:
+        try:
+            chute_prism = _prism_from_xy(chute_xy, z0 - 1.0, LID_BOTTOM_T + 2.0)
+            floor = floor.cut(chute_prism).removeSplitter()
+            chute_cut = True
+        except Exception:
+            pass
     parts: list[tuple[str, Part.Shape, tuple]] = []
     if floor is not None and floor.Solids:
         parts.append(("Lid_Bottom_Floor", floor, bot_c))
+
+    # Seal patches under Rim_Pocket / Deck_S_Rim (inside the disc opening)
+    disc_mask = _cyl_z(DISC_D + 0.05, LID_BOTTOM_T + 4.0, z0 - 1.0)
+    seal_names: list[str] = []
+
+    def _keep_bot(shape: Part.Shape, min_vol: float = 2.0) -> Part.Shape | None:
+        if shape is None or not shape.Solids:
+            return None
+        kept = _fuse_significant_solids(shape, min_vol=min_vol)
+        if kept is None or not kept.Solids or kept.Volume < min_vol:
+            return None
+        return kept
+
+    try:
+        rim_prism = _prism_from_xy(
+            lid_rim_pocket_xy(plan), z0, LID_BOTTOM_T
+        )
+        rim_seal = _keep_bot(rim_prism.common(disc_mask), min_vol=3.0)
+        if rim_seal is not None:
+            parts.append(("Lid_Bottom_Rim_Pocket", rim_seal, rim_c))
+            seal_names.append("Rim_Pocket")
+    except Exception as exc:
+        print("Lid_Bottom_Rim_Pocket skipped:", exc)
+
+    # Deck_S_Rim XY = over-disc remainder south of mouth, west of chute-in
+    # (same split as Lid_Top_Deck_S_Rim): disc ∩ box − chute − rim
+    try:
+        dx = x_in - (-r_disc - 2.0)
+        dy = y_mouth - (-r_disc - 2.0)
+        if dx > 1e-3 and dy > 1e-3:
+            box = Part.makeBox(dx, dy, LID_BOTTOM_T + 2.0)
+            box.translate(App.Vector(-r_disc - 2.0, -r_disc - 2.0, z0 - 1.0))
+            deck = box.common(disc_mask)
+            try:
+                deck = deck.cut(
+                    _prism_from_xy(chute_xy, z0 - 1.0, LID_BOTTOM_T + 2.0)
+                )
+            except Exception:
+                pass
+            try:
+                deck = deck.cut(
+                    _prism_from_xy(
+                        lid_rim_pocket_xy(plan), z0 - 1.0, LID_BOTTOM_T + 2.0
+                    )
+                )
+            except Exception:
+                pass
+            # Clip height to bottom plate band
+            band = Part.makeBox(xr - xl + 4.0, yt - yb + 4.0, LID_BOTTOM_T)
+            band.translate(App.Vector(xl - 2.0, yb - 2.0, z0))
+            deck_seal = _keep_bot(deck.common(band).removeSplitter(), min_vol=2.0)
+            if deck_seal is not None:
+                parts.append(("Lid_Bottom_Deck_S_Rim", deck_seal, deck_c))
+                seal_names.append("Deck_S_Rim")
+    except Exception as exc:
+        print("Lid_Bottom_Deck_S_Rim skipped:", exc)
+
     print(
-        "Lid_Bottom: underside z=disc+%.1f | T=%.0f | holeØ=%.1f"
-        % (LID_DISC_CLEAR, LID_BOTTOM_T, hole_d)
+        "Lid_Bottom: underside z=disc+%.1f | T=%.0f | holeØ=%.1f | chute_open=%s | seal=%s"
+        % (
+            LID_DISC_CLEAR,
+            LID_BOTTOM_T,
+            hole_d,
+            chute_cut,
+            ",".join(seal_names) if seal_names else "none",
+        )
     )
     return parts
 
@@ -1835,11 +1975,27 @@ def make_lid_top_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
         out_c,
         min_vol=2.0,
     )
+    # Out_SW → chute X-band vs rest; chute split at Lid_Wall_Chute_End (y_exit)
+    out_sw = outside.common(_box_mask(x_out, 0.0, yb, 0.0))
+    y_end = float(plan["y_exit"])
+    sw_chute = out_sw.common(_box_mask(x_out, x_in, yb, 0.0))
     _add(
-        "Lid_Top_Out_SW",
-        outside.common(_box_mask(x_out, 0.0, yb, 0.0)),
+        "Lid_Top_Out_SW_Chute_Above",
+        sw_chute.common(_box_mask(x_out, x_in, y_end, 0.0)),
         out_c,
-        min_vol=3.0,
+        min_vol=1.0,
+    )
+    _add(
+        "Lid_Top_Out_SW_Chute_Below",
+        sw_chute.common(_box_mask(x_out, x_in, yb, y_end)),
+        out_c,
+        min_vol=1.0,
+    )
+    _add(
+        "Lid_Top_Out_SW_Rest",
+        out_sw.common(_box_mask(x_in, 0.0, yb, 0.0)),
+        out_c,
+        min_vol=2.0,
     )
 
     # --- 3) Over disc: split at funnel / chute / mouth / rim walls ---
@@ -1884,9 +2040,16 @@ def make_lid_top_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
         top_c,
     )
     south = rem.common(_box_mask(-r_disc - 2.0, r_disc + 2.0, -r_disc - 2.0, y_mouth))
+    # Deck_S_Hub → split trái (−X) / phải (+X) at mid-axis
+    south_hub = south.common(_box_mask(x_in, r_disc + 2.0, -r_disc - 2.0, y_mouth))
     _add(
-        "Lid_Top_Deck_S_Hub",
-        south.common(_box_mask(x_in, r_disc + 2.0, -r_disc - 2.0, y_mouth)),
+        "Lid_Top_Deck_S_Hub_L",
+        south_hub.common(_box_mask(x_in, 0.0, -r_disc - 2.0, y_mouth)),
+        top_c,
+    )
+    _add(
+        "Lid_Top_Deck_S_Hub_R",
+        south_hub.common(_box_mask(0.0, r_disc + 2.0, -r_disc - 2.0, y_mouth)),
         top_c,
     )
     _add(
@@ -1915,6 +2078,7 @@ def make_disc_access_lid_parts(z_disc: float) -> list[tuple[str, Part.Shape, tup
       Walls over disc start at disc top + disc_clear (0.5 mm).
       Lid_Wall_Sq_*     — closed square outer walls
       Lid_Wall_*        — funnel / chute / mouth / wide
+      Lid_Wall_Chute_End — full-height barrier at chute south edge (blocks pills)
       Width_Adjust_Bar / Height_Adjust_Bar
     """
     plan = _lid_plan_points()
@@ -1922,6 +2086,7 @@ def make_disc_access_lid_parts(z_disc: float) -> list[tuple[str, Part.Shape, tup
 
     wall_c = (0.55, 0.60, 0.68)
     sq_c = (0.45, 0.50, 0.58)
+    end_c = (0.75, 0.25, 0.25)  # red-ish — chute end barrier
     width_c = (0.55, 0.20, 0.65)
     height_c = (0.95, 0.55, 0.15)
 
@@ -1930,24 +2095,98 @@ def make_disc_access_lid_parts(z_disc: float) -> list[tuple[str, Part.Shape, tup
 
     wall_specs = [
         ("Lid_Wall_Arc_In", plan["arc_in"]),
-        ("Lid_Wall_Arc_Out", plan["arc_out"]),
+        ("Lid_Wall_Arc_Out", _arc_out_pts_wide_tip(plan)),
         ("Lid_Wall_Chute_In", [plan["n_in"], plan["e_in"]]),
         ("Lid_Wall_Chute_Out", [plan["n_out"], plan["e_out"]]),
         ("Lid_Wall_Wide", [plan["w_in"], plan["w_out"]]),
         ("Lid_Wall_Mouth", [plan["n_in"], plan["n_out"]]),
-        ("Lid_Wall_Exit", [plan["e_in"], plan["e_out"]]),
         # Closed square — fill missing edges
         ("Lid_Wall_Sq_E", [(xr, yb), (xr, yt)]),
         ("Lid_Wall_Sq_N", [(xr, yt), (xl, yt)]),
         ("Lid_Wall_Sq_W", [(xl, yt), (xl, yb)]),
         ("Lid_Wall_Sq_S", [(xl, yb), (xr, yb)]),
     ]
+    # Expand chute slightly — punch circular arcs where they enter the straight channel
+    chute_xy = [plan["n_in"], plan["e_in"], plan["e_out"], plan["n_out"]]
+    pad = 0.5
+    x_lo = min(p[0] for p in chute_xy) - pad
+    x_hi = max(p[0] for p in chute_xy) + pad
+    y_lo = min(p[1] for p in chute_xy) - pad
+    y_hi = max(p[1] for p in chute_xy) + pad
+    # Open south of mouth only (keep mouth wall); cut arcs that spill into chute
+    y_mouth = float(plan["y_mouth"])
+    chute_cut_xy = [
+        (x_hi, y_mouth - 0.1),
+        (x_hi, y_lo),
+        (x_lo, y_lo),
+        (x_lo, y_mouth - 0.1),
+    ]
+    chute_arc_cutter = None
+    try:
+        chute_arc_cutter = _prism_from_xy(
+            chute_cut_xy, z_wall0 - 1.0, LID_WALL_H + 2.0
+        )
+    except Exception:
+        pass
+
     wall_parts: list[tuple[str, Part.Shape, tuple]] = []
     for name, pts in wall_specs:
         col = sq_c if name.startswith("Lid_Wall_Sq_") else wall_c
         w = _wall_along_poly(pts, LID_WALL_T, LID_WALL_H, z_wall0)
-        if w is not None:
+        if w is None:
+            continue
+        if name in ("Lid_Wall_Arc_In", "Lid_Wall_Arc_Out") and chute_arc_cutter is not None:
+            try:
+                w = w.cut(chute_arc_cutter).removeSplitter()
+                w = _fuse_significant_solids(w, min_vol=1.0)
+            except Exception:
+                pass
+        if w is not None and w.Solids:
             wall_parts.append((name, w, col))
+
+    # Sealed rim arc OUTSIDE Ø20 cm disc — SOUTHERN arc:
+    # right chute edge ∩ rim (−Y) → wide-mouth outer (+X)
+    rim_cfg = _LID_CFG["plan"]["funnel_chamber"].get("rim_seal_wall", {})
+    if bool(rim_cfg.get("enabled", True)):
+        try:
+            from box_settings import lid_rim_seal_angles
+
+            deg0, deg1, r_in, r_out = lid_rim_seal_angles(plan)
+            rim_seg = _annular_sector(r_in, r_out, deg0, deg1, z_wall0, LID_WALL_H)
+            # Safety: carve any accidental intrusion into disc cylinder
+            rim_seg = rim_seg.cut(_cyl_z(DISC_D, LID_WALL_H + 4.0, z_wall0 - 1.0))
+            rim_kept = _fuse_significant_solids(rim_seg.removeSplitter(), min_vol=5.0)
+            if rim_kept is not None and rim_kept.Solids:
+                rim_name = str(rim_cfg.get("name", "Lid_Wall_Rim_Arc"))
+                rim_c = (0.35, 0.55, 0.45)
+                wall_parts.append((rim_name, rim_kept, rim_c))
+                print(
+                    "%s: south rim wall T=%.1f | r=[%.2f,%.2f] | ang=%.1f→%.1f° CCW | outside disc"
+                    % (rim_name, r_out - r_in, r_in, r_out, deg0, deg1)
+                )
+        except Exception as exc:
+            print("Lid_Wall_Rim_Arc skipped:", exc)
+
+    # Chute south edge barrier: underside → top face of lid (full stack)
+    chute_cfg = _LID_CFG["plan"].get("chute", {})
+    if bool(chute_cfg.get("end_barrier", True)):
+        h_spec = chute_cfg.get("end_barrier_height", "stack_height")
+        h_end = LID_STACK_H if h_spec == "stack_height" else float(h_spec)
+        # Span full chute width + wall half on each side so no corner leak
+        e_in = plan["e_in"]
+        e_out = plan["e_out"]
+        x0 = min(float(e_in[0]), float(e_out[0])) - LID_WALL_T / 2.0
+        x1 = max(float(e_in[0]), float(e_out[0])) + LID_WALL_T / 2.0
+        y_end = 0.5 * (float(e_in[1]) + float(e_out[1]))
+        barrier = Part.makeBox(x1 - x0, LID_WALL_T, h_end)
+        barrier.translate(App.Vector(x0, y_end - LID_WALL_T / 2.0, z_wall0))
+        wall_parts.append(
+            ("Lid_Wall_Chute_End", _keep_largest_solid(barrier.removeSplitter()), end_c)
+        )
+        print(
+            "Lid_Wall_Chute_End: y=%.1f H=%.0f (underside→top) blocks chute exit"
+            % (y_end, h_end)
+        )
 
     width_bar = _prism_from_xy(plan["width_bar"], z_wall0, LID_WIDTH_BAR_H)
     height_bar = _prism_from_xy(plan["height_bar"], z_wall0, LID_HEIGHT_BAR_H)
@@ -2404,9 +2643,29 @@ def main() -> None:
 
     # Disc_Access_Lid: Top + Bottom + solid annulus fill + walls/bars
     lid_top_objs = []
+    hub_kids: list = []
+    sw_chute_kids: list = []
+    sw_rest = None
     for n, sh, col in make_lid_top_parts(z_disc):
         tr = 0 if n == "Lid_Top_Arc_Corner" else 25
-        lid_top_objs.append(add_part(doc, n, sh, col, transparency=tr))
+        obj = add_part(doc, n, sh, col, transparency=tr)
+        if n.startswith("Lid_Top_Deck_S_Hub_"):
+            hub_kids.append(obj)
+        elif n.startswith("Lid_Top_Out_SW_Chute_"):
+            sw_chute_kids.append(obj)
+        elif n == "Lid_Top_Out_SW_Rest":
+            sw_rest = obj
+        else:
+            lid_top_objs.append(obj)
+    if hub_kids:
+        lid_top_objs.append(add_group(doc, "Lid_Top_Deck_S_Hub", hub_kids))
+    sw_kids: list = []
+    if sw_chute_kids:
+        sw_kids.append(add_group(doc, "Lid_Top_Out_SW_Chute", sw_chute_kids))
+    if sw_rest is not None:
+        sw_kids.append(sw_rest)
+    if sw_kids:
+        lid_top_objs.append(add_group(doc, "Lid_Top_Out_SW", sw_kids))
     lid_top_grp = add_group(doc, "Lid_Top", lid_top_objs)
     lid_kids = [lid_top_grp]
     lid_bot_objs = [
@@ -2449,6 +2708,20 @@ def main() -> None:
 
     apply_preserved_state(doc, placements, visibility, prior_parts)
 
+    # Disc_Access_Lid: children authored with wall bottoms at disc_top + disc_clear.
+    # Parent Pz must be 0 so Lid_Wall_Arc_* underside stays 0.5 mm above the disc.
+    # (Old FCStd had Pz=-3 which sank walls into the disc.)
+    lid_grp = doc.getObject("Disc_Access_Lid")
+    if lid_grp is not None and hasattr(lid_grp, "Placement"):
+        pl = lid_grp.Placement
+        if abs(float(pl.Base.z)) > 1e-6:
+            print(
+                "Disc_Access_Lid: Pz %.3f → 0 (Lid_Wall bottom = disc+%.1f mm)"
+                % (pl.Base.z, LID_DISC_CLEAR)
+            )
+            pl.Base = App.Vector(pl.Base.x, pl.Base.y, 0.0)
+            lid_grp.Placement = pl
+
     # Force-show full sealed Lid_Top (user may have hidden older children)
     for obj in lid_top_objs + [lid_top_grp, doc.getObject("Disc_Access_Lid")]:
         if obj is None:
@@ -2460,6 +2733,10 @@ def main() -> None:
     doc.recompute()
     doc.saveAs(str(FCSTD))
     print(f"Saved: {FCSTD}")
+    print(
+        "Lid clearance: wall bottoms at disc_top+%.1f mm (Disc_Access_Lid Pz=0)"
+        % LID_DISC_CLEAR
+    )
 
     if App.GuiUp and Gui is not None:
         Gui.ActiveDocument = Gui.getDocument(doc.Name)

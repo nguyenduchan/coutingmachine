@@ -15,6 +15,7 @@ from box_settings import (  # noqa: E402
     lid_north_cap_xy,
     lid_plan_full,
     lid_rim_pocket_xy,
+    lid_rim_seal_angles,
 )
 
 plan = lid_plan_full()
@@ -102,7 +103,7 @@ arc_corner = lid_north_cap_xy(plan)  # AABB of tiny corner pocket
 _cx, _cy, _sp, _or = lid_arc_corner_params(plan)
 
 roof_note = (
-    f"Vuong {SIDE:.0f}mm | mat tren KIN (chia theo tuong) | mat duoi HO trong O dia"
+    f"Vuong {SIDE:.0f}mm | day kin duoi Rim+Deck_S_Rim | mang HO duoi"
 )
 
 parts = [
@@ -115,7 +116,7 @@ parts = [
     circle((0, 0), R_DISC, "#888", 1.5, fill="#fff"),
     # bottom open over disc (dashed ring cue)
     circle((0, 0), R_DISC, "#1565c0", 1.2, dash="5 3"),
-    text(0, -R_DISC * 0.55, "mat duoi HO (vung dia)", 8, fill="#1565c0"),
+    text(0, -R_DISC * 0.55, "mat duoi HO (dia+mang)", 8, fill="#1565c0"),
     circle((0, 0), R_HUB, "#333", 1.2, fill="#2a2a2a"),
     circle((0, 0), R_MOUTH, "#999", 0.6, dash="3 2"),
     line((-R_DISC, -R_DISC), (R_DISC, -R_DISC), "#999", 0.7, dash="4 3"),
@@ -125,6 +126,10 @@ if ROOF_RIM:
     parts.append(poly(rim_pocket + [rim_pocket[0]], "#607d8b", 0.5, fill="#90a4ae", opacity=0.65))
     parts.append(text(55, 55, "Rim_Pocket", 8, fill="#455a64"))
 parts.append(text(-95, -20, "Out_W", 8, fill="#455a64"))
+parts.append(text(-75, -85, "SW_Chute", 7, fill="#455a64"))
+parts.append(text(-75, -72, "Above End", 6, fill="#607d8b"))
+parts.append(text(-75, -98, "Below End", 6, fill="#607d8b"))
+parts.append(text(-30, -85, "SW_Rest", 7, fill="#455a64"))
 parts.append(text(70, 70, "Out_NE", 8, fill="#455a64"))
 if ROOF_FUNNEL:
     parts.append(poly(funnel_chamber, "#546e7a", 0.6, fill="#90a4ae", opacity=0.55))
@@ -133,11 +138,46 @@ else:
     parts.append(poly(channel, "#1a6b8a", 0.8, fill="#3aa7d0", opacity=0.28))
 if ROOF_CHUTE:
     parts.append(poly(chute, "#546e7a", 0.6, fill="#78909c", opacity=0.5))
+    parts.append(text(-55, -35, "Chute_Roof", 8, fill="#455a64"))
 else:
     parts.append(poly(chute, "#ef9a9a", 0.5, fill="#ffcdd2", opacity=0.35))
+    parts.append(text(-55, -35, "mang HO tren", 8, fill="#b71c1c"))
 parts.append(text(-40, -40, "Deck_S_Rim", 7, fill="#455a64"))
-parts.append(text(40, -40, "Deck_S_Hub", 7, fill="#455a64"))
+parts.append(text(-25, -40, "Hub_L", 7, fill="#455a64"))
+parts.append(text(40, -40, "Hub_R", 7, fill="#455a64"))
 parts.append(text(0, 50, "Deck_N", 7, fill="#455a64"))
+
+# Rim seal wall outside disc (2mm) — wide mouth → chute via north
+_rs = LID["plan"]["funnel_chamber"].get("rim_seal_wall", {})
+if bool(_rs.get("enabled", True)):
+    import math
+
+    _d0, _d1, _ri, _ro = lid_rim_seal_angles(plan)
+    _steps = max(24, int(round((_d1 - _d0) % 360)))
+    _rim_outer = [
+        (
+            _ro * math.cos(math.radians(_d0 + (_d1 - _d0) * i / _steps)),
+            _ro * math.sin(math.radians(_d0 + (_d1 - _d0) * i / _steps)),
+        )
+        for i in range(_steps + 1)
+    ]
+    _rim_inner = [
+        (
+            _ri * math.cos(math.radians(_d1 - (_d1 - _d0) * i / _steps)),
+            _ri * math.sin(math.radians(_d1 - (_d1 - _d0) * i / _steps)),
+        )
+        for i in range(_steps + 1)
+    ]
+    parts.append(
+        poly(
+            _rim_outer + _rim_inner + [_rim_outer[0]],
+            "#2e7d32",
+            1.2,
+            fill="#66bb6a",
+            opacity=0.55,
+        )
+    )
+    parts.append(text(20, -95, "Rim_Arc 2mm (cung duoi)", 8, fill="#1b5e20"))
 
 parts += [
     poly(arc_out, "#0b5f7a", 2.5),

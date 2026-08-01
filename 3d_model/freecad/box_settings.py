@@ -41,7 +41,10 @@ GUIDE = {
     "wall_radial_thickness": 12.0,
     "bore_clearance_on_disc": 0.5,  # bore = disc_d + this
     "wall_sector_step_deg": 10.0,
-    "note": "Outer_Guide_Arc — fixed bowl wall around disc",
+    # Khoét thủng vách vành nơi máng thẳng (lid chute) cắt qua
+    "cut_straight_chute": True,
+    "chute_cut_pad": 1.0,  # mm expand cut beyond chute polygon
+    "note": "Outer_Guide_Arc — fixed bowl wall around disc; open where straight chute crosses",
 }
 HOUSING = {
     "shape": "box_shell",
@@ -134,6 +137,7 @@ PRESS = {
 LID = {
     # --- stack (Z) ---
     # Underside of lid + walls over disc = disc top + this gap (disc can spin free)
+    # Enforced: Disc_Access_Lid parent Placement Pz = 0 (do not sink the group)
     "disc_clear": 0.5,
     "top_thickness": 3.0,  # flat continuous top face
     "wall_thickness": 2.0,
@@ -168,14 +172,14 @@ LID = {
             "at_clock": 3,
             "shape": "radial_segment",
             "width": 75.0,  # hub→rim ≈ full annulus
-            "inset_from_hub_rim": 2.5,  # margin inside disc
+            "inset_from_hub_rim": 2.5,  # margin inside disc (w_in / w_out plan)
         },
         "narrow_mouth": {
             "at_clock": 9,
             "shape": "horizontal_segment",  # perpendicular to chute
             "width": 20.0,
             # center radius = mid_annulus + outward_offset
-            "mid_annulus_offset": 10.0,  # +1 cm toward rim from mid
+            "mid_annulus_offset": 20.0,  # +2 cm toward rim from mid (−1 cm closer to disc rim)
             "y_offset": 8.0,  # slight +Y so arcs stay upper
         },
         "funnel_walls": {
@@ -184,6 +188,12 @@ LID = {
             "outer": "w_out -> n_out (rim side)",
             "must_stay_inside_disc": True,
             "non_crossing": True,
+            # Mép trong cửa rộng: đi thẳng vào phễu rồi mới cung tròn
+            # (tránh cung cắt hub Ø5 cm — kể cả nửa bề dày tường)
+            "inner_lead_mm": 15.0,
+            "inner_hub_clear": 1.0,  # extra mm beyond hub + wall/2
+            # Chỉ mép Arc_Out tại cửa rộng dịch +X (sát vành); cung giữ nguyên
+            "arc_out_wide_tip_inset": 0.5,  # tip at r = disc_r − this
         },
         # Khoang phễu (cửa rộng → cửa hẹp): có được nắp trên che kín không
         "funnel_chamber": {
@@ -191,8 +201,9 @@ LID = {
             # True  = khoang bị khép bởi Lid_Top (thêm Lid_Top_Funnel_Roof)
             # False = để hở xuyên nắp (chỉ tường + không có mái)
             "roofed_by_lid_top": True,
-            # True  = máng đỏ sau cửa hẹp cũng có mái; False = máng hở trên
-            "roof_chute": False,
+            # True  = máng đỏ sau cửa hẹp cũng có mái (mặt trên kín)
+            # False = máng hở trên
+            "roof_chute": True,
             # Vùng giữa cung ngoài phễu và vành đĩa (vùng vàng trên sơ đồ) — kín bằng nắp
             "roof_rim_pocket": True,
             # Kéo Rim_Pocket xuống quá miệng hẹp (°) để kín khe dưới với Deck_S_Rim
@@ -207,6 +218,17 @@ LID = {
                 "span": 35.0,
                 "orient": "right_above",  # +X,+Y from corner
             },
+            # Thành kín dọc vành đĩa (ngoài Ø20cm), CUNG PHÍA DƯỚI (−Y):
+            # bắt đầu cạnh phải máng thẳng ∩ đường tròn → mép ngoài cửa rộng (3h)
+            "rim_seal_wall": {
+                "enabled": True,
+                "thickness": 2.0,  # radial wall T (mm)
+                "disc_clear_radial": 0.25,  # r_in = disc_r + this
+                "from": "chute_in_rim_south",  # cạnh phải máng (x_inner) ∩ rim, nhánh −Y
+                "to": "wide_mouth_out",  # mép ngoài cửa rộng (+X / 3h)
+                "via": "south",  # cung dưới (không qua 12h)
+                "name": "Lid_Wall_Rim_Arc",
+            },
         },
         "chute": {
             "shape": "two_parallel_walls",
@@ -216,6 +238,11 @@ LID = {
             # end flush with farthest disc rim in -Y (= y = -disc_radius)
             "end": "disc_far_rim",
             "end_y": "-(DISC.diameter/2)",
+            # Vách đứng tại cạnh ngang cuối máng: từ mặt dưới → mặt trên nắp
+            "end_barrier": True,
+            "end_barrier_height": "stack_height",  # full lid H
+            # Mặt dưới nắp: khoét thủng theo polygon máng (cộng với lỗ đĩa)
+            "open_bottom": True,
         },
         # Outer lid = closed square; bottom edge = disc + bottom_extra (1 cm past rim)
         "frame": {
@@ -235,26 +262,42 @@ LID = {
                 "Lid_Top_Out_W",
                 "Lid_Top_Out_NW",
                 "Lid_Top_Out_NWm",
-                "Lid_Top_Out_SW",
+                "Lid_Top_Out_SW",  # parent
+                "Lid_Top_Out_SW_Chute",  # parent: Above + Below (split at Chute_End)
+                "Lid_Top_Out_SW_Chute_Above",
+                "Lid_Top_Out_SW_Chute_Below",
+                "Lid_Top_Out_SW_Rest",
                 # Over disc — split at funnel / rim / mouth / chute walls
                 "Lid_Top_Funnel_Roof",
                 "Lid_Top_Rim_Pocket",
-                "Lid_Top_Chute_Roof",
+                "Lid_Top_Chute_Roof",  # máng đỏ — mặt trên kín
                 "Lid_Top_Deck_N",
-                "Lid_Top_Deck_S_Hub",
+                "Lid_Top_Deck_S_Hub",  # parent: Hub_L + Hub_R
+                "Lid_Top_Deck_S_Hub_L",
+                "Lid_Top_Deck_S_Hub_R",
                 "Lid_Top_Deck_S_Rim",
             ],
             "build": "continuous_plate_split_at_walls",
         },
-        # Mặt dưới: Z = mặt đĩa + disc_clear (0.5); hở hình trụ đĩa
+        # Mặt dưới: Z = mặt đĩa + disc_clear (0.5); hở hình trụ đĩa + máng thẳng
+        # nhưng kín dưới Rim_Pocket + Deck_S_Rim (cùng XY với mặt trên)
         "bottom_plate": {
             "enabled": True,
             "thickness": 3.0,
             "open_over_disc": True,
+            "open_over_chute": True,  # khoét thêm polygon máng thẳng
             "disc_clearance": 0.5,  # XY hole Ø = disc + this
             "z": "disc_top + LID.disc_clear",  # underside flush plane
-            "children": ["Lid_Bottom_Floor"],
-            "note": "bottom face at disc height + 0.5mm; walls over disc same Z",
+            "seal_under": [
+                "Lid_Top_Rim_Pocket",
+                "Lid_Top_Deck_S_Rim",
+            ],
+            "children": [
+                "Lid_Bottom_Floor",
+                "Lid_Bottom_Rim_Pocket",
+                "Lid_Bottom_Deck_S_Rim",
+            ],
+            "note": "bottom open over disc/chute except sealed under Rim_Pocket + Deck_S_Rim",
         },
         # Đặc phần giữa vành đĩa ↔ cạnh vuông (đầy tường, không để rỗng)
         "annulus_fill": {
@@ -280,6 +323,43 @@ def lid_mouth_radius() -> float:
     """Narrow-mouth center radius (toward rim from mid-annulus)."""
     mid = (hub_radius() + disc_radius()) / 2.0
     return mid + float(LID["plan"]["narrow_mouth"]["mid_annulus_offset"])
+
+
+def lid_rim_seal_angles(plan: dict | None = None) -> tuple[float, float, float, float]:
+    """
+    Angles (deg, CCW from +X) and radii for Lid_Wall_Rim_Arc — SOUTHERN arc.
+
+    Starts at the right edge of the straight chute (x_inner / Chute_In) where it
+    intersects the disc circle on the −Y side, then goes CCW along the lower rim
+    to the wide-mouth outer at +X (3h). Wall stays outside Ø20 cm disc.
+
+    Returns (deg0, deg1, r_in, r_out) for CCW annular sector deg0→deg1.
+    """
+    import math
+
+    if plan is None:
+        plan = lid_plan_full()
+    cfg = LID["plan"]["funnel_chamber"].get("rim_seal_wall", {})
+    r_disc = float(plan["r_disc"])
+    clear = float(cfg.get("disc_clear_radial", 0.25))
+    thick = float(cfg.get("thickness", LID["wall_thickness"]))
+    r_in = r_disc + clear
+    r_out = r_in + thick
+
+    # Wide-mouth outer → rim at +X (3h) ≈ 0° / 360°
+    w_out = plan["w_out"]
+    deg_wide = math.degrees(math.atan2(float(w_out[1]), float(w_out[0]))) % 360.0
+    if deg_wide < 1e-6:
+        deg_wide = 360.0  # CCW end of southern sweep
+
+    # Right edge of chute = x_inner (Chute_In); south intersection with disc
+    x_in = float(plan["x_inner"])
+    half = max(r_disc * r_disc - x_in * x_in, 1e-6) ** 0.5
+    chute_rim_s = (x_in, -half)
+    deg_chute = math.degrees(math.atan2(chute_rim_s[1], chute_rim_s[0])) % 360.0
+
+    # Southern arc: CCW from chute-right-south (~223°) → wide mouth (360°)
+    return deg_chute, deg_wide, r_in, r_out
 
 
 def _rim_arc_cw(
@@ -532,14 +612,35 @@ def lid_funnel_arcs(
     r_hub: float | None = None,
     r_disc: float | None = None,
     n: int = 48,
-) -> tuple[list, list]:
-    """Two non-crossing circular arcs inside the disc (shared by CAD + 2D)."""
+) -> tuple[list, list, dict]:
+    """
+    Two non-crossing walls inside the disc (shared by CAD + 2D).
+
+    Inner wall: short straight lead from w_in into the funnel (+Y), then a
+    circular arc to n_in — keeps the wall clear of the hub circle (Ø5 cm).
+    Outer wall: circular arc w_out → n_out.
+    """
     import math
 
     if r_hub is None:
         r_hub = hub_radius()
     if r_disc is None:
         r_disc = disc_radius()
+
+    fw = LID["plan"]["funnel_walls"]
+    lead_mm = float(fw.get("inner_lead_mm", 15.0))
+    hub_clear = float(fw.get("inner_hub_clear", 1.0))
+    wall_t = float(LID.get("wall_thickness", 2.0))
+    # Path is wall centerline → keep hub_r + wall/2 + clear so solid wall clears Ø5cm
+    r_hub_keep = r_hub + wall_t / 2.0 + hub_clear
+
+    # Straight lead: from wide-mouth inner tip into funnel (+Y at clock-3)
+    # Also keep X far enough that the whole lead clears the hub circle
+    x_lead = max(float(w_in[0]), r_hub_keep)
+    lead_pt = (x_lead, float(w_in[1]) + lead_mm)
+    if math.hypot(*lead_pt) < r_hub_keep:
+        # push further +X if needed
+        lead_pt = (r_hub_keep + 1.0, float(w_in[1]) + lead_mm)
 
     def sample_arc(c, r, p_a, p_b):
         a0 = math.atan2(p_a[1] - c[1], p_a[0] - c[0])
@@ -560,7 +661,7 @@ def lid_funnel_arcs(
         for poly in (pts(d_ccw, +1), pts(d_cw, -1)):
             mid = poly[len(poly) // 2]
             if any(
-                math.hypot(x, y) < r_hub + 0.3 or math.hypot(x, y) > r_disc - 0.3
+                math.hypot(x, y) < r_hub_keep or math.hypot(x, y) > r_disc - 0.3
                 for x, y in poly
             ):
                 continue
@@ -606,7 +707,9 @@ def lid_funnel_arcs(
                     return True
         return False
 
-    cins = collect(w_in, n_in, r_hub + 14)
+    # Arc starts after the straight lead (not from w_in directly)
+    # Favor mid-radius that stays well outside hub (Ø5cm + wall)
+    cins = collect(lead_pt, n_in, max(r_hub_keep + 12.0, r_hub + 18.0))
     couts = collect(w_out, n_out, r_disc - 14)
     for hug_i, ai, ci, ri in cins:
         for hug_o, ao, co, ro in couts:
@@ -614,8 +717,31 @@ def lid_funnel_arcs(
                 continue
             if math.hypot(*ao[len(ao) // 2]) < math.hypot(*ai[len(ai) // 2]) + 3:
                 continue
-            return ai, ao, {"c_in": ci, "r_in": ri, "c_out": co, "r_out": ro}
-    return [w_in, n_in], [w_out, n_out], {"c_in": None, "r_in": None, "c_out": None, "r_out": None}
+            # Prepend straight lead: w_in → lead_pt → arc…
+            arc_in = [tuple(w_in), lead_pt] + list(ai[1:])
+            return (
+                arc_in,
+                ao,
+                {
+                    "c_in": ci,
+                    "r_in": ri,
+                    "c_out": co,
+                    "r_out": ro,
+                    "inner_lead_pt": lead_pt,
+                },
+            )
+    # Fallback: straight lead + chord
+    return (
+        [tuple(w_in), lead_pt, tuple(n_in)],
+        [tuple(w_out), tuple(n_out)],
+        {
+            "c_in": None,
+            "r_in": None,
+            "c_out": None,
+            "r_out": None,
+            "inner_lead_pt": lead_pt,
+        },
+    )
 
 
 def lid_plan_full() -> dict:
