@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="720" viewBox="0 0 360 360">
+<rect width="100%" height="100%" fill="#f7f5f0"/>
+<text x="180.00" y="14.00" font-size="14" font-family="Segoe UI,Arial" font-weight="600" fill="#222" text-anchor="middle">Nap - hinh vuong kin (nhin tu tren)</text>
+<text x="180.00" y="30.00" font-size="9" font-family="Segoe UI,Arial" font-weight="normal" fill="#455a64" text-anchor="middle">Vuong 220mm | mat tren KIN (chia theo tuong) | mat duoi HO trong O dia</text>
+<polyline points="290.00,285.00 290.00,65.00 70.00,65.00 70.00,285.00 290.00,285.00" fill="#cfd8dc" fill-opacity="0.35" stroke="#263238" stroke-width="2.4" stroke-linejoin="round"/>
+<circle cx="180.00" cy="175.00" r="100.00" fill="#fff" stroke="#888" stroke-width="1.5"/>
+<circle cx="180.00" cy="175.00" r="100.00" fill="none" stroke="#1565c0" stroke-width="1.2" stroke-dasharray="5 3"/>
+<text x="180.00" y="230.00" font-size="8" font-family="Segoe UI,Arial" fill="#1565c0" text-anchor="middle">mat duoi HO (vung dia)</text>
+<circle cx="180.00" cy="175.00" r="25.00" fill="#2a2a2a" stroke="#333" stroke-width="1.2"/>
+<circle cx="180.00" cy="175.00" r="72.50" fill="none" stroke="#999" stroke-width="0.6" stroke-dasharray="3 2"/>
+<line x1="80.00" y1="275.00" x2="280.00" y2="275.00" stroke="#999" stroke-width="0.7" stroke-dasharray="4 3"/>
+<line x1="70.00" y1="285.00" x2="290.00" y2="285.00" stroke="#1565c0" stroke-width="2.0"/>
+<polyline points="277.50,175.00 276.97,169.51 276.10,164.07 274.91,158.68 273.39,153.38 271.55,148.18 269.40,143.11 266.95,138.17 264.19,133.39 261.16,128.79 257.85,124.38 254.27,120.18 250.45,116.20 246.39,112.47 242.12,108.99 237.64,105.77 232.97,102.84 228.13,100.19 223.14,97.84 218.02,95.80 212.78,94.08 207.45,92.67 202.04,91.60 196.58,90.85 191.08,90.44 185.57,90.36 180.06,90.62 174.58,91.21 169.14,92.14 163.77,93.39 158.49,94.97 153.31,96.86 148.26,99.07 143.35,101.58 138.60,104.39 134.03,107.48 129.66,110.84 125.50,114.46 121.57,118.32 117.88,122.42 114.45,126.73 111.28,131.25 108.40,135.95 105.80,140.82 103.51,145.83 101.53,150.98 99.86,156.23 98.52,161.58 97.50,167.00 97.50,175.00 84.15,203.32 84.15,203.32 82.07,195.01 80.72,186.55 80.10,178.01 80.20,169.45 81.05,160.92 82.61,152.50 84.90,144.25 87.88,136.22 91.54,128.47 95.85,121.07 100.77,114.06 106.28,107.50 112.33,101.44 118.88,95.92 125.87,90.97 133.27,86.65 141.00,82.97 149.02,79.97 157.27,77.67 165.69,76.08 174.21,75.22 182.78,75.09 191.32,75.69 199.78,77.03 208.10,79.08 216.21,81.84 224.05,85.28 231.57,89.38 238.71,94.11 245.42,99.43 251.65,105.31 257.35,111.70 262.49,118.56 267.02,125.83 270.91,133.46 274.13,141.40 276.66,149.58 278.48,157.95 279.58,166.44 279.95,175.00 277.50,175.00" fill="#90a4ae" fill-opacity="0.65" stroke="#607d8b" stroke-width="0.5" stroke-linejoin="round"/>
+<text x="235.00" y="120.00" font-size="8" font-family="Segoe UI,Arial" fill="#455a64" text-anchor="middle">Rim_Pocket</text>
+<text x="85.00" y="195.00" font-size="8" font-family="Segoe UI,Arial" fill="#455a64" text-anchor="middle">Out_W</text>
+<text x="250.00" y="105.00" font-size="8" font-family="Segoe UI,Arial" fill="#455a64" text-anchor="middle">Out_NE</text>
+<polyline points="207.50,175.00 207.50,175.00 206.83,172.64 206.03,170.31 205.12,168.03 204.10,165.80 202.96,163.62 201.71,161.51 200.35,159.46 198.89,157.48 197.33,155.58 195.68,153.77 193.93,152.04 192.10,150.40 190.19,148.86 188.20,147.42 186.14,146.08 184.01,144.85 181.82,143.73 179.58,142.72 177.29,141.83 174.96,141.06 172.59,140.41 170.19,139.88 167.77,139.48 165.33,139.20 162.87,139.04 160.42,139.01 157.96,139.11 155.52,139.33 153.08,139.68 150.67,140.15 148.29,140.75 145.94,141.47 143.63,142.30 141.36,143.25 139.15,144.32 137.00,145.50 134.91,146.79 132.88,148.19 130.93,149.68 129.06,151.28 127.28,152.96 125.58,154.74 123.98,156.60 122.47,158.54 121.07,160.56 119.77,162.64 118.58,164.79 117.50,167.00 117.50,167.00 97.50,167.00 97.50,167.00 98.52,161.58 99.86,156.23 101.53,150.98 103.51,145.83 105.80,140.82 108.40,135.95 111.28,131.25 114.45,126.73 117.88,122.42 121.57,118.32 125.50,114.46 129.66,110.84 134.03,107.48 138.60,104.39 143.35,101.58 148.26,99.07 153.31,96.86 158.49,94.97 163.77,93.39 169.14,92.14 174.58,91.21 180.06,90.62 185.57,90.36 191.08,90.44 196.58,90.85 202.04,91.60 207.45,92.67 212.78,94.08 218.02,95.80 223.14,97.84 228.13,100.19 232.97,102.84 237.64,105.77 242.12,108.99 246.39,112.47 250.45,116.20 254.27,120.18 257.85,124.38 261.16,128.79 264.19,133.39 266.95,138.17 269.40,143.11 271.55,148.18 273.39,153.38 274.91,158.68 276.10,164.07 276.97,169.51 277.50,175.00 277.50,175.00" fill="#90a4ae" fill-opacity="0.55" stroke="#546e7a" stroke-width="0.6" stroke-linejoin="round"/>
+<text x="200.00" y="160.00" font-size="8" font-family="Segoe UI,Arial" fill="#455a64" text-anchor="middle">Funnel_Roof</text>
+<polyline points="117.50,167.00 117.50,275.00 97.50,275.00 97.50,167.00 117.50,167.00" fill="#ffcdd2" fill-opacity="0.35" stroke="#ef9a9a" stroke-width="0.5" stroke-linejoin="round"/>
+<text x="140.00" y="215.00" font-size="7" font-family="Segoe UI,Arial" fill="#455a64" text-anchor="middle">Deck_S_Rim</text>
+<text x="220.00" y="215.00" font-size="7" font-family="Segoe UI,Arial" fill="#455a64" text-anchor="middle">Deck_S_Hub</text>
+<text x="180.00" y="125.00" font-size="7" font-family="Segoe UI,Arial" fill="#455a64" text-anchor="middle">Deck_N</text>
+<polyline points="277.50,175.00 276.97,169.51 276.10,164.07 274.91,158.68 273.39,153.38 271.55,148.18 269.40,143.11 266.95,138.17 264.19,133.39 261.16,128.79 257.85,124.38 254.27,120.18 250.45,116.20 246.39,112.47 242.12,108.99 237.64,105.77 232.97,102.84 228.13,100.19 223.14,97.84 218.02,95.80 212.78,94.08 207.45,92.67 202.04,91.60 196.58,90.85 191.08,90.44 185.57,90.36 180.06,90.62 174.58,91.21 169.14,92.14 163.77,93.39 158.49,94.97 153.31,96.86 148.26,99.07 143.35,101.58 138.60,104.39 134.03,107.48 129.66,110.84 125.50,114.46 121.57,118.32 117.88,122.42 114.45,126.73 111.28,131.25 108.40,135.95 105.80,140.82 103.51,145.83 101.53,150.98 99.86,156.23 98.52,161.58 97.50,167.00" fill="none" fill-opacity="1.0" stroke="#0b5f7a" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="207.50,175.00 206.83,172.64 206.03,170.31 205.12,168.03 204.10,165.80 202.96,163.62 201.71,161.51 200.35,159.46 198.89,157.48 197.33,155.58 195.68,153.77 193.93,152.04 192.10,150.40 190.19,148.86 188.20,147.42 186.14,146.08 184.01,144.85 181.82,143.73 179.58,142.72 177.29,141.83 174.96,141.06 172.59,140.41 170.19,139.88 167.77,139.48 165.33,139.20 162.87,139.04 160.42,139.01 157.96,139.11 155.52,139.33 153.08,139.68 150.67,140.15 148.29,140.75 145.94,141.47 143.63,142.30 141.36,143.25 139.15,144.32 137.00,145.50 134.91,146.79 132.88,148.19 130.93,149.68 129.06,151.28 127.28,152.96 125.58,154.74 123.98,156.60 122.47,158.54 121.07,160.56 119.77,162.64 118.58,164.79 117.50,167.00" fill="none" fill-opacity="1.0" stroke="#0b5f7a" stroke-width="2.5" stroke-linejoin="round"/>
+<line x1="117.50" y1="167.00" x2="97.50" y2="167.00" stroke="#e65100" stroke-width="3.5"/>
+<line x1="117.50" y1="167.00" x2="117.50" y2="275.00" stroke="#b71c1c" stroke-width="2.6"/>
+<line x1="97.50" y1="167.00" x2="97.50" y2="275.00" stroke="#b71c1c" stroke-width="2.6"/>
+<line x1="117.50" y1="275.00" x2="97.50" y2="275.00" stroke="#b71c1c" stroke-width="2.0"/>
+<polyline points="97.50,235.14 97.50,206.86 70.00,179.36 70.00,207.64 97.50,235.14" fill="#9c27b0" fill-opacity="0.45" stroke="#6a1b9a" stroke-width="2.0" stroke-linejoin="round"/>
+<line x1="97.50" y1="235.14" x2="97.50" y2="206.86" stroke="#4a148c" stroke-width="2.8"/>
+<line x1="70.00" y1="207.64" x2="70.00" y2="179.36" stroke="#4a148c" stroke-width="2.8"/>
+<line x1="97.50" y1="206.86" x2="70.00" y2="179.36" stroke="#7b1fa2" stroke-width="2.4"/>
+<line x1="97.50" y1="235.14" x2="70.00" y2="207.64" stroke="#7b1fa2" stroke-width="2.4"/>
+<polyline points="81.50,168.00 113.50,168.00 113.50,166.00 81.50,166.00 81.50,168.00" fill="#ff9800" fill-opacity="0.7" stroke="#ef6c00" stroke-width="2.0" stroke-linejoin="round"/>
+<line x1="81.50" y1="168.00" x2="113.50" y2="168.00" stroke="#e65100" stroke-width="2.4"/>
+<line x1="113.50" y1="166.00" x2="81.50" y2="166.00" stroke="#e65100" stroke-width="2.4"/>
+<line x1="113.50" y1="168.00" x2="113.50" y2="166.00" stroke="#f57c00" stroke-width="2.2"/>
+<line x1="81.50" y1="168.00" x2="81.50" y2="166.00" stroke="#f57c00" stroke-width="2.2"/>
+<line x1="207.50" y1="175.00" x2="277.50" y2="175.00" stroke="#c45c26" stroke-width="2.6"/>
+<line x1="290.00" y1="285.00" x2="290.00" y2="65.00" stroke="#263238" stroke-width="2.6"/>
+<line x1="290.00" y1="65.00" x2="70.00" y2="65.00" stroke="#263238" stroke-width="2.6"/>
+<line x1="70.00" y1="65.00" x2="70.00" y2="285.00" stroke="#263238" stroke-width="2.6"/>
+<line x1="70.00" y1="285.00" x2="290.00" y2="285.00" stroke="#1565c0" stroke-width="2.8"/>
+<circle cx="187.06" cy="180.99" r="2.00" fill="#6a1b9a" stroke="#6a1b9a" stroke-width="1"/>
+<circle cx="161.08" cy="186.94" r="2.00" fill="#6a1b9a" stroke="#6a1b9a" stroke-width="1"/>
+<line x1="280.00" y1="175.00" x2="292.00" y2="175.00" stroke="#222" stroke-width="1.3"/>
+<text x="298.00" y="175.00" font-size="11" font-family="Segoe UI,Arial" fill="#222" text-anchor="middle">3h</text>
+<text x="72.00" y="159.00" font-size="11" font-family="Segoe UI,Arial" fill="#222" text-anchor="middle">9h</text>
+<text x="180.00" y="61.00" font-size="10" font-family="Segoe UI,Arial" fill="#222" text-anchor="middle">12h</text>
+<text x="180.00" y="297.00" font-size="9" font-family="Segoe UI,Arial" fill="#1565c0" text-anchor="middle">canh duoi +10mm</text>
+<text x="232.00" y="163.00" font-size="9" font-family="Segoe UI,Arial" fill="#c45c26" text-anchor="middle">cua rong 7.5 cm</text>
+<text x="107.50" y="145.00" font-size="9" font-family="Segoe UI,Arial" fill="#e65100" text-anchor="middle">chinh CAO</text>
+<text x="91.75" y="185.11" font-size="9" font-family="Segoe UI,Arial" fill="#4a148c" text-anchor="middle">chinh RONG</text>
+<text x="79.50" y="221.00" font-size="9" font-family="Segoe UI,Arial" fill="#b71c1c" text-anchor="middle">mang</text>
+<text x="180.00" y="283.00" font-size="9" font-family="Segoe UI,Arial" fill="#555" text-anchor="middle">dia O20 cm</text>
+<text x="282.00" y="73.00" font-size="9" font-family="Segoe UI,Arial" fill="#263238" text-anchor="middle">220</text>
+<text x="10.00" y="332.00" font-size="8" font-family="Segoe UI,Arial" font-weight="normal" fill="#444" text-anchor="start">frame.closed_square | bottom_extra trong box_settings.py</text>
+<text x="10.00" y="348.00" font-size="8" font-family="Segoe UI,Arial" font-weight="normal" fill="#444" text-anchor="start">square [-110,-110]-[110,110] side=220mm</text>
+</svg>

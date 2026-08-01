@@ -34,6 +34,13 @@ OUT = _HERE / "out"
 OUT.mkdir(parents=True, exist_ok=True)
 FCSTD = OUT / "jgb37_motor_bracket.FCStd"
 
+# Geometric settings (edit box_settings.py — sizes + shapes)
+import box_settings as BX
+from box_settings import DISC as _DISC_CFG
+from box_settings import HUB as _HUB_CFG
+from box_settings import LID as _LID_CFG
+from box_settings import lid_plan_full as _lid_plan_full
+
 # ---- Motor datasheet (mm) ----
 GB_D, GB_L = 37.0, 26.5
 MOUNT_PCD = 31.0
@@ -166,21 +173,21 @@ def make_bracket() -> Part.Shape:
 
 
 # ---- Vertical drive + Rx-4 Manual Gate upper (from video CM4_RVPX__8) ----
-DISC_D = 200.0
-DISC_T = 5.0
+DISC_D = float(_DISC_CFG["diameter"])
+DISC_T = float(_DISC_CFG["thickness"])
 DRIVE_SHAFT_D = 6.0
 BEARING_OD, BEARING_ID, BEARING_H = 19.0, 6.0, 6.0  # 626ZZ
 COUPLER_OD, COUPLER_L = 18.0, 25.0
-HUB_D, HUB_H = 36.0, 12.0
+HUB_D, HUB_H = float(_HUB_CFG["diameter"]), float(_HUB_CFG["height"])
 
-# Housing footprint = Outer_Guide_Arc envelope (+ small pad)
-# Outer_Guide side = boreØ + 2*GUIDE_WALL ≈ 224.5
-GUIDE_WALL = 12.0
-_OUTER_GUIDE_SIDE = (DISC_D + 0.5) + 2.0 * GUIDE_WALL
-BOX_PAD = 6.0  # clearance around Outer_Guide
-BOX_W = _OUTER_GUIDE_SIDE + 2.0 * BOX_PAD  # ~236.5 — khớp Outer_Guide
-BOX_D = _OUTER_GUIDE_SIDE + 2.0 * BOX_PAD
-BOX_T = 4.0
+# Housing footprint — outer W×D from box_settings.HOUSING (20×20 cm)
+GUIDE_WALL = float(BX.GUIDE["wall_radial_thickness"])
+_OUTER_GUIDE_SIDE = (DISC_D + float(BX.GUIDE["bore_clearance_on_disc"])) + 2.0 * GUIDE_WALL
+BOX_PAD = float(BX.HOUSING.get("pad_around_guide", 6.0))
+_BOX_FROM_GUIDE = _OUTER_GUIDE_SIDE + 2.0 * BOX_PAD
+BOX_W = float(BX.HOUSING.get("outer_width", _BOX_FROM_GUIDE))
+BOX_D = float(BX.HOUSING.get("outer_depth", _BOX_FROM_GUIDE))
+BOX_T = float(BX.HOUSING["wall_thickness"])
 # Keep SAME placement rule as before: face_z = SHELF_Z - 8 - COUPLER_L
 # Raise shelf so motor body (below face) clears floor.
 MOTOR_BODY_LEN = GB_L + CAN_L + REAR_BOSS_H + TERM_L  # ~58.7
@@ -191,47 +198,62 @@ SPAN = TOP_Z - SHELF_Z
 FACE_Z = SHELF_Z - 8.0 - COUPLER_L  # identical formula as previous place_motor_vertical
 
 # Manual lining-up gate (YouTube: "Lining up mechanism 1")
-GATE_GAP = 11.0  # nominal set width (slightly > pill OD)
-GATE_GAP_MAX = 20.0
+GATE_GAP = float(BX.GATE["nominal_gap"])
+GATE_GAP_MAX = float(BX.GATE["gap_max"])
 GATE_BEVEL = 18.0
 KNOB_D, KNOB_H = 28.0, 14.0
 JAW_T = 4.0
 JAW_LEN = 42.0
-EXIT_Y = 55.0  # gap throat (unchanged with tray freeze)
+EXIT_Y = float(BX.GATE["exit_y"])
+# Disc access lid — from box_settings.LID
+LID_DISC_CLEAR = float(_LID_CFG["disc_clear"])
+LID_TOP_T = float(_LID_CFG["top_thickness"])
+LID_WALL_T = float(_LID_CFG["wall_thickness"])
+LID_WALL_H = float(_LID_CFG["wall_height"])
+LID_STACK_H = float(_LID_CFG["stack_height"])
+LID_WIDTH_BAR_H = float(_LID_CFG["width_bar"]["height"])
+LID_HEIGHT_BAR_H = float(_LID_CFG["height_bar"]["height"])
+LID_HEIGHT_BAR_T = float(_LID_CFG["height_bar"]["thickness"])
+_LID_BOT = _LID_CFG["plan"].get("bottom_plate", {})
+LID_BOTTOM_EN = bool(_LID_BOT.get("enabled", True))
+LID_BOTTOM_T = float(_LID_BOT.get("thickness", LID_TOP_T))
+LID_BOTTOM_DISC_CLR = float(_LID_BOT.get("disc_clearance", 0.5))
+_LID_FILL = _LID_CFG["plan"].get("annulus_fill", {})
+LID_FILL_EN = bool(_LID_FILL.get("enabled", True))
 # Exit tray — Left straight | Right = 1/4 Ø10cm + straight
 # FROZEN placement (do not change unless user explicitly asks to move):
-EXIT_TRAY_ARC_D = 100.0  # đường kính 10 cm
-EXIT_TRAY_ARC_R = EXIT_TRAY_ARC_D / 2.0  # 50 mm
-EXIT_TRAY_CH_W = 12.0
-EXIT_TRAY_STRAIGHT_LEN = 65.0
-EXIT_TRAY_WALL_H = 20.0
-EXIT_TRAY_FLOOR_T = 2.5
-EXIT_TRAY_WALL_T = 3.0
+EXIT_TRAY_ARC_D = float(BX.EXIT_TRAY["arc_diameter"])
+EXIT_TRAY_ARC_R = EXIT_TRAY_ARC_D / 2.0
+EXIT_TRAY_CH_W = float(BX.EXIT_TRAY["channel_width"])
+EXIT_TRAY_STRAIGHT_LEN = float(BX.EXIT_TRAY["straight_length"])
+EXIT_TRAY_WALL_H = float(BX.EXIT_TRAY["wall_height"])
+EXIT_TRAY_FLOOR_T = float(BX.EXIT_TRAY["floor_thickness"])
+EXIT_TRAY_WALL_T = float(BX.EXIT_TRAY["wall_thickness"])
 # Đế rộng hơn thành theo chiều ngang (mỗi bên) — shape only
-EXIT_TRAY_FLOOR_SIDE_PAD = 20.0
+EXIT_TRAY_FLOOR_SIDE_PAD = float(BX.EXIT_TRAY["floor_side_pad"])
 # Thành ngắn lại: mép trước tường cách cạnh ngang trước của đế 3 cm — shape only
-EXIT_TRAY_WALL_FRONT_CLEAR = 30.0
-EXIT_TRAY_ARC_CX = -50.0  # local shape anchor (move tray via App::Part Placement)
-EXIT_TRAY_ARC_CY = 50.0  # local shape anchor
+EXIT_TRAY_WALL_FRONT_CLEAR = float(BX.EXIT_TRAY["wall_front_clear"])
+EXIT_TRAY_ARC_CX = float(BX.EXIT_TRAY["arc_cx_local"])
+EXIT_TRAY_ARC_CY = float(BX.EXIT_TRAY["arc_cy_local"])
 # Recirculation: leave rim path open so pills can skip gap and go another loop
-EXIT_TRAY_RECYC_GAP = 14.0  # mm open at left-wall tip vs sealed-against-guard
-EXIT_TRAY_DISC_CLEAR = 1.2  # tray must not occupy disc interior (r < disc/2 + this)
-EXIT_TRAY_ARC_A0 = 130.0  # shorten right arc (was 90) — open upstream rim
-EXIT_TRAY_ARC_A1 = 180.0
+EXIT_TRAY_RECYC_GAP = float(BX.EXIT_TRAY["recycle_gap"])
+EXIT_TRAY_DISC_CLEAR = float(BX.EXIT_TRAY["disc_clear"])
+EXIT_TRAY_ARC_A0 = float(BX.EXIT_TRAY["arc_a0_deg"])
+EXIT_TRAY_ARC_A1 = float(BX.EXIT_TRAY["arc_a1_deg"])
 # Gap curved guard (Ø10cm, concentric with exit tray right arc)
-GAP_CURVE_T = 4.0  # radial thickness of Gap_Curve_Guard
-GAP_CURVE_A0, GAP_CURVE_A1 = 95.0, 175.0
+GAP_CURVE_T = float(BX.GAP["curve_thickness"])
+GAP_CURVE_A0, GAP_CURVE_A1 = float(BX.GAP["curve_a0_deg"]), float(BX.GAP["curve_a1_deg"])
 # Max radial open from hug pose (2 cm) — left wall tip meets guard at this stroke
-GAP_CURVE_STROKE_MAX = 20.0  # mm
-GAP_RACK_MODULE = 1.5  # printable rack/pinion module
-GAP_PINION_TEETH = 16
-GAP_RAIL_CLEAR = 0.4  # slide clearance rack↔rail (mm)
-GAP_RAIL_WALL = 2.5  # rail wall / lip thickness
+GAP_CURVE_STROKE_MAX = float(BX.GAP["stroke_max"])
+GAP_RACK_MODULE = float(BX.GAP["rack_module"])
+GAP_PINION_TEETH = int(BX.GAP["pinion_teeth"])
+GAP_RAIL_CLEAR = 0.4
+GAP_RAIL_WALL = 2.5
 # Exit press / reject: ép viên vào khe hoặc cho trượt vòng lại
-PRESS_FINGER_H = 9.0  # above disc (≈ 1 pill high)
-PRESS_FINGER_T = 2.2
-PRESS_TIP_R = 3.5
-PRESS_BYPASS_DR = 14.0  # how far inward overflow is guided
+PRESS_FINGER_H = float(BX.PRESS["finger_height"])
+PRESS_FINGER_T = float(BX.PRESS["finger_thickness"])
+PRESS_TIP_R = float(BX.PRESS["tip_radius"])
+PRESS_BYPASS_DR = float(BX.PRESS["bypass_dr"])
 
 
 
@@ -263,11 +285,7 @@ def make_box_frame() -> Part.Shape:
 
     lid = Part.makeBox(BOX_W, BOX_D, BOX_T)
     lid.translate(App.Vector(ox, oy, TOP_Z))
-    lid = lid.cut(_cyl_z(DISC_D + 8, BOX_T + 2, TOP_Z - 1))
-    # Front-left notch for exit tray
-    notch = Part.makeBox(50, 55, BOX_T + 2)
-    notch.translate(App.Vector(-DISC_D / 2 - 40, -BOX_D / 2 - 1, TOP_Z - 1))
-    lid = lid.cut(notch)
+    # Full square outer — no disc hole / exit notch
 
     shelf = Part.makeBox(BOX_W - 2 * BOX_T - 4, BOX_D - 2 * BOX_T - 4, BOX_T)
     shelf.translate(App.Vector(ox + BOX_T + 2, oy + BOX_T + 2, SHELF_Z))
@@ -278,8 +296,8 @@ def make_box_frame() -> Part.Shape:
     shell = shell.cut(drawer_cut)
 
     print(
-        "Housing BOX=%.1fx%.1f (Outer_Guide side=%.1f + pad=%.1f)"
-        % (BOX_W, BOX_D, _OUTER_GUIDE_SIDE, BOX_PAD)
+        "Housing_Shell outer=%.0fx%.0f mm (22x22 cm) | Outer_Guide side=%.1f"
+        % (BOX_W, BOX_D, _OUTER_GUIDE_SIDE)
     )
     return shell.fuse(lid).fuse(shelf)
 
@@ -1463,10 +1481,7 @@ def make_housing_mount_parts(face_z: float) -> list[tuple[str, Part.Shape, tuple
 
     lid = Part.makeBox(BOX_W, BOX_D, BOX_T)
     lid.translate(App.Vector(ox, oy, TOP_Z))
-    lid = lid.cut(_cyl_z(DISC_D + 8, BOX_T + 2, TOP_Z - 1))
-    notch = Part.makeBox(50, 55, BOX_T + 2)
-    notch.translate(App.Vector(-DISC_D / 2 - 40, -BOX_D / 2 - 1, TOP_Z - 1))
-    lid = lid.cut(notch)
+    # Housing_Lid: full closed square — no disc hole / exit notch
 
     shelf = Part.makeBox(BOX_W - 2 * BOX_T - 4, BOX_D - 2 * BOX_T - 4, BOX_T)
     shelf.translate(App.Vector(ox + BOX_T + 2, oy + BOX_T + 2, SHELF_Z))
@@ -1593,6 +1608,360 @@ def make_center_hub_parts(z0: float) -> list[tuple[str, Part.Shape, tuple]]:
     hub = hub.cut(_cyl_z(DRIVE_SHAFT_D + 0.2, HUB_H + 1, z0 + DISC_T - 0.5))
     return [("Hub_Body", _keep_largest_solid(hub.removeSplitter()), c)]
 
+
+def _fluted_knob(cx: float, cy: float, cz: float, d: float, h: float, n_flute: int = 10) -> Part.Shape:
+    knob = Part.makeCylinder(d / 2.0, h)
+    knob.translate(App.Vector(cx, cy, cz))
+    fr = max(1.2, d * 0.06)
+    for i in range(n_flute):
+        a = math.radians(i * (360.0 / n_flute))
+        fx = cx + (d / 2.0 - fr * 0.55) * math.cos(a)
+        fy = cy + (d / 2.0 - fr * 0.55) * math.sin(a)
+        flute = Part.makeCylinder(fr, h + 1.0)
+        flute.translate(App.Vector(fx, fy, cz - 0.5))
+        knob = knob.cut(flute)
+    return _keep_largest_solid(knob.removeSplitter())
+
+
+def _lid_plan_points() -> dict:
+    """2D lid plan (XY) from box_settings — chute ends at disc far rim (−Y)."""
+    return _lid_plan_full()
+
+
+def _wall_along_poly(pts: list, thick: float, height: float, z0: float) -> Part.Shape | None:
+    acc = None
+    for i in range(len(pts) - 1):
+        x0, y0 = pts[i]
+        x1, y1 = pts[i + 1]
+        dx, dy = x1 - x0, y1 - y0
+        length = math.hypot(dx, dy)
+        if length < 1e-4:
+            continue
+        ang = math.degrees(math.atan2(dy, dx))
+        seg = Part.makeBox(length, thick, height)
+        seg.translate(App.Vector(0.0, -thick / 2.0, z0))
+        seg.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), ang)
+        seg.translate(App.Vector(x0, y0, 0.0))
+        acc = seg if acc is None else acc.fuse(seg)
+    if acc is None:
+        return None
+    return _fuse_significant_solids(acc.removeSplitter(), min_vol=1.0)
+
+
+def _prism_from_xy(pts: list, z0: float, height: float) -> Part.Shape:
+    vecs = [App.Vector(p[0], p[1], 0.0) for p in pts]
+    if vecs[0].distanceToPoint(vecs[-1]) > 1e-6:
+        vecs.append(vecs[0])
+    wire = Part.makePolygon(vecs)
+    face = Part.Face(wire)
+    solid = face.extrude(App.Vector(0, 0, height))
+    solid.translate(App.Vector(0, 0, z0))
+    return _keep_largest_solid(solid.removeSplitter())
+
+
+def _lid_z_underside(z_disc: float) -> float:
+    """Z of lid underside / disc-region wall bottoms = disc top + disc_clear."""
+    return z_disc + DISC_T + LID_DISC_CLEAR
+
+
+def _lid_square_minus_disc(
+    xl: float,
+    xr: float,
+    yb: float,
+    yt: float,
+    z0: float,
+    thickness: float,
+    hole_d: float,
+) -> Part.Shape:
+    """Closed square plate/prism with circular disc opening (no AABB gaps)."""
+    body = Part.makeBox(xr - xl, yt - yb, thickness)
+    body.translate(App.Vector(xl, yb, z0))
+    body = body.cut(_cyl_z(hole_d, thickness + 4.0, z0 - 1.0))
+    return _fuse_significant_solids(body.removeSplitter(), min_vol=10.0)
+
+
+def make_lid_bottom_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
+    """
+    Lid_Bottom — underside at disc top + 0.5 mm; open over disc cylinder.
+    Plate grows upward from that plane.
+    """
+    if not LID_BOTTOM_EN:
+        return []
+    plan = _lid_plan_points()
+    z0 = _lid_z_underside(z_disc)  # bottom face = disc top + clear
+    bot_c = (0.55, 0.62, 0.70)
+    xl, xr = float(plan["box_xl"]), float(plan["box_xr"])
+    yb, yt = float(plan["box_yb"]), float(plan["box_yt"])
+    hole_d = DISC_D + LID_BOTTOM_DISC_CLR
+
+    floor = _lid_square_minus_disc(xl, xr, yb, yt, z0, LID_BOTTOM_T, hole_d)
+    parts: list[tuple[str, Part.Shape, tuple]] = []
+    if floor is not None and floor.Solids:
+        parts.append(("Lid_Bottom_Floor", floor, bot_c))
+    print(
+        "Lid_Bottom: underside z=disc+%.1f | T=%.0f | holeØ=%.1f"
+        % (LID_DISC_CLEAR, LID_BOTTOM_T, hole_d)
+    )
+    return parts
+
+
+def make_lid_fill_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
+    """
+    Solid fill between disc rim and square — sits on bottom plate,
+    up to underside of top plate.
+    """
+    if not LID_FILL_EN:
+        return []
+    plan = _lid_plan_points()
+    z_under = _lid_z_underside(z_disc)
+    z_fill0 = z_under + (LID_BOTTOM_T if LID_BOTTOM_EN else 0.0)
+    h_fill = LID_WALL_H - (LID_BOTTOM_T if LID_BOTTOM_EN else 0.0)
+    if h_fill < 1.0:
+        h_fill = LID_WALL_H
+        z_fill0 = z_under
+    fill_c = (0.60, 0.66, 0.72)
+    xl, xr = float(plan["box_xl"]), float(plan["box_xr"])
+    yb, yt = float(plan["box_yb"]), float(plan["box_yt"])
+    hole_d = DISC_D + LID_BOTTOM_DISC_CLR
+    fill = _lid_square_minus_disc(xl, xr, yb, yt, z_fill0, h_fill, hole_d)
+    parts: list[tuple[str, Part.Shape, tuple]] = []
+    if fill is not None and fill.Solids:
+        parts.append(("Lid_Fill_Outside", fill, fill_c))
+    print(
+        "Lid_Fill_Outside: on bottom | H=%.0f holeØ=%.1f"
+        % (h_fill, hole_d)
+    )
+    return parts
+
+
+def make_lid_top_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
+    """
+    Lid_Top — continuous square top face, then split at wall lines.
+
+    Build one sealed plate (hub / optional chute openings only), then carve into
+    named children whose union == that plate (no gaps). Splits follow walls:
+      square mid-axes, mouth, chute, funnel arcs, disc rim.
+    """
+    from box_settings import lid_rim_pocket_xy
+
+    plan = _lid_plan_points()
+    z_under = _lid_z_underside(z_disc)
+    z_top0 = z_under + LID_WALL_H
+    top_c = (0.75, 0.80, 0.88)
+    out_c = (0.68, 0.74, 0.82)
+    roof_c = (0.62, 0.72, 0.82)
+    rim_c = (0.72, 0.78, 0.55)
+    xl, xr = float(plan["box_xl"]), float(plan["box_xr"])
+    yb, yt = float(plan["box_yb"]), float(plan["box_yt"])
+    r_disc = float(plan["r_disc"])
+    y_mouth = float(plan["y_mouth"])
+    x_in = float(plan["x_inner"])
+    x_out = float(plan["x_outer"])
+
+    fc = _LID_CFG["plan"]["funnel_chamber"]
+    roof_funnel = bool(fc.get("roofed_by_lid_top", True))
+    roof_chute = bool(fc.get("roof_chute", False))
+    cut_hub = bool(_LID_CFG["plan"]["top_plate"].get("cut_hub", True))
+
+    funnel_xy = (
+        [plan["w_in"]]
+        + plan["arc_in"]
+        + [plan["n_in"], plan["n_out"]]
+        + list(reversed(plan["arc_out"]))
+        + [plan["w_out"]]
+    )
+    chute_xy = [plan["n_in"], plan["e_in"], plan["e_out"], plan["n_out"]]
+
+    parts: list[tuple[str, Part.Shape, tuple]] = []
+
+    def _keep(shape: Part.Shape, min_vol: float = 2.0) -> Part.Shape | None:
+        if shape is None or not shape.Solids:
+            return None
+        kept = _fuse_significant_solids(shape, min_vol=min_vol)
+        if kept is None or not kept.Solids or kept.Volume < min_vol:
+            return None
+        return kept
+
+    def _box_mask(x0: float, x1: float, y0: float, y1: float) -> Part.Shape:
+        dx, dy = x1 - x0, y1 - y0
+        if dx < 1e-6 or dy < 1e-6:
+            return Part.Shape()
+        b = Part.makeBox(dx, dy, LID_TOP_T + 4.0)
+        b.translate(App.Vector(x0, y0, z_top0 - 1.0))
+        return b
+
+    def _add(name: str, shape: Part.Shape | None, color: tuple, min_vol: float = 2.0):
+        kept = _keep(shape, min_vol=min_vol)
+        if kept is not None:
+            parts.append((name, kept, color))
+
+    # --- 1) Continuous sealed square plate ---
+    plate = Part.makeBox(xr - xl, yt - yb, LID_TOP_T)
+    plate.translate(App.Vector(xl, yb, z_top0))
+    if cut_hub:
+        plate = plate.cut(_cyl_z(HUB_D + 4.0, LID_TOP_T + 4.0, z_top0 - 1.0))
+    if not roof_funnel:
+        try:
+            plate = plate.cut(_prism_from_xy(funnel_xy, z_top0 - 1.0, LID_TOP_T + 2.0))
+        except Exception:
+            pass
+    if not roof_chute:
+        try:
+            plate = plate.cut(_prism_from_xy(chute_xy, z_top0 - 1.0, LID_TOP_T + 2.0))
+        except Exception:
+            pass
+    plate = plate.removeSplitter()
+    plate_vol = float(plate.Volume)
+
+    disc_mask = _cyl_z(DISC_D + 0.05, LID_TOP_T + 4.0, z_top0 - 1.0)
+
+    # --- 2) Outside disc — split at mid-axes + mouth + chute-out wall ---
+    outside = plate.cut(disc_mask)
+    # East of x=0 (wide-mouth axis)
+    _add("Lid_Top_Out_NE", outside.common(_box_mask(0.0, xr, 0.0, yt)), out_c)
+    _add("Lid_Top_Out_SE", outside.common(_box_mask(0.0, xr, yb, 0.0)), out_c)
+    # West strip outside chute-out wall (square W ↔ chute) — covers ~9h pocket
+    _add("Lid_Top_Out_W", outside.common(_box_mask(xl, x_out, yb, yt)), out_c, min_vol=3.0)
+    # Between chute-out and center, split at mouth wall
+    _add(
+        "Lid_Top_Out_NW",
+        outside.common(_box_mask(x_out, 0.0, y_mouth, yt)),
+        out_c,
+        min_vol=3.0,
+    )
+    _add(
+        "Lid_Top_Out_NWm",
+        outside.common(_box_mask(x_out, 0.0, 0.0, y_mouth)),
+        out_c,
+        min_vol=2.0,
+    )
+    _add(
+        "Lid_Top_Out_SW",
+        outside.common(_box_mask(x_out, 0.0, yb, 0.0)),
+        out_c,
+        min_vol=3.0,
+    )
+
+    # --- 3) Over disc: split at funnel / chute / mouth / rim walls ---
+    over = plate.common(disc_mask)
+
+    funnel_m = None
+    chute_m = None
+    rim_m = None
+    try:
+        funnel_m = _prism_from_xy(funnel_xy, z_top0 - 1.0, LID_TOP_T + 2.0)
+    except Exception:
+        pass
+    try:
+        chute_m = _prism_from_xy(chute_xy, z_top0 - 1.0, LID_TOP_T + 2.0)
+    except Exception:
+        pass
+    try:
+        rim_m = _prism_from_xy(lid_rim_pocket_xy(plan), z_top0 - 1.0, LID_TOP_T + 2.0)
+    except Exception:
+        pass
+
+    if roof_funnel and funnel_m is not None:
+        _add("Lid_Top_Funnel_Roof", over.common(funnel_m), roof_c, min_vol=5.0)
+    if roof_chute and chute_m is not None:
+        _add("Lid_Top_Chute_Roof", over.common(chute_m), roof_c, min_vol=3.0)
+    if rim_m is not None:
+        _add("Lid_Top_Rim_Pocket", over.common(rim_m), rim_c, min_vol=3.0)
+
+    # Remainder over disc (not funnel / chute / rim) — split at mouth + chute-in
+    rem = over
+    for m in (funnel_m, chute_m, rim_m):
+        if m is not None:
+            try:
+                rem = rem.cut(m)
+            except Exception:
+                pass
+    rem = rem.removeSplitter()
+
+    _add(
+        "Lid_Top_Deck_N",
+        rem.common(_box_mask(-r_disc - 2.0, r_disc + 2.0, y_mouth, r_disc + 2.0)),
+        top_c,
+    )
+    south = rem.common(_box_mask(-r_disc - 2.0, r_disc + 2.0, -r_disc - 2.0, y_mouth))
+    _add(
+        "Lid_Top_Deck_S_Hub",
+        south.common(_box_mask(x_in, r_disc + 2.0, -r_disc - 2.0, y_mouth)),
+        top_c,
+    )
+    _add(
+        "Lid_Top_Deck_S_Rim",
+        south.common(_box_mask(-r_disc - 2.0, x_in, -r_disc - 2.0, y_mouth)),
+        top_c,
+    )
+
+    vol_sum = sum(sh.Volume for _, sh, _ in parts)
+    print(
+        "Lid_Top: sealed split-at-walls | plate=%.0f sum=%.0f (%.1f%%) | %s"
+        % (
+            plate_vol,
+            vol_sum,
+            100.0 * vol_sum / plate_vol if plate_vol > 1 else 0.0,
+            ", ".join(n for n, _, _ in parts),
+        )
+    )
+    return parts
+
+
+def make_disc_access_lid_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
+    """
+    Disc_Access_Lid wall + adjuster children (Lid_Top is nested separately).
+
+      Walls over disc start at disc top + disc_clear (0.5 mm).
+      Lid_Wall_Sq_*     — closed square outer walls
+      Lid_Wall_*        — funnel / chute / mouth / wide
+      Width_Adjust_Bar / Height_Adjust_Bar
+    """
+    plan = _lid_plan_points()
+    z_wall0 = _lid_z_underside(z_disc)
+
+    wall_c = (0.55, 0.60, 0.68)
+    sq_c = (0.45, 0.50, 0.58)
+    width_c = (0.55, 0.20, 0.65)
+    height_c = (0.95, 0.55, 0.15)
+
+    xl, xr = float(plan["box_xl"]), float(plan["box_xr"])
+    yb, yt = float(plan["box_yb"]), float(plan["box_yt"])
+
+    wall_specs = [
+        ("Lid_Wall_Arc_In", plan["arc_in"]),
+        ("Lid_Wall_Arc_Out", plan["arc_out"]),
+        ("Lid_Wall_Chute_In", [plan["n_in"], plan["e_in"]]),
+        ("Lid_Wall_Chute_Out", [plan["n_out"], plan["e_out"]]),
+        ("Lid_Wall_Wide", [plan["w_in"], plan["w_out"]]),
+        ("Lid_Wall_Mouth", [plan["n_in"], plan["n_out"]]),
+        ("Lid_Wall_Exit", [plan["e_in"], plan["e_out"]]),
+        # Closed square — fill missing edges
+        ("Lid_Wall_Sq_E", [(xr, yb), (xr, yt)]),
+        ("Lid_Wall_Sq_N", [(xr, yt), (xl, yt)]),
+        ("Lid_Wall_Sq_W", [(xl, yt), (xl, yb)]),
+        ("Lid_Wall_Sq_S", [(xl, yb), (xr, yb)]),
+    ]
+    wall_parts: list[tuple[str, Part.Shape, tuple]] = []
+    for name, pts in wall_specs:
+        col = sq_c if name.startswith("Lid_Wall_Sq_") else wall_c
+        w = _wall_along_poly(pts, LID_WALL_T, LID_WALL_H, z_wall0)
+        if w is not None:
+            wall_parts.append((name, w, col))
+
+    width_bar = _prism_from_xy(plan["width_bar"], z_wall0, LID_WIDTH_BAR_H)
+    height_bar = _prism_from_xy(plan["height_bar"], z_wall0, LID_HEIGHT_BAR_H)
+
+    print(
+        "Disc_Access_Lid: walls from disc+%.1fmm | square %.0fmm | H=%.0f"
+        % (LID_DISC_CLEAR, float(plan["square_side"]), LID_WALL_H)
+    )
+
+    out: list[tuple[str, Part.Shape, tuple]] = []
+    out.extend(wall_parts)
+    out.append(("Width_Adjust_Bar", width_bar, width_c))
+    out.append(("Height_Adjust_Bar", height_bar, height_c))
+    return out
 
 
 def make_exit_press_guide_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
@@ -1940,7 +2309,7 @@ def apply_preserved_state(
     # Geometry of these parents is world-posed in children; parent Placement
     # is the user's Transform offset relative to that design pose.
     # Exit_Guide_Tray Placement is free — Transform in GUI; restored each rebuild
-    allow_placement = {"Exit_Guide_Tray", "Gap_Lining_Up"}
+    allow_placement = {"Exit_Guide_Tray", "Gap_Lining_Up", "Disc_Access_Lid"}
     prior = prior_part_names or set()
     moved = []
     for name, pl in placements.items():
@@ -2014,6 +2383,7 @@ def main() -> None:
         ("Turntable_Disc", make_disc_parts(z_disc), 0),
         ("Center_Hub", make_center_hub_parts(z_disc), 0),
         ("Outer_Guide_Arc", make_outer_guide_parts(z_disc), 0),
+        # Disc_Access_Lid built below (nested Lid_Top)
         ("Gap_Lining_Up", make_lining_up_gap_parts(z_disc), 0),
         ("Exit_Press_Guide", make_exit_press_guide_parts(z_disc), 0),
         ("Clear_Exit_Cover", make_clear_exit_cover_parts(z_disc), 60),
@@ -2032,6 +2402,35 @@ def main() -> None:
         add_group(doc, parent, kids)
         counts.append("%s(%d)" % (parent, len(kids)))
 
+    # Disc_Access_Lid: Top + Bottom + solid annulus fill + walls/bars
+    lid_top_objs = []
+    for n, sh, col in make_lid_top_parts(z_disc):
+        tr = 0 if n == "Lid_Top_Arc_Corner" else 25
+        lid_top_objs.append(add_part(doc, n, sh, col, transparency=tr))
+    lid_top_grp = add_group(doc, "Lid_Top", lid_top_objs)
+    lid_kids = [lid_top_grp]
+    lid_bot_objs = [
+        add_part(doc, n, sh, col, transparency=25)
+        for n, sh, col in make_lid_bottom_parts(z_disc)
+    ]
+    if lid_bot_objs:
+        lid_kids.append(add_group(doc, "Lid_Bottom", lid_bot_objs))
+    lid_fill_objs = [
+        add_part(doc, n, sh, col, transparency=20)
+        for n, sh, col in make_lid_fill_parts(z_disc)
+    ]
+    if lid_fill_objs:
+        lid_kids.append(add_group(doc, "Lid_Fill", lid_fill_objs))
+    lid_rest = [
+        add_part(doc, n, sh, col, transparency=25)
+        for n, sh, col in make_disc_access_lid_parts(z_disc)
+    ]
+    add_group(doc, "Disc_Access_Lid", lid_kids + lid_rest)
+    counts.append(
+        "Disc_Access_Lid(Top %d + Bottom %d + Fill %d + rest %d)"
+        % (len(lid_top_objs), len(lid_bot_objs), len(lid_fill_objs), len(lid_rest))
+    )
+
     # Exit_Guide_Tray: nested Exit_Tray_Floor (basic solids) + walls
     floor_objs = [
         add_part(doc, n, sh, col, transparency=55)
@@ -2049,6 +2448,14 @@ def main() -> None:
     print("GATE_GAP=%.1fmm | Placement restore = App::Part only" % GATE_GAP)
 
     apply_preserved_state(doc, placements, visibility, prior_parts)
+
+    # Force-show full sealed Lid_Top (user may have hidden older children)
+    for obj in lid_top_objs + [lid_top_grp, doc.getObject("Disc_Access_Lid")]:
+        if obj is None:
+            continue
+        vo = getattr(obj, "ViewObject", None)
+        if vo is not None and hasattr(vo, "Visibility"):
+            vo.Visibility = True
 
     doc.recompute()
     doc.saveAs(str(FCSTD))
