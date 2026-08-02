@@ -1,2 +1,0 @@
-sim start
-geometry: z_th=[-8.0,42.0] tap_len=16.8 tap_hi@stroke=35.3 need_L>=43.3

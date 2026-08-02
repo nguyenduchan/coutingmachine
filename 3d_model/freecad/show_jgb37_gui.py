@@ -2655,16 +2655,11 @@ def _thread_solid_along_z(
 
 def make_height_adjust_drive_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
     """
-    Height_Adjust — Spur rack & pinion (see height_adjust_z.py).
+    Rotary_Linear (rack & pinion) on lid height_bar — see rotary_linear.py.
 
-      Height_Knob + Height_Pinion + Height_Shaft — rotate about Y (⊥ Z travel)
-      Height_Friction_Washer — friction hold
-      Height_Bearing_L/R — shaft supports
-      Height_Adjust_Bar (follower + rack) — +/-Z; ~π·m·z mm/turn
-      Height_Guide_Rail_* — anti-rotate
-      Height_Bottom_Stop, Height_Scale_*
+    FreeCAD object names stay Height_* so saved Placement/Visibility still match.
     """
-    from height_adjust_z import build_height_adjust_z_parts
+    from rotary_linear import build_rotary_linear_parts
 
     drv = _LID_CFG.get("height_bar", {}).get("drive", {})
     if not bool(drv.get("enabled", False)):
@@ -2693,7 +2688,7 @@ def make_height_adjust_drive_parts(z_disc: float) -> list[tuple[str, Part.Shape,
     cfg["bar_length_y"] = max(20.0, y_b - y_a)
     cfg["bar_height"] = float(_LID_CFG.get("height_bar", {}).get("height", 12.0))
 
-    raw = build_height_adjust_z_parts(
+    raw = build_rotary_linear_parts(
         cx=cx,
         cy=cy,
         z_zero=z_wall0,
@@ -2701,20 +2696,20 @@ def make_height_adjust_drive_parts(z_disc: float) -> list[tuple[str, Part.Shape,
         include_demo_wall=False,
     )
     rename = {
-        "HA_Pinion_Shaft": "Height_Pinion_Shaft",
-        "HA_Bearing_Rail_S": "Height_Bearing_Rail_S",
-        "HA_Bearing_Cap_S": "Height_Bearing_Cap_S",
-        "HA_Bearing_Rail_N": "Height_Bearing_Rail_N",
-        "HA_Bearing_Cap_N": "Height_Bearing_Cap_N",
-        "HA_Knob": "Height_Knob",
-        "HA_Friction_Washer": "Height_Friction_Washer",
-        "HA_Follower": "Height_Adjust_Bar",
-        "HA_Bottom_Stop": "Height_Bottom_Stop",
+        "RL_Pinion_Shaft": "Height_Pinion_Shaft",
+        "RL_Bearing_Rail_S": "Height_Bearing_Rail_S",
+        "RL_Bearing_Cap_S": "Height_Bearing_Cap_S",
+        "RL_Bearing_Rail_N": "Height_Bearing_Rail_N",
+        "RL_Bearing_Cap_N": "Height_Bearing_Cap_N",
+        "RL_Knob": "Height_Knob",
+        "RL_Friction_Washer": "Height_Friction_Washer",
+        "RL_Follower": "Height_Adjust_Bar",
+        "RL_Bottom_Stop": "Height_Bottom_Stop",
     }
     out: list[tuple[str, Part.Shape, tuple]] = []
     for n, sh, col in raw:
-        if n.startswith("HA_Scale_"):
-            out.append((n.replace("HA_Scale_", "Height_Scale_"), sh, col))
+        if n.startswith("RL_Scale_"):
+            out.append((n.replace("RL_Scale_", "Height_Scale_"), sh, col))
         else:
             out.append((rename.get(n, n), sh, col))
     return out

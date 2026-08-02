@@ -608,7 +608,7 @@ def height_drive_xy(
     drv: dict | None = None,
 ) -> tuple[float, float]:
     """
-    XY of Height_Adjust knob/screw axis.
+    XY of Rotary_Linear (height_bar) knob/screw axis.
     Default: left end of bar (−X) so the knob is not centered on the chute.
     """
     drv = drv or {}

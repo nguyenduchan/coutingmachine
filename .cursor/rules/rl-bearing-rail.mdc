@@ -1,0 +1,62 @@
+---
+description: RL_Bearing_Rail — one solid, top-down M3, symmetric web
+globs:
+  - 3d_model/freecad/rotary_linear*.py
+alwaysApply: false
+---
+
+# RL_Bearing_Rail constraints
+
+When editing `RL_Bearing_Rail_S` / `N`, Cap, web, bridge, or clamp, **all** must hold:
+
+## Structural
+
+1. **One solid (C1)** — lower bearing + guide rail + stiff web + tongue fused.
+   Build must report `solids=1`. No air gap / “rời nhau”.
+2. **Tongue fuse (C2)** — guide tongue **overlaps** the rail inner face (no
+   `rail_clear` gap between tongue and rail). Clearance is only vs follower.
+3. **Web band (C3)** — web in **rail Y band** (`link_t = rail_t`); stop before
+   journal at `cx`. **Mirror-symmetric about rail mid-X** (long axis // Z) and
+   full length in Z (symmetric about `z_pin`). Do **not** invade Cap / shaft.
+
+
+## Clamp / fasteners (must be *installable from top*)
+
+4. **±Z M3 holes (C4)** — hole centers on **±Z** of pinion (same Y), equal
+   both sides via `_m3_clamp_z`. No −X-only offset / expose window.
+5. **Split at X=`cx` (C5)** — bolt **// X** in build frame:
+   Cap = **+X** half + through hole + head CB on **+X** face;
+   Rail = **−X** half + nut pocket on **−X** face.
+   After `_orient_travel_horizontal` (+90°Y then +180°X): bolt axis = **world −Z**
+   (install **from top down**); Cap sits on top of Rail.
+6. **No Cap∩Rail solids (C6)** — after build, cut `RL_Bearing_Rail_*` by matching
+   `RL_Bearing_Cap_*` so web/flange/ear do not intersect the Cap.
+7. **Nut install (C7)** — nut pocket + under-ear cavity from −X
+   (`M3_RAIL_UNDER`); AF must fit. After orient this is underside access.
+8. **Fuse then re-cut (C8)** — re-cut M3 / nut after fuse.
+9. **Hardware (C9)** — M3×16 ISO hex + M3 nut; clear Ø3.6; CB Ø6.5×2.2;
+   nut pocket AF 6.0×2.8.
+10. **Journal (C10)** — bush bore on saddle + cap (`j_od + 0.35`).
+11. **Symmetric Rail clamp (C11)** — ±Z ears match (|Δ depth| ≤ 0.35 mm);
+    no −X-only flatten/window that opens one ear into a slot.
+12. **Cap bolt from +X (C12)** — clearance + CB through Cap to **+X** face
+    (becomes top after orient).
+13. **Bridge service windows (C13)** — openings at each bearing Y and **±Z**
+    clamp so −X nut face is reachable if needed.
+14. **Full round bore both sides (C14)** — ±Z M3 holes must match: clearance
+    cylinder through a **complete ear pad** (closed ring around Ø3.6).
+15. **Equal depth + under space (C15)** — left/right (±Z) hole depths match;
+    Rail: cavity Ø≈11 × `M3_RAIL_UNDER` outside each nut face.
+
+## Verify every rebuild (FAIL if any false)
+
+- Rail S/N: `solids=1`
+- `RL_M3_verify Rail_S` and `Cap_S` → PASS (equal depth, ring_Lo/Hi, under)
+- After orient: Cap above Rail; M3 axis ≈ world Z
+
+## Forbidden
+
+- Window/tunnel that cuts an ear into an open slot (breaks C14)
+- Shipping `solids>1` to expose a hole
+- Bolt // travel Z (becomes sideways after orient) — use // X split
+- Filling journal with web / moving JGB37 motor mount

@@ -1,9 +1,9 @@
 ---
 description: Spur rack–pinion teeth must be identical and share one gear math
 globs:
-  - 3d_model/freecad/height_adjust*.py
+  - 3d_model/freecad/rotary_linear*.py
   - 3d_model/freecad/out/rack_pinion*.py
-  - 3d_model/sim/height_adjust*.py
+  - 3d_model/sim/rotary_linear*.py
 alwaysApply: true
 ---
 

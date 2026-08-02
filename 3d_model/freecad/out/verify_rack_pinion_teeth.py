@@ -82,7 +82,7 @@ def main():
         import FreeCAD as App  # noqa: F401
         import Part  # noqa: F401
 
-        from height_adjust_z import (  # type: ignore
+        from rotary_linear import (  # type: ignore
             make_involute_pinion_local,
             spur_gear_math as fc_math,
             verify_pinion_teeth_uniform,

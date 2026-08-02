@@ -1,0 +1,177 @@
+{
+  "unit": "mm",
+  "source": "rotary_linear.build_rotary_linear_parts",
+  "mechanism": "rack_pinion",
+  "kinematics": {
+    "pinion_axis": "Y",
+    "rack_travel": "Z",
+    "note": "spur: rotation axis perpendicular to translation",
+    "axis_pivot_mm": [
+      87.9645943005142,
+      0.0,
+      -1.0658141036401503e-14
+    ],
+    "axis_pivot_m": [
+      0.08796459430051419,
+      0.0,
+      -1.0658141036401503e-17
+    ]
+  },
+  "rack": {
+    "stroke": 20.0,
+    "module": 2.0,
+    "pinion_teeth": 18,
+    "pitch_d": 36.0,
+    "travel_per_turn": 113.09733552923255,
+    "face_w": 12.0,
+    "pressure_angle_deg": 20.0,
+    "tooth_clear": 0.55,
+    "center_backlash": 0.5,
+    "gear": {
+      "module": 2.0,
+      "teeth": 18,
+      "alpha_deg": 20.0,
+      "alpha_rad": 0.3490658503988659,
+      "circular_pitch": 6.283185307179586,
+      "pitch_radius": 18.0,
+      "tip_radius": 20.0,
+      "root_radius": 15.5,
+      "addendum": 2.0,
+      "dedendum": 2.5,
+      "tooth_thickness": 2.866592653589793,
+      "space_width": 3.416592653589793,
+      "tooth_clear": 0.55,
+      "tan_alpha": 0.36397023426620234,
+      "z_min_no_undercut": 17.09726434082606,
+      "travel_per_turn": 113.09733552923255
+    }
+  },
+  "rail_stroke_mm": 20.0,
+  "parts": {
+    "RL_Bearing_Cap_N": {
+      "file": "RL_Bearing_Cap_N.stl",
+      "volume_mm3": 2417.1204835959347,
+      "bbox_mm": {
+        "xmin": 65.46459430051421,
+        "xmax": 110.46459430051421,
+        "ymin": -17.95,
+        "ymax": -9.449999999999996,
+        "zmin": -0.0500000000000111,
+        "zmax": 9.999999999999993
+      }
+    },
+    "RL_Bearing_Cap_S": {
+      "file": "RL_Bearing_Cap_S.stl",
+      "volume_mm3": 2417.1204835959343,
+      "bbox_mm": {
+        "xmin": 65.46459430051421,
+        "xmax": 110.46459430051421,
+        "ymin": 9.45,
+        "ymax": 17.950000000000003,
+        "zmin": -0.05000000000001446,
+        "zmax": 9.99999999999999
+      }
+    },
+    "RL_Bearing_Rail_N": {
+      "file": "RL_Bearing_Rail_N.stl",
+      "volume_mm3": 42283.8799984813,
+      "bbox_mm": {
+        "xmin": -5.08759701034478e-15,
+        "xmax": 175.92918860102841,
+        "ymin": -17.950000000000006,
+        "ymax": -9.449999999999996,
+        "zmin": -45.82500000000003,
+        "zmax": 0.049999999999994764
+      }
+    },
+    "RL_Bearing_Rail_S": {
+      "file": "RL_Bearing_Rail_S.stl",
+      "volume_mm3": 42283.8799984813,
+      "bbox_mm": {
+        "xmin": -5.08759701034478e-15,
+        "xmax": 175.92918860102841,
+        "ymin": 9.449999999999996,
+        "ymax": 17.950000000000003,
+        "zmin": -45.825000000000024,
+        "zmax": 0.0499999999999914
+      }
+    },
+    "RL_Follower": {
+      "file": "RL_Follower.stl",
+      "volume_mm3": 20494.45558981913,
+      "bbox_mm": {
+        "xmin": 43.982297150257104,
+        "xmax": 131.94689145077132,
+        "ymin": -12.000000000000004,
+        "ymax": 11.999999999999998,
+        "zmin": -31.000000000000014,
+        "zmax": -17.5
+      }
+    },
+    "RL_Friction_Washer": {
+      "file": "RL_Friction_Washer.stl",
+      "volume_mm3": 395.4479752706152,
+      "bbox_mm": {
+        "xmin": 78.96739166250686,
+        "xmax": 96.96179693852156,
+        "ymin": -20.15,
+        "ymax": -18.149999999999995,
+        "zmin": -9.000000000000007,
+        "zmax": 8.999999999999993
+      }
+    },
+    "RL_Knob": {
+      "file": "RL_Knob.stl",
+      "volume_mm3": 4616.842129857719,
+      "bbox_mm": {
+        "xmin": 73.96894575250278,
+        "xmax": 101.96024284852564,
+        "ymin": -51.95,
+        "ymax": -37.949999999999996,
+        "zmin": -14.000000000000005,
+        "zmax": 13.999999999999998
+      }
+    },
+    "RL_Pinion_Shaft": {
+      "file": "RL_Pinion_Shaft.stl",
+      "volume_mm3": 15514.958135550112,
+      "bbox_mm": {
+        "xmin": 68.14595548087605,
+        "xmax": 107.78323312015235,
+        "ymin": -45.95,
+        "ymax": 19.95,
+        "zmin": -20.00000000000001,
+        "zmax": 19.99999999999999
+      }
+    },
+    "RL_Rail_Bridge": {
+      "file": "RL_Rail_Bridge.stl",
+      "volume_mm3": 31579.289353884596,
+      "bbox_mm": {
+        "xmin": -4.496403249731884e-15,
+        "xmax": 175.92918860102841,
+        "ymin": -17.950000000000003,
+        "ymax": 17.949999999999996,
+        "zmin": -40.50000000000002,
+        "zmax": -35.49999999999999
+      }
+    }
+  },
+  "roles": {
+    "actuator": [
+      "RL_Pinion_Shaft",
+      "RL_Knob"
+    ],
+    "follower": [
+      "RL_Follower"
+    ],
+    "static": [
+      "RL_Bearing_Rail_S",
+      "RL_Bearing_Cap_S",
+      "RL_Bearing_Rail_N",
+      "RL_Bearing_Cap_N",
+      "RL_Rail_Bridge",
+      "RL_Friction_Washer"
+    ]
+  }
+}

@@ -19,9 +19,10 @@
 __pycache__/
 *.py[cod]
 
-# Blender / FreeCAD backups
+# Blender / FreeCAD backups & recovery
 *.blend1
 *.FCBak
+*.FCStd.*
 
 # Installers
 *.exe
@@ -34,12 +35,52 @@ __pycache__/
 3d_model/sim/out/phase_verify/
 3d_model/sim/frames_pocket/
 3d_model/sim/frames_drive_phys/
+3d_model/sim/frames_height_adjust/
+3d_model/sim/frames_*/
 
 # Sim out rebuildable binaries
 3d_model/sim/out/*.blend
 3d_model/sim/out/*.blend1
 3d_model/sim/out/*.gif
 3d_model/sim/out/*.png
+
+# Mesh intermediates (VHACD / OBJ); STL+manifest kept when exported
+3d_model/sim/meshes/**/*.obj
+3d_model/sim/meshes/**/*.vhacd.log
+3d_model/sim/meshes/**/*_vhacd.*
+
+# FreeCAD agent scratch / one-off probes / logs (keep verify_*.py + FCStd)
+3d_model/freecad/out/_fcstd_snap/
+3d_model/freecad/out/thread_verify/
+3d_model/freecad/out/ref_rx*/
+3d_model/freecad/out/_chk*.py
+3d_model/freecad/out/_probe*.py
+3d_model/freecad/out/_diag*.py
+3d_model/freecad/out/_thick.py
+3d_model/freecad/out/_hole_x.py
+3d_model/freecad/out/_overlap.py
+3d_model/freecad/out/_ring_z.py
+3d_model/freecad/out/_cmp_holes.py
+3d_model/freecad/out/_verify_m3*.py
+3d_model/freecad/out/_verify_install.py
+3d_model/freecad/out/_check_gear_math.py
+3d_model/freecad/out/_rail_section.py
+3d_model/freecad/out/check_cam_clearance.py
+3d_model/freecad/out/sim_height_motion.py
+3d_model/freecad/out/*.log
+3d_model/freecad/out/_*.txt
+3d_model/freecad/out/hole_verify.txt
+3d_model/freecad/out/*_motion_sim.*
+3d_model/freecad/out/height_cam_clearance.json
+3d_model/freecad/out/rack_pinion_*_check.json
+3d_model/freecad/out/rack_pinion_kinematics.json
+3d_model/freecad/out/verify_rack_pinion_teeth.json
+3d_model/freecad/_v.py
+3d_model/freecad/verify_height_threads.py
+
+# Legacy rename leftovers
+3d_model/freecad/out/height_adjust_z.FCStd
+3d_model/freecad/out/height_adjust*.FCStd
 
 # Preview renders
 3d_model/preview/
