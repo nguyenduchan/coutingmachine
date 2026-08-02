@@ -1,0 +1,90 @@
+HA_shaft→knob: y_knob=19.8 extend=+12.0 end=45.8 (len=65.1)
+HA_plane_S: y=-17.350 | HA_plane_N: y=17.350 (bearing outer = rail outer)
+HA_Pinion tooth_uniform: PASS — max_rel_dev=0.0000 mean_vol=188.60
+HA_Pinion_Shaft: fused print | m=2.0 z=18 | travel/turn=113.1
+HA_mesh: x_pitch=-18.50 pitch_r=18.00 bl=0.50 tip_to_rack_root=1.00
+HA_fastener: M3x16 ISO hex bolt + M3 hex nut (AF 5.5) | clear=Ø3.6 | clamp=±X beside shaft
+HA_mesh_collision: PASS — overlap=0.00 mm³ (max 8.00)
+HA_Follower slim: bar_x=8.0 bar_y=24.0 rack_body_t=4.5 rack_face=12.0
+HA_stiffen: bar_x=8.0 rack_body=4.5 rail_wall=3.5 bearing_t=7.5 slot=3.6x3.0 shaft_mid_od=10.8 (kinematics unchanged)
+HA_Bearing_Rail_S extend_down=8.0 mm (z_bot=-12.0)
+HA_Bearing_Rail y0=-17.4: solids=1 (want 1) | ±X M3 OK
+HA_Bearing_Rail y0=9.9: solids=1 (want 1) | ±X M3 OK
+HA_Bearing_Rail: C1 one-solid + C2 ±X holes + C3 nut access
+Height_Adjust_Z involute | z=18 alpha=20 | stroke=20 | 0.18 turn (113 mm/turn)
+HA_active_parts: HA_Pinion_Shaft, HA_Friction_Washer, HA_Knob, HA_Follower, HA_Bearing_Rail_S, HA_Bearing_Rail_N, HA_Bearing_Cap_S, HA_Bearing_Cap_N
+=== CONFIG (mm) ===
+gear_module=2.0
+pinion_teeth=18
+pinion_face_w=10.0
+pressure_angle_deg=20.0
+tooth_clear=0.4
+center_backlash=0.5
+rail_stroke=20.0
+bar_thickness=8.0
+bar_length_y=24.0
+bar_height=14.0
+rack_body_t=4.5
+nut_ridge_h=10.0
+nut_ridge_t=4.5
+rail_wall=3.5
+rail_clear=0.35
+rail_s_extend_down=8.0
+bearing_t=7.5
+bearing_h=22.0
+bearing_w=20.0
+journal_od=8.0
+knob_od=28.0
+knob_h=14.0
+shaft_knob_extend=12.0
+friction_washer_t=2.0
+friction_washer_od=18.0
+=== DERIVED GEAR ===
+module=2.0 teeth=18 face_w=12.0
+pitch_d=36.000 travel_per_turn=113.097
+stroke=20.0 alpha=20.0 bl=0.5
+HA_shaft→knob: y_knob=19.8 extend=+12.0 end=45.8 (len=65.1)
+HA_plane_S: y=-17.350 | HA_plane_N: y=17.350 (bearing outer = rail outer)
+HA_Pinion tooth_uniform: PASS — max_rel_dev=0.0000 mean_vol=188.60
+HA_Pinion_Shaft: fused print | m=2.0 z=18 | travel/turn=113.1
+HA_mesh: x_pitch=-18.50 pitch_r=18.00 bl=0.50 tip_to_rack_root=1.00
+HA_fastener: M3x16 ISO hex bolt + M3 hex nut (AF 5.5) | clear=Ø3.6 | clamp=±X beside shaft
+HA_mesh_collision: PASS — overlap=0.00 mm³ (max 8.00)
+HA_Follower slim: bar_x=8.0 bar_y=24.0 rack_body_t=4.5 rack_face=12.0
+HA_stiffen: bar_x=8.0 rack_body=4.5 rail_wall=3.5 bearing_t=7.5 slot=3.6x3.0 shaft_mid_od=10.8 (kinematics unchanged)
+HA_Bearing_Rail_S extend_down=8.0 mm (z_bot=-12.0)
+HA_Bearing_Rail y0=-17.4: solids=1 (want 1) | ±X M3 OK
+HA_Bearing_Rail y0=9.9: solids=1 (want 1) | ±X M3 OK
+HA_Bearing_Rail: C1 one-solid + C2 ±X holes + C3 nut access
+Height_Adjust_Z involute | z=18 alpha=20 | stroke=20 | 0.18 turn (113 mm/turn)
+HA_active_parts: HA_Pinion_Shaft, HA_Friction_Washer, HA_Knob, HA_Follower, HA_Bearing_Rail_S, HA_Bearing_Rail_N, HA_Bearing_Cap_S, HA_Bearing_Cap_N
+=== CONFIG (mm) ===
+gear_module=2.0
+pinion_teeth=18
+pinion_face_w=10.0
+pressure_angle_deg=20.0
+tooth_clear=0.4
+center_backlash=0.5
+rail_stroke=20.0
+bar_thickness=8.0
+bar_length_y=24.0
+bar_height=14.0
+rack_body_t=4.5
+nut_ridge_h=10.0
+nut_ridge_t=4.5
+rail_wall=3.5
+rail_clear=0.35
+rail_s_extend_down=8.0
+bearing_t=7.5
+bearing_h=22.0
+bearing_w=20.0
+journal_od=8.0
+knob_od=28.0
+knob_h=14.0
+shaft_knob_extend=12.0
+friction_washer_t=2.0
+friction_washer_od=18.0
+=== DERIVED GEAR ===
+module=2.0 teeth=18 face_w=12.0
+pitch_d=36.000 travel_per_turn=113.097
+stroke=20.0 alpha=20.0 bl=0.5

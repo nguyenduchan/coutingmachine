@@ -1,0 +1,226 @@
+{
+  "mechanism": "face_cam_follower",
+  "stroke_mm": 20.0,
+  "base_t_mm": 4.0,
+  "contact_budget_mm3": 120.0,
+  "samples": [
+    {
+      "deg": 0,
+      "dz_mm": 0.0,
+      "cam_fol_mm3": 53.338739468630905,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 15,
+      "dz_mm": 0.8333333333333333,
+      "cam_fol_mm3": 3.564130863317595,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 30,
+      "dz_mm": 1.6666666666666665,
+      "cam_fol_mm3": 3.5641308633175877,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 45,
+      "dz_mm": 2.5,
+      "cam_fol_mm3": 3.5641308633175908,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 60,
+      "dz_mm": 3.333333333333333,
+      "cam_fol_mm3": 3.564130863317596,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 75,
+      "dz_mm": 4.166666666666667,
+      "cam_fol_mm3": 3.5641308633175917,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 90,
+      "dz_mm": 5.0,
+      "cam_fol_mm3": 3.564130863317587,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 105,
+      "dz_mm": 5.833333333333334,
+      "cam_fol_mm3": 3.5641308633175774,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 120,
+      "dz_mm": 6.666666666666666,
+      "cam_fol_mm3": 3.5641308633175846,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 135,
+      "dz_mm": 7.5,
+      "cam_fol_mm3": 3.5641308633175965,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 150,
+      "dz_mm": 8.333333333333334,
+      "cam_fol_mm3": 3.5641308633175792,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 165,
+      "dz_mm": 9.166666666666666,
+      "cam_fol_mm3": 3.5641308633175943,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 180,
+      "dz_mm": 10.0,
+      "cam_fol_mm3": 3.564130863317585,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 195,
+      "dz_mm": 10.833333333333336,
+      "cam_fol_mm3": 3.564130863317555,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 210,
+      "dz_mm": 11.666666666666668,
+      "cam_fol_mm3": 3.5641308633175783,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 225,
+      "dz_mm": 12.5,
+      "cam_fol_mm3": 3.56413086331758,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 240,
+      "dz_mm": 13.333333333333332,
+      "cam_fol_mm3": 3.564130863317591,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 255,
+      "dz_mm": 14.166666666666668,
+      "cam_fol_mm3": 3.564130863317578,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 270,
+      "dz_mm": 15.0,
+      "cam_fol_mm3": 3.564130863317579,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 285,
+      "dz_mm": 15.833333333333332,
+      "cam_fol_mm3": 3.5641308633176467,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 300,
+      "dz_mm": 16.666666666666668,
+      "cam_fol_mm3": 3.564130863317637,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 315,
+      "dz_mm": 17.5,
+      "cam_fol_mm3": 3.5641308633176116,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 330,
+      "dz_mm": 18.333333333333332,
+      "cam_fol_mm3": 3.5641308633176205,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    },
+    {
+      "deg": 345,
+      "dz_mm": 19.166666666666668,
+      "cam_fol_mm3": 3.5641308633176108,
+      "shaft_fol_mm3": 0.0,
+      "cam_block_mm3": 0.0,
+      "cam_rail_mm3": 0.0,
+      "ok": true
+    }
+  ],
+  "pass": true,
+  "errors": []
+}

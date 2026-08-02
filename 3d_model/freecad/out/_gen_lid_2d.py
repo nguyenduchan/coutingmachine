@@ -131,6 +131,31 @@ parts.append(text(-75, -72, "Above End", 6, fill="#607d8b"))
 parts.append(text(-75, -98, "Below End", 6, fill="#607d8b"))
 parts.append(text(-30, -85, "SW_Rest", 7, fill="#455a64"))
 parts.append(text(70, 70, "Out_NE", 8, fill="#455a64"))
+# Width knob (coaxial leadscrew // Y) — show end of screw/knob near bar north tip
+_wbc = plan.get("width_bar_center")
+_drv = LID.get("width_bar", {}).get("drive", {})
+_wb = plan.get("width_bar", [])
+if _wbc and bool(_drv.get("enabled", False)) and _wb:
+    _ys = [p[1] for p in _wb]
+    _y_hi = max(_ys)
+    _kx, _ky = float(_wbc[0]), float(_y_hi) + 8.0
+    _kod = float(_drv.get("knob_od", 28.0)) / 2.0
+    parts.append(circle((_kx, _ky), _kod, "#6a1b9a", 1.5, fill="#ce93d8"))
+    parts.append(circle((_kx, _ky), 3.0, "#4a148c", 1.0, fill="#4a148c"))
+    parts.append(text(_kx, _ky + _kod + 8, "Width_Knob (// Y)", 7, fill="#4a148c"))
+    # rail outline around bar
+    _xs = [p[0] for p in _wb]
+    _xa, _xb = min(_xs) - 3.0, max(_xs) + 3.0
+    _ylo, _yhi = min(_ys) - 4.0, max(_ys) + 4.0
+    parts.append(
+        poly(
+            [(_xa, _ylo), (_xb, _ylo), (_xb, _yhi), (_xa, _yhi)],
+            "#2e7d32",
+            1.4,
+            fill="none",
+        )
+    )
+    parts.append(text(_xa - 8, 0.5 * (_ylo + _yhi), "Rail", 7, fill="#2e7d32"))
 if ROOF_FUNNEL:
     parts.append(poly(funnel_chamber, "#546e7a", 0.6, fill="#90a4ae", opacity=0.55))
     parts.append(text(20, 15, "Funnel_Roof", 8, fill="#455a64"))

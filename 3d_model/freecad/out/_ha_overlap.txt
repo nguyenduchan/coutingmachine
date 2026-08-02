@@ -1,0 +1,30 @@
+HA_shaft→knob: clear_N=20.0 y_knob=37.4 seat=8.0 end=45.4 (len=64.7) blind
+HA_plane_S: y=-17.350 | HA_plane_N: y=17.350 (bearing outer = rail outer)
+HA_Pinion tooth_uniform: PASS — max_rel_dev=0.0000 mean_vol=188.60
+HA_Pinion_Shaft: fused print | tip M3+flat len=6.0 | m=2.0 z=18
+HA_mesh: x_pitch=-18.50 pitch_r=18.00 bl=0.50 tip_to_rack_root=1.00
+HA_fastener: M3x16 ISO hex bolt + M3 hex nut (AF 5.5) | clear=Ø3.6 | clamp=±X beside shaft
+HA_Knob: blind seat=8.0 mm | outer wall≈6.0 | no through-shaft
+HA_mesh_collision: PASS — overlap=0.00 mm³ (max 8.00)
+HA_Follower slim: bar_x=8.0 bar_y=24.0 rack_body_t=4.5 rack_face=12.0
+HA_stiffen: bar_x=8.0 rack_body=4.5 rail_wall=3.5 bearing_t=7.5 slot=3.6x3.0 shaft_mid_od=10.8 (kinematics unchanged)
+HA_Bearing_Rail S/N extend_down=8.0 mm (z_bot=-12.0)
+HA_web: X[-37.4,-6.2] t=5.0 (stops before journal)
+HA_Bearing_Rail y0=-17.4: solids=2 (want 1) | ±X M3 lower-half
+HA_Bearing_Rail y0=9.9: solids=2 (want 1) | ±X M3 lower-half
+HA_Bearing_Rail: C1 one-solid + C2 ±X holes + C3 nut access
+HA_M3_split: Cap=upper half+cbore | Rail=lower half+nut @ z_pin=20.00 ex=[-9.0,15.0]
+Height_Adjust_Z involute | z=18 alpha=20 | stroke=20 | 0.18 turn (113 mm/turn)
+HA_active_parts: HA_Pinion_Shaft, HA_Friction_Washer, HA_Knob, HA_Follower, HA_Bearing_Rail_S, HA_Bearing_Rail_N, HA_Bearing_Cap_S, HA_Bearing_Cap_N
+=== OVERLAP REPORT (mm3) ===
+=== SUMMARY ===
+unexpected_or_huge=0
+=== BBOX ===
+HA_Pinion_Shaft: X[-20.0,20.0] Y[-19.4,45.4] Z[0.2,39.8]
+HA_Friction_Washer: X[-9.0,9.0] Y[17.6,19.6] Z[11.0,29.0]
+HA_Knob: X[-14.0,14.0] Y[37.4,51.4] Z[6.0,34.0]
+HA_Follower: X[-35.7,-16.5] Y[-12.0,12.0] Z[-29.5,69.5]
+HA_Bearing_Rail_S: X[-37.4,20.0] Y[-17.4,-9.2] Z[-12.0,96.0]
+HA_Bearing_Rail_N: X[-37.4,20.0] Y[9.2,17.4] Z[-12.0,96.0]
+HA_Bearing_Cap_S: X[-14.0,20.0] Y[-17.4,-9.9] Z[20.0,31.0]
+HA_Bearing_Cap_N: X[-14.0,20.0] Y[9.9,17.4] Z[20.0,31.0]

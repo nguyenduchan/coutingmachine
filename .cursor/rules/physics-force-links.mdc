@@ -11,13 +11,15 @@ alwaysApply: true
 3. **Gravity always on** (`g = -9.81`) for all dynamic bodies.
 
 ## Implementation
-Prefer `3d_model/sim/step_drive_pybullet.py`:
-- Motor shaft/cams = kinematic actuator
-- Followers lifted by **cam contact only**
-- Verify with `getContactPoints` / gap checks in `out/step_drive_metrics.json`
+Prefer `3d_model/sim/step_drive_pybullet.py` and `height_adjust_pybullet.py`:
+- Motor/knob shaft = kinematic actuator
+- Followers lifted by **cam/patch CONTACT only**
+- Verify with `getContactPoints` / gap checks in metrics JSON
 
 ```
 python 3d_model/sim/step_drive_pybullet.py --gui
+python 3d_model/sim/height_adjust_pybullet.py
 ```
 
-Check: `pass`, `illegal_force_while_separated == 0`, `free_fall_delta_z_m > 0`.
+Check every run: `pass`, `illegal_force_while_separated == 0`, `jam_hits == 0`,
+`free_fall_delta_z_m > 0`. If fail → fix CAD/sim until pass (see `sim-collision-checks.mdc`).

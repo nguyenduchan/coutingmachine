@@ -146,25 +146,119 @@ LID = {
     # --- adjusters ---
     "width_bar": {
         "role": "lane width adjust",
-        "shape": "parallelogram_prism",
-        "height": 40.0,
-        "width": 20.0,  # distance between long edges
-        "long_edge_angle_deg": 135.0,  # from +X CCW
-        "short_edge": "parallel_to_chute",  # vertical in plan (= chute // -Y)
-        # cạnh phải bar = cạnh trái máng thẳng (x_outer)
-        "short_edge_placement": "chute_left",
-        # chiều dài dọc 135° tới gần tường vuông trái
-        "long_length": "to_square_left",
-        "long_end_inset": 0.0,  # mm inward from square left wall
+        "shape": "box_prism",
+        "height": 12.0,  # thap — chay trong ray duoi nap
+        "width": 10.0,  # 1 cm
+        "long_edge_angle_deg": 90.0,
+        "short_edge": "perpendicular_to_chute",
+        "short_edge_placement": "chute_right_inward",
+        "long_length": "chute_span",
+        "long_end_inset": 0.0,
+        "offset_x": -12.0,  # dich Drive+Bar sang trai (−X), khong canh phai mang
+        "offset_y": 138.0,
+        "clip_to_lid_box": True,
+        # Num dong truc voi chieu tinh tien (// Y) — ren in duoc + giu num vao nap
+        "drive": {
+            "enabled": True,
+            "mechanism": "coaxial_leadscrew",
+            "note": "knob+screw // Y; FDM helix; bar+rail shifted left of chute right wall",
+            "offset_x": 0.0,  # extra drive-axis shift vs bar center (usually 0)
+            "knob_od": 28.0,
+            "knob_h": 14.0,
+            "knob_grip_od": 22.0,
+            "leadscrew_od": 8.0,
+            "leadscrew_pitch": 3.0,
+            "leadscrew_len": 90.0,
+            "thread_depth": 1.1,  # radial major→minor
+            "thread_clear_r": 0.40,  # FDM radial clearance nut vs screw
+            "segs_per_turn": 20,
+            "nut_l": 18.0,  # ≥ ~6×pitch engagement
+            "nut_w": 14.0,
+            "nut_h": 12.0,
+            "rail_wall": 2.0,
+            "rail_clear": 0.4,
+            "rail_overhang": 3.0,
+            # Axial lock: flange on screw trapped by retainer bolted to lid underside
+            "collar_od": 16.0,
+            "collar_t": 2.8,
+            "journal_od": 8.0,
+            "retainer_wall": 3.0,
+            "retainer_pad_t": 4.0,  # pad against Lid_Top underside
+            "retainer_screw_d": 3.2,  # M3 clearance in pad+cap
+            "retainer_screw_span": 22.0,
+        },
     },
     "height_bar": {
-        "role": "stack height limit",
+        "role": "stack height limit — cam follower / green scraper // Y beside Width",
         "shape": "box_prism",
-        "height": 10.0,  # 1 cm
-        "thickness": 2.0,  # plan thickness
-        "length": 32.0,
-        "angle_deg": 0.0,  # horizontal
-        "at": "narrow_mouth",
+        "height": 12.0,  # scraper body Z (ridge adds +nut_ridge_h)
+        "thickness": 10.0,  # plan X
+        "at": "width_bar_right",
+        "gap": 0.0,
+        "long_length": "match_width_bar",
+        # Spur rack–pinion: pinion axis Y ⊥ rack travel Z; ~75 mm/turn; friction hold
+        "drive": {
+            "enabled": True,
+            "mechanism": "rack_pinion",
+            "note": "Y-pinion+Z-rack; stiffened rails/follower/shaft; fused pinion-shaft; M3 caps+knob",
+            "include_bottom_stop": False,
+            "include_scale": False,
+            "knob_od": 28.0,
+            "knob_h": 14.0,
+            "knob_grip_od": 22.0,
+            "knob_seat_depth": 8.0,
+            "shaft_tip_hole_len": 6.0,
+            "knob_clear_from_rail_n": 20.0,
+            "rack": {
+                "stroke": 20.0,
+                "module": 2.0,
+                "pinion_teeth": 18,
+                "face_w": 12.0,
+                "pressure_angle_deg": 20.0,
+                "tooth_clear": 0.55,
+                "center_backlash": 0.50,
+            },
+            "gear_module": 2.0,
+            "pinion_teeth": 18,
+            "pinion_face_w": 10.0,
+            "pressure_angle_deg": 20.0,
+            "tooth_clear": 0.55,
+            "center_backlash": 0.50,
+            "friction_washer_t": 2.0,
+            "friction_washer_od": 18.0,
+            "bearing_t": 8.5,
+            "bearing_h": 22.0,
+            "bearing_w": 20.0,
+            "nut_l": 12.0,
+            "nut_w": 16.0,
+            "nut_h": 12.0,
+            "bar_thickness": 8.0,
+            "bar_length_y": 24.0,
+            "bar_height": 14.0,
+            "rack_body_t": 0.0,
+            "nut_ridge_h": 10.0,
+            "nut_ridge_t": 4.5,
+            "nut_ridge_side": "right",
+            "rail_wall": 4.5,
+            "rail_clear": 0.35,
+            "rail_extend_down": 8.0,
+            "rail_s_extend_down": 8.0,
+            "rail_bridge_t": 5.0,
+            "rail_stroke": 20.0,
+            "scale_max": 20.0,
+            "bottom_stop_h": 3.0,
+            "journal_od": 8.0,
+            "groove_od": 6.5,
+            "groove_w": 2.2,
+            "collar_od": 14.0,
+            "collar_flange_t": 1.5,
+            "block_xy": 36.0,
+            "block_h": 8.0,
+            "retainer_screw_d": 3.2,
+            "retainer_screw_span": 22.0,
+            "at": "bar_center",
+            "axis_inset": 0.0,
+        },
     },
     # --- plan (XY) ---
     "plan": {
@@ -509,6 +603,35 @@ def lid_chute_end_y() -> float:
     return y_rim - 18.0
 
 
+def height_drive_xy(
+    height_bar: list,
+    drv: dict | None = None,
+) -> tuple[float, float]:
+    """
+    XY of Height_Adjust knob/screw axis.
+    Default: left end of bar (−X) so the knob is not centered on the chute.
+    """
+    drv = drv or {}
+    xs = [float(p[0]) for p in height_bar]
+    ys = [float(p[1]) for p in height_bar]
+    x_a, x_b = min(xs), max(xs)
+    y_a, y_b = min(ys), max(ys)
+    cy = 0.5 * (y_a + y_b)
+    inset = float(drv.get("axis_inset", 7.0))
+    place = str(drv.get("at", "bar_left"))
+    if place in ("bar_left", "left", "-x", "outer"):
+        cx = x_a + inset
+    elif place in ("bar_right", "right", "+x", "inner"):
+        cx = x_b - inset
+    else:
+        cx = 0.5 * (x_a + x_b) + float(drv.get("offset_x", 0.0))
+        cy = cy + float(drv.get("offset_y", 0.0))
+        return (cx, cy)
+    cx += float(drv.get("offset_x", 0.0))
+    cy += float(drv.get("offset_y", 0.0))
+    return (cx, cy)
+
+
 def lid_plan_xy() -> dict:
     """
     Compute all lid plan points (mm) for 2D SVG and 3D walls.
@@ -545,39 +668,129 @@ def lid_plan_xy() -> dict:
     ]
     wb = LID["width_bar"]
     bar_w = float(wb["width"])
-    bar_short = bar_w * math.sqrt(2.0)
-    ang = math.radians(float(wb["long_edge_angle_deg"]))
-    ux, uy = math.cos(ang), math.sin(ang)
-    # Short edge X: right edge of bar
-    place = str(wb.get("short_edge_placement", "chute_left"))
-    if place in ("chute_left", "x_outer"):
-        xc = x_outer  # trùng cạnh trái máng thẳng
-    elif place in ("chute_right", "x_inner"):
-        xc = x_inner
+    place = str(wb.get("short_edge_placement", "chute_right"))
+    ll = wb.get("long_length", "chute_span")
+    ang_deg = float(wb.get("long_edge_angle_deg", 90.0))
+
+    # Width bar: // chute (long along ±Y), same Y span
+    if ll == "chute_span" or ang_deg in (90.0, -90.0, 270.0):
+        # Long edges // máng (−Y); short = width along +X
+        if place in ("in_chute", "centered_in_chute", "chute"):
+            # Trùng đúng lòng máng thẳng
+            x_a, x_b = min(x_outer, x_inner), max(x_outer, x_inner)
+        elif place in ("chute_right_inward", "flush_right_inward"):
+            # Cạnh phải cố định tại x_inner; rộng bar_w về −X (vào máng)
+            x_b = x_inner
+            x_a = x_inner - bar_w
+        elif place in ("chute_right", "x_inner"):
+            x_a, x_b = x_inner, x_inner + bar_w
+        elif place in ("chute_left", "x_outer"):
+            x_a, x_b = x_outer - bar_w, x_outer
+        else:
+            xm = 0.5 * (x_inner + x_outer)
+            x_a, x_b = xm - bar_w / 2.0, xm + bar_w / 2.0
+        y_lo, y_hi = min(y_exit, y_mouth), max(y_exit, y_mouth)
+        ox = float(wb.get("offset_x", 0.0))
+        oy = float(wb.get("offset_y", 0.0))
+        x_a, x_b = x_a + ox, x_b + ox
+        y_lo, y_hi = y_lo + oy, y_hi + oy
+        # Clip to closed-square lid box (cut protrusion outside hộp)
+        if bool(wb.get("clip_to_lid_box", True)):
+            x_a = max(x_a, box_xl)
+            x_b = min(x_b, box_xr)
+            y_lo = max(y_lo, box_yb)
+            y_hi = min(y_hi, box_yt)
+        if x_b - x_a < 1e-6 or y_hi - y_lo < 1e-6:
+            width_bar = [
+                (x_inner + ox, y_mouth + oy),
+                (x_outer + ox, y_mouth + oy),
+                (x_outer + ox, y_mouth + oy),
+                (x_inner + ox, y_mouth + oy),
+            ]
+        else:
+            width_bar = [
+                (x_a, y_lo),
+                (x_b, y_lo),
+                (x_b, y_hi),
+                (x_a, y_hi),
+            ]
     else:
-        xc = 0.5 * (x_inner + x_outer)  # centered_in_chute
-    yc = 0.5 * (y_mouth + y_exit)
-    # Long length along 135°
-    ll = wb.get("long_length", "to_square_left")
-    if ll == "to_square_left" or ll is None:
-        inset = float(wb.get("long_end_inset", 0.0))
-        # xc + bar_long*ux = box_xl + inset  (ux < 0)
-        bar_long = (box_xl + inset - xc) / ux if abs(ux) > 1e-9 else 40.0
-        bar_long = abs(float(bar_long))
+        # legacy parallelogram (135° → square left)
+        bar_short = bar_w * math.sqrt(2.0)
+        ang = math.radians(ang_deg)
+        ux, uy = math.cos(ang), math.sin(ang)
+        if place in ("chute_left", "x_outer"):
+            xc = x_outer
+        elif place in ("chute_right", "x_inner"):
+            xc = x_inner
+        else:
+            xc = 0.5 * (x_inner + x_outer)
+        yc = 0.5 * (y_mouth + y_exit)
+        if ll == "to_square_left" or ll is None:
+            inset = float(wb.get("long_end_inset", 0.0))
+            bar_long = (box_xl + inset - xc) / ux if abs(ux) > 1e-9 else 40.0
+            bar_long = abs(float(bar_long))
+        else:
+            bar_long = float(ll)
+        b0 = (xc, yc - bar_short / 2.0)
+        b1 = (xc, yc + bar_short / 2.0)
+        b2 = (b1[0] + bar_long * ux, b1[1] + bar_long * uy)
+        b3 = (b0[0] + bar_long * ux, b0[1] + bar_long * uy)
+        width_bar = [b0, b1, b2, b3]
+
+    # Height bar: vertical strip // Y, flush to Width_Adjust right edge (+X)
+    hb = LID["height_bar"]
+    hb_at = str(hb.get("at", "width_bar_right"))
+    hb_tx = float(hb.get("thickness", 10.0))  # X thickness
+    wxs = [float(p[0]) for p in width_bar]
+    wys = [float(p[1]) for p in width_bar]
+    wr = max(wxs)
+    wl = min(wxs)
+    wy0, wy1 = min(wys), max(wys)
+    if hb_at in ("width_bar_right", "flush_width_right", "width_right"):
+        gap = float(hb.get("gap", 0.0))
+        hx0 = wr + gap
+        hx1 = hx0 + hb_tx
+        hy0, hy1 = wy0, wy1
+        if str(hb.get("long_length", "match_width_bar")) not in (
+            "match_width_bar",
+            "width_span",
+            "same_y",
+        ):
+            try:
+                half_l = 0.5 * float(hb["long_length"])
+                yc = 0.5 * (wy0 + wy1)
+                hy0, hy1 = yc - half_l, yc + half_l
+            except (TypeError, ValueError, KeyError):
+                pass
+        height_bar = [
+            (hx0, hy0),
+            (hx1, hy0),
+            (hx1, hy1),
+            (hx0, hy1),
+        ]
+    elif hb_at in ("width_bar_left", "flush_width_left"):
+        gap = float(hb.get("gap", 0.0))
+        hx1 = wl - gap
+        hx0 = hx1 - hb_tx
+        height_bar = [
+            (hx0, wy0),
+            (hx1, wy0),
+            (hx1, wy1),
+            (hx0, wy1),
+        ]
     else:
-        bar_long = float(ll)
-    b0 = (xc, yc - bar_short / 2.0)
-    b1 = (xc, yc + bar_short / 2.0)
-    b2 = (b1[0] + bar_long * ux, b1[1] + bar_long * uy)
-    b3 = (b0[0] + bar_long * ux, b0[1] + bar_long * uy)
-    ht = float(LID["height_bar"]["thickness"])
-    hl = float(LID["height_bar"]["length"])
-    height_bar = [
-        (xc - hl / 2.0, y_mouth - ht / 2.0),
-        (xc + hl / 2.0, y_mouth - ht / 2.0),
-        (xc + hl / 2.0, y_mouth + ht / 2.0),
-        (xc - hl / 2.0, y_mouth + ht / 2.0),
-    ]
+        # legacy: horizontal blade at narrow mouth
+        ht = float(hb.get("thickness", 10.0))
+        hl = float(hb.get("length", 32.0))
+        hx = 0.5 * (x_inner + x_outer)
+        height_bar = [
+            (hx - hl / 2.0, y_mouth - ht / 2.0),
+            (hx + hl / 2.0, y_mouth - ht / 2.0),
+            (hx + hl / 2.0, y_mouth + ht / 2.0),
+            (hx - hl / 2.0, y_mouth + ht / 2.0),
+        ]
+
     return {
         "w_in": w_in,
         "w_out": w_out,
@@ -586,7 +799,7 @@ def lid_plan_xy() -> dict:
         "e_in": e_in,
         "e_out": e_out,
         "box": box,
-        "width_bar": [b0, b1, b2, b3],
+        "width_bar": width_bar,
         "height_bar": height_bar,
         "box_xl": box_xl,
         "box_xr": box_xr,
@@ -601,6 +814,17 @@ def lid_plan_xy() -> dict:
         "x_outer": x_outer,
         "square_side": 2.0 * half,
         "square_half": half,
+        "width_bar_center": (
+            0.5 * (width_bar[0][0] + width_bar[2][0]),
+            0.5 * (width_bar[0][1] + width_bar[2][1]),
+        ),
+        "height_bar_center": (
+            0.5 * (height_bar[0][0] + height_bar[2][0]),
+            0.5 * (height_bar[0][1] + height_bar[2][1]),
+        ),
+        "height_drive_xy": height_drive_xy(
+            height_bar, LID.get("height_bar", {}).get("drive", {})
+        ),
     }
 
 

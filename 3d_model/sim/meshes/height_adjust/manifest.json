@@ -1,0 +1,183 @@
+{
+  "unit": "mm",
+  "source": "height_adjust_z.build_height_adjust_z_parts",
+  "mechanism": "rack_pinion",
+  "kinematics": {
+    "pinion_axis": "Y",
+    "rack_travel": "Z",
+    "note": "spur: rotation axis perpendicular to translation",
+    "axis_pivot_mm": [
+      0.0,
+      0.0,
+      17.0
+    ],
+    "axis_pivot_m": [
+      0.0,
+      0.0,
+      0.017
+    ]
+  },
+  "rack": {
+    "stroke": 20.0,
+    "module": 2.0,
+    "pinion_teeth": 12,
+    "pitch_d": 24.0,
+    "travel_per_turn": 75.39822368615503,
+    "face_w": 10.0,
+    "tooth_clear": 0.3
+  },
+  "rail_stroke_mm": 20.0,
+  "parts": {
+    "HA_Bearing_L": {
+      "file": "HA_Bearing_L.stl",
+      "volume_mm3": 2803.529896167205,
+      "bbox_mm": {
+        "xmin": -14.0,
+        "xmax": 14.0,
+        "ymin": -12.0,
+        "ymax": -5.999999999999999,
+        "zmin": 3.0,
+        "zmax": 28.0
+      }
+    },
+    "HA_Bearing_R": {
+      "file": "HA_Bearing_R.stl",
+      "volume_mm3": 2803.529896167205,
+      "bbox_mm": {
+        "xmin": -14.0,
+        "xmax": 14.0,
+        "ymin": 5.999999999999999,
+        "ymax": 12.0,
+        "zmin": 3.0,
+        "zmax": 28.0
+      }
+    },
+    "HA_Bottom_Stop": {
+      "file": "HA_Bottom_Stop.stl",
+      "volume_mm3": 9288.0,
+      "bbox_mm": {
+        "xmin": -44.5,
+        "xmax": 20.0,
+        "ymin": -24.0,
+        "ymax": 24.0,
+        "zmin": -4.0,
+        "zmax": -1.0
+      }
+    },
+    "HA_Collar": {
+      "file": "HA_Collar.stl",
+      "volume_mm3": 452.38934211693015,
+      "bbox_mm": {
+        "xmin": -6.0,
+        "xmax": 6.0,
+        "ymin": -14.2,
+        "ymax": -3.799999999999999,
+        "zmin": 11.001864907995103,
+        "zmax": 22.9981350920049
+      }
+    },
+    "HA_Follower": {
+      "file": "HA_Follower.stl",
+      "volume_mm3": 28945.1985934182,
+      "bbox_mm": {
+        "xmin": -29.5,
+        "xmax": -10.3,
+        "ymin": -20.0,
+        "ymax": 20.0,
+        "zmin": -16.283185307179586,
+        "zmax": 56.0
+      }
+    },
+    "HA_Friction_Washer": {
+      "file": "HA_Friction_Washer.stl",
+      "volume_mm3": 398.1026210628987,
+      "bbox_mm": {
+        "xmin": -9.0,
+        "xmax": 9.0,
+        "ymin": 12.199999999999998,
+        "ymax": 14.2,
+        "zmin": 8.002797361992652,
+        "zmax": 25.997202638007348
+      }
+    },
+    "HA_Guide_Rail_N": {
+      "file": "HA_Guide_Rail_N.stl",
+      "volume_mm3": 5744.94,
+      "bbox_mm": {
+        "xmin": -32.0,
+        "xmax": -17.0,
+        "ymin": 17.775000000000002,
+        "ymax": 24.35,
+        "zmin": -4.0,
+        "zmax": 84.0
+      }
+    },
+    "HA_Guide_Rail_S": {
+      "file": "HA_Guide_Rail_S.stl",
+      "volume_mm3": 5744.94,
+      "bbox_mm": {
+        "xmin": -32.0,
+        "xmax": -17.0,
+        "ymin": -24.35,
+        "ymax": -17.775,
+        "zmin": -4.0,
+        "zmax": 84.0
+      }
+    },
+    "HA_Knob": {
+      "file": "HA_Knob.stl",
+      "volume_mm3": 5215.67036084877,
+      "bbox_mm": {
+        "xmin": -14.0,
+        "xmax": 14.0,
+        "ymin": 13.399999999999999,
+        "ymax": 28.400000000000002,
+        "zmin": 3.004351451988571,
+        "zmax": 30.99564854801143
+      }
+    },
+    "HA_Pinion": {
+      "file": "HA_Pinion.stl",
+      "volume_mm3": 3407.093301988465,
+      "bbox_mm": {
+        "xmin": -14.0,
+        "xmax": 14.0,
+        "ymin": -5.000000000000002,
+        "ymax": 5.000000000000002,
+        "zmin": 3.0,
+        "zmax": 31.0
+      }
+    },
+    "HA_Shaft": {
+      "file": "HA_Shaft.stl",
+      "volume_mm3": 1636.2463352971456,
+      "bbox_mm": {
+        "xmin": -4.0,
+        "xmax": 4.0,
+        "ymin": -14.0,
+        "ymax": 21.4,
+        "zmin": 13.0,
+        "zmax": 21.000000000000004
+      }
+    }
+  },
+  "roles": {
+    "actuator": [
+      "HA_Pinion",
+      "HA_Shaft",
+      "HA_Knob",
+      "HA_Collar"
+    ],
+    "follower": [
+      "HA_Follower"
+    ],
+    "static": [
+      "HA_Guide_Rail_N",
+      "HA_Guide_Rail_S",
+      "HA_Bearing_L",
+      "HA_Bearing_R",
+      "HA_Bottom_Stop",
+      "HA_Friction_Washer"
+    ]
+  }
+}

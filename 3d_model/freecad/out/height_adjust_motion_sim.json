@@ -1,0 +1,82 @@
+{
+  "settings": {
+    "pitch_mm": 10.0,
+    "screw_thread_len_mm": 50.0,
+    "stroke_mm": 20.0,
+    "nut_engage_mm": 16.8,
+    "major_d": 8.0,
+    "depth": 1.5,
+    "male_clear_r": 0.0,
+    "female_clear_r": 0.4
+  },
+  "kinematics": {
+    "usable_travel_mm": 26.7,
+    "usable_partial_mm": 30.06,
+    "z_th0": -8.0,
+    "z_th1": 42.0,
+    "tap_len": 16.8,
+    "z_tap_hi_at_stroke": 35.3,
+    "required_L_mm": 43.3,
+    "turns_for_full_stroke": 2.0,
+    "travel_per_2_turns_mm": 20.0
+  },
+  "match": {
+    "male_pitch": 10.0,
+    "female_pitch": 10.0,
+    "male_major": 8.0,
+    "female_cutter_major": 8.8,
+    "male_sample_r_mean": null,
+    "female_sample_r_mean": 7.7181803811008,
+    "pitch_uniform": true,
+    "build_uses_constant_pitch": true
+  },
+  "sim": {
+    "steps": [
+      {
+        "turns": 0.0,
+        "dz_mm": 0.0,
+        "tap_overlap_mm": 16.8,
+        "bore_open": true,
+        "screw_at_mid": true,
+        "ok": true
+      },
+      {
+        "turns": 0.5,
+        "dz_mm": 5.0,
+        "tap_overlap_mm": 16.8,
+        "bore_open": true,
+        "screw_at_mid": true,
+        "ok": true
+      },
+      {
+        "turns": 1.0,
+        "dz_mm": 10.0,
+        "tap_overlap_mm": 16.8,
+        "bore_open": true,
+        "screw_at_mid": true,
+        "ok": true
+      },
+      {
+        "turns": 1.5,
+        "dz_mm": 15.0,
+        "tap_overlap_mm": 16.8,
+        "bore_open": true,
+        "screw_at_mid": true,
+        "ok": true
+      },
+      {
+        "turns": 2.0,
+        "dz_mm": 20.0,
+        "tap_overlap_mm": 16.799999999999997,
+        "bore_open": true,
+        "screw_at_mid": true,
+        "ok": true
+      }
+    ],
+    "ok": true,
+    "midstroke_intersect_ratio": 0.0
+  },
+  "pass": true,
+  "errors": [],
+  "warnings": []
+}

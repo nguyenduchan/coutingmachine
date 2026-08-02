@@ -1,0 +1,31 @@
+---
+description: Spur rack–pinion teeth must be identical and share one gear math
+globs:
+  - 3d_model/freecad/height_adjust*.py
+  - 3d_model/freecad/out/rack_pinion*.py
+  - 3d_model/sim/height_adjust*.py
+alwaysApply: true
+---
+
+# Rack–pinion: identical teeth + shared math
+
+## Mandatory
+1. **One math** for pinion and rack: `spur_gear_math(m, z, α, tooth_clear)` → same `p, s, e, ha, hf`.
+2. **Pinion teeth identical**: build **one** tooth solid, then **polar copy** about axis Z in local pinion frame (`360°/z`). No per-tooth random/noise offsets. No separate “hand-tuned” teeth.
+3. **Rack teeth**: same `s, e, α, ha, hf` as pinion; one tooth template translated by pitch `p` along Z.
+5. **Mesh phase**: rack SPACE centered on pinion mesh height; pinion tooth on −X seats in the gap — never tooth-on-tooth at rest.
+6. **Center distance**: `x_pitch = cx − pitch_r − center_backlash`. Build must fail if `verify_rack_pinion_mesh` overlap is too large.
+7. Build must fail if `verify_pinion_teeth_uniform()` fails (volume of each tooth sector must match within tolerance).
+8. Do **not** invent different tooth thickness on pinion vs rack “for clearance” beyond the single shared `tooth_clear` / `center_backlash` in settings.
+
+## Verify
+```
+python 3d_model/freecad/out/verify_rack_pinion_teeth.py
+```
+Expect: `uniform_teeth == PASS`, `shared_math == PASS`, `pitch_match == PASS`.
+
+## Forbidden
+- Per-index tooth width/scale jitter
+- Different module or pressure angle on rack vs pinion
+- Replacing polar copy with N independently sketched unequal polygons
+---

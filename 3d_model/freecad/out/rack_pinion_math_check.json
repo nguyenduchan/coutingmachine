@@ -1,0 +1,72 @@
+{
+  "standard": "ISO/AGMA full-depth spur + rack, pressure angle like SolidWorks Toolbox",
+  "inputs": {
+    "module_mm": 2.0,
+    "pinion_teeth": 18,
+    "pressure_angle_deg": 20.0,
+    "tooth_clear_mm": 0.4,
+    "center_backlash_mm": 0.25,
+    "stroke_mm": 20.0
+  },
+  "geometry": {
+    "circular_pitch_p_mm": 6.283185307179586,
+    "pitch_diameter_d_mm": 36.0,
+    "pitch_radius_r_mm": 18.0,
+    "tip_diameter_da_mm": 40.0,
+    "root_diameter_df_mm": 31.0,
+    "base_diameter_db_mm": 33.828934348292705,
+    "addendum_ha_mm": 2.0,
+    "dedendum_hf_mm": 2.5,
+    "bottom_clearance_mm": 0.5,
+    "pitch_line_offset_from_axis_mm": 18.25,
+    "tooth_thickness_std_mm": 3.141592653589793,
+    "tooth_thickness_pinion_mm": 2.941592653589793,
+    "tooth_thickness_rack_mm": 2.941592653589793,
+    "space_pinion_mm": 3.3415926535897933,
+    "space_rack_mm": 3.3415926535897933,
+    "circumferential_clearance_mm": 0.40000000000000036,
+    "working_depth_mm": 4.0,
+    "radial_engagement_mm": 3.75,
+    "tip_overlap_radial_mm": 3.3500000000000014,
+    "z_min_no_undercut": 17.09726434082606
+  },
+  "kinematics_no_slip": {
+    "law": "s = r * theta (pitch circle rolls on pitch line)",
+    "travel_per_revolution_mm": 113.09733552923255,
+    "travel_per_tooth_mm": 6.283185307179586,
+    "angle_per_tooth_deg": 20.0,
+    "identity_pi_m_z_equals_z_times_p": true
+  },
+  "contact_ratio": {
+    "epsilon_alpha_standard_CD": 1.755287363938037,
+    "epsilon_alpha_with_center_backlash": 1.7408054484575919,
+    "formula": "eps = (sqrt(ra^2-rb^2) + ha/sin(a) - r*sin(a) - CD_extra*sin(a)) / (pi*m*cos(a))",
+    "requirement": "eps >= 1 for continuous contact (next tooth engages before previous leaves)"
+  },
+  "successive_teeth": {
+    "pinion_step_deg": 20.0,
+    "rack_step_mm": 6.283185307179586,
+    "relation": "rotate 360/z deg => rack advances exactly p = pi*m (no slip)",
+    "ok": true
+  },
+  "turns_for_stroke": 0.17683882565766149,
+  "checks": {
+    "same_circular_pitch_pinion_and_rack": true,
+    "no_slip_pure_rolling": true,
+    "contact_ratio_std_ge_1": true,
+    "contact_ratio_with_CD_ge_1": true,
+    "pinion_tooth_fits_rack_space": true,
+    "rack_tooth_fits_pinion_space": true,
+    "circumferential_clearance_positive": true,
+    "radial_engagement_positive": true,
+    "next_tooth_meshes_without_jam": true,
+    "undercut_warning_z_below_min": false
+  },
+  "overall_pass": true,
+  "notes": [
+    "Pure rolling (no slip) is defined on the pitch circle / pitch line, not the tip.",
+    "CAD teeth are approximate (not true involute); math assumes standard involute proportions.",
+    "z=18 >= z_min\u224817 at 20 deg => no undercut (SolidWorks/AGMA).",
+    "CAD uses involute pinion + straight \u03b1 rack flanks; tooth_clear/CD match math."
+  ]
+}

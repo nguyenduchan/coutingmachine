@@ -1,0 +1,800 @@
+{
+  "mechanism": "rack_pinion",
+  "kinematics": {
+    "pinion_axis": "Y",
+    "rack_travel": "Z",
+    "note": "spur: rotation axis perpendicular to translation",
+    "axis_pivot_mm": [
+      0.0,
+      0.0,
+      17.0
+    ],
+    "axis_pivot_m": [
+      0.0,
+      0.0,
+      0.017
+    ]
+  },
+  "meshes": "C:\\workspace\\embedded\\CountingMachine\\3d_model\\sim\\meshes\\height_adjust",
+  "manifest": "rack_pinion",
+  "force_sources": [
+    "HA_Pinion_assembly_kinematic_about_Y"
+  ],
+  "axis_pivot_m": [
+    0.0,
+    0.0,
+    0.017
+  ],
+  "measured_Z_range_mm": 32.0,
+  "cad_stroke_mm": 20.0,
+  "max_contact_N": 7046.009664485286,
+  "illegal_force_while_separated": 0,
+  "ghost_moves_without_contact": 0,
+  "free_fall_delta_z_m": 0.19701058744319583,
+  "pass": true,
+  "checks": {
+    "travel_ok": true,
+    "fall_ok": true,
+    "illegal_ok": true,
+    "ghost_ok": true,
+    "contact_ok": true
+  },
+  "samples": [
+    {
+      "t": 0.0,
+      "turns": 0.0,
+      "follower_z_m": -0.002,
+      "dz_mm": 0.0,
+      "contact_N": 2746.2366244045534,
+      "n_contacts": 12,
+      "in_contact": true
+    },
+    {
+      "t": 0.12,
+      "turns": 0.029999999999999995,
+      "follower_z_m": -0.002,
+      "dz_mm": 0.0,
+      "contact_N": 792.0995366917889,
+      "n_contacts": 12,
+      "in_contact": true
+    },
+    {
+      "t": 0.24,
+      "turns": 0.05999999999999999,
+      "follower_z_m": 4.0528376209351454e-05,
+      "dz_mm": 2.040528376209352,
+      "contact_N": 1250.3262651307757,
+      "n_contacts": 14,
+      "in_contact": true
+    },
+    {
+      "t": 0.36,
+      "turns": 0.08999999999999998,
+      "follower_z_m": 0.0030254081281659885,
+      "dz_mm": 5.025408128165989,
+      "contact_N": 2626.3346817086526,
+      "n_contacts": 22,
+      "in_contact": true
+    },
+    {
+      "t": 0.48,
+      "turns": 0.11999999999999998,
+      "follower_z_m": 0.004392150196861669,
+      "dz_mm": 6.392150196861669,
+      "contact_N": 2794.8554971114554,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 0.6,
+      "turns": 0.14999999999999997,
+      "follower_z_m": 0.005274350561052638,
+      "dz_mm": 7.274350561052638,
+      "contact_N": 2534.235667899376,
+      "n_contacts": 18,
+      "in_contact": true
+    },
+    {
+      "t": 0.72,
+      "turns": 0.17999999999999997,
+      "follower_z_m": 0.008889812952910409,
+      "dz_mm": 10.88981295291041,
+      "contact_N": 2986.608966159049,
+      "n_contacts": 20,
+      "in_contact": true
+    },
+    {
+      "t": 0.84,
+      "turns": 0.21,
+      "follower_z_m": 0.011264124978716953,
+      "dz_mm": 13.264124978716954,
+      "contact_N": 2851.342601955737,
+      "n_contacts": 18,
+      "in_contact": true
+    },
+    {
+      "t": 0.96,
+      "turns": 0.23999999999999996,
+      "follower_z_m": 0.010430618471693371,
+      "dz_mm": 12.430618471693371,
+      "contact_N": 2653.599322765687,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 1.08,
+      "turns": 0.27,
+      "follower_z_m": 0.010398469910084107,
+      "dz_mm": 12.398469910084108,
+      "contact_N": 1749.1086517980712,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 1.2,
+      "turns": 0.29999999999999993,
+      "follower_z_m": 0.010311946545154485,
+      "dz_mm": 12.311946545154484,
+      "contact_N": 3645.9847208989113,
+      "n_contacts": 14,
+      "in_contact": true
+    },
+    {
+      "t": 1.32,
+      "turns": 0.32999999999999996,
+      "follower_z_m": 0.010366727942816307,
+      "dz_mm": 12.366727942816306,
+      "contact_N": 7046.009664485286,
+      "n_contacts": 18,
+      "in_contact": true
+    },
+    {
+      "t": 1.44,
+      "turns": 0.35999999999999993,
+      "follower_z_m": 0.010505104992565361,
+      "dz_mm": 12.50510499256536,
+      "contact_N": 1098.8066110723007,
+      "n_contacts": 22,
+      "in_contact": true
+    },
+    {
+      "t": 1.56,
+      "turns": 0.39,
+      "follower_z_m": 0.010430023870009601,
+      "dz_mm": 12.4300238700096,
+      "contact_N": 1102.9758158404218,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 1.68,
+      "turns": 0.42,
+      "follower_z_m": 0.010438671655717088,
+      "dz_mm": 12.438671655717089,
+      "contact_N": 1832.3726331929824,
+      "n_contacts": 18,
+      "in_contact": true
+    },
+    {
+      "t": 1.8,
+      "turns": 0.44999999999999996,
+      "follower_z_m": 0.01050995785702048,
+      "dz_mm": 12.50995785702048,
+      "contact_N": 1504.7483957347613,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 1.92,
+      "turns": 0.4799999999999999,
+      "follower_z_m": 0.01050351464450229,
+      "dz_mm": 12.50351464450229,
+      "contact_N": 909.4908418264673,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 2.04,
+      "turns": 0.5099999999999999,
+      "follower_z_m": 0.010497197042012787,
+      "dz_mm": 12.497197042012786,
+      "contact_N": 1865.4494693414213,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 2.16,
+      "turns": 0.54,
+      "follower_z_m": 0.0105400996367638,
+      "dz_mm": 12.5400996367638,
+      "contact_N": 3760.130655912207,
+      "n_contacts": 18,
+      "in_contact": true
+    },
+    {
+      "t": 2.2800000000000002,
+      "turns": 0.57,
+      "follower_z_m": 0.011462183134130093,
+      "dz_mm": 13.462183134130093,
+      "contact_N": 4515.035178331688,
+      "n_contacts": 20,
+      "in_contact": true
+    },
+    {
+      "t": 2.4,
+      "turns": 0.5999999999999999,
+      "follower_z_m": 0.010551352986906118,
+      "dz_mm": 12.551352986906117,
+      "contact_N": 1640.3668064371152,
+      "n_contacts": 18,
+      "in_contact": true
+    },
+    {
+      "t": 2.52,
+      "turns": 0.6299999999999999,
+      "follower_z_m": 0.010516535261240937,
+      "dz_mm": 12.516535261240938,
+      "contact_N": 1688.3117752283317,
+      "n_contacts": 18,
+      "in_contact": true
+    },
+    {
+      "t": 2.64,
+      "turns": 0.6599999999999999,
+      "follower_z_m": 0.01076893486171037,
+      "dz_mm": 12.76893486171037,
+      "contact_N": 2757.504625519843,
+      "n_contacts": 18,
+      "in_contact": true
+    },
+    {
+      "t": 2.7600000000000002,
+      "turns": 0.69,
+      "follower_z_m": 0.010584528761049816,
+      "dz_mm": 12.584528761049816,
+      "contact_N": 2514.7496055154256,
+      "n_contacts": 22,
+      "in_contact": true
+    },
+    {
+      "t": 2.88,
+      "turns": 0.7199999999999999,
+      "follower_z_m": 0.01057899249786008,
+      "dz_mm": 12.57899249786008,
+      "contact_N": 754.1443217415464,
+      "n_contacts": 20,
+      "in_contact": true
+    },
+    {
+      "t": 3.0,
+      "turns": 0.7499999999999999,
+      "follower_z_m": 0.010567295930855177,
+      "dz_mm": 12.567295930855176,
+      "contact_N": 2936.5252915749456,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 3.12,
+      "turns": 0.78,
+      "follower_z_m": 0.010460209170927489,
+      "dz_mm": 12.460209170927488,
+      "contact_N": 421.9018109958293,
+      "n_contacts": 18,
+      "in_contact": true
+    },
+    {
+      "t": 3.24,
+      "turns": 0.8099999999999999,
+      "follower_z_m": 0.01053600930556476,
+      "dz_mm": 12.53600930556476,
+      "contact_N": 928.3314575576859,
+      "n_contacts": 18,
+      "in_contact": true
+    },
+    {
+      "t": 3.36,
+      "turns": 0.84,
+      "follower_z_m": 0.00998644816155079,
+      "dz_mm": 11.98644816155079,
+      "contact_N": 2912.4346870371955,
+      "n_contacts": 18,
+      "in_contact": true
+    },
+    {
+      "t": 3.48,
+      "turns": 0.8699999999999999,
+      "follower_z_m": 0.010484812146708095,
+      "dz_mm": 12.484812146708094,
+      "contact_N": 1623.6478406404601,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 3.6,
+      "turns": 0.8999999999999999,
+      "follower_z_m": 0.011653169987808708,
+      "dz_mm": 13.653169987808708,
+      "contact_N": 3772.771359843298,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 3.72,
+      "turns": 0.9299999999999999,
+      "follower_z_m": 0.015390987446945063,
+      "dz_mm": 17.39098744694506,
+      "contact_N": 541.5913849461389,
+      "n_contacts": 20,
+      "in_contact": true
+    },
+    {
+      "t": 3.84,
+      "turns": 0.9599999999999999,
+      "follower_z_m": 0.01734396660808646,
+      "dz_mm": 19.34396660808646,
+      "contact_N": 146.4207376500986,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 3.96,
+      "turns": 0.9899999999999999,
+      "follower_z_m": 0.019298170699658994,
+      "dz_mm": 21.298170699658996,
+      "contact_N": 83.27380463409658,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 4.08,
+      "turns": 1.0199999999999998,
+      "follower_z_m": 0.02165299160357111,
+      "dz_mm": 23.652991603571106,
+      "contact_N": 417.5913573321216,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 4.2,
+      "turns": 1.0499999999999998,
+      "follower_z_m": 0.024120363982594723,
+      "dz_mm": 26.12036398259472,
+      "contact_N": 1038.6475195612916,
+      "n_contacts": 17,
+      "in_contact": true
+    },
+    {
+      "t": 4.32,
+      "turns": 1.08,
+      "follower_z_m": 0.024115968920195383,
+      "dz_mm": 26.11596892019538,
+      "contact_N": 2033.5002154114702,
+      "n_contacts": 18,
+      "in_contact": true
+    },
+    {
+      "t": 4.44,
+      "turns": 1.1099999999999999,
+      "follower_z_m": 0.024749730871962427,
+      "dz_mm": 26.749730871962424,
+      "contact_N": 2084.808203206832,
+      "n_contacts": 18,
+      "in_contact": true
+    },
+    {
+      "t": 4.5600000000000005,
+      "turns": 1.14,
+      "follower_z_m": 0.0245222920341738,
+      "dz_mm": 26.522292034173798,
+      "contact_N": 899.1402094159367,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 4.68,
+      "turns": 1.1699999999999997,
+      "follower_z_m": 0.025984504867996496,
+      "dz_mm": 27.984504867996495,
+      "contact_N": 798.5866332819477,
+      "n_contacts": 18,
+      "in_contact": true
+    },
+    {
+      "t": 4.8,
+      "turns": 1.1999999999999997,
+      "follower_z_m": 0.027889348180121922,
+      "dz_mm": 29.88934818012192,
+      "contact_N": 334.38792789781985,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 4.92,
+      "turns": 1.2299999999999998,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 50.081504347649535,
+      "n_contacts": 14,
+      "in_contact": true
+    },
+    {
+      "t": 5.04,
+      "turns": 1.2599999999999998,
+      "follower_z_m": 0.027920172172894005,
+      "dz_mm": 29.920172172894006,
+      "contact_N": 333.85132584846235,
+      "n_contacts": 10,
+      "in_contact": true
+    },
+    {
+      "t": 5.16,
+      "turns": 1.2899999999999998,
+      "follower_z_m": 0.029514666136851702,
+      "dz_mm": 31.514666136851698,
+      "contact_N": 515.2955215249777,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 5.28,
+      "turns": 1.3199999999999998,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 752.0615185284123,
+      "n_contacts": 12,
+      "in_contact": true
+    },
+    {
+      "t": 5.4,
+      "turns": 1.35,
+      "follower_z_m": 0.02990189529870075,
+      "dz_mm": 31.90189529870075,
+      "contact_N": 645.6690158802271,
+      "n_contacts": 14,
+      "in_contact": true
+    },
+    {
+      "t": 5.5200000000000005,
+      "turns": 1.38,
+      "follower_z_m": 0.029948315143312917,
+      "dz_mm": 31.948315143312914,
+      "contact_N": 1023.1183749182422,
+      "n_contacts": 18,
+      "in_contact": true
+    },
+    {
+      "t": 5.64,
+      "turns": 1.4099999999999997,
+      "follower_z_m": 0.029958941700013512,
+      "dz_mm": 31.958941700013508,
+      "contact_N": 2398.3811532344175,
+      "n_contacts": 14,
+      "in_contact": true
+    },
+    {
+      "t": 5.76,
+      "turns": 1.4399999999999997,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 804.8670749802855,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 5.88,
+      "turns": 1.47,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 298.9678031224156,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 6.0,
+      "turns": 1.4999999999999998,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 2252.3885092150667,
+      "n_contacts": 12,
+      "in_contact": true
+    },
+    {
+      "t": 6.12,
+      "turns": 1.5299999999999998,
+      "follower_z_m": 0.029956730892470636,
+      "dz_mm": 31.956730892470635,
+      "contact_N": 1970.5068756229548,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 6.24,
+      "turns": 1.56,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 712.0176820767597,
+      "n_contacts": 14,
+      "in_contact": true
+    },
+    {
+      "t": 6.36,
+      "turns": 1.5899999999999999,
+      "follower_z_m": 0.029953593353371274,
+      "dz_mm": 31.95359335337127,
+      "contact_N": 4295.512110565421,
+      "n_contacts": 12,
+      "in_contact": true
+    },
+    {
+      "t": 6.48,
+      "turns": 1.6199999999999999,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 817.885097422582,
+      "n_contacts": 20,
+      "in_contact": true
+    },
+    {
+      "t": 6.6000000000000005,
+      "turns": 1.65,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 1349.0704165729867,
+      "n_contacts": 14,
+      "in_contact": true
+    },
+    {
+      "t": 6.72,
+      "turns": 1.68,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 891.9637189953512,
+      "n_contacts": 14,
+      "in_contact": true
+    },
+    {
+      "t": 6.84,
+      "turns": 1.7099999999999997,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 763.1620474599576,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 6.96,
+      "turns": 1.7399999999999998,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 67.3064926743593,
+      "n_contacts": 12,
+      "in_contact": true
+    },
+    {
+      "t": 7.08,
+      "turns": 1.7699999999999998,
+      "follower_z_m": 0.02971692554089968,
+      "dz_mm": 31.716925540899677,
+      "contact_N": 1994.9577689310295,
+      "n_contacts": 12,
+      "in_contact": true
+    },
+    {
+      "t": 7.2,
+      "turns": 1.7999999999999998,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 515.7681442970866,
+      "n_contacts": 10,
+      "in_contact": true
+    },
+    {
+      "t": 7.32,
+      "turns": 1.8299999999999998,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 1236.5902973716134,
+      "n_contacts": 12,
+      "in_contact": true
+    },
+    {
+      "t": 7.44,
+      "turns": 1.8599999999999999,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 992.9262860055991,
+      "n_contacts": 14,
+      "in_contact": true
+    },
+    {
+      "t": 7.5600000000000005,
+      "turns": 1.8899999999999997,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 1137.063160214888,
+      "n_contacts": 14,
+      "in_contact": true
+    },
+    {
+      "t": 7.68,
+      "turns": 1.9199999999999997,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 855.8249448775075,
+      "n_contacts": 12,
+      "in_contact": true
+    },
+    {
+      "t": 7.8,
+      "turns": 1.9499999999999997,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 804.2108006237506,
+      "n_contacts": 14,
+      "in_contact": true
+    },
+    {
+      "t": 7.92,
+      "turns": 1.9799999999999998,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 28.513203047666604,
+      "n_contacts": 14,
+      "in_contact": true
+    },
+    {
+      "t": 8.040000000000001,
+      "turns": 2.01,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 2020.9504693536396,
+      "n_contacts": 12,
+      "in_contact": true
+    },
+    {
+      "t": 8.16,
+      "turns": 2.0399999999999996,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 28.599963980203704,
+      "n_contacts": 12,
+      "in_contact": true
+    },
+    {
+      "t": 8.28,
+      "turns": 2.0699999999999994,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 793.1614795323912,
+      "n_contacts": 12,
+      "in_contact": true
+    },
+    {
+      "t": 8.4,
+      "turns": 2.0999999999999996,
+      "follower_z_m": 0.028859684873019997,
+      "dz_mm": 30.859684873019994,
+      "contact_N": 744.1201667711432,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 8.52,
+      "turns": 2.1299999999999994,
+      "follower_z_m": 0.029891382251799135,
+      "dz_mm": 31.891382251799133,
+      "contact_N": 759.1101949057899,
+      "n_contacts": 14,
+      "in_contact": true
+    },
+    {
+      "t": 8.64,
+      "turns": 2.16,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 2688.0304481053677,
+      "n_contacts": 14,
+      "in_contact": true
+    },
+    {
+      "t": 8.76,
+      "turns": 2.19,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 886.9974185275496,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 8.88,
+      "turns": 2.2199999999999998,
+      "follower_z_m": 0.029914491863289015,
+      "dz_mm": 31.91449186328901,
+      "contact_N": 123.5519843763861,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 9.0,
+      "turns": 2.2499999999999996,
+      "follower_z_m": 0.029421443499986023,
+      "dz_mm": 31.421443499986026,
+      "contact_N": 1921.8295294252684,
+      "n_contacts": 12,
+      "in_contact": true
+    },
+    {
+      "t": 9.120000000000001,
+      "turns": 2.28,
+      "follower_z_m": 0.028852036480342267,
+      "dz_mm": 30.852036480342264,
+      "contact_N": 172.555271847661,
+      "n_contacts": 14,
+      "in_contact": true
+    },
+    {
+      "t": 9.24,
+      "turns": 2.3099999999999996,
+      "follower_z_m": 0.029758834705049017,
+      "dz_mm": 31.75883470504902,
+      "contact_N": 799.0163245729213,
+      "n_contacts": 14,
+      "in_contact": true
+    },
+    {
+      "t": 9.36,
+      "turns": 2.3399999999999994,
+      "follower_z_m": 0.029977310618436916,
+      "dz_mm": 31.977310618436913,
+      "contact_N": 4251.85439253364,
+      "n_contacts": 12,
+      "in_contact": true
+    },
+    {
+      "t": 9.48,
+      "turns": 2.37,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 906.6373546774489,
+      "n_contacts": 20,
+      "in_contact": true
+    },
+    {
+      "t": 9.6,
+      "turns": 2.3999999999999995,
+      "follower_z_m": 0.029886514334069008,
+      "dz_mm": 31.886514334069005,
+      "contact_N": 704.920606502934,
+      "n_contacts": 14,
+      "in_contact": true
+    },
+    {
+      "t": 9.72,
+      "turns": 2.4299999999999997,
+      "follower_z_m": 0.02981332978782758,
+      "dz_mm": 31.81332978782758,
+      "contact_N": 857.576171727822,
+      "n_contacts": 14,
+      "in_contact": true
+    },
+    {
+      "t": 9.84,
+      "turns": 2.4599999999999995,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 731.3267741662817,
+      "n_contacts": 16,
+      "in_contact": true
+    },
+    {
+      "t": 9.96,
+      "turns": 2.4899999999999998,
+      "follower_z_m": 0.03,
+      "dz_mm": 32.0,
+      "contact_N": 406.9257857944913,
+      "n_contacts": 12,
+      "in_contact": true
+    }
+  ]
+}

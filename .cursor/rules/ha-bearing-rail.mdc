@@ -1,0 +1,69 @@
+---
+description: HA_Bearing_Rail — one solid, installable ±X M3 bolt+nut, stiff web
+globs:
+  - 3d_model/freecad/height_adjust*.py
+alwaysApply: false
+---
+
+# HA_Bearing_Rail constraints
+
+When editing `HA_Bearing_Rail_S` / `N`, Cap, web, bridge, or −X flatten, **all** must hold:
+
+## Structural
+
+1. **One solid (C1)** — lower bearing + guide rail + stiff web + tongue fused.
+   Build must report `solids=1`. No air gap / “rời nhau”.
+2. **Tongue fuse (C2)** — guide tongue **overlaps** the rail inner face (no
+   `rail_clear` gap between tongue and rail). Clearance is only vs follower.
+3. **Web band (C3)** — web in **rail Y band** (`link_t = rail_t`); X stops
+   **before journal** at `cx` (no saddle fill / shaft clash). Still fuse into
+   bearing foot. Do **not** run web through the shaft axis.
+
+## Clamp / fasteners (must be *installable*)
+
+4. **±X M3 holes (C4)** — holes on **±X** of pinion (axis // Y at `cx`),
+   matching Cap via shared `_m3_clamp_x`. **−X hole stays on the outer ear**
+   (clear of Cap main-block top / CB must not drill the bearing roof).
+   Do not pull −X toward the shaft into the Cap top face.
+5. **Split at `z_pin` (C5)** — bolt // Z: Cap = upper + through hole + head CB;
+   Rail = lower + nut pocket. Rail clamp material ≤ `z_pin`.
+   **No solid overlap:** after build, cut `HA_Bearing_Rail_*` by matching
+   `HA_Bearing_Cap_*` so web/flange/ear do not intersect the Cap.
+6. **−X ear visible (C6)** — clear web/flange from `rail_x0` up to the **ear
+   outer face** (`ex − ½·BOLT_EAR`) so the left ear is reachable like the right.
+   Do **not** cut the window through to the hole axis (that destroys the round
+   bore and leaves an open slot).
+7. **Nut install (C7)** — nut pocket + under-ear path from −X; AF must fit.
+8. **Fuse then re-cut (C8)** — re-cut M3 / nut / window after fuse and after
+   −X flatten.
+9. **Hardware (C9)** — M3×16 ISO hex + M3 nut; clear Ø3.6; CB Ø6.5×2.2;
+   nut pocket AF 6.0×2.8.
+10. **Journal (C10)** — bush bore on saddle + cap (`j_od + 0.35`).
+11. **Planar −X + window (C11)** — −X flush at `rail_x0` except C6 window
+    (window stops at ear face, not at hole axis).
+12. **Cap bolt from +Z (C12)** — M3 clearance + CB through **full cap height**
+    to the top face (no closed cavity under bearing “roof”).
+13. **Bridge service windows (C13)** — `HA_Rail_Bridge` must not wall off −X
+    clamps. Cut openings at each bearing Y / clamp Z.
+14. **Full round bore both sides (C14)** — −X and +X M3 holes must match:
+    clearance cylinder through a **complete ear pad** (closed ring of material
+    around Ø3.6). Left must **not** be a radial slot open to −X.
+15. **Equal depth + under space (C15)** — on `HA_Bearing_Rail_*` and
+    `HA_Bearing_Cap_*`, left and right hole depths must match (|Δ| ≤ 0.35 mm).
+    Rail: empty cavity Ø≈11 × `M3_RAIL_UNDER` (8 mm) **under** each hole for
+    nut + tool — same both sides. Cap: through to top + CB, no khuyết ear.
+
+## Verify every rebuild (FAIL if any false)
+
+- Rail S/N: `solids=1`
+- `HA_M3_verify Rail_S` and `Cap_S` → PASS (equal depth, ring_L/R, under)
+- Cap: void on hole axis from `z_pin` to `z_cap_top`
+- Bridge: void at (−X clamp Y, ear Z) through bridge thickness
+
+## Forbidden
+
+- Window/tunnel with `x1 ≥ ex` that cuts the ear into an open slot (breaks C14)
+- Shipping `solids>1` to expose a hole
+- Full-height bridge with **no** C13 windows
+- Cap hole only through short ear (closed cavity)
+- Filling journal with web / moving JGB37 motor mount

@@ -1,0 +1,6 @@
+FAIL
+
+Errors:
+- Traveling_Nut thread probe weak solid=0 empty=24 r=3.90 (need both)
+
+components: HA_Lead_Screw, HA_Collar, HA_Knob, HA_Bearing_Block, HA_Traveling_Nut, HA_Guide_Rail_S, HA_Guide_Rail_N, HA_Bottom_Stop, HA_Scale_00, HA_Scale_01, HA_Scale_02, HA_Scale_03, HA_Scale_04, HA_Scale_05, HA_Scale_06, HA_Scale_07, HA_Scale_08, HA_Scale_09, HA_Scale_10, HA_Scale_11, HA_Scale_12, HA_Scale_13, HA_Scale_14, HA_Scale_15, HA_Scale_16, HA_Scale_17, HA_Scale_18, HA_Scale_19, HA_Scale_20, HA_Demo_Wall_U

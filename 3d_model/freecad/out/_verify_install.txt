@@ -1,0 +1,31 @@
+﻿HA_Z_layout: rail_len=175.9 follower=88.0 (=┬╜ rail) z_pin=88.0 (centered) stroke=20.0
+HA_shaft->knob: clear_N=20.0 y_knob=38.9 seat=8.0 end=46.9 (len=67.7) blind
+HA_plane_S: y=-18.850 | HA_plane_N: y=18.850 (bearing outer = rail outer)
+HA_Pinion tooth_uniform: PASS ΓÇö max_rel_dev=0.0000 mean_vol=184.55
+HA_Pinion_Shaft: fused print | tip M3+flat len=6.0 | m=2.0 z=18
+HA_mesh: x_pitch=-18.50 pitch_r=18.00 bl=0.50 tip_to_rack_root=1.00
+HA_fastener: M3x16 ISO hex bolt + M3 hex nut (AF 5.5) | clear=├ÿ3.6 | clamp=┬▒X beside shaft
+HA_Knob: blind seat=8.0 mm | outer wallΓëê6.0 | no through-shaft
+HA_mesh_collision: PASS ΓÇö overlap=0.00 mm┬│ (max 8.00)
+HA_mesh_conjugate: PASS ΓÇö worst_overlap=0.00 mm┬│ | clear=0.55 bl=0.50 p=6.2832
+HA_gear_math: m=2.0 z=18 ╬▒=20 s=2.867 e=3.417 tip_root_clr=1.00
+HA_Follower: slide+teeth | len=88.0 (=┬╜ rail 175.9) z[44.0,131.9]
+HA_stiffen: bar_x=8.0 rail_wall=4.5 bearing_t=8.5 slot=3.6x3.0 shaft_mid_od=10.8 (kinematics unchanged)
+HA_Bearing_Rail S/N: len=175.9 z[0.0,175.9] pinion_mid=88.0
+HA_web: X[-33.5,-6.2] t=6.5 (stops before journal)
+HA_rail_thick: wall=4.5 rail_t=6.5 bearing_t=8.5 foot_h=5.5
+HA_Bearing_Rail y0=-18.9: solids=1 (want 1) | +/-X M3 + C6 window
+HA_Bearing_Rail y0=10.4: solids=1 (want 1) | +/-X M3 + C6 window
+HA_M3_-X window @ x=-9.0 solids=1 channel_clear=yes
+HA_M3_-X window @ x=-9.0 solids=1 channel_clear=yes
+HA_Bearing_Rail: C1 one-solid + C4 +/-X M3 + C6 -X window
+HA_M3_split: Cap=through+CB@top | Rail=lower+nut @ z_pin=87.96 ex=[-9.0,15.0]
+HA_Rail_Bridge: t=5.0 Y-span=37.7 H=175.9 @ x=-36.0 | M3 service windows solids=1
+Height_Adjust_Z involute | z=18 alpha=20 | stroke=20 | 0.18 turn (113 mm/turn)
+HA_active_parts: HA_Pinion_Shaft, HA_Friction_Washer, HA_Knob, HA_Follower, HA_Bearing_Rail_S, HA_Bearing_Rail_N, HA_Bearing_Cap_S, HA_Bearing_Cap_N, HA_Rail_Bridge
+VERIFY_M3_LEFT: PASS
+cap ZMax=98.96 bridge solids=1
+FreeCAD 1.1.3, Libs: 1.1.3R20260725 (Git shallow)
+(C) 2001-2026 FreeCAD contributors
+FreeCAD is free and open-source software licensed under the terms of LGPL2+ license.
+

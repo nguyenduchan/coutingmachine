@@ -1,0 +1,12 @@
+METHOD: exact FreeCAD STL visuals + tooth proxy contact in PyBullet
+KINEMATICS: pinion rotates about Y; rack translates Z (spur)
+ONE actuator = HA_Pinion(+shaft/knob) kinematic | HA_Follower(+rack) dynamic
+Drive force = pinion/rack CONTACT only; prismatic = ideal rail bearing
+mesh_dir=C:\workspace\embedded\CountingMachine\3d_model\sim\meshes\height_adjust
+axis_pivot_m=[0.0, 0.0, 0.017]
+measured_Z_range_mm=32.00 (CAD stroke=20.0)
+max_contact_N=7046.010
+illegal_force_while_separated=0
+ghost_moves_without_contact=0
+free_fall_delta_z_m=0.1970
+pass=True

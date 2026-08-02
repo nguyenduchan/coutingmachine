@@ -1,0 +1,32 @@
+---
+description: Always verify contact collisions in physics sims; fix violations
+alwaysApply: true
+---
+
+# Physics sims: always check collisions
+
+Whenever you **run or change** a PyBullet / physics sim in this repo:
+
+## Required laws
+1. **One drive actuator** — only the motor/knob/cam assembly is kinematic. Followers are **dynamic**.
+2. **Contact-only force between bodies** — no invisible θ→Z / gear / patch that moves the follower without collision.
+3. **`illegal_force_while_separated == 0`**.
+4. **`ghost_moves_without_contact == 0`** — follower must not rise while cam↔pad gap is open.
+5. **Gravity on** — `g = -9.81`; `free_fall_delta_z_m > 0`.
+6. Write `3d_model/sim/out/*_metrics.json` with `pass` and the counters above.
+
+## Forbidden “fake physics”
+- Kinematic follower Z = f(θ)
+- Extra “drive patch” that lifts while the visible cam does not touch
+- `rail_project` that sets follower Z from a formula (XY lock only is OK)
+
+## If checks fail
+Fix CAD and/or sim until `pass: true`.
+
+## Height_Adjust (exact FreeCAD mesh — rack & pinion)
+```
+freecadcmd 3d_model/freecad/export_height_adjust_meshes.py
+python 3d_model/sim/height_adjust_pybullet.py [--gui]
+```
+Meshes must come from CAD export — do not substitute hand-built primitives.
+See `3d_model/sim/HEIGHT_ADJUST_SIM.md`.

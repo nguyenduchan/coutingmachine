@@ -15,8 +15,17 @@ from __future__ import annotations
 
 import math
 import re
+import sys
 import zipfile
 from pathlib import Path
+
+# Windows freecadcmd defaults to cp1252 — unicode in print() aborts the rebuild mid-model
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 
 import FreeCAD as App
 import Part
@@ -370,11 +379,26 @@ MOUNT_BRACE_W = 8.0
 
 
 def _keep_largest_solid(shape: Part.Shape) -> Part.Shape:
+    if shape is None or getattr(shape, "isNull", lambda: False)():
+        return shape
     solids = list(shape.Solids)
     if len(solids) <= 1:
         return shape
-    solids.sort(key=lambda s: s.Volume, reverse=True)
+    solids.sort(key=lambda s: abs(float(s.Volume)), reverse=True)
     return solids[0]
+
+
+def _safe_refine(shape: Part.Shape) -> Part.Shape:
+    """removeSplitter can throw Bnd_Box is void on helix fusions — keep raw solid."""
+    if shape is None or getattr(shape, "isNull", lambda: False)():
+        return shape
+    try:
+        out = shape.removeSplitter()
+        if out is None or out.isNull():
+            return shape
+        return out
+    except Exception:
+        return shape
 
 
 def mount_layout(face_z: float) -> dict:
@@ -492,7 +516,7 @@ def make_l_bracket_mount_core(face_z: float) -> Part.Shape:
     mono = apply_motor_face_holes(mono, face_z)
     print(
         "Mount face holes (=motor): "
-        + ", ".join("Ø%.1f@(%.2f,%.2f)" % (d, x, y) for x, y, d in motor_face_holes_world())
+        + ", ".join("D%.1f@(%.2f,%.2f)" % (d, x, y) for x, y, d in motor_face_holes_world())
     )
     return _keep_largest_solid(mono.removeSplitter())
 
@@ -514,9 +538,9 @@ def make_housing_with_mount(face_z: float) -> Part.Shape:
         # center of a through-hole is ~d/2 from wall
         if abs(dist - d / 2.0) > 0.15:
             ok = False
-            print("WARN hole i=%d Ø%.1f dist=%.3f expected~%.3f" % (i, d, dist, d / 2.0))
+            print("WARN hole i=%d D%.1f dist=%.3f expected~%.3f" % (i, d, dist, d / 2.0))
     print(
-        "Housing+mount ONE solid | motor holes verify=%s (PCD31 Ø3/Ø4, no lid vents)"
+        "Housing+mount ONE solid | motor holes verify=%s (PCD31 D3/D4, no lid vents)"
         % ("PASS" if ok else "FAIL")
     )
     return mono
@@ -685,7 +709,7 @@ def _cyl_along_xy(
 ) -> Part.Shape:
     """Cylinder starting at (x0,y0,z0), axis along unit (ux,uy) in XY."""
     c = Part.makeCylinder(radius, length)
-    c.rotate(App.Vector(0, 0, 0), App.Vector(0, 1, 0), 90)  # +Z → +X
+    c.rotate(App.Vector(0, 0, 0), App.Vector(0, 1, 0), 90)  # +Z -> +X
     ang = math.degrees(math.atan2(uy, ux))
     c.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), ang)
     c.translate(App.Vector(x0, y0, z0))
@@ -874,7 +898,7 @@ def _make_drive_box(
     oy: float,
 ) -> Part.Shape:
     """
-    Enclosure around pinion. Local box → rotate(ang) → translate(ox,oy).
+    Enclosure around pinion. Local box -> rotate(ang) -> translate(ox,oy).
     Shaft holes on bottom + top. motion_cuts open rack/guard tunnels.
     """
     sx, sy = shaft_xy
@@ -911,14 +935,14 @@ def make_lining_up_gap_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple
     Gap_Lining_Up: rack + pinion in enclosed drive box.
 
       Gap_Curve_Guard — curved Ø10cm barrier + socket for rack tongue
-      Gap_Rack_Rail — fixed T-slot; open outer end → rack removable
+      Gap_Rack_Rail — fixed T-slot; open outer end -> rack removable
       Gap_Rack — T-foot bar in rail
       Gap_Drive_Box — shell; dual shaft holes; grooves for rack+guard travel
       Gap_Pinion + shaft + knob — vertical axis, dual-bearing
 
     Geometry mates Exit_Guide_Tray in world via FCStd Placements.
     """
-    _pls, _vis, _ = load_state_from_fcstd(FCSTD)
+    _pls, _vis, _parts, _names = load_state_from_fcstd(FCSTD)
     tray_pl = _pls.get("Exit_Guide_Tray")
     gap_pl = _pls.get("Gap_Lining_Up")
     tpx = float(tray_pl.Base.x) if tray_pl is not None else 0.0
@@ -975,7 +999,7 @@ def make_lining_up_gap_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple
     rack, rack_len = _make_rack(
         module, rack_n, rack_w, rack_h, stem_w, stem_h, flange_w, flange_h
     )
-    # place rack: local body Y [0,w] → center on ray by -w/2
+    # place rack: local body Y [0,w] -> center on ray by -w/2
     def _place_on_ray(shape: Part.Shape, r0: float) -> Part.Shape:
         s = shape.copy()
         s.translate(App.Vector(0.0, -rack_w / 2.0, rack_z))
@@ -1144,7 +1168,7 @@ def make_lining_up_gap_mechanism(z_disc: float):
 
 
 def make_manual_gate_assembly(z_disc: float):
-    """Back-compat wrapper → lining-up gap mechanism parts."""
+    """Back-compat wrapper -> lining-up gap mechanism parts."""
     mount, fixed, slide, screw, knob = make_lining_up_gap_mechanism(z_disc)
     body = mount.fuse(fixed)
     return body, knob, screw, slide
@@ -1172,7 +1196,7 @@ def _box_along_xy(
 
 def _tray_disc_center_local() -> tuple[float, float]:
     """Disc axis (world 0,0) expressed in Exit_Guide_Tray local coords."""
-    _pls, _vis, _ = load_state_from_fcstd(FCSTD)
+    _pls, _vis, _parts, _names = load_state_from_fcstd(FCSTD)
     tray_pl = _pls.get("Exit_Guide_Tray")
     tpx = float(tray_pl.Base.x) if tray_pl is not None else 0.0
     tpy = float(tray_pl.Base.y) if tray_pl is not None else 0.0
@@ -1432,7 +1456,7 @@ def make_control_panel() -> Part.Shape:
     return panel
 
 
-# ---- Split assemblies → basic geometry children (box / cylinder / sector) ----
+# ---- Split assemblies -> basic geometry children (box / cylinder / sector) ----
 
 def make_motor_parts() -> list[tuple[str, Part.Shape, tuple]]:
     """JGB37 children as basic solids; same world pose as place_motor_vertical."""
@@ -1718,7 +1742,7 @@ def _arc_out_pts_wide_tip(plan: dict) -> list:
     x0, y0 = float(pts[0][0]), float(pts[0][1])
     if tip_x > x0 + 1e-6:
         print(
-            "Lid_Wall_Arc_Out: tip only %.1f → %.1f (+X); arc body unchanged"
+            "Lid_Wall_Arc_Out: tip only %.1f -> %.1f (+X); arc body unchanged"
             % (x0, tip_x)
         )
         return [(tip_x, y0)] + pts
@@ -1833,7 +1857,7 @@ def make_lid_bottom_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
         print("Lid_Bottom_Deck_S_Rim skipped:", exc)
 
     print(
-        "Lid_Bottom: underside z=disc+%.1f | T=%.0f | holeØ=%.1f | chute_open=%s | seal=%s"
+        "Lid_Bottom: underside z=disc+%.1f | T=%.0f | holeD=%.1f | chute_open=%s | seal=%s"
         % (
             LID_DISC_CLEAR,
             LID_BOTTOM_T,
@@ -1868,7 +1892,7 @@ def make_lid_fill_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
     if fill is not None and fill.Solids:
         parts.append(("Lid_Fill_Outside", fill, fill_c))
     print(
-        "Lid_Fill_Outside: on bottom | H=%.0f holeØ=%.1f"
+        "Lid_Fill_Outside: on bottom | H=%.0f holeD=%.1f"
         % (h_fill, hole_d)
     )
     return parts
@@ -1940,6 +1964,33 @@ def make_lid_top_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
     plate.translate(App.Vector(xl, yb, z_top0))
     if cut_hub:
         plate = plate.cut(_cyl_z(HUB_D + 4.0, LID_TOP_T + 4.0, z_top0 - 1.0))
+    # Shaft clearance for Width_Adjust knob — only if vertical (legacy worm drive)
+    drv = _LID_CFG.get("width_bar", {}).get("drive", {})
+    if bool(drv.get("enabled", False)) and str(drv.get("mechanism", "")) == "worm_leadscrew":
+        try:
+            cx, cy = plan.get("width_bar_center", (0.0, 0.0))
+            shaft_d = float(drv.get("shaft_od", 6.0)) + 0.6
+            plate = plate.cut(
+                _cyl_z(shaft_d, LID_TOP_T + 4.0, z_top0 - 1.0, float(cx), float(cy))
+            )
+        except Exception:
+            pass
+    # Height_Adjust shaft // Z (bearing block / journal through lid)
+    hdrv = _LID_CFG.get("height_bar", {}).get("drive", {})
+    if bool(hdrv.get("enabled", False)) and str(hdrv.get("mechanism", "")) in (
+        "coaxial_leadscrew",
+        "fixed_screw_traveling_nut",
+        "face_cam_follower",
+        # rack_pinion: shaft is horizontal (Y) — no vertical lid journal
+    ):
+        try:
+            hx, hy = plan.get("height_drive_xy", plan.get("height_bar_center", (0.0, 0.0)))
+            jod = float(hdrv.get("journal_od", hdrv.get("leadscrew_od", 8.0)))
+            plate = plate.cut(
+                _cyl_z(jod + 0.8, LID_TOP_T + 4.0, z_top0 - 1.0, float(hx), float(hy))
+            )
+        except Exception:
+            pass
     if not roof_funnel:
         try:
             plate = plate.cut(_prism_from_xy(funnel_xy, z_top0 - 1.0, LID_TOP_T + 2.0))
@@ -1975,7 +2026,7 @@ def make_lid_top_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
         out_c,
         min_vol=2.0,
     )
-    # Out_SW → chute X-band vs rest; chute split at Lid_Wall_Chute_End (y_exit)
+    # Out_SW -> chute X-band vs rest; chute split at Lid_Wall_Chute_End (y_exit)
     out_sw = outside.common(_box_mask(x_out, 0.0, yb, 0.0))
     y_end = float(plan["y_exit"])
     sw_chute = out_sw.common(_box_mask(x_out, x_in, yb, 0.0))
@@ -2040,7 +2091,7 @@ def make_lid_top_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
         top_c,
     )
     south = rem.common(_box_mask(-r_disc - 2.0, r_disc + 2.0, -r_disc - 2.0, y_mouth))
-    # Deck_S_Hub → split trái (−X) / phải (+X) at mid-axis
+    # Deck_S_Hub -> split trái (−X) / phải (+X) at mid-axis
     south_hub = south.common(_box_mask(x_in, r_disc + 2.0, -r_disc - 2.0, y_mouth))
     _add(
         "Lid_Top_Deck_S_Hub_L",
@@ -2145,7 +2196,7 @@ def make_disc_access_lid_parts(z_disc: float) -> list[tuple[str, Part.Shape, tup
             wall_parts.append((name, w, col))
 
     # Sealed rim arc OUTSIDE Ø20 cm disc — SOUTHERN arc:
-    # right chute edge ∩ rim (−Y) → wide-mouth outer (+X)
+    # right chute edge ∩ rim (−Y) -> wide-mouth outer (+X)
     rim_cfg = _LID_CFG["plan"]["funnel_chamber"].get("rim_seal_wall", {})
     if bool(rim_cfg.get("enabled", True)):
         try:
@@ -2161,13 +2212,13 @@ def make_disc_access_lid_parts(z_disc: float) -> list[tuple[str, Part.Shape, tup
                 rim_c = (0.35, 0.55, 0.45)
                 wall_parts.append((rim_name, rim_kept, rim_c))
                 print(
-                    "%s: south rim wall T=%.1f | r=[%.2f,%.2f] | ang=%.1f→%.1f° CCW | outside disc"
+                    "%s: south rim wall T=%.1f | r=[%.2f,%.2f] | ang=%.1f->%.1f° CCW | outside disc"
                     % (rim_name, r_out - r_in, r_in, r_out, deg0, deg1)
                 )
         except Exception as exc:
             print("Lid_Wall_Rim_Arc skipped:", exc)
 
-    # Chute south edge barrier: underside → top face of lid (full stack)
+    # Chute south edge barrier: underside -> top face of lid (full stack)
     chute_cfg = _LID_CFG["plan"].get("chute", {})
     if bool(chute_cfg.get("end_barrier", True)):
         h_spec = chute_cfg.get("end_barrier_height", "stack_height")
@@ -2184,12 +2235,73 @@ def make_disc_access_lid_parts(z_disc: float) -> list[tuple[str, Part.Shape, tup
             ("Lid_Wall_Chute_End", _keep_largest_solid(barrier.removeSplitter()), end_c)
         )
         print(
-            "Lid_Wall_Chute_End: y=%.1f H=%.0f (underside→top) blocks chute exit"
+            "Lid_Wall_Chute_End: y=%.1f H=%.0f (underside->top) blocks chute exit"
             % (y_end, h_end)
         )
 
     width_bar = _prism_from_xy(plan["width_bar"], z_wall0, LID_WIDTH_BAR_H)
     height_bar = _prism_from_xy(plan["height_bar"], z_wall0, LID_HEIGHT_BAR_H)
+
+    # Clip Z to lid stack (XY already clipped in lid_plan_xy when clip_to_lid_box)
+    wb_cfg = _LID_CFG.get("width_bar", {})
+    if bool(wb_cfg.get("clip_to_lid_box", True)) and width_bar is not None:
+        try:
+            lid_clip = Part.makeBox(xr - xl, yt - yb, LID_STACK_H)
+            lid_clip.translate(App.Vector(xl, yb, z_wall0))
+            before = float(width_bar.Volume)
+            width_bar = width_bar.common(lid_clip).removeSplitter()
+            width_bar = _keep_largest_solid(width_bar)
+            after = float(width_bar.Volume) if width_bar is not None else 0.0
+            print(
+                "Width_Adjust_Bar: pose offset=(%.1f,%.1f) | clipped to lid | vol %.0f->%.0f"
+                % (
+                    float(wb_cfg.get("offset_x", 0.0)),
+                    float(wb_cfg.get("offset_y", 0.0)),
+                    before,
+                    after,
+                )
+            )
+        except Exception as exc:
+            print("Width_Adjust_Bar clip skipped:", exc)
+
+    # Coaxial leadscrew bore through bar (// Y) so nut can ride the screw
+    drv = wb_cfg.get("drive", {})
+    if (
+        width_bar is not None
+        and bool(drv.get("enabled", False))
+        and str(drv.get("mechanism", "")) == "coaxial_leadscrew"
+    ):
+        try:
+            cx, cy = plan.get("width_bar_center", (0.0, 0.0))
+            xs = [p[0] for p in plan["width_bar"]]
+            ys = [p[1] for p in plan["width_bar"]]
+            y_lo, y_hi = min(ys), max(ys)
+            screw_od = float(drv.get("leadscrew_od", 8.0))
+            clear_r = float(drv.get("thread_clear_r", 0.40))
+            z_sc = z_wall0 + 0.5 * LID_WIDTH_BAR_H
+            bore = _cyl_along_xy(
+                float(cx),
+                y_lo - 2.0,
+                z_sc,
+                0.0,
+                1.0,
+                (y_hi - y_lo) + 4.0,
+                screw_od / 2.0 + clear_r + 0.3,
+            )
+            width_bar = _keep_largest_solid(width_bar.cut(bore).removeSplitter())
+        except Exception as exc:
+            print("Width_Adjust_Bar screw bore skipped:", exc)
+
+    # Cam/follower drive owns Height_Adjust_Bar — skip prism duplicate
+    hdrv = _LID_CFG.get("height_bar", {}).get("drive", {})
+    height_from_drive = bool(hdrv.get("enabled", False)) and str(
+        hdrv.get("mechanism", "")
+    ) in (
+        "face_cam_follower",
+        "fixed_screw_traveling_nut",
+        "coaxial_leadscrew",
+        "rack_pinion",
+    )
 
     print(
         "Disc_Access_Lid: walls from disc+%.1fmm | square %.0fmm | H=%.0f"
@@ -2198,8 +2310,413 @@ def make_disc_access_lid_parts(z_disc: float) -> list[tuple[str, Part.Shape, tup
 
     out: list[tuple[str, Part.Shape, tuple]] = []
     out.extend(wall_parts)
-    out.append(("Width_Adjust_Bar", width_bar, width_c))
-    out.append(("Height_Adjust_Bar", height_bar, height_c))
+    if width_bar is not None and width_bar.Solids:
+        out.append(("Width_Adjust_Bar", width_bar, width_c))
+    if height_bar is not None and height_bar.Solids and not height_from_drive:
+        out.append(("Height_Adjust_Bar", height_bar, height_c))
+    return out
+
+
+def _helical_thread_solid_z(
+    major_r: float,
+    minor_r: float,
+    pitch: float,
+    length: float,
+    segs_per_turn: int = 20,
+) -> Part.Shape:
+    """
+    External thread along +Z: core (minor_r) + helical trapezoid tooth to major_r.
+    Helix + makePipe (+ makeSolid); segment fallback if needed.
+    """
+    if length < pitch * 0.5 or major_r <= minor_r + 0.05:
+        return Part.makeCylinder(max(minor_r, 0.5), max(length, 0.5))
+    core = Part.makeCylinder(minor_r, length)
+    tip_hw = 0.12 * pitch
+    root_hw = 0.32 * pitch
+    hr = 0.5 * (major_r + minor_r)
+    try:
+        helix = Part.makeHelix(pitch, max(pitch * 0.5, length - 0.05), hr, 0.0, False)
+        # Profile in plane ⊥ helix tangent at start (~⊥Y): trapezoid in XZ
+        pts = [
+            App.Vector(minor_r, 0.0, -root_hw),
+            App.Vector(major_r, 0.0, -tip_hw),
+            App.Vector(major_r, 0.0, tip_hw),
+            App.Vector(minor_r, 0.0, root_hw),
+            App.Vector(minor_r, 0.0, -root_hw),
+        ]
+        profile = Part.makePolygon(pts)
+        pipe = Part.Wire([helix]).makePipe(profile)
+        if pipe is None or pipe.isNull():
+            raise RuntimeError("null pipe")
+        if not pipe.Solids:
+            pipe = Part.makeSolid(pipe)
+        if float(pipe.Volume) < 0.0:
+            pipe = pipe.reversed()
+        return _keep_largest_solid(_safe_refine(core.fuse(pipe)))
+    except Exception as exc:
+        print("helix makePipe fallback (%s)" % exc)
+    segs = max(8, min(int(segs_per_turn), 12))
+    seg_h = pitch / float(segs)
+    n = max(1, int(math.ceil(length / seg_h)))
+    dr = major_r - minor_r
+    tooth = None
+    step = max(1, n // 120)
+    for i in range(0, n, step):
+        z = i * seg_h
+        if z >= length - 0.02:
+            break
+        ang = (i * 360.0) / float(segs)
+        h_use = min(seg_h * step * 1.15, length - z)
+        w = root_hw * 2.0
+        box = Part.makeBox(dr + 0.05, w, h_use)
+        box.translate(App.Vector(minor_r - 0.02, -w / 2.0, z))
+        box.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), ang)
+        tooth = box if tooth is None else tooth.fuse(box)
+    if tooth is None:
+        return _keep_largest_solid(core)
+    return _keep_largest_solid(_safe_refine(core.fuse(tooth)))
+
+
+def _thread_solid_along_y(
+    x: float,
+    y0: float,
+    z: float,
+    length: float,
+    major_d: float,
+    pitch: float,
+    depth: float,
+    segs_per_turn: int = 20,
+    radial_extra: float = 0.0,
+) -> Part.Shape:
+    """Leadscrew (or oversized nut cutter) along +Y at (x, z)."""
+    major_r = major_d / 2.0 + radial_extra
+    minor_r = max(0.6, major_r - depth)
+    local = _helical_thread_solid_z(major_r, minor_r, pitch, length, segs_per_turn)
+    # +Z -> +Y
+    local.rotate(App.Vector(0, 0, 0), App.Vector(1, 0, 0), -90.0)
+    local.translate(App.Vector(x, y0, z))
+    return _keep_largest_solid(local)
+
+
+def make_width_adjust_drive_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
+    """
+    Printable coaxial width drive:
+
+      Width_Lead_Screw  — FDM helix male thread + smooth journals + collar flange
+      Width_Knob        — fused to north journal (turn by hand)
+      Width_Nut         — matching female helix (clearance for FDM)
+      Width_Rail        — anti-rotate U-channel + end bushings
+      Width_Retainer_Base / _Cap — clamp collar to Lid_Top underside (axial lock)
+
+    Turning the knob rotates the screw; nut+bar translate ±Y. Axial force on the
+    screw is taken by the collar trapped in the retainer, so the knob stays on the lid.
+    """
+    drv = _LID_CFG.get("width_bar", {}).get("drive", {})
+    if not bool(drv.get("enabled", False)):
+        return []
+    mech = str(drv.get("mechanism", "coaxial_leadscrew"))
+    if mech != "coaxial_leadscrew":
+        print("Width_Adjust_Drive: skip unsupported mechanism=%s" % mech)
+        return []
+
+    plan = _lid_plan_points()
+    z_wall0 = _lid_z_underside(z_disc)
+    z_top0 = z_wall0 + LID_WALL_H  # Lid_Top underside
+    xs = [p[0] for p in plan["width_bar"]]
+    ys = [p[1] for p in plan["width_bar"]]
+    x_a, x_b = min(xs), max(xs)
+    y_lo, y_hi = min(ys), max(ys)
+    cx = 0.5 * (x_a + x_b) + float(drv.get("offset_x", 0.0))
+    cy = 0.5 * (y_lo + y_hi) + float(drv.get("offset_y", 0.0))
+    bar_w = x_b - x_a
+    bar_h = LID_WIDTH_BAR_H
+    z_sc = z_wall0 + 0.5 * bar_h
+
+    knob_od = float(drv.get("knob_od", 28.0))
+    knob_h = float(drv.get("knob_h", 14.0))
+    grip_od = float(drv.get("knob_grip_od", 22.0))
+    screw_od = float(drv.get("leadscrew_od", 8.0))
+    pitch = float(drv.get("leadscrew_pitch", 3.0))
+    depth = float(drv.get("thread_depth", 1.1))
+    clear_r = float(drv.get("thread_clear_r", 0.40))
+    segs = int(drv.get("segs_per_turn", 20))
+    nut_l = float(drv.get("nut_l", 18.0))
+    nut_w = float(drv.get("nut_w", 14.0))
+    nut_h = float(drv.get("nut_h", 12.0))
+    wall = float(drv.get("rail_wall", 2.0))
+    clear = float(drv.get("rail_clear", 0.4))
+    overhang = float(drv.get("rail_overhang", 3.0))
+    collar_od = float(drv.get("collar_od", 16.0))
+    collar_t = float(drv.get("collar_t", 2.8))
+    journal_od = float(drv.get("journal_od", screw_od))
+    ret_wall = float(drv.get("retainer_wall", 3.0))
+    pad_t = float(drv.get("retainer_pad_t", 4.0))
+    m3_d = float(drv.get("retainer_screw_d", 3.2))
+    m3_span = float(drv.get("retainer_screw_span", 22.0))
+
+    knob_c = (0.45, 0.25, 0.55)
+    screw_c = (0.55, 0.58, 0.62)
+    nut_c = (0.70, 0.45, 0.20)
+    rail_c = (0.35, 0.55, 0.50)
+    ret_c = (0.25, 0.45, 0.70)
+
+    parts: list[tuple[str, Part.Shape, tuple]] = []
+
+    # --- Axial layout along +Y ---
+    # south journal | threaded | north journal in rail bushing | collar | hub | knob
+    y_south_j0 = y_lo - 10.0
+    south_j_len = 6.0
+    y_th0 = y_south_j0 + south_j_len
+    th_len = max(float(drv.get("leadscrew_len", 90.0)), (y_hi - y_lo) + 8.0)
+    y_th1 = y_th0 + th_len
+    north_j_len = 5.0
+    y_nj0 = y_th1
+    y_collar0 = y_nj0 + north_j_len
+    y_hub0 = y_collar0 + collar_t
+    hub_len = 4.0
+    y_knob0 = y_hub0 + hub_len
+    # smooth journal under knob face bearing against retainer
+
+    # Lead screw: journals + helical male thread + collar
+    south_j = _cyl_along_xy(
+        cx, y_south_j0, z_sc, 0.0, 1.0, south_j_len + 0.5, journal_od / 2.0
+    )
+    threaded = _thread_solid_along_y(
+        cx, y_th0, z_sc, th_len, screw_od, pitch, depth, segs, radial_extra=0.0
+    )
+    north_j = _cyl_along_xy(
+        cx, y_nj0 - 0.3, z_sc, 0.0, 1.0, north_j_len + collar_t + hub_len + 1.0,
+        journal_od / 2.0,
+    )
+    collar = _cyl_along_xy(cx, y_collar0, z_sc, 0.0, 1.0, collar_t, collar_od / 2.0)
+    screw = south_j.fuse(threaded).fuse(north_j).fuse(collar)
+    parts.append(("Width_Lead_Screw", _keep_largest_solid(_safe_refine(screw)), screw_c))
+
+    # Knob fused to north end (print as one with screw, or glue on D-flat later)
+    knob = _cyl_along_xy(cx, y_knob0, z_sc, 0.0, 1.0, knob_h * 0.35, knob_od / 2.0)
+    grip = _cyl_along_xy(cx, y_knob0, z_sc, 0.0, 1.0, knob_h, grip_od / 2.0)
+    knob = knob.fuse(grip)
+    for i in range(8):
+        a = math.radians(i * 45.0)
+        fx = cx + (grip_od / 2.0 - 0.4) * math.cos(a)
+        fz = z_sc + (grip_od / 2.0 - 0.4) * math.sin(a)
+        flute = _cyl_along_xy(fx, y_knob0 - 0.5, fz, 0.0, 1.0, knob_h + 1.0, 2.2)
+        knob = knob.cut(flute)
+    hub = _cyl_along_xy(cx, y_hub0, z_sc, 0.0, 1.0, hub_len + 0.5, journal_od / 2.0 + 0.6)
+    knob = knob.fuse(hub)
+    parts.append(("Width_Knob", _keep_largest_solid(_safe_refine(knob)), knob_c))
+
+    # Nut with matching female thread (cut oversized male solid from blank)
+    nut = Part.makeBox(nut_w, nut_l, nut_h)
+    nut.translate(App.Vector(cx - nut_w / 2.0, cy - nut_l / 2.0, z_sc - nut_h / 2.0))
+    cutter = _thread_solid_along_y(
+        cx,
+        cy - nut_l / 2.0 - 1.0,
+        z_sc,
+        nut_l + 2.0,
+        screw_od,
+        pitch,
+        depth,
+        segs,
+        radial_extra=clear_r,
+    )
+    nut = nut.cut(cutter)
+    flange = Part.makeBox(max(nut_w, bar_w + 2.0), nut_l * 0.55, 2.0)
+    flange.translate(
+        App.Vector(
+            cx - max(nut_w, bar_w + 2.0) / 2.0,
+            cy - nut_l * 0.275,
+            z_wall0 + bar_h,
+        )
+    )
+    nut = nut.fuse(flange)
+    parts.append(("Width_Nut", _keep_largest_solid(_safe_refine(nut)), nut_c))
+
+    # Anti-rotate rail + end bushings (smooth journal clearance)
+    inner_w = bar_w + 2.0 * clear
+    outer_w = inner_w + 2.0 * wall
+    rail_len = (y_hi - y_lo) + 8.0
+    y_rail0 = y_lo - 4.0
+    z_floor0 = z_wall0 - wall
+    outer = Part.makeBox(outer_w, rail_len, bar_h + wall + 1.0)
+    outer.translate(App.Vector(cx - outer_w / 2.0, y_rail0, z_floor0))
+    cavity = Part.makeBox(inner_w, rail_len + 2.0, bar_h + clear + 2.0)
+    cavity.translate(App.Vector(cx - inner_w / 2.0, y_rail0 - 1.0, z_wall0))
+    rail = outer.cut(cavity)
+    lip_gap = max(2.0, screw_od + 1.5)
+    lip_w = max(0.8, (inner_w - lip_gap) / 2.0)
+    for sign in (-1.0, 1.0):
+        lip = Part.makeBox(lip_w, rail_len, overhang)
+        if sign < 0:
+            lx = cx - inner_w / 2.0
+        else:
+            lx = cx + inner_w / 2.0 - lip_w
+        lip.translate(App.Vector(lx, y_rail0, z_wall0 + bar_h + clear - 0.2))
+        rail = rail.fuse(lip)
+    j_clear = journal_od / 2.0 + 0.35
+    for yb, jy0 in (
+        (y_rail0 - 4.0, y_south_j0 - 0.5),
+        (y_rail0 + rail_len, y_nj0 - 0.5),
+    ):
+        boss = Part.makeBox(outer_w, 5.0, bar_h + wall)
+        boss.translate(App.Vector(cx - outer_w / 2.0, yb, z_floor0))
+        journal = _cyl_along_xy(cx, jy0, z_sc, 0.0, 1.0, 8.0, j_clear)
+        boss = boss.cut(journal)
+        rail = rail.fuse(boss)
+    parts.append(("Width_Rail", _keep_largest_solid(_safe_refine(rail)), rail_c))
+
+    # --- Retainer clamp on Lid_Top underside: traps collar -> knob cannot pull out ---
+    # Pocket: journal bore + collar groove. Cap screws on with 2× M3.
+    ret_w = max(collar_od + 2.0 * ret_wall, m3_span + 10.0)
+    ret_h = max(collar_od + 2.0 * ret_wall, bar_h + 6.0)
+    groove_clear = 0.35
+    # Base sits under lid, open toward −Z so screw drops in from below, then cap closes
+    y_ret0 = y_collar0 - ret_wall
+    ret_len = collar_t + 2.0 * ret_wall + hub_len * 0.5
+    z_ret0 = z_sc - ret_h / 2.0
+    base = Part.makeBox(ret_w, ret_len, ret_h * 0.55)
+    base.translate(App.Vector(cx - ret_w / 2.0, y_ret0, z_ret0))
+    # Collar groove + journal slot (open bottom)
+    groove = _cyl_along_xy(
+        cx,
+        y_collar0 - groove_clear,
+        z_sc,
+        0.0,
+        1.0,
+        collar_t + 2.0 * groove_clear,
+        collar_od / 2.0 + groove_clear,
+    )
+    jslot = _cyl_along_xy(
+        cx, y_ret0 - 1.0, z_sc, 0.0, 1.0, ret_len + 2.0, journal_od / 2.0 + 0.4
+    )
+    # Bottom access opening so one-piece screw+collar can drop in before capping
+    access = Part.makeBox(ret_w + 2.0, ret_len + 2.0, ret_h * 0.35)
+    access.translate(App.Vector(cx - ret_w / 2.0 - 1.0, y_ret0 - 1.0, z_ret0 - 0.5))
+    base = base.cut(groove).cut(jslot).cut(access)
+    # Pad up to lid underside (glue / M3 into Lid_Top)
+    pad_z1 = z_top0
+    pad_z0 = pad_z1 - pad_t
+    pad = Part.makeBox(ret_w, ret_len, pad_t)
+    pad.translate(App.Vector(cx - ret_w / 2.0, y_ret0, pad_z0))
+    # Stem connecting base to pad
+    stem = Part.makeBox(ret_w * 0.45, ret_len, max(1.0, pad_z0 - (z_ret0 + ret_h * 0.55)))
+    stem.translate(
+        App.Vector(cx - ret_w * 0.225, y_ret0, z_ret0 + ret_h * 0.55 - 0.1)
+    )
+    base = base.fuse(pad).fuse(stem)
+    for sx in (-0.5 * m3_span, 0.5 * m3_span):
+        hole = _cyl_z(m3_d, pad_t + ret_h + 8.0, z_ret0 - 2.0, cx + sx, y_ret0 + ret_len * 0.5)
+        base = base.cut(hole)
+    parts.append(
+        ("Width_Retainer_Base", _keep_largest_solid(_safe_refine(base)), ret_c)
+    )
+
+    # Cap: mirrors lower half, traps collar; two M3 through
+    cap = Part.makeBox(ret_w, ret_len, ret_h * 0.5)
+    cap.translate(App.Vector(cx - ret_w / 2.0, y_ret0, z_sc - ret_h * 0.05))
+    cap = cap.cut(groove).cut(jslot)
+    for sx in (-0.5 * m3_span, 0.5 * m3_span):
+        hole = _cyl_z(m3_d, ret_h + 4.0, z_sc - ret_h * 0.2, cx + sx, y_ret0 + ret_len * 0.5)
+        cap = cap.cut(hole)
+    # Countersink cue on outer face
+    for sx in (-0.5 * m3_span, 0.5 * m3_span):
+        cs = _cyl_z(6.0, 1.8, z_sc + ret_h * 0.35 - 1.8, cx + sx, y_ret0 + ret_len * 0.5)
+        cap = cap.cut(cs)
+    parts.append(
+        ("Width_Retainer_Cap", _keep_largest_solid(_safe_refine(cap)), ret_c)
+    )
+
+    print(
+        "Width_Adjust_Drive: FDM helix D%.0fx%.0f clear=%.2f | "
+        "collar D%.0f captive in lid retainer | knob // Y"
+        % (screw_od, pitch, clear_r, collar_od)
+    )
+    return parts
+
+
+def _thread_solid_along_z(
+    x: float,
+    y: float,
+    z0: float,
+    length: float,
+    major_d: float,
+    pitch: float,
+    depth: float,
+    segs_per_turn: int = 20,
+    radial_extra: float = 0.0,
+) -> Part.Shape:
+    """Leadscrew (or oversized nut cutter) along +Z at (x, y)."""
+    major_r = major_d / 2.0 + radial_extra
+    minor_r = max(0.6, major_r - depth)
+    local = _helical_thread_solid_z(major_r, minor_r, pitch, length, segs_per_turn)
+    local.translate(App.Vector(x, y, z0))
+    return _keep_largest_solid(local)
+
+
+def make_height_adjust_drive_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
+    """
+    Height_Adjust — Spur rack & pinion (see height_adjust_z.py).
+
+      Height_Knob + Height_Pinion + Height_Shaft — rotate about Y (⊥ Z travel)
+      Height_Friction_Washer — friction hold
+      Height_Bearing_L/R — shaft supports
+      Height_Adjust_Bar (follower + rack) — +/-Z; ~π·m·z mm/turn
+      Height_Guide_Rail_* — anti-rotate
+      Height_Bottom_Stop, Height_Scale_*
+    """
+    from height_adjust_z import build_height_adjust_z_parts
+
+    drv = _LID_CFG.get("height_bar", {}).get("drive", {})
+    if not bool(drv.get("enabled", False)):
+        return []
+    mech = str(drv.get("mechanism", "rack_pinion"))
+    if mech not in (
+        "rack_pinion",
+        "face_cam_follower",
+        "fixed_screw_traveling_nut",
+        "coaxial_leadscrew",
+    ):
+        print("Height_Adjust_Drive: skip unsupported mechanism=%s" % mech)
+        return []
+
+    plan = _lid_plan_points()
+    z_wall0 = _lid_z_underside(z_disc)
+    xs = [p[0] for p in plan["height_bar"]]
+    ys = [p[1] for p in plan["height_bar"]]
+    x_a, x_b = min(xs), max(xs)
+    y_a, y_b = min(ys), max(ys)
+    cx, cy = plan.get("height_drive_xy", (0.5 * (x_a + x_b), 0.5 * (y_a + y_b)))
+    cx, cy = float(cx), float(cy)
+
+    cfg = dict(drv)
+    cfg["bar_thickness"] = max(8.0, x_b - x_a)
+    cfg["bar_length_y"] = max(20.0, y_b - y_a)
+    cfg["bar_height"] = float(_LID_CFG.get("height_bar", {}).get("height", 12.0))
+
+    raw = build_height_adjust_z_parts(
+        cx=cx,
+        cy=cy,
+        z_zero=z_wall0,
+        cfg=cfg,
+        include_demo_wall=False,
+    )
+    rename = {
+        "HA_Pinion_Shaft": "Height_Pinion_Shaft",
+        "HA_Bearing_Rail_S": "Height_Bearing_Rail_S",
+        "HA_Bearing_Cap_S": "Height_Bearing_Cap_S",
+        "HA_Bearing_Rail_N": "Height_Bearing_Rail_N",
+        "HA_Bearing_Cap_N": "Height_Bearing_Cap_N",
+        "HA_Knob": "Height_Knob",
+        "HA_Friction_Washer": "Height_Friction_Washer",
+        "HA_Follower": "Height_Adjust_Bar",
+        "HA_Bottom_Stop": "Height_Bottom_Stop",
+    }
+    out: list[tuple[str, Part.Shape, tuple]] = []
+    for n, sh, col in raw:
+        if n.startswith("HA_Scale_"):
+            out.append((n.replace("HA_Scale_", "Height_Scale_"), sh, col))
+        else:
+            out.append((rename.get(n, n), sh, col))
     return out
 
 
@@ -2211,9 +2728,9 @@ def make_exit_press_guide_parts(z_disc: float) -> list[tuple[str, Part.Shape, tu
       Press_Hinge       — khớp / trụ lò xo (minh họa đàn hồi)
       Press_Finger_Leaf — lá mỏng hướng vào miệng khe (ép single-file)
       Press_Tip_Pad     — đầu mềm tiếp xúc viên
-      Press_Bypass_Rail — thành lệch trong: viên không vào khe → đi vòng lại
+      Press_Bypass_Rail — thành lệch trong: viên không vào khe -> đi vòng lại
 
-    Giả định đĩa quay CCW (nhìn từ trên): viên theo vành → miệng khe.
+    Giả định đĩa quay CCW (nhìn từ trên): viên theo vành -> miệng khe.
     """
     z0 = z_disc + DISC_T
     r_rim = (DISC_D + 0.5) / 2.0
@@ -2241,7 +2758,7 @@ def make_exit_press_guide_parts(z_disc: float) -> list[tuple[str, Part.Shape, tu
     hinge = Part.makeCylinder(2.5, PRESS_FINGER_H + 4.0)
     hinge.translate(App.Vector(hx, hy, z0 - 1.0))
 
-    # Finger leaf: mount → tip, lightly inside rim, tapered
+    # Finger leaf: mount -> tip, lightly inside rim, tapered
     r_t = r_rim - 2.5
     tx = r_t * math.cos(math.radians(a_tip))
     ty = r_t * math.sin(math.radians(a_tip))
@@ -2277,7 +2794,7 @@ def make_exit_press_guide_parts(z_disc: float) -> list[tuple[str, Part.Shape, tu
     tip = Part.makeSphere(PRESS_TIP_R)
     tip.translate(App.Vector(tx + 1.0 * nx, ty + 1.0 * ny, z0 + PRESS_TIP_R + 0.3))
 
-    # Bypass rail: short inner fence — overflow slides inside finger → recirculate
+    # Bypass rail: short inner fence — overflow slides inside finger -> recirculate
     r_b0 = r_rim - PRESS_BYPASS_DR - 4.0
     r_b1 = r_rim - PRESS_BYPASS_DR + 2.0
     bypass = _annular_sector(
@@ -2412,8 +2929,8 @@ def add_part(doc, name, shape, color, transparency=0):
 def add_group(doc, name, children, use_part=True):
     """
     Parent folder in the FreeCAD tree; children stay editable solids.
-    App::Part  → assembly (has Placement; move whole group)
-    App::DocumentObjectGroup → simple tree folder
+    App::Part  -> assembly (has Placement; move whole group)
+    App::DocumentObjectGroup -> simple tree folder
     """
     typ = "App::Part" if use_part else "App::DocumentObjectGroup"
     grp = doc.addObject(typ, name)
@@ -2442,15 +2959,17 @@ def _placement_is_identity(pl: App.Placement, tol: float = 1e-6) -> bool:
 
 
 def capture_open_document_state() -> tuple[
-    dict[str, App.Placement], dict[str, bool], set[str]
+    dict[str, App.Placement], dict[str, bool], set[str], set[str]
 ]:
     """Read Placement + Visibility from any currently open FreeCAD docs (user may have moved/hidden)."""
     placements: dict[str, App.Placement] = {}
     visibility: dict[str, bool] = {}
     part_names: set[str] = set()
+    all_names: set[str] = set()
     for doc_name in list(App.listDocuments().keys()):
         doc = App.getDocument(doc_name)
         for obj in doc.Objects:
+            all_names.add(obj.Name)
             if obj.TypeId == "App::Part":
                 part_names.add(obj.Name)
             if hasattr(obj, "Placement"):
@@ -2458,22 +2977,23 @@ def capture_open_document_state() -> tuple[
             vo = getattr(obj, "ViewObject", None)
             if vo is not None and hasattr(vo, "Visibility"):
                 visibility[obj.Name] = bool(vo.Visibility)
-    return placements, visibility, part_names
+    return placements, visibility, part_names, all_names
 
 
 def load_state_from_fcstd(
     path: Path,
-) -> tuple[dict[str, App.Placement], dict[str, bool], set[str]]:
+) -> tuple[dict[str, App.Placement], dict[str, bool], set[str], set[str]]:
     """
     Parse last-saved FCStd so rebuild can keep user Placement / Visibility.
     Source of truth = this .FCStd only (never a sidecar JSON).
-    Returns (placements, visibility, names that were App::Part).
+    Returns (placements, visibility, App::Part names, all object names).
     """
     placements: dict[str, App.Placement] = {}
     visibility: dict[str, bool] = {}
     part_names: set[str] = set()
+    all_names: set[str] = set()
     if not path.is_file():
-        return placements, visibility, part_names
+        return placements, visibility, part_names, all_names
     try:
         with zipfile.ZipFile(path, "r") as zf:
             names = set(zf.namelist())
@@ -2482,6 +3002,7 @@ def load_state_from_fcstd(
                 for t, n in re.findall(
                     r'<Object type="([^"]+)" name="([^"]+)"', xml
                 ):
+                    all_names.add(n)
                     if t == "App::Part":
                         part_names.add(n)
                 for m in re.finditer(
@@ -2490,6 +3011,7 @@ def load_state_from_fcstd(
                     flags=re.DOTALL,
                 ):
                     oname = m.group(1)
+                    all_names.add(oname)
                     block = m.group(0)
                     pm = re.search(
                         r'<Property name="Placement"[^>]*>\s*<PropertyPlacement\s+([^/]+)/>',
@@ -2528,7 +3050,7 @@ def load_state_from_fcstd(
                         visibility[oname] = vm.group(1) == "true"
     except Exception as exc:
         print("load_state_from_fcstd: skip (%s)" % exc)
-    return placements, visibility, part_names
+    return placements, visibility, part_names, all_names
 
 
 def apply_preserved_state(
@@ -2586,15 +3108,23 @@ def apply_preserved_state(
 def main() -> None:
     # 1) Live open docs (same FreeCAD session) win over disk
     # 2) Else last-saved FCStd — user may have Transform'd then saved / agent Ctrl+S
-    live_pl, live_vis, live_parts = capture_open_document_state()
-    disk_pl, disk_vis, disk_parts = load_state_from_fcstd(FCSTD)
+    live_pl, live_vis, live_parts, live_names = capture_open_document_state()
+    disk_pl, disk_vis, disk_parts, disk_names = load_state_from_fcstd(FCSTD)
     placements = {**disk_pl, **live_pl}
     visibility = {**disk_vis, **live_vis}
     prior_parts = disk_parts | live_parts
+    # Objects present in last save / open doc — deleted assemblies are not rebuilt
+    prior_names = disk_names | live_names | set(placements.keys())
     if live_pl:
         print("Captured state from open document(s): %d objects" % len(live_pl))
     elif disk_pl:
         print("Captured state from FCStd on disk: %d objects" % len(disk_pl))
+
+    def _keep_assembly(name: str) -> bool:
+        """Respect user deletions in FCStd: do not recreate missing top-level groups."""
+        if not prior_names:
+            return True
+        return name in prior_names
 
     for name in list(App.listDocuments().keys()):
         App.closeDocument(name)
@@ -2634,7 +3164,11 @@ def main() -> None:
     ]
 
     counts = []
+    skipped = []
     for parent, specs, tr in assemblies:
+        if not _keep_assembly(parent):
+            skipped.append(parent)
+            continue
         kids = [
             add_part(doc, n, sh, col, transparency=tr) for n, sh, col in specs
         ]
@@ -2642,66 +3176,103 @@ def main() -> None:
         counts.append("%s(%d)" % (parent, len(kids)))
 
     # Disc_Access_Lid: Top + Bottom + solid annulus fill + walls/bars
-    lid_top_objs = []
-    hub_kids: list = []
-    sw_chute_kids: list = []
-    sw_rest = None
-    for n, sh, col in make_lid_top_parts(z_disc):
-        tr = 0 if n == "Lid_Top_Arc_Corner" else 25
-        obj = add_part(doc, n, sh, col, transparency=tr)
-        if n.startswith("Lid_Top_Deck_S_Hub_"):
-            hub_kids.append(obj)
-        elif n.startswith("Lid_Top_Out_SW_Chute_"):
-            sw_chute_kids.append(obj)
-        elif n == "Lid_Top_Out_SW_Rest":
-            sw_rest = obj
-        else:
-            lid_top_objs.append(obj)
-    if hub_kids:
-        lid_top_objs.append(add_group(doc, "Lid_Top_Deck_S_Hub", hub_kids))
-    sw_kids: list = []
-    if sw_chute_kids:
-        sw_kids.append(add_group(doc, "Lid_Top_Out_SW_Chute", sw_chute_kids))
-    if sw_rest is not None:
-        sw_kids.append(sw_rest)
-    if sw_kids:
-        lid_top_objs.append(add_group(doc, "Lid_Top_Out_SW", sw_kids))
-    lid_top_grp = add_group(doc, "Lid_Top", lid_top_objs)
-    lid_kids = [lid_top_grp]
-    lid_bot_objs = [
-        add_part(doc, n, sh, col, transparency=25)
-        for n, sh, col in make_lid_bottom_parts(z_disc)
-    ]
-    if lid_bot_objs:
-        lid_kids.append(add_group(doc, "Lid_Bottom", lid_bot_objs))
-    lid_fill_objs = [
-        add_part(doc, n, sh, col, transparency=20)
-        for n, sh, col in make_lid_fill_parts(z_disc)
-    ]
-    if lid_fill_objs:
-        lid_kids.append(add_group(doc, "Lid_Fill", lid_fill_objs))
-    lid_rest = [
-        add_part(doc, n, sh, col, transparency=25)
-        for n, sh, col in make_disc_access_lid_parts(z_disc)
-    ]
-    add_group(doc, "Disc_Access_Lid", lid_kids + lid_rest)
-    counts.append(
-        "Disc_Access_Lid(Top %d + Bottom %d + Fill %d + rest %d)"
-        % (len(lid_top_objs), len(lid_bot_objs), len(lid_fill_objs), len(lid_rest))
-    )
+    if _keep_assembly("Disc_Access_Lid"):
+        lid_top_objs = []
+        hub_kids: list = []
+        sw_chute_kids: list = []
+        sw_rest = None
+        for n, sh, col in make_lid_top_parts(z_disc):
+            tr = 0 if n == "Lid_Top_Arc_Corner" else 25
+            obj = add_part(doc, n, sh, col, transparency=tr)
+            if n.startswith("Lid_Top_Deck_S_Hub_"):
+                hub_kids.append(obj)
+            elif n.startswith("Lid_Top_Out_SW_Chute_"):
+                sw_chute_kids.append(obj)
+            elif n == "Lid_Top_Out_SW_Rest":
+                sw_rest = obj
+            else:
+                lid_top_objs.append(obj)
+        if hub_kids:
+            lid_top_objs.append(add_group(doc, "Lid_Top_Deck_S_Hub", hub_kids))
+        sw_kids: list = []
+        if sw_chute_kids:
+            sw_kids.append(add_group(doc, "Lid_Top_Out_SW_Chute", sw_chute_kids))
+        if sw_rest is not None:
+            sw_kids.append(sw_rest)
+        if sw_kids:
+            lid_top_objs.append(add_group(doc, "Lid_Top_Out_SW", sw_kids))
+        lid_top_grp = add_group(doc, "Lid_Top", lid_top_objs)
+        lid_kids = [lid_top_grp]
+        lid_bot_objs = [
+            add_part(doc, n, sh, col, transparency=25)
+            for n, sh, col in make_lid_bottom_parts(z_disc)
+        ]
+        if lid_bot_objs:
+            lid_kids.append(add_group(doc, "Lid_Bottom", lid_bot_objs))
+        lid_fill_objs = [
+            add_part(doc, n, sh, col, transparency=20)
+            for n, sh, col in make_lid_fill_parts(z_disc)
+        ]
+        if lid_fill_objs:
+            lid_kids.append(add_group(doc, "Lid_Fill", lid_fill_objs))
+        lid_rest = [
+            add_part(doc, n, sh, col, transparency=25)
+            for n, sh, col in make_disc_access_lid_parts(z_disc)
+        ]
+        drive_objs = []
+        if _keep_assembly("Width_Adjust_Drive") or _keep_assembly("Width_Lead_Screw"):
+            drive_objs = [
+                add_part(doc, n, sh, col, transparency=15)
+                for n, sh, col in make_width_adjust_drive_parts(z_disc)
+            ]
+            if drive_objs:
+                lid_rest.append(add_group(doc, "Width_Adjust_Drive", drive_objs))
+        # Height_Adjust_Drive (settings-gated; new feature always built when enabled)
+        h_drive_objs = []
+        if bool(_LID_CFG.get("height_bar", {}).get("drive", {}).get("enabled", False)):
+            h_drive_objs = [
+                add_part(doc, n, sh, col, transparency=15)
+                for n, sh, col in make_height_adjust_drive_parts(z_disc)
+            ]
+            if h_drive_objs:
+                lid_rest.append(add_group(doc, "Height_Adjust_Drive", h_drive_objs))
+        add_group(doc, "Disc_Access_Lid", lid_kids + lid_rest)
+        counts.append(
+            "Disc_Access_Lid(Top %d + Bottom %d + Fill %d + rest %d + w_drive %d + h_drive %d)"
+            % (
+                len(lid_top_objs),
+                len(lid_bot_objs),
+                len(lid_fill_objs),
+                len(lid_rest) - (1 if drive_objs else 0) - (1 if h_drive_objs else 0),
+                len(drive_objs),
+                len(h_drive_objs),
+            )
+        )
+    else:
+        skipped.append("Disc_Access_Lid")
+        lid_top_objs = []
+        lid_top_grp = None
 
     # Exit_Guide_Tray: nested Exit_Tray_Floor (basic solids) + walls
-    floor_objs = [
-        add_part(doc, n, sh, col, transparency=55)
-        for n, sh, col in make_exit_tray_floor_basic_parts(z_disc)
-    ]
-    floor_grp = add_group(doc, "Exit_Tray_Floor", floor_objs)
-    wall_objs = [
-        add_part(doc, n, sh, col, transparency=55)
-        for n, sh, col in make_exit_guide_tray_parts(z_disc)
-    ]
-    add_group(doc, "Exit_Guide_Tray", [floor_grp] + wall_objs)
-    counts.append("Exit_Guide_Tray(Floor %d + walls %d)" % (len(floor_objs), len(wall_objs)))
+    if _keep_assembly("Exit_Guide_Tray"):
+        floor_objs = [
+            add_part(doc, n, sh, col, transparency=55)
+            for n, sh, col in make_exit_tray_floor_basic_parts(z_disc)
+        ]
+        floor_grp = add_group(doc, "Exit_Tray_Floor", floor_objs)
+        wall_objs = [
+            add_part(doc, n, sh, col, transparency=55)
+            for n, sh, col in make_exit_guide_tray_parts(z_disc)
+        ]
+        add_group(doc, "Exit_Guide_Tray", [floor_grp] + wall_objs)
+        counts.append(
+            "Exit_Guide_Tray(Floor %d + walls %d)" % (len(floor_objs), len(wall_objs))
+        )
+    else:
+        skipped.append("Exit_Guide_Tray")
+
+    if skipped:
+        print("Skipped deleted assemblies: " + ", ".join(skipped))
 
     print("Assemblies -> basic children: " + ", ".join(counts))
     print("GATE_GAP=%.1fmm | Placement restore = App::Part only" % GATE_GAP)
@@ -2716,19 +3287,20 @@ def main() -> None:
         pl = lid_grp.Placement
         if abs(float(pl.Base.z)) > 1e-6:
             print(
-                "Disc_Access_Lid: Pz %.3f → 0 (Lid_Wall bottom = disc+%.1f mm)"
+                "Disc_Access_Lid: Pz %.3f -> 0 (Lid_Wall bottom = disc+%.1f mm)"
                 % (pl.Base.z, LID_DISC_CLEAR)
             )
             pl.Base = App.Vector(pl.Base.x, pl.Base.y, 0.0)
             lid_grp.Placement = pl
 
     # Force-show full sealed Lid_Top (user may have hidden older children)
-    for obj in lid_top_objs + [lid_top_grp, doc.getObject("Disc_Access_Lid")]:
-        if obj is None:
-            continue
-        vo = getattr(obj, "ViewObject", None)
-        if vo is not None and hasattr(vo, "Visibility"):
-            vo.Visibility = True
+    if lid_top_grp is not None:
+        for obj in lid_top_objs + [lid_top_grp, doc.getObject("Disc_Access_Lid")]:
+            if obj is None:
+                continue
+            vo = getattr(obj, "ViewObject", None)
+            if vo is not None and hasattr(vo, "Visibility"):
+                vo.Visibility = True
 
     doc.recompute()
     doc.saveAs(str(FCSTD))

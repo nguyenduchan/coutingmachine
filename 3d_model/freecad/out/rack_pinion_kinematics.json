@@ -1,0 +1,7 @@
+{
+  "rotation_axis": "Z",
+  "translation_axis": "Z",
+  "pair": "spur_pinion_vertical_rack",
+  "travel_per_turn_mm": 75.39822368615503,
+  "engagement_ok": false
+}
