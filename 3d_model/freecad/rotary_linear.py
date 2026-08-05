@@ -9,8 +9,9 @@ Print / assembly (serviceable):
   RL_Bearing_Rail_S/N — lower saddle + rail; M3 nut pockets
   RL_Bearing_Cap_S/N — upper half; M3×16 hex bolt + head counterbore
   RL_Knob — blind bore on shaft tip + short M3 (shaft does not pass through)
-  RL_Follower — rack + slide (travel horizontal after orient)
-  RL_Rail_Bridge — flat plate // follower, joins Rail_S ↔ Rail_N
+  RL_Follower — rack + slide (travel horizontal after orient); optional detent pockets
+  RL_Rail_Bridge — flat plate // follower, joins Rail_S ↔ Rail_N; optional detent bore
+  RL_Detent — ball + spring + set screw (include_ball_detent)
 
 Hardware: M3×16 ISO hex bolt + M3 hex nut (AF 5.5). Clearance Ø3.6.
 Drop pinion-shaft into open saddles → bolt caps → fit washer/knob.
@@ -43,6 +44,10 @@ ACTIVE_RL_PARTS = frozenset(
         "RL_Knob",
         "RL_Friction_Washer",
         "RL_Follower",
+        # Ball detent (include_ball_detent): bi lò xo sập vào rãnh khi dừng xoay
+        "RL_Detent",
+        "RL_Cam_Sleeve",
+        "RL_Cam_StopPin",
     }
 )
 
@@ -142,6 +147,12 @@ def _cyl_axis_x(d: float, length: float, x0: float, y: float, z: float) -> Part.
     c.rotate(App.Vector(0, 0, 0), App.Vector(0, 1, 0), 90.0)
     c.translate(App.Vector(x0, y, z))
     return c
+
+
+def _sphere(r: float, x: float, y: float, z: float) -> Part.Shape:
+    s = Part.makeSphere(r)
+    s.translate(App.Vector(x, y, z))
+    return s
 
 
 def _m3_hole_x(x0: float, y: float, z: float, h: float) -> Part.Shape:
@@ -549,6 +560,9 @@ def build_rotary_linear_parts(
     thread_fn: Callable | None = None,
 ) -> list:
     d = dict(cfg or {})
+    # Ball detent: bi + lò xo qua cầu ray → rãnh cầu trên thanh (2 chiều, sạch)
+    ball_detent = bool(d.get("include_ball_detent", False))
+    active_cam = bool(d.get("include_active_cam", False))
     rp = _rack_params(d)
     stroke = float(d.get("rail_stroke", rp["stroke"]))
     module = rp["module"]
@@ -723,10 +737,26 @@ def build_rotary_linear_parts(
     # Stiffen exposed shaft between washer and knob (skip washer Y)
     gap0 = y_fric + friction_t + 0.5
     gap1 = y_knob - 0.8
-    if gap1 > gap0 + 1.0:
+    if gap1 > gap0 + 1.0 and not active_cam:
         pinion_shaft = _as_one_solid(
             pinion_shaft.fuse(_cyl_y(stiff_od, gap1 - gap0, cx, gap0, z_pin))
         )
+    if active_cam:
+        # D-flat dài cho ống cam: quay cùng trục nhưng trượt dọc Y
+        cam_flat_x0 = cx + 0.5 * j_od - 1.15
+        cam_flat_y0 = y_fric + 0.2
+        cam_flat = Part.makeBox(
+            2.0,
+            (y_knob + 1.0) - cam_flat_y0,
+            j_od + 1.0,
+        )
+        cam_flat.translate(
+            App.Vector(cam_flat_x0, cam_flat_y0, z_pin - 0.5 * (j_od + 1.0))
+        )
+        try:
+            pinion_shaft = _as_one_solid(pinion_shaft.cut(cam_flat))
+        except Exception:
+            pass
     # Short D-flat + M3 cross hole only near tip (knob seat) — not full shaft
     y_tip0 = y_shaft_end - tip_hole_len
     flat_depth = 0.9
@@ -938,30 +968,121 @@ def build_rotary_linear_parts(
         knob = knob.cut(socket)
     except Exception:
         pass
-    # Internal D-flat (match shaft) — only +X side of bore, stays inside grip
-    flat_depth = 0.9
-    flat_x0 = cx + 0.5 * j_od - flat_depth
-    kflat = Part.makeBox(flat_depth + 1.0, tip_hole_len + 0.8, j_od + 1.0)
-    kflat.translate(
-        App.Vector(
-            flat_x0,
-            y_tip0 - 0.2,
-            z_pin - 0.5 * (j_od + 1.0),
+    y_hs = y_tip0 + 0.5 * tip_hole_len
+    if not active_cam:
+        # Internal D-flat (match shaft) — only +X side of bore, stays inside grip
+        flat_depth = 0.9
+        flat_x0 = cx + 0.5 * j_od - flat_depth
+        kflat = Part.makeBox(flat_depth + 1.0, tip_hole_len + 0.8, j_od + 1.0)
+        kflat.translate(
+            App.Vector(
+                flat_x0,
+                y_tip0 - 0.2,
+                z_pin - 0.5 * (j_od + 1.0),
+            )
         )
-    )
-    try:
-        knob = knob.cut(kflat)
-    except Exception:
-        pass
-    # M3 set-screw through axis (// X), centered on z_pin — not a +Z-only gouge
-    try:
-        y_hs = y_tip0 + 0.5 * tip_hole_len
-        knob = knob.cut(
-            _m3_hole_x(cx - 0.5 * j_od - 2.0, y_hs, z_pin, j_od + 4.0)
+        try:
+            knob = knob.cut(kflat)
+        except Exception:
+            pass
+        # M3 set-screw through axis (// X), centered on z_pin — not a +Z-only gouge
+        try:
+            knob = knob.cut(
+                _m3_hole_x(cx - 0.5 * j_od - 2.0, y_hs, z_pin, j_od + 4.0)
+            )
+        except Exception:
+            pass
+    else:
+        # Knob free-play ±40°: rãnh cung quanh stop-pin + FACE CAM theo góc.
+        # (Ramp XY phẳng đùn //Z KHÔNG đổi Y khi xoay quanh Y — đã fail rotate-check.)
+        # rise(|θ|): 0 @ nghỉ → ~3 mm @ ±40° → đẩy ống cam −Y trước khi chốt kéo pinion.
+        ring = _cyl_y(15.2, 4.0, cx, y_hs - 2.0, z_pin).cut(
+            _cyl_y(7.8, 4.4, cx, y_hs - 2.2, z_pin)
         )
-    except Exception:
+        for a_center in (0.0, 180.0):
+            wpts = [App.Vector(cx, y_hs - 2.2, z_pin)]
+            for k in range(9):
+                a = math.radians(a_center - 54.0 + 108.0 * k / 8.0)
+                wpts.append(
+                    App.Vector(
+                        cx + 9.0 * math.cos(a), y_hs - 2.2, z_pin - 9.0 * math.sin(a)
+                    )
+                )
+            wpts.append(App.Vector(cx, y_hs - 2.2, z_pin))
+            wedge = Part.Face(Part.makePolygon(wpts)).extrude(App.Vector(0, 4.4, 0))
+            try:
+                knob = knob.cut(ring.common(wedge))
+            except Exception:
+                pass
+        # Face-cam: gắn NGẬP vào thân núm (y_knob+embed) rồi nhô −Y,
+        # tránh _keep_largest_solid nuốt mất lobe (chỉ chạm mặt phẳng thì fuse rời).
+        cam_rise = float(d.get("cam_face_rise", 3.0))
+        cam_ang = float(d.get("cam_face_angle_deg", 42.0))
+        cam_dead = float(d.get("cam_face_dead_deg", 12.0))
+        r_cam0, r_cam1 = 6.2, 10.2
+        n_seg = 24
+        embed = 1.2
+        face_y0 = y_knob + embed
+        cam_vol = 0.0
+        for lobe in (90.0, 270.0):
+            for i in range(n_seg):
+                a0 = -cam_ang + (2.0 * cam_ang) * i / (n_seg - 1)
+                a1 = -cam_ang + (2.0 * cam_ang) * (i + 1) / (n_seg - 1)
+                if i == n_seg - 1:
+                    a1 = cam_ang
+                a_mid = 0.5 * (a0 + a1)
+                aa = abs(a_mid)
+                if aa <= cam_dead:
+                    continue
+                rise = cam_rise * min(1.0, (aa - cam_dead) / max(1.0, 40.0 - cam_dead))
+                if rise < 0.15:
+                    continue
+                da = math.radians(max(1.2, abs(a1 - a0) * 1.08))
+                am = math.radians(lobe + a_mid)
+                p0 = App.Vector(
+                    cx + r_cam0 * math.cos(am - 0.5 * da),
+                    face_y0,
+                    z_pin + r_cam0 * math.sin(am - 0.5 * da),
+                )
+                p1 = App.Vector(
+                    cx + r_cam1 * math.cos(am - 0.5 * da),
+                    face_y0,
+                    z_pin + r_cam1 * math.sin(am - 0.5 * da),
+                )
+                p2 = App.Vector(
+                    cx + r_cam1 * math.cos(am + 0.5 * da),
+                    face_y0,
+                    z_pin + r_cam1 * math.sin(am + 0.5 * da),
+                )
+                p3 = App.Vector(
+                    cx + r_cam0 * math.cos(am + 0.5 * da),
+                    face_y0,
+                    z_pin + r_cam0 * math.sin(am + 0.5 * da),
+                )
+                try:
+                    face = Part.Face(Part.makePolygon([p0, p1, p2, p3, p0]))
+                    seg = face.extrude(App.Vector(0, -(rise + embed), 0))
+                    knob = knob.fuse(seg)
+                    cam_vol += float(seg.Volume)
+                except Exception:
+                    pass
+        knob = _as_one_solid(knob)
+        # Không dùng _keep_largest_solid sau face-cam — giữ mọi solid đã fuse.
+        print(
+            "RL_active_cam_knob: free ±40° | FACE-CAM rise=%.1f mm dead=±%.0f° "
+            "to ±%.0f° | cam_seg_vol≈%.1f | slot @ y=%.2f"
+            % (cam_rise, cam_dead, cam_ang, cam_vol, y_hs)
+        )
+    parts.append(("RL_Knob", _as_one_solid(knob), cols["knob"]))
+    if active_cam:
+        # Giữ face-cam: không _keep_largest_solid (sẽ cắt lobe rời)
         pass
-    parts.append(("RL_Knob", _keep_largest_solid(_as_one_solid(knob)), cols["knob"]))
+    else:
+        parts[-1] = (
+            "RL_Knob",
+            _keep_largest_solid(_as_one_solid(knob)),
+            cols["knob"],
+        )
     print(
         "RL_Knob: blind seat=%.1f mm | outer wall~%.1f | 8-flute sym | no through-shaft"
         % (knob_seat, knob_h - knob_seat)
@@ -1070,6 +1191,56 @@ def build_rotary_linear_parts(
         except Exception:
             pass
     scraper = _keep_largest_solid(_as_one_solid(scraper))
+    # Ball detent: nấc ĐỘC LẬP với bước răng — răng giữ m lớn (dễ in 3D),
+    # bi lò xo tạo độ phân giải mịn (mặc định 0.5 mm). Bi nhỏ Ø1.5 hợp nấc mịn.
+    #
+    # KHÔNG có cơ cấu riêng từ núm → bi. Chuỗi lực:
+    #   xoay núm → pinion → thanh trượt → MÉP RÃNH trên thanh đẩy bi nén lò xo
+    #   (cam thụ động bởi mặt cầu). Dừng xoay → lò xo ép bi sập nấc kế.
+    det_pitch = float(d.get("detent_pitch", 0.5))
+    det_ball_r = float(d.get("detent_ball_r", 0.75))  # Ø1.5
+    # Nấc 0.5 mm + bi Ø1.5: dimple cầu sẽ chồng miệng → dùng rãnh V (còn gờ).
+    det_off = float(d.get("detent_off", 0.20))
+    x_fol_back = bar_cx - 0.5 * bar_x
+    if ball_detent:
+        v_width = min(0.40, 0.82 * det_pitch)  # miệng < pitch → còn gờ
+        v_depth = float(d.get("detent_v_depth", 0.35))
+        n_det = max(3, int(math.ceil(0.5 * stroke / det_pitch)) + 1)
+        n_cut = 0
+        for k in range(-n_det, n_det + 1):
+            zc = z_pin + k * det_pitch
+            if zc < z_fol0 + 3.0 or zc > z_fol0 + follower_len - 3.0:
+                continue
+            try:
+                # Tam giác V trong mặt XZ, đùn // Y — khắc vào lưng thanh (−X)
+                hw = 0.5 * v_width
+                pts = [
+                    App.Vector(x_fol_back + 0.02, 0.0, zc - hw),
+                    App.Vector(x_fol_back - v_depth, 0.0, zc),
+                    App.Vector(x_fol_back + 0.02, 0.0, zc + hw),
+                    App.Vector(x_fol_back + 0.02, 0.0, zc - hw),
+                ]
+                wedge = Part.Face(Part.makePolygon(pts)).extrude(
+                    App.Vector(0, 4.0, 0)
+                )
+                wedge.translate(App.Vector(0, cy - 2.0, 0))
+                nxt = scraper.cut(wedge)
+                if len(list(getattr(nxt, "Solids", []) or [])) == 1:
+                    scraper = nxt
+                    n_cut += 1
+            except Exception:
+                pass
+        scraper = _keep_largest_solid(_as_one_solid(scraper))
+        print(
+            "RL_detent_pockets: V-groove nấc=%.2f mm | w=%.2f d=%.2f | "
+            "ball Ø%.1f | %d rãnh | gờ giữa nấc | pitch răng=%.2f"
+            % (det_pitch, v_width, v_depth, 2.0 * det_ball_r, n_cut, pitch)
+        )
+        print(
+            "RL_detent_kinematics: CAM nhấc bi rồi mới kéo | "
+            "khóa: bi sập V mỗi %.2f mm"
+            % det_pitch
+        )
     parts.append(("RL_Follower", scraper, cols["fol"]))
     print(
         "RL_Follower: slide+teeth | len=%.1f (=1/2 rail %.1f) z[%.1f,%.1f] solids=%d"
@@ -1502,6 +1673,63 @@ def build_rotary_linear_parts(
     bridge_dy = y_n_plane - y_s_plane
     bridge = Part.makeBox(bridge_t, bridge_dy, bridge_h)
     bridge.translate(App.Vector(rail_x0 - bridge_t, bridge_y0, bridge_z0))
+    # Ball detent plunger bore (// X) through bridge at mid-travel z_pin
+    if ball_detent:
+        bore_d = 2.0 * det_ball_r + 0.35  # clear cho bi Ø1.5
+        try:
+            bridge = _as_one_solid(
+                bridge.cut(
+                    _cyl_axis_x(
+                        bore_d,
+                        bridge_t + rail_wall + 2.0,
+                        rail_x0 - bridge_t - 1.0,
+                        cy,
+                        z_pin,
+                    )
+                )
+            )
+        except Exception:
+            pass
+        # Counterbore ngoài cầu cho vành Ø11 + đầu ốc Ø8
+        try:
+            bridge = _as_one_solid(
+                bridge.cut(
+                    _cyl_axis_x(
+                        11.2,
+                        1.4,
+                        rail_x0 - bridge_t - 0.1,
+                        cy,
+                        z_pin,
+                    )
+                )
+            )
+        except Exception:
+            pass
+        # Cửa sổ nhìn cạnh (+Y): thấy bi tì vào rãnh trên lưng thanh
+        # (chứng minh: mép rãnh đẩy bi khi thanh chạy — không có cam từ núm)
+        try:
+            side_win = Part.makeBox(
+                bridge_t + rail_wall + 1.5,
+                14.0,
+                20.0,
+            )
+            side_win.translate(
+                App.Vector(
+                    rail_x0 - bridge_t - 0.5,
+                    cy + 1.5,
+                    z_pin - 10.0,
+                )
+            )
+            nxt = _as_one_solid(bridge.cut(side_win))
+            if len(list(getattr(nxt, "Solids", []) or [])) == 1:
+                bridge = nxt
+        except Exception:
+            pass
+        print(
+            "RL_detent_bridge: bore Ø%.1f // X @ z_pin=%.1f | "
+            "cửa sổ +Y nhìn bi↔rãnh thanh"
+            % (bore_d, z_pin)
+        )
     # No side windows: M3 is top-down (windows looked like deep side notches)
     n_br = len(list(getattr(bridge, "Solids", []) or []))
     parts.append(("RL_Rail_Bridge", _as_one_solid(bridge), cols["bridge"]))
@@ -1509,6 +1737,224 @@ def build_rotary_linear_parts(
         "RL_Rail_Bridge: t=%.1f Y-span=%.1f H=%.1f @ x=%.1f solids=%d"
         % (bridge_t, bridge_dy, bridge_h, rail_x0 - 0.5 * bridge_t, n_br)
     )
+
+    # ------------------------------------------------------------------
+    # BALL DETENT — chủ động bằng CAM:
+    #   đoạn xoay đầu của núm đi vào cam dốc → đẩy ống cam trượt dọc Y.
+    #   Ống cam có mặt côn tác động lên tay đẩy của cụm bi, RÚT bi ra
+    #   khỏi rãnh trước khi pinion kéo follower trượt.
+    #   Hết hành trình rơ ±40° thì chốt chạm đầu rãnh cung và mới bắt đầu
+    #   kéo pinion. Nhả tay → lò xo detent đẩy bi về, đồng thời hồi cam.
+    # ------------------------------------------------------------------
+    if ball_detent:
+        if active_cam:
+            sl_face = y_knob - 0.3
+            sl_col0 = y_knob - 7.45
+            sl_cone0 = y_knob - 13.25
+            cone = Part.makeCone(7.2, 13.0, sl_col0 - sl_cone0)
+            cone.rotate(App.Vector(0, 0, 0), App.Vector(1, 0, 0), -90.0)
+            cone.translate(App.Vector(cx, sl_cone0, z_pin))
+            collar_cam = _cyl_y(21.4, sl_face - sl_col0, cx, sl_col0, z_pin)
+            cam_sleeve = _as_one_solid(cone.fuse(collar_cam))
+            # Mặt ống lõm sâu hơn cam_rise + 2 pad tì tại ±Z (khớp lobe núm).
+            cam_rise_ref = float(d.get("cam_face_rise", 3.0))
+            try:
+                recess = _cyl_y(
+                    22.0,  # rộng hơn r_cam1
+                    cam_rise_ref + 1.2,
+                    cx,
+                    sl_face - (cam_rise_ref + 0.6),
+                    z_pin,
+                )
+                cam_sleeve = _as_one_solid(cam_sleeve.cut(recess))
+            except Exception:
+                pass
+            # Pad thấp: đỉnh dưới mặt núm một khe nghỉ (~0.35 mm)
+            pad_h = 0.40
+            pad_r0, pad_r1 = 6.4, 10.0
+            for lobe in (90.0, 270.0):
+                am = math.radians(lobe)
+                da = math.radians(16.0)
+                q0 = App.Vector(
+                    cx + pad_r0 * math.cos(am - 0.5 * da),
+                    sl_face - pad_h,
+                    z_pin + pad_r0 * math.sin(am - 0.5 * da),
+                )
+                q1 = App.Vector(
+                    cx + pad_r1 * math.cos(am - 0.5 * da),
+                    sl_face - pad_h,
+                    z_pin + pad_r1 * math.sin(am - 0.5 * da),
+                )
+                q2 = App.Vector(
+                    cx + pad_r1 * math.cos(am + 0.5 * da),
+                    sl_face - pad_h,
+                    z_pin + pad_r1 * math.sin(am + 0.5 * da),
+                )
+                q3 = App.Vector(
+                    cx + pad_r0 * math.cos(am + 0.5 * da),
+                    sl_face - pad_h,
+                    z_pin + pad_r0 * math.sin(am + 0.5 * da),
+                )
+                try:
+                    pad = Part.Face(Part.makePolygon([q0, q1, q2, q3, q0])).extrude(
+                        App.Vector(0, pad_h, 0)
+                    )
+                    cam_sleeve = cam_sleeve.fuse(pad)
+                except Exception:
+                    pass
+            cam_sleeve = _as_one_solid(cam_sleeve)
+            cam_sleeve = _as_one_solid(
+                cam_sleeve.cut(
+                    _cyl_y(j_od + 0.4, (sl_face - sl_cone0) + 2.0, cx, sl_cone0 - 1.0, z_pin)
+                )
+            )
+            ridge = Part.makeBox(1.45, (sl_face - 0.05) - (sl_cone0 + 0.05), 5.8)
+            ridge.translate(App.Vector(cx + 2.95, sl_cone0 + 0.05, z_pin - 2.9))
+            cam_sleeve = _as_one_solid(cam_sleeve.fuse(ridge))
+            stop_pin = _cyl_axis_x(3.4, 14.0, cx - 7.0, y_hs, z_pin)
+            parts.append(("RL_Cam_Sleeve", cam_sleeve, (0.95, 0.45, 0.10)))
+            parts.append(("RL_Cam_StopPin", _as_one_solid(stop_pin), (0.22, 0.22, 0.25)))
+            print(
+                "RL_active_cam: face-cam pads @ ±Z | sleeve y[%.1f,%.1f] | "
+                "θ→push −Y before drive"
+                % (sl_cone0, sl_col0)
+            )
+        xb = x_fol_back - det_off  # tâm bi khi sập vào rãnh (đúng nấc mid)
+        ball = _sphere(det_ball_r, xb, cy, z_pin)
+        spring_x0 = rail_x0 - bridge_t + 2.6
+        spring_x1 = xb - det_ball_r + 0.2
+        spring = _cyl_axis_x(
+            max(1.0, 2.0 * det_ball_r - 0.3),
+            max(1.0, spring_x1 - spring_x0),
+            spring_x0,
+            cy,
+            z_pin,
+        )
+        shank = _cyl_axis_x(1.6, 3.0, rail_x0 - bridge_t + 0.2, cy, z_pin)
+        head = _cyl_axis_x(8.0, 4.0, rail_x0 - bridge_t - 4.0, cy, z_pin)
+        collar = _cyl_axis_x(11.0, 1.2, rail_x0 - bridge_t - 1.2, cy, z_pin)
+        detent = ball.fuse(spring).fuse(shank).fuse(head).fuse(collar)
+        if active_cam:
+            # Chân tì côn −X. Đòn bên ngoài web ray (x < web_x_lo) chạy +Y
+            # tới cam rồi bắt ngang — tránh Rail_N web / bridge / pinion.
+            cone_len = sl_col0 - sl_cone0
+            cone_r0, cone_r1 = 7.2, 13.0
+            cam_gap = 0.30
+            y_f0, y_f1 = sl_cone0 + 0.8, sl_cone0 + 3.5
+            r_f0 = cone_r0 + (cone_r1 - cone_r0) * ((y_f0 - sl_cone0) / cone_len)
+            r_f1 = cone_r0 + (cone_r1 - cone_r0) * ((y_f1 - sl_cone0) / cone_len)
+            x_touch0 = cx - (r_f0 + cam_gap)
+            x_touch1 = cx - (r_f1 + cam_gap)
+            x_safe = cx - (cone_r1 + cam_gap + 0.5)
+            xc_rail = 0.5 * (rail_x0 + rail_x1)
+            web_x_lo = min(link_x0, 2.0 * xc_rail - link_x1)
+            lever_w = 5.0
+            # Toàn bộ đòn nằm ngoài web (và ngoài cầu)
+            x_ext = web_x_lo - 5.0
+            lever = Part.makeBox(lever_w, (y_f1 + 1.0) - (cy - 4.0), 6.0)
+            lever.translate(
+                App.Vector(x_ext - 0.5 * lever_w, cy - 4.0, z_pin - 3.0)
+            )
+            # Nối đòn → đầu ốc/collar (đã có sẵn phía ngoài cầu)
+            x_head0 = rail_x0 - bridge_t - 4.0
+            x_lever_hi = x_ext + 0.5 * lever_w
+            if x_head0 > x_lever_hi + 0.5:
+                conn = Part.makeBox(x_head0 - x_lever_hi, 6.0, 6.0)
+                conn.translate(App.Vector(x_lever_hi, cy - 3.0, z_pin - 3.0))
+                detent = detent.fuse(conn)
+            cross = Part.makeBox(
+                x_safe - (x_ext - 0.5 * lever_w),
+                y_f1 - y_f0,
+                6.0,
+            )
+            cross.translate(
+                App.Vector(x_ext - 0.5 * lever_w, y_f0, z_pin - 3.0)
+            )
+            fpts = [
+                App.Vector(x_touch0, y_f0, 0.0),
+                App.Vector(x_touch1, y_f1, 0.0),
+                App.Vector(x_safe, y_f1, 0.0),
+                App.Vector(x_safe, y_f0, 0.0),
+                App.Vector(x_touch0, y_f0, 0.0),
+            ]
+            foot = Part.Face(Part.makePolygon(fpts)).extrude(App.Vector(0, 0, 7.0))
+            foot.translate(App.Vector(0, 0, z_pin - 3.5))
+            detent = detent.fuse(lever).fuse(cross).fuse(foot)
+            try:
+                cone_keep = Part.makeCone(
+                    cone_r0 + cam_gap, cone_r1 + cam_gap, cone_len
+                )
+                cone_keep.rotate(App.Vector(0, 0, 0), App.Vector(1, 0, 0), -90.0)
+                cone_keep.translate(App.Vector(cx, sl_cone0, z_pin))
+                col_keep = _cyl_y(
+                    21.4 + 2.0 * cam_gap,
+                    sl_face - sl_col0 + 0.5,
+                    cx,
+                    sl_col0 - 0.25,
+                    z_pin,
+                )
+                detent = _as_one_solid(detent.cut(cone_keep.fuse(col_keep)))
+            except Exception:
+                pass
+            print(
+                "RL_active_cam_wedge: lever outside web (x_ext=%.1f web_lo=%.1f) | "
+                "foot −X gap=%.2f R≈%.1f→%.1f"
+                % (x_ext, web_x_lo, cam_gap, r_f0, r_f1)
+            )
+        detent = _as_one_solid(detent)
+        # Bi chrome nổi — phần ĐƯỢC mép rãnh thanh đẩy khi xoay núm
+        parts.append(("RL_Detent", detent, (0.85, 0.88, 0.92)))
+        print(
+            "RL_detent: bi Ø%.1f + lò xo + ốc | nấc=%.2f mm | stroke=%.0f→~%.0f "
+            "nấc | %s"
+            % (
+                2.0 * det_ball_r,
+                det_pitch,
+                stroke,
+                stroke / det_pitch,
+                "CAM chủ động nhấc bi trước khi kéo thanh" if active_cam
+                else "ĐẨY BI = mép rãnh THANH (không phải núm/cam riêng)",
+            )
+        )
+        knob_sh = parts[[n for n, _, _ in parts].index("RL_Knob")][1]
+        det_pairs = [
+            ("Detent", detent, "Rail_Bridge", bridge, 0.05),
+            ("Detent", detent, "Follower", scraper, 15.0),
+            ("Detent", detent, "Bearing_Rail_S", rail_s_assy, 0.05),
+            ("Detent", detent, "Bearing_Rail_N", rail_n_assy, 0.05),
+            ("Detent", detent, "Pinion_Shaft", pinion_shaft, 0.05),
+            ("Detent", detent, "Knob", knob_sh, 0.05),
+        ]
+        if active_cam:
+            det_pairs.extend(
+                [
+                    ("Cam_Sleeve", cam_sleeve, "Detent", detent, 0.05),
+                    ("Cam_Sleeve", cam_sleeve, "Pinion_Shaft", pinion_shaft, 0.05),
+                    ("Cam_Sleeve", cam_sleeve, "Knob", knob_sh, 0.05),
+                    ("Cam_StopPin", stop_pin, "Knob", knob_sh, 0.05),
+                    ("Cam_StopPin", stop_pin, "Pinion_Shaft", pinion_shaft, 0.05),
+                ]
+            )
+        det_bad = []
+        for na, sa, nb, sb, mx in det_pairs:
+            try:
+                com = sa.common(sb)
+                vol = (
+                    float(com.Volume)
+                    if com is not None and not com.isNull()
+                    else 0.0
+                )
+            except Exception:
+                vol = -1.0
+            ok = 0.0 <= vol <= mx
+            print(
+                "RL_detent_clear %s vs %s: overlap=%.3f mm3 (max %.2f) -> %s"
+                % (na, nb, vol, mx, "PASS" if ok else "FAIL")
+            )
+            if not ok:
+                det_bad.append((na, nb, vol))
+        if det_bad:
+            raise RuntimeError("RL ball-detent collision: %s" % det_bad)
 
     include_bottom_stop = bool(d.get("include_bottom_stop", False))
     include_scale = bool(d.get("include_scale", False))

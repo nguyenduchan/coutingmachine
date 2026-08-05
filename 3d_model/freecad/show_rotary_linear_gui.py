@@ -4,11 +4,12 @@ Standalone FreeCAD: Rotary_Linear — rack & pinion (travel horizontal).
 Active:
   RL_Pinion_Shaft (pinion+shaft fused print)
   RL_Bearing_Rail_S/N + RL_Bearing_Cap_S/N (M3 clamp)
-  RL_Rail_Bridge (flat // follower, joins S–N)
+  RL_Rail_Bridge (flat // follower, joins S–N; bore for ball detent)
   RL_Knob (blind seat + short M3) + RL_Friction_Washer
-  RL_Follower (tịnh tiến ngang)
+  RL_Follower (tịnh tiến ngang + rãnh cầu detent)
+  RL_Detent (bi + lò xo + ốc siết — hãm khi dừng xoay)
 
-Assembly: drop pinion-shaft into saddles → bolt caps M3 → washer/knob (blind).
+Assembly: drop pinion-shaft → M3 caps → washer/knob; ball plunger in bridge.
 """
 
 from __future__ import annotations
@@ -76,6 +77,20 @@ def main() -> None:
     drv["bar_height"] = float(drv.get("bar_height", hb.get("height", 12.0)))
     drv["include_bottom_stop"] = False
     drv["include_scale"] = False
+    # Ball detent: răng m=2 dễ in; nấc bi 0.5 mm độc lập (độ phân giải mịn)
+    drv["include_ball_detent"] = True
+    drv["include_active_cam"] = True
+    drv["detent_pitch"] = 0.5
+    drv["detent_ball_r"] = 0.75  # bi Ø1.5 — hợp nấc 0.5 mm
+    # detent_off / pocket_r: để rotary_linear tự tính dimple nông (còn gờ giữa nấc)
+    drv.pop("detent_off", None)
+    # Giữ module lớn (đã có trong box_settings ≈ 2.0) — không hạ xuống 0.5 mm/răng
+    drv["gear_module"] = 2.0
+    drv.setdefault("rack", {})
+    if isinstance(drv["rack"], dict):
+        drv["rack"] = dict(drv["rack"])
+        drv["rack"]["module"] = 2.0
+        drv["rack"]["tooth_clear"] = float(drv["rack"].get("tooth_clear", 0.55))
 
     parts = build_rotary_linear_parts(
         cx=0.0,
@@ -89,15 +104,25 @@ def main() -> None:
         if n not in ACTIVE_RL_PARTS:
             print("skip (not in active model):", n)
             continue
-        if n == "RL_Follower":
-            tr = 50
+        elif n == "RL_Detent":
+            tr = 0
+            col = (0.95, 0.78, 0.08)  # vàng — đầu ốc + bi/lò xo
+        elif n == "RL_Cam_Sleeve":
+            tr = 0
+            col = (0.98, 0.45, 0.08)
+        elif n == "RL_Cam_StopPin":
+            tr = 0
+            col = (0.2, 0.2, 0.2)
         elif n.startswith("RL_Bearing_Cap"):
             tr = 35
             col = (0.40, 0.60, 0.85)
         elif n.startswith("RL_Bearing"):
-            tr = 40
+            tr = 45
         elif n == "RL_Rail_Bridge":
-            tr = 25
+            tr = 75  # cửa sổ + trong suốt: thấy bi tì rãnh thanh
+        elif n == "RL_Follower":
+            tr = 35  # bớt đục để thấy track rãnh trên lưng
+            # keep green from builder
         elif n == "RL_Pinion_Shaft":
             tr = 0
             col = (1.0, 0.45, 0.05)
@@ -112,10 +137,23 @@ def main() -> None:
     doc.saveAs(str(FCSTD))
     print("Saved:", FCSTD)
     print("Active:", ", ".join(sorted(ACTIVE_RL_PARTS)))
-    print("Assembly: drop RL_Pinion_Shaft → M3 caps → blind RL_Knob")
+    det_obj = next((o for o in objs if o.Name == "RL_Detent"), None)
+    print(
+        "KINEMATICS: xoay núm → ramp trong núm → RL_Cam_Sleeve trượt → "
+        "tay đẩy RL_Detent rút bi lên trước. Hết free-play thì stop pin "
+        "mới kéo trục/pinion. Nhìn cụm cam màu cam gần núm."
+    )
+    if det_obj is not None:
+        print("RL_Detent selected — look at bridge side window mid-travel")
 
     if App.GuiUp and Gui is not None:
         Gui.ActiveDocument = Gui.getDocument(doc.Name)
+        if det_obj is not None:
+            try:
+                Gui.Selection.clearSelection()
+                Gui.Selection.addSelection(doc.Name, det_obj.Name)
+            except Exception:
+                pass
         Gui.activeDocument().activeView().viewIsometric()
         Gui.SendMsgToActiveView("ViewFit")
         Gui.updateGui()

@@ -1,0 +1,101 @@
+{
+  "mode": "knob_rotation_cam_push_check_oriented",
+  "pass": true,
+  "travel_y_by_p40deg_mm": 2.7,
+  "travel_y_by_m40deg_mm": 2.7,
+  "overlap_at_40deg_mm3": 4.122566052857191,
+  "sleeve_clear_y_0": 0.0,
+  "sleeve_clear_y_p40": 2.7,
+  "sleeve_clear_y_m40": 2.7,
+  "diagnosis": "OK: knob \u03b8 pushes cam sleeve (+Y after orient) before drive",
+  "rows": [
+    {
+      "theta_deg": 0,
+      "overlap_rest_sleeve_mm3": 0.0,
+      "sleeve_clear_y_mm": 0.0,
+      "best_clear_y_mm": 0.0,
+      "best_ov_mm3": 0.0,
+      "detent_clear_z_mm": -0.4
+    },
+    {
+      "theta_deg": 5,
+      "overlap_rest_sleeve_mm3": 0.0,
+      "sleeve_clear_y_mm": 0.0,
+      "best_clear_y_mm": 0.0,
+      "best_ov_mm3": 0.0,
+      "detent_clear_z_mm": -0.4
+    },
+    {
+      "theta_deg": 10,
+      "overlap_rest_sleeve_mm3": 0.6513416514312256,
+      "sleeve_clear_y_mm": 0.4,
+      "best_clear_y_mm": 0.4,
+      "best_ov_mm3": 0.0,
+      "detent_clear_z_mm": -0.4
+    },
+    {
+      "theta_deg": 15,
+      "overlap_rest_sleeve_mm3": 2.6256657914799537,
+      "sleeve_clear_y_mm": 0.8,
+      "best_clear_y_mm": 0.8,
+      "best_ov_mm3": 0.0,
+      "detent_clear_z_mm": -0.4
+    },
+    {
+      "theta_deg": 20,
+      "overlap_rest_sleeve_mm3": 4.649024924377101,
+      "sleeve_clear_y_mm": 1.5,
+      "best_clear_y_mm": 1.5,
+      "best_ov_mm3": 0.034719541907111524,
+      "detent_clear_z_mm": -0.4
+    },
+    {
+      "theta_deg": 25,
+      "overlap_rest_sleeve_mm3": 6.421543725157207,
+      "sleeve_clear_y_mm": 2.0,
+      "best_clear_y_mm": 2.0,
+      "best_ov_mm3": 0.0,
+      "detent_clear_z_mm": -0.4
+    },
+    {
+      "theta_deg": 30,
+      "overlap_rest_sleeve_mm3": 6.509451794974225,
+      "sleeve_clear_y_mm": 2.4000000000000004,
+      "best_clear_y_mm": 2.4000000000000004,
+      "best_ov_mm3": 0.0,
+      "detent_clear_z_mm": -0.4
+    },
+    {
+      "theta_deg": 35,
+      "overlap_rest_sleeve_mm3": 6.158198231947596,
+      "sleeve_clear_y_mm": 2.7,
+      "best_clear_y_mm": 2.7,
+      "best_ov_mm3": 0.0,
+      "detent_clear_z_mm": -0.4
+    },
+    {
+      "theta_deg": 40,
+      "overlap_rest_sleeve_mm3": 4.122566052857191,
+      "sleeve_clear_y_mm": 2.7,
+      "best_clear_y_mm": 2.7,
+      "best_ov_mm3": 0.0,
+      "detent_clear_z_mm": -0.4
+    },
+    {
+      "theta_deg": -20,
+      "overlap_rest_sleeve_mm3": 4.64902492437691,
+      "sleeve_clear_y_mm": 1.5,
+      "best_clear_y_mm": 1.5,
+      "best_ov_mm3": 0.03471954190709251,
+      "detent_clear_z_mm": -0.4
+    },
+    {
+      "theta_deg": -40,
+      "overlap_rest_sleeve_mm3": 4.306350775602004,
+      "sleeve_clear_y_mm": 2.7,
+      "best_clear_y_mm": 2.7,
+      "best_ov_mm3": 0.0,
+      "detent_clear_z_mm": -0.4
+    }
+  ]
+}

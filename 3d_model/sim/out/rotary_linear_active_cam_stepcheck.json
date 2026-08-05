@@ -1,0 +1,80 @@
+{
+  "mode": "quasi_static_stepcheck",
+  "detent_pitch_mm": 0.5,
+  "cam_lift_y_mm": 2.5,
+  "detent_retract_x_mm": -2.0,
+  "z_range_mm": [
+    -10.0,
+    10.0
+  ],
+  "n_steps": 41,
+  "pass": true,
+  "checks": {
+    "locked_seat_detent_follower": true,
+    "locked_clear_cam_detent": true,
+    "moving_clear_detent_follower": true,
+    "moving_cam_detent_contact_ok": true,
+    "jam_without_lift": true
+  },
+  "max_moving_detent_vs_follower_mm3": 0.0,
+  "max_moving_cam_vs_detent_mm3": 1.4409148624267687,
+  "min_jam_without_lift_mm3": 0.5121908104199433,
+  "samples": [
+    {
+      "step_index": -20,
+      "z_mm": -10.0,
+      "locked_detent_vs_follower_mm3": 0.5121908104199618,
+      "locked_cam_vs_detent_mm3": 0.0,
+      "moving_detent_vs_follower_mm3": 0.0,
+      "moving_cam_vs_detent_mm3": 1.4409148624267687
+    },
+    {
+      "step_index": -19,
+      "z_mm": -9.5,
+      "locked_detent_vs_follower_mm3": 0.5121908104202303,
+      "locked_cam_vs_detent_mm3": 0.0,
+      "moving_detent_vs_follower_mm3": 0.0,
+      "moving_cam_vs_detent_mm3": 1.4409148624267687
+    },
+    {
+      "step_index": -18,
+      "z_mm": -9.0,
+      "locked_detent_vs_follower_mm3": 0.5121908104199618,
+      "locked_cam_vs_detent_mm3": 0.0,
+      "moving_detent_vs_follower_mm3": 0.0,
+      "moving_cam_vs_detent_mm3": 1.4409148624267687
+    },
+    {
+      "step_index": 0,
+      "z_mm": 0.0,
+      "locked_detent_vs_follower_mm3": 0.5121908104202322,
+      "locked_cam_vs_detent_mm3": 0.0,
+      "moving_detent_vs_follower_mm3": 0.0,
+      "moving_cam_vs_detent_mm3": 1.4409148624267687
+    },
+    {
+      "step_index": 18,
+      "z_mm": 9.0,
+      "locked_detent_vs_follower_mm3": 0.5121908104202303,
+      "locked_cam_vs_detent_mm3": 0.0,
+      "moving_detent_vs_follower_mm3": 0.0,
+      "moving_cam_vs_detent_mm3": 1.4409148624267687
+    },
+    {
+      "step_index": 19,
+      "z_mm": 9.5,
+      "locked_detent_vs_follower_mm3": 0.5121908104199618,
+      "locked_cam_vs_detent_mm3": 0.0,
+      "moving_detent_vs_follower_mm3": 0.0,
+      "moving_cam_vs_detent_mm3": 1.4409148624267687
+    },
+    {
+      "step_index": 20,
+      "z_mm": 10.0,
+      "locked_detent_vs_follower_mm3": 0.5121908104202303,
+      "locked_cam_vs_detent_mm3": 0.0,
+      "moving_detent_vs_follower_mm3": 0.0,
+      "moving_cam_vs_detent_mm3": 1.4409148624267687
+    }
+  ]
+}
