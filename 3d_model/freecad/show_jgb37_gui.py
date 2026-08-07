@@ -49,6 +49,11 @@ from box_settings import DISC as _DISC_CFG
 from box_settings import HUB as _HUB_CFG
 from box_settings import LID as _LID_CFG
 from box_settings import lid_plan_full as _lid_plan_full
+from disc_access_lid import (
+    assemble_disc_access_lid,
+    enforce_lid_parent_pz0,
+    force_show_lid_top,
+)
 
 # ---- Motor datasheet (mm) ----
 GB_D, GB_L = 37.0, 26.5
@@ -3170,79 +3175,25 @@ def main() -> None:
         add_group(doc, parent, kids)
         counts.append("%s(%d)" % (parent, len(kids)))
 
-    # Disc_Access_Lid: Top + Bottom + solid annulus fill + walls/bars
-    if _keep_assembly("Disc_Access_Lid"):
-        lid_top_objs = []
-        hub_kids: list = []
-        sw_chute_kids: list = []
-        sw_rest = None
-        for n, sh, col in make_lid_top_parts(z_disc):
-            tr = 0 if n == "Lid_Top_Arc_Corner" else 25
-            obj = add_part(doc, n, sh, col, transparency=tr)
-            if n.startswith("Lid_Top_Deck_S_Hub_"):
-                hub_kids.append(obj)
-            elif n.startswith("Lid_Top_Out_SW_Chute_"):
-                sw_chute_kids.append(obj)
-            elif n == "Lid_Top_Out_SW_Rest":
-                sw_rest = obj
-            else:
-                lid_top_objs.append(obj)
-        if hub_kids:
-            lid_top_objs.append(add_group(doc, "Lid_Top_Deck_S_Hub", hub_kids))
-        sw_kids: list = []
-        if sw_chute_kids:
-            sw_kids.append(add_group(doc, "Lid_Top_Out_SW_Chute", sw_chute_kids))
-        if sw_rest is not None:
-            sw_kids.append(sw_rest)
-        if sw_kids:
-            lid_top_objs.append(add_group(doc, "Lid_Top_Out_SW", sw_kids))
-        lid_top_grp = add_group(doc, "Lid_Top", lid_top_objs)
-        lid_kids = [lid_top_grp]
-        lid_bot_objs = [
-            add_part(doc, n, sh, col, transparency=25)
-            for n, sh, col in make_lid_bottom_parts(z_disc)
-        ]
-        if lid_bot_objs:
-            lid_kids.append(add_group(doc, "Lid_Bottom", lid_bot_objs))
-        lid_fill_objs = [
-            add_part(doc, n, sh, col, transparency=20)
-            for n, sh, col in make_lid_fill_parts(z_disc)
-        ]
-        if lid_fill_objs:
-            lid_kids.append(add_group(doc, "Lid_Fill", lid_fill_objs))
-        lid_rest = [
-            add_part(doc, n, sh, col, transparency=25)
-            for n, sh, col in make_disc_access_lid_parts(z_disc)
-        ]
-        drive_objs = []
-        if _keep_assembly("Width_Adjust_Drive") or _keep_assembly("Width_Lead_Screw"):
-            drive_objs = [
-                add_part(doc, n, sh, col, transparency=15)
-                for n, sh, col in make_width_adjust_drive_parts(z_disc)
-            ]
-            if drive_objs:
-                lid_rest.append(add_group(doc, "Width_Adjust_Drive", drive_objs))
-        # Height_Adjust_Drive (settings-gated; new feature always built when enabled)
-        h_drive_objs = []
-        if bool(_LID_CFG.get("height_bar", {}).get("drive", {}).get("enabled", False)):
-            h_drive_objs = [
-                add_part(doc, n, sh, col, transparency=15)
-                for n, sh, col in make_height_adjust_drive_parts(z_disc)
-            ]
-            if h_drive_objs:
-                lid_rest.append(add_group(doc, "Height_Adjust_Drive", h_drive_objs))
-        add_group(doc, "Disc_Access_Lid", lid_kids + lid_rest)
-        counts.append(
-            "Disc_Access_Lid(Top %d + Bottom %d + Fill %d + rest %d + w_drive %d + h_drive %d)"
-            % (
-                len(lid_top_objs),
-                len(lid_bot_objs),
-                len(lid_fill_objs),
-                len(lid_rest) - (1 if drive_objs else 0) - (1 if h_drive_objs else 0),
-                len(drive_objs),
-                len(h_drive_objs),
-            )
-        )
+    # Disc_Access_Lid: shared assembler (also show_disc_access_lid_gui.py)
+    lid_result = assemble_disc_access_lid(
+        doc,
+        z_disc,
+        add_part=add_part,
+        add_group=add_group,
+        make_lid_top_parts=make_lid_top_parts,
+        make_lid_bottom_parts=make_lid_bottom_parts,
+        make_lid_fill_parts=make_lid_fill_parts,
+        make_disc_access_lid_parts=make_disc_access_lid_parts,
+        make_width_adjust_drive_parts=make_width_adjust_drive_parts,
+        make_height_adjust_drive_parts=make_height_adjust_drive_parts,
+        lid_cfg=_LID_CFG,
+        keep_assembly=_keep_assembly,
+    )
+    if lid_result.get("built"):
+        counts.append(lid_result["count_msg"])
+        lid_top_objs = lid_result["lid_top_objs"]
+        lid_top_grp = lid_result["lid_top_grp"]
     else:
         skipped.append("Disc_Access_Lid")
         lid_top_objs = []
@@ -3276,26 +3227,11 @@ def main() -> None:
 
     # Disc_Access_Lid: children authored with wall bottoms at disc_top + disc_clear.
     # Parent Pz must be 0 so Lid_Wall_Arc_* underside stays 0.5 mm above the disc.
-    # (Old FCStd had Pz=-3 which sank walls into the disc.)
-    lid_grp = doc.getObject("Disc_Access_Lid")
-    if lid_grp is not None and hasattr(lid_grp, "Placement"):
-        pl = lid_grp.Placement
-        if abs(float(pl.Base.z)) > 1e-6:
-            print(
-                "Disc_Access_Lid: Pz %.3f -> 0 (Lid_Wall bottom = disc+%.1f mm)"
-                % (pl.Base.z, LID_DISC_CLEAR)
-            )
-            pl.Base = App.Vector(pl.Base.x, pl.Base.y, 0.0)
-            lid_grp.Placement = pl
+    enforce_lid_parent_pz0(doc, LID_DISC_CLEAR)
 
     # Force-show full sealed Lid_Top (user may have hidden older children)
     if lid_top_grp is not None:
-        for obj in lid_top_objs + [lid_top_grp, doc.getObject("Disc_Access_Lid")]:
-            if obj is None:
-                continue
-            vo = getattr(obj, "ViewObject", None)
-            if vo is not None and hasattr(vo, "Visibility"):
-                vo.Visibility = True
+        force_show_lid_top(doc, lid_top_objs, lid_top_grp)
 
     doc.recompute()
     doc.saveAs(str(FCSTD))
@@ -3315,4 +3251,22 @@ def main() -> None:
         App.closeDocument(doc.Name)
 
 
-main()
+def _is_direct_launch() -> bool:
+    """True when FreeCAD launched this file (not when imported as makers)."""
+    if __name__ == "__main__":
+        return True
+    try:
+        me = Path(__file__).resolve()
+    except NameError:
+        return True
+    for arg in sys.argv:
+        try:
+            if Path(arg).resolve() == me:
+                return True
+        except Exception:
+            continue
+    return False
+
+
+if _is_direct_launch():
+    main()

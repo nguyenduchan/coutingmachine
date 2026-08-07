@@ -1,0 +1,157 @@
+{
+  "pass": true,
+  "aperture_ok": true,
+  "aperture_small_band_mm": [
+    1.5,
+    5.5
+  ],
+  "aperture_large_band_mm": [
+    0.0,
+    12.0
+  ],
+  "small_hold_ok": true,
+  "ang_at_small_end_deg": 5.0,
+  "had_lug_contact": true,
+  "contact_steps_transit": 87,
+  "angle_min_deg": 5.0,
+  "angle_max_deg": 60.61,
+  "angle_delta_deg": 55.61,
+  "illegal_force_while_separated": 0,
+  "ghost_moves_without_contact": 0,
+  "gravity": -9.81,
+  "free_fall_delta_z_m": 0.07602,
+  "open_sweep_mm": [
+    1.0,
+    28.7,
+    1.0
+  ],
+  "open_bands": {
+    "small": [
+      1.0,
+      5.0
+    ],
+    "transit": [
+      5.0,
+      16.7
+    ],
+    "large": [
+      16.7,
+      28.7
+    ]
+  },
+  "aperture_samples": [
+    {
+      "open": 1.0,
+      "small_mm": 1.5,
+      "large_mm": 0.0,
+      "active": "SMALL",
+      "active_width_mm": 1.5,
+      "flap_deg": 5.0
+    },
+    {
+      "open": 3.77,
+      "small_mm": 4.27,
+      "large_mm": 0.0,
+      "active": "SMALL",
+      "active_width_mm": 4.27,
+      "flap_deg": 5.0
+    },
+    {
+      "open": 6.54,
+      "small_mm": 3.96,
+      "large_mm": 0.0,
+      "active": "LARGE",
+      "active_width_mm": 0.0,
+      "flap_deg": 15.76
+    },
+    {
+      "open": 9.31,
+      "small_mm": 1.19,
+      "large_mm": 0.0,
+      "active": "LARGE",
+      "active_width_mm": 0.0,
+      "flap_deg": 43.04
+    },
+    {
+      "open": 12.08,
+      "small_mm": 0.0,
+      "large_mm": 0.0,
+      "active": "LARGE",
+      "active_width_mm": 0.0,
+      "flap_deg": 58.5
+    },
+    {
+      "open": 14.85,
+      "small_mm": 0.0,
+      "large_mm": 0.0,
+      "active": "LARGE",
+      "active_width_mm": 0.0,
+      "flap_deg": 60.59
+    },
+    {
+      "open": 17.62,
+      "small_mm": 0.0,
+      "large_mm": 0.92,
+      "active": "LARGE",
+      "active_width_mm": 0.92,
+      "flap_deg": 60.59
+    },
+    {
+      "open": 20.39,
+      "small_mm": 0.0,
+      "large_mm": 3.69,
+      "active": "LARGE",
+      "active_width_mm": 3.69,
+      "flap_deg": 60.59
+    },
+    {
+      "open": 23.16,
+      "small_mm": 0.0,
+      "large_mm": 6.46,
+      "active": "LARGE",
+      "active_width_mm": 6.46,
+      "flap_deg": 60.59
+    },
+    {
+      "open": 25.93,
+      "small_mm": 0.0,
+      "large_mm": 9.23,
+      "active": "LARGE",
+      "active_width_mm": 9.23,
+      "flap_deg": 60.59
+    },
+    {
+      "open": 28.7,
+      "small_mm": 0.0,
+      "large_mm": 12.0,
+      "active": "LARGE",
+      "active_width_mm": 12.0,
+      "flap_deg": 60.59
+    },
+    {
+      "open": 26.07,
+      "small_mm": 0.0,
+      "large_mm": 9.369,
+      "active": "LARGE",
+      "active_width_mm": 9.369,
+      "flap_deg": 60.59
+    },
+    {
+      "open": 23.3,
+      "small_mm": 0.0,
+      "large_mm": 6.599,
+      "active": "LARGE",
+      "active_width_mm": 6.599,
+      "flap_deg": 60.59
+    },
+    {
+      "open": 20.53,
+      "small_mm": 0.0,
+      "large_mm": 3.829,
+      "active": "LARGE",
+      "active_width_mm": 3.829,
+      "flap_deg": 60.59
+    }
+  ],
+  "mechanism": "aperture meters 5.5 then 12; short lugs contact-drive flap only in transit"
+}

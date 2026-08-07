@@ -133,6 +133,8 @@ PRESS = {
 
 # =============================================================================
 # DISC ACCESS LID (everything except rotating disc/hub)
+# Standalone: show_disc_access_lid_gui.py → out/disc_access_lid.FCStd
+# (same make_lid_* as show_jgb37_gui — rebuild either file to update both)
 # =============================================================================
 LID = {
     # --- stack (Z) ---
