@@ -1,0 +1,129 @@
+{
+  "pass": true,
+  "width_ok": true,
+  "keepout_ok": true,
+  "under_z_ok": true,
+  "continuity_ok": true,
+  "collision_ok": true,
+  "gap_ok": true,
+  "keepout_r_mm": 13.8,
+  "tip_clear_mm": 0.4,
+  "under_h_mm": 3.6,
+  "inlet_len_mm": 8.0,
+  "max_overlap_mm3": 0.0,
+  "jam_hits": 0,
+  "meta_small": {
+    "tag": "small",
+    "x0": -6.5,
+    "x1": -1.0,
+    "width_mm": 5.5,
+    "y_groove": -43.0,
+    "y_under_hi": 13.280719107036337,
+    "y_inlet0": 13.281,
+    "y_inlet1": 21.281,
+    "keepout_r": 13.8,
+    "under_h": 3.6,
+    "inlet_h": 6.45
+  },
+  "meta_large": {
+    "tag": "large",
+    "x0": 1.0,
+    "x1": 13.0,
+    "width_mm": 12.0,
+    "y_groove": -43.0,
+    "y_under_hi": 11.892854997854805,
+    "y_inlet0": 11.893,
+    "y_inlet1": 19.893,
+    "keepout_r": 13.8,
+    "under_h": 3.6,
+    "inlet_h": 6.45
+  },
+  "tip_gaps": [
+    {
+      "park_deg": 0.0,
+      "arm": "large",
+      "lane_hint": "large",
+      "tip_xy": [
+        13.4,
+        0.0
+      ],
+      "tip_r": 13.4,
+      "keepout_r": 13.8,
+      "radial_gap_mm": 0.4
+    },
+    {
+      "park_deg": 90.0,
+      "arm": "large",
+      "lane_hint": "small",
+      "tip_xy": [
+        0.0,
+        13.4
+      ],
+      "tip_r": 13.4,
+      "keepout_r": 13.8,
+      "radial_gap_mm": 0.4
+    },
+    {
+      "park_deg": 0.0,
+      "arm": "small",
+      "lane_hint": "small",
+      "tip_xy": [
+        0.0,
+        6.9
+      ],
+      "tip_r": 6.9,
+      "keepout_r": 13.8,
+      "radial_gap_mm": 6.9
+    },
+    {
+      "park_deg": 90.0,
+      "arm": "small",
+      "lane_hint": "large",
+      "tip_xy": [
+        -6.9,
+        0.0
+      ],
+      "tip_r": 6.9,
+      "keepout_r": 13.8,
+      "radial_gap_mm": 6.9
+    }
+  ],
+  "sweep": [
+    {
+      "open_mm": 0.0,
+      "malta_deg": 0.0,
+      "overlap_mm3": 0.0
+    },
+    {
+      "open_mm": 6.167,
+      "malta_deg": 6.67,
+      "overlap_mm3": 0.0
+    },
+    {
+      "open_mm": 6.833,
+      "malta_deg": 23.33,
+      "overlap_mm3": 0.0
+    },
+    {
+      "open_mm": 7.5,
+      "malta_deg": 45.0,
+      "overlap_mm3": 0.0
+    },
+    {
+      "open_mm": 8.167,
+      "malta_deg": 66.67,
+      "overlap_mm3": 0.0
+    },
+    {
+      "open_mm": 8.833,
+      "malta_deg": 83.33,
+      "overlap_mm3": 0.0
+    },
+    {
+      "open_mm": 17.5,
+      "malta_deg": 90.0,
+      "overlap_mm3": 0.0
+    }
+  ],
+  "note": "Guide chutes = groove X; under-arm continuous; +Y mouths outside tip keepout; Malta sweep overlap==0"
+}

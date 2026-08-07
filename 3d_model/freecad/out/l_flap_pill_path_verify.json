@@ -1,0 +1,685 @@
+{
+  "pass": true,
+  "solid_ok": true,
+  "jam_hits_when_path_open": 0,
+  "path_logic": "Outside -> guide chute (+Y) -> aperture window -> Malta gate -> groove (-Y). Lane chosen by which aperture is open AND which arm is clear; object diameter must fit window.",
+  "scenarios": [
+    {
+      "scenario": "rest_cover_small",
+      "pill": "small_pill",
+      "pill_d_mm": 4.0,
+      "open_mm": 0.0,
+      "aperture_small_mm": 0.0,
+      "aperture_large_mm": 0.0,
+      "malta_deg": 0.0,
+      "chosen_path": "BLOCKED_AT_APERTURE",
+      "path_open_small": false,
+      "path_open_large": false
+    },
+    {
+      "scenario": "rest_cover_small",
+      "pill": "large_pill",
+      "pill_d_mm": 10.0,
+      "open_mm": 0.0,
+      "aperture_small_mm": 0.0,
+      "aperture_large_mm": 0.0,
+      "malta_deg": 0.0,
+      "chosen_path": "BLOCKED_AT_APERTURE",
+      "path_open_small": false,
+      "path_open_large": false
+    },
+    {
+      "scenario": "small_lane_metering",
+      "pill": "small_pill",
+      "pill_d_mm": 4.0,
+      "open_mm": 4.0,
+      "aperture_small_mm": 4.0,
+      "aperture_large_mm": 0.0,
+      "malta_deg": 0.0,
+      "chosen_path": "SMALL",
+      "path_open_small": true,
+      "path_open_large": false
+    },
+    {
+      "scenario": "small_lane_metering",
+      "pill": "large_pill",
+      "pill_d_mm": 10.0,
+      "open_mm": 4.0,
+      "aperture_small_mm": 4.0,
+      "aperture_large_mm": 0.0,
+      "malta_deg": 0.0,
+      "chosen_path": "BLOCKED_AT_APERTURE",
+      "path_open_small": false,
+      "path_open_large": false
+    },
+    {
+      "scenario": "max_large_open",
+      "pill": "small_pill",
+      "pill_d_mm": 4.0,
+      "open_mm": 17.5,
+      "aperture_small_mm": 0.0,
+      "aperture_large_mm": 12.0,
+      "malta_deg": 90.0,
+      "chosen_path": "LARGE",
+      "path_open_small": false,
+      "path_open_large": true
+    },
+    {
+      "scenario": "max_large_open",
+      "pill": "large_pill",
+      "pill_d_mm": 10.0,
+      "open_mm": 17.5,
+      "aperture_small_mm": 0.0,
+      "aperture_large_mm": 12.0,
+      "malta_deg": 90.0,
+      "chosen_path": "LARGE",
+      "path_open_small": false,
+      "path_open_large": true
+    }
+  ],
+  "transit_risk": [
+    {
+      "open_mm": 5.5,
+      "pill": "small_pill",
+      "chosen_path": "SMALL",
+      "risk_jam": false,
+      "ap_s": 5.5,
+      "ap_l": 0.0,
+      "block_s": false,
+      "block_l": true
+    },
+    {
+      "open_mm": 5.5,
+      "pill": "large_pill",
+      "chosen_path": "BLOCKED_AT_APERTURE",
+      "risk_jam": false,
+      "ap_s": 5.5,
+      "ap_l": 0.0,
+      "block_s": false,
+      "block_l": true
+    },
+    {
+      "open_mm": 6.5,
+      "pill": "small_pill",
+      "chosen_path": "SMALL",
+      "risk_jam": false,
+      "ap_s": 4.5,
+      "ap_l": 1.0,
+      "block_s": false,
+      "block_l": false
+    },
+    {
+      "open_mm": 6.5,
+      "pill": "large_pill",
+      "chosen_path": "BLOCKED_AT_APERTURE",
+      "risk_jam": false,
+      "ap_s": 4.5,
+      "ap_l": 1.0,
+      "block_s": false,
+      "block_l": false
+    },
+    {
+      "open_mm": 7.5,
+      "pill": "small_pill",
+      "chosen_path": "BLOCKED_AT_APERTURE",
+      "risk_jam": false,
+      "ap_s": 3.5,
+      "ap_l": 2.0,
+      "block_s": false,
+      "block_l": false
+    },
+    {
+      "open_mm": 7.5,
+      "pill": "large_pill",
+      "chosen_path": "BLOCKED_AT_APERTURE",
+      "risk_jam": false,
+      "ap_s": 3.5,
+      "ap_l": 2.0,
+      "block_s": false,
+      "block_l": false
+    },
+    {
+      "open_mm": 8.5,
+      "pill": "small_pill",
+      "chosen_path": "BLOCKED_AT_APERTURE",
+      "risk_jam": false,
+      "ap_s": 2.5,
+      "ap_l": 3.0,
+      "block_s": true,
+      "block_l": false
+    },
+    {
+      "open_mm": 8.5,
+      "pill": "large_pill",
+      "chosen_path": "BLOCKED_AT_APERTURE",
+      "risk_jam": false,
+      "ap_s": 2.5,
+      "ap_l": 3.0,
+      "block_s": true,
+      "block_l": false
+    },
+    {
+      "open_mm": 9.5,
+      "pill": "small_pill",
+      "chosen_path": "LARGE",
+      "risk_jam": false,
+      "ap_s": 1.5,
+      "ap_l": 4.0,
+      "block_s": true,
+      "block_l": false
+    },
+    {
+      "open_mm": 9.5,
+      "pill": "large_pill",
+      "chosen_path": "BLOCKED_AT_APERTURE",
+      "risk_jam": false,
+      "ap_s": 1.5,
+      "ap_l": 4.0,
+      "block_s": true,
+      "block_l": false
+    }
+  ],
+  "math_samples": [
+    {
+      "open_mm": 0.0,
+      "pill_d_mm": 4.0,
+      "aperture_small_mm": 0.0,
+      "aperture_large_mm": 0.0,
+      "malta_deg": 0.0,
+      "fit_aperture_small": false,
+      "fit_aperture_large": false,
+      "malta_blocks_small": false,
+      "malta_blocks_large": true,
+      "path_open_small": false,
+      "path_open_large": false,
+      "chosen_path": "BLOCKED_AT_APERTURE",
+      "pill": "small_pill"
+    },
+    {
+      "open_mm": 0.0,
+      "pill_d_mm": 10.0,
+      "aperture_small_mm": 0.0,
+      "aperture_large_mm": 0.0,
+      "malta_deg": 0.0,
+      "fit_aperture_small": false,
+      "fit_aperture_large": false,
+      "malta_blocks_small": false,
+      "malta_blocks_large": true,
+      "path_open_small": false,
+      "path_open_large": false,
+      "chosen_path": "BLOCKED_AT_APERTURE",
+      "pill": "large_pill"
+    },
+    {
+      "open_mm": 4.4,
+      "pill_d_mm": 4.0,
+      "aperture_small_mm": 4.4,
+      "aperture_large_mm": 0.0,
+      "malta_deg": 0.0,
+      "fit_aperture_small": true,
+      "fit_aperture_large": false,
+      "malta_blocks_small": false,
+      "malta_blocks_large": true,
+      "path_open_small": true,
+      "path_open_large": false,
+      "chosen_path": "SMALL",
+      "pill": "small_pill"
+    },
+    {
+      "open_mm": 4.4,
+      "pill_d_mm": 10.0,
+      "aperture_small_mm": 4.4,
+      "aperture_large_mm": 0.0,
+      "malta_deg": 0.0,
+      "fit_aperture_small": false,
+      "fit_aperture_large": false,
+      "malta_blocks_small": false,
+      "malta_blocks_large": true,
+      "path_open_small": false,
+      "path_open_large": false,
+      "chosen_path": "BLOCKED_AT_APERTURE",
+      "pill": "large_pill"
+    },
+    {
+      "open_mm": 5.5,
+      "pill_d_mm": 4.0,
+      "aperture_small_mm": 5.5,
+      "aperture_large_mm": 0.0,
+      "malta_deg": 0.0,
+      "fit_aperture_small": true,
+      "fit_aperture_large": false,
+      "malta_blocks_small": false,
+      "malta_blocks_large": true,
+      "path_open_small": true,
+      "path_open_large": false,
+      "chosen_path": "SMALL",
+      "pill": "small_pill"
+    },
+    {
+      "open_mm": 5.5,
+      "pill_d_mm": 10.0,
+      "aperture_small_mm": 5.5,
+      "aperture_large_mm": 0.0,
+      "malta_deg": 0.0,
+      "fit_aperture_small": false,
+      "fit_aperture_large": false,
+      "malta_blocks_small": false,
+      "malta_blocks_large": true,
+      "path_open_small": false,
+      "path_open_large": false,
+      "chosen_path": "BLOCKED_AT_APERTURE",
+      "pill": "large_pill"
+    },
+    {
+      "open_mm": 7.5,
+      "pill_d_mm": 4.0,
+      "aperture_small_mm": 3.5,
+      "aperture_large_mm": 2.0,
+      "malta_deg": 45.0,
+      "fit_aperture_small": false,
+      "fit_aperture_large": false,
+      "malta_blocks_small": false,
+      "malta_blocks_large": false,
+      "path_open_small": false,
+      "path_open_large": false,
+      "chosen_path": "BLOCKED_AT_APERTURE",
+      "pill": "small_pill"
+    },
+    {
+      "open_mm": 7.5,
+      "pill_d_mm": 10.0,
+      "aperture_small_mm": 3.5,
+      "aperture_large_mm": 2.0,
+      "malta_deg": 45.0,
+      "fit_aperture_small": false,
+      "fit_aperture_large": false,
+      "malta_blocks_small": false,
+      "malta_blocks_large": false,
+      "path_open_small": false,
+      "path_open_large": false,
+      "chosen_path": "BLOCKED_AT_APERTURE",
+      "pill": "large_pill"
+    },
+    {
+      "open_mm": 9.5,
+      "pill_d_mm": 4.0,
+      "aperture_small_mm": 1.5,
+      "aperture_large_mm": 4.0,
+      "malta_deg": 90.0,
+      "fit_aperture_small": false,
+      "fit_aperture_large": true,
+      "malta_blocks_small": true,
+      "malta_blocks_large": false,
+      "path_open_small": false,
+      "path_open_large": true,
+      "chosen_path": "LARGE",
+      "pill": "small_pill"
+    },
+    {
+      "open_mm": 9.5,
+      "pill_d_mm": 10.0,
+      "aperture_small_mm": 1.5,
+      "aperture_large_mm": 4.0,
+      "malta_deg": 90.0,
+      "fit_aperture_small": false,
+      "fit_aperture_large": false,
+      "malta_blocks_small": true,
+      "malta_blocks_large": false,
+      "path_open_small": false,
+      "path_open_large": false,
+      "chosen_path": "BLOCKED_AT_APERTURE",
+      "pill": "large_pill"
+    },
+    {
+      "open_mm": 17.5,
+      "pill_d_mm": 4.0,
+      "aperture_small_mm": 0.0,
+      "aperture_large_mm": 12.0,
+      "malta_deg": 90.0,
+      "fit_aperture_small": false,
+      "fit_aperture_large": true,
+      "malta_blocks_small": true,
+      "malta_blocks_large": false,
+      "path_open_small": false,
+      "path_open_large": true,
+      "chosen_path": "LARGE",
+      "pill": "small_pill"
+    },
+    {
+      "open_mm": 17.5,
+      "pill_d_mm": 10.0,
+      "aperture_small_mm": 0.0,
+      "aperture_large_mm": 12.0,
+      "malta_deg": 90.0,
+      "fit_aperture_small": false,
+      "fit_aperture_large": true,
+      "malta_blocks_small": true,
+      "malta_blocks_large": false,
+      "path_open_small": false,
+      "path_open_large": true,
+      "chosen_path": "LARGE",
+      "pill": "large_pill"
+    }
+  ],
+  "solid_samples": [
+    {
+      "lane": "small",
+      "open_mm": 0.0,
+      "pill_d_mm": 4.0,
+      "max_overlap_mm3": null,
+      "stuck_at": "aperture",
+      "clear": false,
+      "skipped_solid": true,
+      "reason": "aperture_too_narrow"
+    },
+    {
+      "lane": "large",
+      "open_mm": 0.0,
+      "pill_d_mm": 10.0,
+      "max_overlap_mm3": null,
+      "stuck_at": "aperture",
+      "clear": false,
+      "skipped_solid": true,
+      "reason": "aperture_too_narrow"
+    },
+    {
+      "lane": "small",
+      "open_mm": 4.4,
+      "pill_d_mm": 4.0,
+      "probe_h_mm": 2.2,
+      "probe_x_aperture": -4.3,
+      "max_overlap_mm3": 1.073,
+      "stuck_at": null,
+      "clear": true,
+      "stations": [
+        {
+          "station": "inlet",
+          "y": 18.0,
+          "x": -4.3,
+          "overlap_mm3": 0.0,
+          "jammed": false
+        },
+        {
+          "station": "aperture",
+          "y": 17.0,
+          "x": -4.3,
+          "overlap_mm3": 0.0,
+          "jammed": false
+        },
+        {
+          "station": "gate",
+          "y": 0.0,
+          "x": -3.75,
+          "overlap_mm3": 1.073,
+          "jammed": false
+        },
+        {
+          "station": "groove",
+          "y": -20.0,
+          "x": -3.75,
+          "overlap_mm3": 0.0,
+          "jammed": false
+        },
+        {
+          "station": "exit",
+          "y": -35.0,
+          "x": -3.75,
+          "overlap_mm3": 0.0,
+          "jammed": false
+        }
+      ],
+      "pill": "small_pill",
+      "math_choice": "SMALL"
+    },
+    {
+      "lane": "large",
+      "open_mm": 4.4,
+      "pill_d_mm": 10.0,
+      "max_overlap_mm3": null,
+      "stuck_at": "aperture",
+      "clear": false,
+      "skipped_solid": true,
+      "reason": "aperture_too_narrow"
+    },
+    {
+      "lane": "small",
+      "open_mm": 5.5,
+      "pill_d_mm": 4.0,
+      "probe_h_mm": 2.2,
+      "probe_x_aperture": -3.75,
+      "max_overlap_mm3": 1.073,
+      "stuck_at": null,
+      "clear": true,
+      "stations": [
+        {
+          "station": "inlet",
+          "y": 18.0,
+          "x": -3.75,
+          "overlap_mm3": 0.0,
+          "jammed": false
+        },
+        {
+          "station": "aperture",
+          "y": 17.0,
+          "x": -3.75,
+          "overlap_mm3": 0.0,
+          "jammed": false
+        },
+        {
+          "station": "gate",
+          "y": 0.0,
+          "x": -3.75,
+          "overlap_mm3": 1.073,
+          "jammed": false
+        },
+        {
+          "station": "groove",
+          "y": -20.0,
+          "x": -3.75,
+          "overlap_mm3": 0.0,
+          "jammed": false
+        },
+        {
+          "station": "exit",
+          "y": -35.0,
+          "x": -3.75,
+          "overlap_mm3": 0.0,
+          "jammed": false
+        }
+      ],
+      "pill": "small_pill",
+      "math_choice": "SMALL"
+    },
+    {
+      "lane": "large",
+      "open_mm": 5.5,
+      "pill_d_mm": 10.0,
+      "max_overlap_mm3": null,
+      "stuck_at": "aperture",
+      "clear": false,
+      "skipped_solid": true,
+      "reason": "aperture_too_narrow"
+    },
+    {
+      "lane": "small",
+      "open_mm": 7.5,
+      "pill_d_mm": 4.0,
+      "max_overlap_mm3": null,
+      "stuck_at": "aperture",
+      "clear": false,
+      "skipped_solid": true,
+      "reason": "aperture_too_narrow"
+    },
+    {
+      "lane": "large",
+      "open_mm": 7.5,
+      "pill_d_mm": 10.0,
+      "max_overlap_mm3": null,
+      "stuck_at": "aperture",
+      "clear": false,
+      "skipped_solid": true,
+      "reason": "aperture_too_narrow"
+    },
+    {
+      "lane": "large",
+      "open_mm": 9.5,
+      "pill_d_mm": 4.0,
+      "probe_h_mm": 2.2,
+      "probe_x_aperture": 3.0,
+      "max_overlap_mm3": 0.0,
+      "stuck_at": null,
+      "clear": true,
+      "stations": [
+        {
+          "station": "inlet",
+          "y": 18.0,
+          "x": 3.0,
+          "overlap_mm3": 0.0,
+          "jammed": false
+        },
+        {
+          "station": "aperture",
+          "y": 17.0,
+          "x": 3.0,
+          "overlap_mm3": 0.0,
+          "jammed": false
+        },
+        {
+          "station": "gate",
+          "y": 0.0,
+          "x": 7.0,
+          "overlap_mm3": 0.0,
+          "jammed": false
+        },
+        {
+          "station": "groove",
+          "y": -20.0,
+          "x": 7.0,
+          "overlap_mm3": 0.0,
+          "jammed": false
+        },
+        {
+          "station": "exit",
+          "y": -35.0,
+          "x": 7.0,
+          "overlap_mm3": 0.0,
+          "jammed": false
+        }
+      ],
+      "pill": "small_pill",
+      "math_choice": "LARGE"
+    },
+    {
+      "lane": "large",
+      "open_mm": 9.5,
+      "pill_d_mm": 10.0,
+      "max_overlap_mm3": null,
+      "stuck_at": "aperture",
+      "clear": false,
+      "skipped_solid": true,
+      "reason": "aperture_too_narrow"
+    },
+    {
+      "lane": "large",
+      "open_mm": 17.5,
+      "pill_d_mm": 4.0,
+      "probe_h_mm": 2.2,
+      "probe_x_aperture": 7.0,
+      "max_overlap_mm3": 0.0,
+      "stuck_at": null,
+      "clear": true,
+      "stations": [
+        {
+          "station": "inlet",
+          "y": 18.0,
+          "x": 7.0,
+          "overlap_mm3": 0.0,
+          "jammed": false
+        },
+        {
+          "station": "aperture",
+          "y": 17.0,
+          "x": 7.0,
+          "overlap_mm3": 0.0,
+          "jammed": false
+        },
+        {
+          "station": "gate",
+          "y": 0.0,
+          "x": 7.0,
+          "overlap_mm3": 0.0,
+          "jammed": false
+        },
+        {
+          "station": "groove",
+          "y": -20.0,
+          "x": 7.0,
+          "overlap_mm3": 0.0,
+          "jammed": false
+        },
+        {
+          "station": "exit",
+          "y": -35.0,
+          "x": 7.0,
+          "overlap_mm3": 0.0,
+          "jammed": false
+        }
+      ],
+      "pill": "small_pill",
+      "math_choice": "LARGE"
+    },
+    {
+      "lane": "large",
+      "open_mm": 17.5,
+      "pill_d_mm": 10.0,
+      "probe_h_mm": 2.2,
+      "probe_x_aperture": 7.0,
+      "max_overlap_mm3": 1.074,
+      "stuck_at": null,
+      "clear": true,
+      "stations": [
+        {
+          "station": "inlet",
+          "y": 18.0,
+          "x": 7.0,
+          "overlap_mm3": 0.0,
+          "jammed": false
+        },
+        {
+          "station": "aperture",
+          "y": 17.0,
+          "x": 7.0,
+          "overlap_mm3": 0.0,
+          "jammed": false
+        },
+        {
+          "station": "gate",
+          "y": 0.0,
+          "x": 7.0,
+          "overlap_mm3": 1.074,
+          "jammed": false
+        },
+        {
+          "station": "groove",
+          "y": -20.0,
+          "x": 7.0,
+          "overlap_mm3": 0.0,
+          "jammed": false
+        },
+        {
+          "station": "exit",
+          "y": -35.0,
+          "x": 7.0,
+          "overlap_mm3": 0.0,
+          "jammed": false
+        }
+      ],
+      "pill": "large_pill",
+      "math_choice": "LARGE"
+    }
+  ],
+  "pill_sizes_mm": {
+    "small_pill": 4.0,
+    "large_pill": 10.0
+  }
+}

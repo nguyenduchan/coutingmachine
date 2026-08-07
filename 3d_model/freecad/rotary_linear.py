@@ -243,13 +243,16 @@ def spur_gear_math(
     *,
     alpha_deg: float = 20.0,
     tooth_clear: float = 0.40,
+    min_teeth: int = 18,
 ) -> dict:
     """
     Shared ISO/SolidWorks full-depth spur math for pinion AND rack.
     Both must use identical m, α, p, s, e, ha, hf.
+    min_teeth defaults to 18 (undercut-safe); L_Flap may pass lower for compact travel.
     """
-    z = max(18, int(teeth))
-    m = max(1.0, float(module))
+    z = max(int(min_teeth), int(teeth))
+    # Allow fine modules (L_Flap ~1 mm circular pitch); floor only avoids zero/neg.
+    m = max(0.2, float(module))
     alpha = math.radians(alpha_deg)
     p = math.pi * m
     r = 0.5 * m * z
@@ -264,7 +267,8 @@ def spur_gear_math(
 
     def tooth_half_w(depth_from_pitch: float) -> float:
         """Half tooth width; depth_from_pitch >0 toward tip, <0 toward root."""
-        return max(0.25, 0.5 * s - depth_from_pitch * tan_a)
+        # Floor scales with module so fine gears (m≈0.3) keep pointed tips.
+        return max(0.08 * m, 0.5 * s - depth_from_pitch * tan_a)
 
     return {
         "module": m,
@@ -347,12 +351,16 @@ def make_involute_pinion_local(
     bore: float,
     alpha_deg: float = 20.0,
     tooth_clear: float = 0.40,
+    min_teeth: int | None = None,
 ) -> Part.Shape:
     """
     Uniform spur pinion: ONE tooth template polar-copied z times.
     Guarantees every tooth is identical size/shape.
     """
-    g = spur_gear_math(module, teeth, alpha_deg=alpha_deg, tooth_clear=tooth_clear)
+    z_floor = int(teeth if min_teeth is None else min_teeth)
+    g = spur_gear_math(
+        module, teeth, alpha_deg=alpha_deg, tooth_clear=tooth_clear, min_teeth=z_floor
+    )
     z = g["teeth"]
     rf = g["root_radius"] if bore <= 0.5 else max(g["root_radius"], bore / 2.0 + 0.8)
     # Rebuild g root if bore forces larger hub (tooth still uses ISO rf for profile)

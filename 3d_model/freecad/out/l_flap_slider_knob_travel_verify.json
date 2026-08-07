@@ -1,0 +1,186 @@
+{
+  "pass": true,
+  "cover_small_at_rest": true,
+  "small_mm_at_0": 0.0,
+  "large_mm_at_max": 12.0,
+  "large_full_at_max": true,
+  "slider_travel_mm": 17.5,
+  "knob_deg_span": 393.75,
+  "monotonic_slider": true,
+  "couple_err_mm": 0.0,
+  "circular_pitch_mm": 1.0,
+  "jam_hits": 0,
+  "max_illegal_mm3": 0.0,
+  "note": "open0 covers small; max opens large 12mm; knob\u2194slider coupled by rack pitch; solid jam sweep optional via verify_slider_knob_travel.py",
+  "samples": [
+    {
+      "open_mm": 0.0,
+      "knob_deg": 0.0,
+      "slider_x_left": -20.0,
+      "state": "SMALL",
+      "small_mm": 0.0,
+      "large_mm": 0.0
+    },
+    {
+      "open_mm": 1.75,
+      "knob_deg": 39.38,
+      "slider_x_left": -18.25,
+      "state": "SMALL",
+      "small_mm": 1.75,
+      "large_mm": 0.0
+    },
+    {
+      "open_mm": 3.5,
+      "knob_deg": 78.75,
+      "slider_x_left": -16.5,
+      "state": "SMALL",
+      "small_mm": 3.5,
+      "large_mm": 0.0
+    },
+    {
+      "open_mm": 5.25,
+      "knob_deg": 118.12,
+      "slider_x_left": -14.75,
+      "state": "SMALL",
+      "small_mm": 5.25,
+      "large_mm": 0.0
+    },
+    {
+      "open_mm": 7.0,
+      "knob_deg": 157.5,
+      "slider_x_left": -13.0,
+      "state": "LARGE",
+      "small_mm": 4.0,
+      "large_mm": 1.5
+    },
+    {
+      "open_mm": 8.75,
+      "knob_deg": 196.88,
+      "slider_x_left": -11.25,
+      "state": "LARGE",
+      "small_mm": 2.25,
+      "large_mm": 3.25
+    },
+    {
+      "open_mm": 10.5,
+      "knob_deg": 236.25,
+      "slider_x_left": -9.5,
+      "state": "LARGE",
+      "small_mm": 0.5,
+      "large_mm": 5.0
+    },
+    {
+      "open_mm": 12.25,
+      "knob_deg": 275.62,
+      "slider_x_left": -7.75,
+      "state": "LARGE",
+      "small_mm": 0.0,
+      "large_mm": 6.75
+    },
+    {
+      "open_mm": 14.0,
+      "knob_deg": 315.0,
+      "slider_x_left": -6.0,
+      "state": "LARGE",
+      "small_mm": 0.0,
+      "large_mm": 8.5
+    },
+    {
+      "open_mm": 15.75,
+      "knob_deg": 354.38,
+      "slider_x_left": -4.25,
+      "state": "LARGE",
+      "small_mm": 0.0,
+      "large_mm": 10.25
+    },
+    {
+      "open_mm": 17.5,
+      "knob_deg": 393.75,
+      "slider_x_left": -2.5,
+      "state": "LARGE",
+      "small_mm": 0.0,
+      "large_mm": 12.0
+    }
+  ],
+  "png": [
+    "l_flap_topview_open0_cover_small.png",
+    "l_flap_topview_open_max.png"
+  ],
+  "solid_pass": true,
+  "solid_jam_hits": 0,
+  "solid_max_illegal_mm3": 0,
+  "solid_samples": [
+    {
+      "open_mm": 0.0,
+      "knob_deg": 0.0,
+      "small_mm": 0.0,
+      "large_mm": 0.0,
+      "ov_sf": 2.48,
+      "ov_sm": 0.0,
+      "ov_sd": 0.0
+    },
+    {
+      "open_mm": 2.5,
+      "knob_deg": 56.25,
+      "small_mm": 2.5,
+      "large_mm": 0.0,
+      "ov_sf": 2.48,
+      "ov_sm": 0.0,
+      "ov_sd": 0.0
+    },
+    {
+      "open_mm": 5.0,
+      "knob_deg": 112.5,
+      "small_mm": 5.0,
+      "large_mm": 0.0,
+      "ov_sf": 0.62,
+      "ov_sm": 0.0,
+      "ov_sd": 0.0
+    },
+    {
+      "open_mm": 7.5,
+      "knob_deg": 168.75,
+      "small_mm": 3.5,
+      "large_mm": 2.0,
+      "ov_sf": 0.0,
+      "ov_sm": 0.0,
+      "ov_sd": 0.0
+    },
+    {
+      "open_mm": 10.0,
+      "knob_deg": 225.0,
+      "small_mm": 1.0,
+      "large_mm": 4.5,
+      "ov_sf": 0.0,
+      "ov_sm": 0.0,
+      "ov_sd": 0.0
+    },
+    {
+      "open_mm": 12.5,
+      "knob_deg": 281.25,
+      "small_mm": 0.0,
+      "large_mm": 7.0,
+      "ov_sf": 0.0,
+      "ov_sm": 0.0,
+      "ov_sd": 0.0
+    },
+    {
+      "open_mm": 15.0,
+      "knob_deg": 337.5,
+      "small_mm": 0.0,
+      "large_mm": 9.5,
+      "ov_sf": 0.0,
+      "ov_sm": 0.0,
+      "ov_sd": 0.0
+    },
+    {
+      "open_mm": 17.5,
+      "knob_deg": 393.75,
+      "small_mm": 0.0,
+      "large_mm": 12.0,
+      "ov_sf": 2.48,
+      "ov_sm": 0.0,
+      "ov_sd": 0.0
+    }
+  ]
+}

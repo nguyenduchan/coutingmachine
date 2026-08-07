@@ -46,9 +46,11 @@ def main():
             flags.append("illegal=%.2f" % r["illegal_mm3"])
         if r["overlap_slider_frame"] >= 0.5:
             flags.append("vs_frame=%.2f" % r["overlap_slider_frame"])
-        if r["overlap_slider_flap"] >= 0.5:
+        if r.get("overlap_slider_malta", 0) >= 0.5:
+            flags.append("vs_malta=%.2f" % r["overlap_slider_malta"])
+        if r.get("overlap_slider_flap", 0) >= 0.5:
             flags.append("vs_flap=%.2f" % r["overlap_slider_flap"])
-        if r["overlap_bar_rail_walls"] >= 0.5:
+        if r.get("overlap_bar_rail_walls", 0) >= 0.5:
             flags.append("vs_rail=%.2f" % r["overlap_bar_rail_walls"])
         if not r["in_slot_y"]:
             flags.append("OUT_SLOT_Y")
@@ -56,8 +58,9 @@ def main():
             flags.append("OUT_RAIL_X")
         tag = ("  !! " + ", ".join(flags)) if flags else "  ok"
         print(
-            "  open=%6.2f %-5s flap=%5.1f%s"
-            % (r["open_mm"], r["state"], r["flap_deg"], tag)
+            "  open=%6.2f %-5s malta=%5.1f knob=%6.1f%s"
+            % (r["open_mm"], r["state"], r.get("malta_deg", r.get("flap_deg", 0)),
+               r.get("knob_deg", 0), tag)
         )
 
     print("Wrote", path)

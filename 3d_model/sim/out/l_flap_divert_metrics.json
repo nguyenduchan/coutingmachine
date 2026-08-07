@@ -1,157 +1,217 @@
 {
   "pass": true,
-  "aperture_ok": true,
-  "aperture_small_band_mm": [
-    1.5,
-    5.5
+  "backend": "planar_pin_slot_contact",
+  "mechanism": "kinematic knob\u2192pin | Malta \u03b8 from pin\u2194cam-slot CONTACT | bidirectional index (open inward to divider)",
+  "force_sources": [
+    "drive_pin_cam_slot_contact",
+    "lock_dwell_park"
   ],
-  "aperture_large_band_mm": [
-    0.0,
-    12.0
-  ],
-  "small_hold_ok": true,
-  "ang_at_small_end_deg": 5.0,
-  "had_lug_contact": true,
-  "contact_steps_transit": 87,
-  "angle_min_deg": 5.0,
-  "angle_max_deg": 60.61,
-  "angle_delta_deg": 55.61,
+  "target_index_deg": 90.0,
+  "forward_malta_delta_deg": 90.0,
+  "forward_span_deg": 90.09,
+  "reverse_malta_delta_deg": -90.0,
+  "malta_start_deg": 0.0,
+  "malta_mid_deg": 90.0,
+  "malta_end_deg": 0.0,
+  "fwd_index_ok": true,
+  "rev_index_ok": true,
+  "track_ok": true,
+  "contact_drive_steps": 97,
+  "contact_ok": true,
   "illegal_force_while_separated": 0,
   "ghost_moves_without_contact": 0,
+  "jam_hits": 0,
   "gravity": -9.81,
-  "free_fall_delta_z_m": 0.07602,
+  "free_fall_delta_z_m": 0.12,
   "open_sweep_mm": [
-    1.0,
-    28.7,
-    1.0
+    0.0,
+    17.5,
+    0.0
   ],
   "open_bands": {
     "small": [
-      1.0,
-      5.0
+      0.0,
+      5.5
     ],
     "transit": [
-      5.0,
-      16.7
+      5.5,
+      9.5
     ],
     "large": [
-      16.7,
-      28.7
+      9.5,
+      17.5
     ]
   },
-  "aperture_samples": [
+  "geneva": {
+    "alpha_deg": 45.0,
+    "drive_knob_deg": 90.0,
+    "malta_index_deg": 90.0,
+    "n_drive_slots": 1
+  },
+  "samples": [
     {
-      "open": 1.0,
-      "small_mm": 1.5,
-      "large_mm": 0.0,
-      "active": "SMALL",
-      "active_width_mm": 1.5,
-      "flap_deg": 5.0
+      "open_mm": 0.0,
+      "knob_deg": 0.0,
+      "malta_deg": 0.0,
+      "cad_malta_deg": 0.0,
+      "clearance_mm": 21.717,
+      "contacted": false,
+      "in_transit": false
     },
     {
-      "open": 3.77,
-      "small_mm": 4.27,
-      "large_mm": 0.0,
-      "active": "SMALL",
-      "active_width_mm": 4.27,
-      "flap_deg": 5.0
+      "open_mm": 2.188,
+      "knob_deg": 49.22,
+      "malta_deg": 0.0,
+      "cad_malta_deg": 0.0,
+      "clearance_mm": 14.441,
+      "contacted": false,
+      "in_transit": false
     },
     {
-      "open": 6.54,
-      "small_mm": 3.96,
-      "large_mm": 0.0,
-      "active": "LARGE",
-      "active_width_mm": 0.0,
-      "flap_deg": 15.76
+      "open_mm": 4.375,
+      "knob_deg": 98.44,
+      "malta_deg": 0.0,
+      "cad_malta_deg": 0.0,
+      "clearance_mm": 4.268,
+      "contacted": false,
+      "in_transit": false
     },
     {
-      "open": 9.31,
-      "small_mm": 1.19,
-      "large_mm": 0.0,
-      "active": "LARGE",
-      "active_width_mm": 0.0,
-      "flap_deg": 43.04
+      "open_mm": 6.562,
+      "knob_deg": 147.66,
+      "malta_deg": 15.57,
+      "cad_malta_deg": 15.68,
+      "clearance_mm": -1.5,
+      "contacted": true,
+      "in_transit": true
     },
     {
-      "open": 12.08,
-      "small_mm": 0.0,
-      "large_mm": 0.0,
-      "active": "LARGE",
-      "active_width_mm": 0.0,
-      "flap_deg": 58.5
+      "open_mm": 8.75,
+      "knob_deg": 196.88,
+      "malta_deg": 81.69,
+      "cad_malta_deg": 81.69,
+      "clearance_mm": -1.5,
+      "contacted": true,
+      "in_transit": true
     },
     {
-      "open": 14.85,
-      "small_mm": 0.0,
-      "large_mm": 0.0,
-      "active": "LARGE",
-      "active_width_mm": 0.0,
-      "flap_deg": 60.59
+      "open_mm": 10.938,
+      "knob_deg": 246.09,
+      "malta_deg": 90.0,
+      "cad_malta_deg": 90.0,
+      "clearance_mm": 5.832,
+      "contacted": false,
+      "in_transit": false
     },
     {
-      "open": 17.62,
-      "small_mm": 0.0,
-      "large_mm": 0.92,
-      "active": "LARGE",
-      "active_width_mm": 0.92,
-      "flap_deg": 60.59
+      "open_mm": 13.125,
+      "knob_deg": 295.31,
+      "malta_deg": 90.0,
+      "cad_malta_deg": 90.0,
+      "clearance_mm": 15.695,
+      "contacted": false,
+      "in_transit": false
     },
     {
-      "open": 20.39,
-      "small_mm": 0.0,
-      "large_mm": 3.69,
-      "active": "LARGE",
-      "active_width_mm": 3.69,
-      "flap_deg": 60.59
+      "open_mm": 15.312,
+      "knob_deg": 344.53,
+      "malta_deg": 90.0,
+      "cad_malta_deg": 90.0,
+      "clearance_mm": 22.435,
+      "contacted": false,
+      "in_transit": false
     },
     {
-      "open": 23.16,
-      "small_mm": 0.0,
-      "large_mm": 6.46,
-      "active": "LARGE",
-      "active_width_mm": 6.46,
-      "flap_deg": 60.59
+      "open_mm": 17.5,
+      "knob_deg": 393.75,
+      "malta_deg": 90.0,
+      "cad_malta_deg": 90.0,
+      "clearance_mm": 21.917,
+      "contacted": false,
+      "in_transit": false
     },
     {
-      "open": 25.93,
-      "small_mm": 0.0,
-      "large_mm": 9.23,
-      "active": "LARGE",
-      "active_width_mm": 9.23,
-      "flap_deg": 60.59
+      "open_mm": 15.312,
+      "knob_deg": 344.53,
+      "malta_deg": 90.0,
+      "cad_malta_deg": 90.0,
+      "clearance_mm": 22.435,
+      "contacted": false,
+      "in_transit": false
     },
     {
-      "open": 28.7,
-      "small_mm": 0.0,
-      "large_mm": 12.0,
-      "active": "LARGE",
-      "active_width_mm": 12.0,
-      "flap_deg": 60.59
+      "open_mm": 13.125,
+      "knob_deg": 295.31,
+      "malta_deg": 90.0,
+      "cad_malta_deg": 90.0,
+      "clearance_mm": 15.695,
+      "contacted": false,
+      "in_transit": false
     },
     {
-      "open": 26.07,
-      "small_mm": 0.0,
-      "large_mm": 9.369,
-      "active": "LARGE",
-      "active_width_mm": 9.369,
-      "flap_deg": 60.59
+      "open_mm": 10.938,
+      "knob_deg": 246.09,
+      "malta_deg": 90.0,
+      "cad_malta_deg": 90.0,
+      "clearance_mm": 5.832,
+      "contacted": false,
+      "in_transit": false
     },
     {
-      "open": 23.3,
-      "small_mm": 0.0,
-      "large_mm": 6.599,
-      "active": "LARGE",
-      "active_width_mm": 6.599,
-      "flap_deg": 60.59
+      "open_mm": 8.75,
+      "knob_deg": 196.88,
+      "malta_deg": 81.69,
+      "cad_malta_deg": 81.69,
+      "clearance_mm": -1.5,
+      "contacted": true,
+      "in_transit": true
     },
     {
-      "open": 20.53,
-      "small_mm": 0.0,
-      "large_mm": 3.829,
-      "active": "LARGE",
-      "active_width_mm": 3.829,
-      "flap_deg": 60.59
+      "open_mm": 6.562,
+      "knob_deg": 147.66,
+      "malta_deg": 15.56,
+      "cad_malta_deg": 15.68,
+      "clearance_mm": -1.5,
+      "contacted": true,
+      "in_transit": true
+    },
+    {
+      "open_mm": 4.375,
+      "knob_deg": 98.44,
+      "malta_deg": 0.0,
+      "cad_malta_deg": 0.0,
+      "clearance_mm": 4.268,
+      "contacted": false,
+      "in_transit": false
+    },
+    {
+      "open_mm": 2.188,
+      "knob_deg": 49.22,
+      "malta_deg": 0.0,
+      "cad_malta_deg": 0.0,
+      "clearance_mm": 14.441,
+      "contacted": false,
+      "in_transit": false
+    },
+    {
+      "open_mm": 0.0,
+      "knob_deg": 0.0,
+      "malta_deg": 0.0,
+      "cad_malta_deg": 0.0,
+      "clearance_mm": 21.717,
+      "contacted": false,
+      "in_transit": false
     }
   ],
-  "mechanism": "aperture meters 5.5 then 12; short lugs contact-drive flap only in transit"
+  "checks": {
+    "fwd_ok": true,
+    "rev_ok": true,
+    "track_ok": true,
+    "contact_ok": true,
+    "illegal_ok": true,
+    "ghost_ok": true,
+    "jam_ok": true,
+    "fall_ok": true
+  },
+  "gui_hint": false
 }

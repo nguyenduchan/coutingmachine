@@ -1,0 +1,57 @@
+---
+description: Always verify geometry + motion collisions before finishing CAD/mech work
+alwaysApply: true
+---
+
+# Always check geometry + collisions on motion
+
+Whenever this turn **changes or completes** mechanism CAD / kinematics / sim
+(FreeCAD under `3d_model/freecad/`, PyBullet under `3d_model/sim/`):
+
+## Mandatory before ending the turn
+
+1. **Geometry / math** — center distance, mesh phase, Geneva index, travel bands, etc.
+2. **Collisions while moving** — sweep the actuator (open_mm / knob / θ) both ways if the
+   mechanism is reversible; report `pass`, jam/illegal counters.
+3. **Write JSON** under `3d_model/freecad/out/` or `3d_model/sim/out/`.
+4. If **fail** → fix CAD/sim and re-run until `pass: true` (do not stop on a red verify).
+
+## L_Flap / Malta / Geneva (door)
+
+```
+freecadcmd 3d_model/freecad/verify_geneva_knob.py
+freecadcmd 3d_model/freecad/verify_geneva_bidirectional.py
+freecadcmd 3d_model/freecad/verify_malta_single_index.py
+```
+
+Expect: math pass (classic α=45°, pin/malta/lock radii), **1 drive slot**,
+**2 lock wing arcs** hug knob disc (`verify_malta_lock_wings` pass),
+pin seat at transit LO, pin exit at HI, forward **+90°** / reverse **−90°**
+once each, multi-turn **rise==1 / fall==1**, `extra_forward_pin_seats == 0`,
+`jam_hits == 0`, all `pass: true`.
+
+Also (when slider/gear enabled):
+
+```
+freecadcmd 3d_model/freecad/verify_l_flap_divert.py
+```
+
+## Rotary_Linear / rack–pinion
+
+```
+python 3d_model/freecad/out/verify_rack_pinion_teeth.py
+python 3d_model/sim/rotary_linear_pybullet.py
+```
+
+See `rack-pinion-uniform-teeth.mdc`, `sim-collision-checks.mdc`.
+
+## Step drive / other PyBullet
+
+Follow `sim-collision-checks.mdc` + `physics-force-links.mdc`:
+`illegal_force_while_separated == 0`, `ghost_moves_without_contact == 0`, gravity on.
+
+## Do not
+
+- End a mech/CAD turn with “looks fine” and **no** verify run.
+- Skip reverse sweep on reversible drives (knob / Geneva / rack).
+- Treat pose-only preview as a substitute for collision sweep.
