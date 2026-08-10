@@ -1,0 +1,195 @@
+{
+  "pass": true,
+  "math": {
+    "dwell_stand_still": true,
+    "jumps_at_5_and_9": true,
+    "slider1_frozen_during_gear2": true,
+    "cassette_still_during_gear1": true,
+    "sequential_not_both_active": true,
+    "ready_at_15mm": true,
+    "landmarks": true,
+    "knob_drives_arc_q": true,
+    "shared_spur_math": true,
+    "g2_opposite_same_speed": true,
+    "sliders_coplanar": true,
+    "slider2_east_of_gear1": true,
+    "sealed_at_0": true,
+    "bottom_flush_outside_gear2": true,
+    "no_cassette_motion_outside_gear2": true,
+    "no_aperture_motion_outside_gear1": true
+  },
+  "mutex": {
+    "pass": true,
+    "rules": {
+      "opposite_directions": true,
+      "only_one_moves": true,
+      "never_both_idle_while_knob_turns": true,
+      "reverse_knob_ok": true,
+      "pitch_arc_sync": true
+    },
+    "slider1_forward_sign": 1,
+    "slider2_forward_sign": -1,
+    "both_idle_hits": 0,
+    "both_moving_hits": 0,
+    "bad_sign_hits": 0,
+    "worst": null,
+    "rev_worst": null,
+    "n_segments": 310,
+    "phases": {
+      "gear1_a": [
+        0.0,
+        5.0
+      ],
+      "gear2_1": [
+        5.0,
+        11.0
+      ],
+      "gear1_b": [
+        11.0,
+        15.0
+      ],
+      "gear2_2": [
+        15.0,
+        25.0
+      ],
+      "gear1_c": [
+        25.0,
+        31.0
+      ]
+    },
+    "sample_handoffs": [
+      {
+        "q0": 4.9,
+        "q1": 5.0,
+        "v1": 1.0,
+        "v2": 0.0,
+        "moving1": true,
+        "moving2": false,
+        "gear1_active": true,
+        "gear2_active": false,
+        "xor_one": true
+      },
+      {
+        "q0": 5.0,
+        "q1": 5.1,
+        "v1": 0.0,
+        "v2": -1.0,
+        "moving1": false,
+        "moving2": true,
+        "gear1_active": false,
+        "gear2_active": true,
+        "xor_one": true
+      },
+      {
+        "q0": 5.1,
+        "q1": 5.2,
+        "v1": 0.0,
+        "v2": -1.0,
+        "moving1": false,
+        "moving2": true,
+        "gear1_active": false,
+        "gear2_active": true,
+        "xor_one": true
+      },
+      {
+        "q0": 10.9,
+        "q1": 11.0,
+        "v1": 0.0,
+        "v2": -1.0,
+        "moving1": false,
+        "moving2": true,
+        "gear1_active": false,
+        "gear2_active": true,
+        "xor_one": true
+      },
+      {
+        "q0": 11.0,
+        "q1": 11.1,
+        "v1": 1.0,
+        "v2": 0.0,
+        "moving1": true,
+        "moving2": false,
+        "gear1_active": true,
+        "gear2_active": false,
+        "xor_one": true
+      },
+      {
+        "q0": 11.1,
+        "q1": 11.2,
+        "v1": 1.0,
+        "v2": 0.0,
+        "moving1": true,
+        "moving2": false,
+        "gear1_active": true,
+        "gear2_active": false,
+        "xor_one": true
+      },
+      {
+        "q0": 14.9,
+        "q1": 15.0,
+        "v1": 1.0,
+        "v2": 0.0,
+        "moving1": true,
+        "moving2": false,
+        "gear1_active": true,
+        "gear2_active": false,
+        "xor_one": true
+      },
+      {
+        "q0": 15.0,
+        "q1": 15.1,
+        "v1": 0.0,
+        "v2": -1.0,
+        "moving1": false,
+        "moving2": true,
+        "gear1_active": false,
+        "gear2_active": true,
+        "xor_one": true
+      },
+      {
+        "q0": 15.1,
+        "q1": 15.2,
+        "v1": 0.0,
+        "v2": -1.0,
+        "moving1": false,
+        "moving2": true,
+        "gear1_active": false,
+        "gear2_active": true,
+        "xor_one": true
+      },
+      {
+        "q0": 24.9,
+        "q1": 25.0,
+        "v1": 0.0,
+        "v2": -1.0,
+        "moving1": false,
+        "moving2": true,
+        "gear1_active": false,
+        "gear2_active": true,
+        "xor_one": true
+      },
+      {
+        "q0": 25.0,
+        "q1": 25.1,
+        "v1": 1.0,
+        "v2": 0.0,
+        "moving1": true,
+        "moving2": false,
+        "gear1_active": true,
+        "gear2_active": false,
+        "xor_one": true
+      },
+      {
+        "q0": 25.1,
+        "q1": 25.2,
+        "v1": 1.0,
+        "v2": 0.0,
+        "moving1": true,
+        "moving2": false,
+        "gear1_active": true,
+        "gear2_active": false,
+        "xor_one": true
+      }
+    ]
+  }
+}
