@@ -1,0 +1,41 @@
+{
+  "pass": true,
+  "stand": {
+    "scenario": "stand_pill_taller_than_H",
+    "D_mm": 8.0,
+    "T_mm": 4.0,
+    "H_mm": 5.0,
+    "final": {
+      "x_mm": 313.2070319301859,
+      "y_mm": 273.2617386854109,
+      "z_mm": -46.06238671097046,
+      "max_z_mm": 4.9296875,
+      "passed_bar": true
+    },
+    "knocked_down": true,
+    "pass": true
+  },
+  "stacked": {
+    "scenario": "two_pills_stacked",
+    "D_mm": 8.0,
+    "T_mm": 4.0,
+    "H_mm": 5.0,
+    "bottom_final": {
+      "x_mm": 977.0968167941618,
+      "y_mm": 260.26729304953966,
+      "z_mm": -46.0622245608949,
+      "max_z_mm": 2.7296875000000003,
+      "passed_bar": true
+    },
+    "top_final": {
+      "x_mm": 519.0343288399082,
+      "y_mm": -513.3185179782553,
+      "z_mm": -46.05418212706307,
+      "max_z_mm": 8.324177206135024,
+      "passed_bar": true
+    },
+    "bottom_passed_alone": true,
+    "top_blocked_or_flattened": true,
+    "pass": true
+  }
+}

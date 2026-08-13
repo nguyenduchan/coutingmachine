@@ -1,0 +1,335 @@
+{
+  "units": "mm",
+  "W_mm": 9.0,
+  "H_mm": 5.0,
+  "pill_clear_xy_mm": 1.0,
+  "pill_clear_z_mm": 1.0,
+  "note": "Exit_Track W\u00d7H = aperture (= pill + 1 mm clear)",
+  "parts": {
+    "Rotor_Disc": {
+      "file": "Rotor_Disc.stl",
+      "volume_mm3": 162445.001692923,
+      "bbox_mm": {
+        "xmin": -100.0,
+        "xmax": 100.0,
+        "ymin": -99.83081582712684,
+        "ymax": 99.83081582712681,
+        "zmin": -15.0,
+        "zmax": 0.0
+      }
+    },
+    "Bowl_Tube": {
+      "file": "Bowl_Tube.stl",
+      "volume_mm3": 88321.21393591573,
+      "bbox_mm": {
+        "xmin": -104.65637524227934,
+        "xmax": 104.8,
+        "ymin": -104.78231412317221,
+        "ymax": 104.75029542596074,
+        "zmin": 0.0,
+        "zmax": 40.0
+      }
+    },
+    "Crossbar_Bridge": {
+      "file": "Crossbar_Bridge.stl",
+      "volume_mm3": 54341.19999999999,
+      "bbox_mm": {
+        "xmin": -10.000000000000014,
+        "xmax": 10.000000000000018,
+        "ymin": -132.8,
+        "ymax": 132.8,
+        "zmin": 0.0,
+        "zmax": 52.5
+      }
+    },
+    "Scale_Width": {
+      "file": "Scale_Width.stl",
+      "volume_mm3": 50.69999999999979,
+      "bbox_mm": {
+        "xmin": -21.379999999999992,
+        "xmax": -16.37999999999999,
+        "ymin": 74.5,
+        "ymax": 99.1,
+        "zmin": 44.0,
+        "zmax": 45.3
+      }
+    },
+    "Width_Carriage": {
+      "file": "Width_Carriage.stl",
+      "volume_mm3": 12940.830047411448,
+      "bbox_mm": {
+        "xmin": -15.17999999999999,
+        "xmax": 24.18000000000001,
+        "ymin": 74.8,
+        "ymax": 100.28842685370742,
+        "zmin": 32.0,
+        "zmax": 65.5
+      }
+    },
+    "Scale_Height": {
+      "file": "Scale_Height.stl",
+      "volume_mm3": 56.16000000000007,
+      "bbox_mm": {
+        "xmin": -23.17999999999999,
+        "xmax": -17.17999999999999,
+        "ymin": 108.8,
+        "ymax": 110.0,
+        "zmin": 2.5,
+        "zmax": 27.1
+      }
+    },
+    "Inner_Lane_Rail": {
+      "file": "Inner_Lane_Rail.stl",
+      "volume_mm3": 23379.88109607495,
+      "bbox_mm": {
+        "xmin": -168.1586960314855,
+        "xmax": 0.025524208398468223,
+        "ymin": -39.83619316896254,
+        "ymax": 91.79978282253985,
+        "zmin": 0.5,
+        "zmax": 36.5
+      }
+    },
+    "Height_Scraper": {
+      "file": "Height_Scraper.stl",
+      "volume_mm3": 5636.213692763954,
+      "bbox_mm": {
+        "xmin": -6.298363297796463,
+        "xmax": 10.000000000000007,
+        "ymin": 85.0,
+        "ymax": 111.0,
+        "zmin": 5.5,
+        "zmax": 91.5
+      }
+    },
+    "Guide_System": {
+      "file": "Guide_System.stl",
+      "volume_mm3": 48955.18776247361,
+      "bbox_mm": {
+        "xmin": -18.987047097941165,
+        "xmax": 60.69666612508339,
+        "ymin": -35.41790801069617,
+        "ymax": 75.36470936321233,
+        "zmin": 0.5,
+        "zmax": 34.5
+      }
+    },
+    "Exit_Track": {
+      "file": "Exit_Track.stl",
+      "volume_mm3": 13371.103423753115,
+      "bbox_mm": {
+        "xmin": -245.56707813724498,
+        "xmax": -81.49986736731337,
+        "ymin": -72.45394972162858,
+        "ymax": 6.380323276090647,
+        "zmin": 0.5,
+        "zmax": 11.5
+      }
+    },
+    "Screw_Width_1": {
+      "file": "Screw_Width_1.stl",
+      "volume_mm3": 412.1769561509808,
+      "bbox_mm": {
+        "xmin": -3.9981028788534543,
+        "xmax": 3.998102878853473,
+        "ymin": 79.80758668505182,
+        "ymax": 87.8,
+        "zmin": 34.0,
+        "zmax": 69.5
+      }
+    },
+    "Screw_Width_2": {
+      "file": "Screw_Width_2.stl",
+      "volume_mm3": 412.1769561509808,
+      "bbox_mm": {
+        "xmin": -3.9981028788534525,
+        "xmax": 3.9981028788534747,
+        "ymin": 95.80758668505182,
+        "ymax": 103.8,
+        "zmin": 34.0,
+        "zmax": 69.5
+      }
+    },
+    "Screw_Height": {
+      "file": "Screw_Height.stl",
+      "volume_mm3": 442.8989556005512,
+      "bbox_mm": {
+        "xmin": -17.17999999999999,
+        "xmax": 23.177300114295264,
+        "ymin": 93.10503293165084,
+        "ymax": 101.1,
+        "zmin": 53.5,
+        "zmax": 56.5
+      }
+    },
+    "Spring_Width_Jaw_1": {
+      "file": "Spring_Width_Jaw_1.stl",
+      "volume_mm3": 128.69162875480382,
+      "bbox_mm": {
+        "xmin": 10.15000000000001,
+        "xmax": 20.35000000000001,
+        "ymin": 80.50156512494588,
+        "ymax": 87.09843487505411,
+        "zmin": 36.7,
+        "zmax": 43.29374098483225
+      }
+    },
+    "Spring_Width_Jaw_2": {
+      "file": "Spring_Width_Jaw_2.stl",
+      "volume_mm3": 128.69162875480382,
+      "bbox_mm": {
+        "xmin": 10.15000000000001,
+        "xmax": 20.35000000000001,
+        "ymin": 85.50156512494588,
+        "ymax": 92.09843487505411,
+        "zmin": 36.7,
+        "zmax": 43.29374098483225
+      }
+    },
+    "Spring_Width_Top_1": {
+      "file": "Spring_Width_Top_1.stl",
+      "volume_mm3": 128.6916287548038,
+      "bbox_mm": {
+        "xmin": -7.598434875054097,
+        "xmax": -1.001565124945883,
+        "ymin": 82.50625901516776,
+        "ymax": 89.1,
+        "zmin": 49.65,
+        "zmax": 59.85
+      }
+    },
+    "Spring_Width_Top_2": {
+      "file": "Spring_Width_Top_2.stl",
+      "volume_mm3": 120.09990887688656,
+      "bbox_mm": {
+        "xmin": 1.004778844175967,
+        "xmax": 7.599407583882203,
+        "ymin": 94.50318503379589,
+        "ymax": 100.17976158396725,
+        "zmin": 49.65,
+        "zmax": 59.85
+      }
+    },
+    "Spring_Height_1": {
+      "file": "Spring_Height_1.stl",
+      "volume_mm3": 128.6916287548038,
+      "bbox_mm": {
+        "xmin": -1.0984348750540978,
+        "xmax": 5.498434875054117,
+        "ymin": 84.24999999999999,
+        "ymax": 94.44999999999999,
+        "zmin": 46.7,
+        "zmax": 53.29374098483225
+      }
+    },
+    "Spring_Height_2": {
+      "file": "Spring_Height_2.stl",
+      "volume_mm3": 128.6916287548038,
+      "bbox_mm": {
+        "xmin": -5.498434875054097,
+        "xmax": 1.0984348750541166,
+        "ymin": 84.24999999999999,
+        "ymax": 94.44999999999999,
+        "zmin": 53.7,
+        "zmax": 60.29374098483225
+      }
+    }
+  },
+  "colors": {
+    "Rotor_Disc": [
+      0.22,
+      0.22,
+      0.24
+    ],
+    "Bowl_Tube": [
+      0.92,
+      0.92,
+      0.94
+    ],
+    "Crossbar_Bridge": [
+      0.72,
+      0.74,
+      0.78
+    ],
+    "Scale_Width": [
+      0.95,
+      0.9,
+      0.15
+    ],
+    "Width_Carriage": [
+      0.18,
+      0.18,
+      0.22
+    ],
+    "Scale_Height": [
+      0.95,
+      0.9,
+      0.15
+    ],
+    "Inner_Lane_Rail": [
+      0.85,
+      0.55,
+      0.2
+    ],
+    "Height_Scraper": [
+      0.3,
+      0.55,
+      0.9
+    ],
+    "Guide_System": [
+      0.3,
+      0.52,
+      0.62
+    ],
+    "Exit_Track": [
+      0.12,
+      0.12,
+      0.12
+    ],
+    "Screw_Width_1": [
+      0.35,
+      0.35,
+      0.38
+    ],
+    "Screw_Width_2": [
+      0.35,
+      0.35,
+      0.38
+    ],
+    "Screw_Height": [
+      0.35,
+      0.35,
+      0.38
+    ],
+    "Spring_Width_Jaw_1": [
+      0.82,
+      0.62,
+      0.18
+    ],
+    "Spring_Width_Jaw_2": [
+      0.82,
+      0.62,
+      0.18
+    ],
+    "Spring_Width_Top_1": [
+      0.82,
+      0.62,
+      0.18
+    ],
+    "Spring_Width_Top_2": [
+      0.82,
+      0.62,
+      0.18
+    ],
+    "Spring_Height_1": [
+      0.82,
+      0.62,
+      0.18
+    ],
+    "Spring_Height_2": [
+      0.82,
+      0.62,
+      0.18
+    ]
+  }
+}

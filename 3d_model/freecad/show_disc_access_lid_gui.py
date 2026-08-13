@@ -2,6 +2,7 @@
 Standalone FreeCAD: Disc_Access_Lid (nắp mở đĩa).
 
 Cùng geometry makers với máy đếm (show_jgb37_gui.py + box_settings.LID).
+Lỗ M3 (assembly_bolts) — chỉ khoét lỗ, không vẽ bu-lông.
 Sửa LID / make_lid_* rồi chạy lại script này HOẶC show_jgb37_gui.py
 → cả model nắp và hộp đều nhận shape mới đầy đủ.
 

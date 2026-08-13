@@ -1,0 +1,14 @@
+{
+  "pass": true,
+  "d_range_mm": [
+    2.0,
+    25.0
+  ],
+  "step_mm": 1.0,
+  "n_sizes_tablet": 24,
+  "n_cases": 36,
+  "n_pass": 36,
+  "n_fail": 0,
+  "failures": [],
+  "rule": "For every D in [2,25]mm, W=D+1(<=26) H=T+1(<=26) yields single-file, unobstructed passage"
+}

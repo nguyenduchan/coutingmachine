@@ -1,0 +1,38 @@
+{
+  "runs": [
+    {
+      "pass": false,
+      "label": "spaced(D+1mm)",
+      "n_pills": 5,
+      "gap_mm": 21.0,
+      "n_exited": 5,
+      "n_wall_tunnel_hits": 7,
+      "max_penetration_wall_mm": 2.224,
+      "max_penetration_pill_pill_mm": 5.663,
+      "n_neighbor_pairs_touching": 2,
+      "n_neighbor_pairs_total": 4
+    },
+    {
+      "pass": false,
+      "label": "dense(negative_control)",
+      "n_pills": 5,
+      "gap_mm": 3.0,
+      "n_exited": 5,
+      "n_wall_tunnel_hits": 115,
+      "max_penetration_wall_mm": 6.7153,
+      "max_penetration_pill_pill_mm": 11.8087,
+      "n_neighbor_pairs_touching": 4,
+      "n_neighbor_pairs_total": 4
+    }
+  ],
+  "D_mm": 20.0,
+  "T_mm": 10.0,
+  "shape": "tablet",
+  "W_mm": 21.0,
+  "H_mm": 11.0,
+  "drive_net": 0.09233985391962796,
+  "beta_deg": 24.290046219188735,
+  "gap_safe_mm": 21.0,
+  "gap_dense_mm": 3.0,
+  "note": "spaced: khoang thang doc Exit_Track >= D+1mm (nguong dan tu min_angular_pitch_deg trong tube_l_exit_gate.py, quy doi ve khoang cach doc mang tai thoi diem vao mang) -> khong vi\u00ean n\u00e0o ch\u1ed3ng/k\u1eb9t vi\u00ean kh\u00e1c. dense: khoang gan 0 -> chong lan that (negative control)."
+}

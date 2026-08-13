@@ -1,0 +1,116 @@
+{
+  "pass": false,
+  "rpm": 40.0,
+  "duration_s": 60.0,
+  "n_pills": 12,
+  "D_mm": 8.0,
+  "T_mm": 4.0,
+  "n_exited": 0,
+  "n_fell_through": 0,
+  "n_escaped_over_wall": 0,
+  "jam_events_in_channel": 14259,
+  "exit_times_s": [],
+  "pills": {
+    "83": {
+      "exited": false,
+      "exit_t": null,
+      "fell": false,
+      "escaped": false,
+      "r0": 83.74673517346122,
+      "th0_deg": 305.07614529740374
+    },
+    "84": {
+      "exited": false,
+      "exit_t": null,
+      "fell": false,
+      "escaped": false,
+      "r0": 91.92907004669598,
+      "th0_deg": 91.8248492661918
+    },
+    "85": {
+      "exited": false,
+      "exit_t": null,
+      "fell": false,
+      "escaped": false,
+      "r0": 88.44065613219523,
+      "th0_deg": 161.8167833239457
+    },
+    "86": {
+      "exited": false,
+      "exit_t": null,
+      "fell": false,
+      "escaped": false,
+      "r0": 90.47070864539592,
+      "th0_deg": 283.9404064087847
+    },
+    "87": {
+      "exited": false,
+      "exit_t": null,
+      "fell": false,
+      "escaped": false,
+      "r0": 83.22017462806505,
+      "th0_deg": 10.205091547922272
+    },
+    "88": {
+      "exited": false,
+      "exit_t": null,
+      "fell": false,
+      "escaped": false,
+      "r0": 92.8649463509583,
+      "th0_deg": 155.7961444458192
+    },
+    "89": {
+      "exited": false,
+      "exit_t": null,
+      "fell": false,
+      "escaped": false,
+      "r0": 91.90964107195325,
+      "th0_deg": 0.7581792063998494
+    },
+    "90": {
+      "exited": false,
+      "exit_t": null,
+      "fell": false,
+      "escaped": false,
+      "r0": 87.79003352271242,
+      "th0_deg": 259.7544116426817
+    },
+    "91": {
+      "exited": false,
+      "exit_t": null,
+      "fell": false,
+      "escaped": false,
+      "r0": 84.97390887651588,
+      "th0_deg": 340.297450399412
+    },
+    "92": {
+      "exited": false,
+      "exit_t": null,
+      "fell": false,
+      "escaped": false,
+      "r0": 93.71855694894928,
+      "th0_deg": 11.012393892079274
+    },
+    "93": {
+      "exited": false,
+      "exit_t": null,
+      "fell": false,
+      "escaped": false,
+      "r0": 82.33079619291499,
+      "th0_deg": 194.90849020565878
+    },
+    "94": {
+      "exited": false,
+      "exit_t": null,
+      "fell": false,
+      "escaped": false,
+      "r0": 94.20893911612063,
+      "th0_deg": 137.2335255677565
+    }
+  },
+  "exit_channel_x_mm": [
+    -103.3,
+    -89.3
+  ],
+  "note": "Tuong/mang la collision primitive (box/cylinder), khong con dung mesh STL concave cho va cham \u2014 vien khong duoc phep xuyen qua component nao. single-file: kenh Exit_Track rong D+1mm nen ve mat hinh hoc chi 1 vien lot qua tiet dien cung luc; jam_events_in_channel dem va cham vien-vien khi ca hai dang trong kenh (hang doi/ket, khong phai xep hang doc binh thuong)."
+}

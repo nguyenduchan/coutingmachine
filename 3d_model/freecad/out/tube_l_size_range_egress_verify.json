@@ -1,0 +1,451 @@
+{
+  "pass": true,
+  "size_range_mm": [
+    2,
+    26
+  ],
+  "entrance_w_mm": 26.0,
+  "w_h_adjust_mm": [
+    2.0,
+    26.0
+  ],
+  "n_datasets": 27,
+  "n_pass": 27,
+  "n_fail": 0,
+  "any_start_grid": true,
+  "cases": [
+    {
+      "id": "size_ball_2",
+      "D_mm": 2.0,
+      "T_mm": 2.0,
+      "shape": "ball",
+      "gap": {
+        "W": 3.0,
+        "H": 3.0
+      },
+      "n_trials": 40,
+      "n_exit": 40,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_ball_3",
+      "D_mm": 3.0,
+      "T_mm": 3.0,
+      "shape": "ball",
+      "gap": {
+        "W": 4.0,
+        "H": 4.0
+      },
+      "n_trials": 40,
+      "n_exit": 40,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_tab_3x2",
+      "D_mm": 3.0,
+      "T_mm": 2.0,
+      "shape": "tablet",
+      "gap": {
+        "W": 4.0,
+        "H": 3.0
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_ball_4",
+      "D_mm": 4.0,
+      "T_mm": 4.0,
+      "shape": "ball",
+      "gap": {
+        "W": 5.0,
+        "H": 5.0
+      },
+      "n_trials": 40,
+      "n_exit": 40,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_tab_4x2",
+      "D_mm": 4.0,
+      "T_mm": 2.0,
+      "shape": "tablet",
+      "gap": {
+        "W": 5.0,
+        "H": 3.0
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_ball_5",
+      "D_mm": 5.0,
+      "T_mm": 5.0,
+      "shape": "ball",
+      "gap": {
+        "W": 6.0,
+        "H": 6.0
+      },
+      "n_trials": 40,
+      "n_exit": 40,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_tab_5x2.5",
+      "D_mm": 5.0,
+      "T_mm": 2.5,
+      "shape": "tablet",
+      "gap": {
+        "W": 6.0,
+        "H": 3.5
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_ball_6",
+      "D_mm": 6.0,
+      "T_mm": 6.0,
+      "shape": "ball",
+      "gap": {
+        "W": 7.0,
+        "H": 7.0
+      },
+      "n_trials": 40,
+      "n_exit": 40,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_tab_6x3",
+      "D_mm": 6.0,
+      "T_mm": 3.0,
+      "shape": "tablet",
+      "gap": {
+        "W": 7.0,
+        "H": 4.0
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_ball_8",
+      "D_mm": 8.0,
+      "T_mm": 8.0,
+      "shape": "ball",
+      "gap": {
+        "W": 9.0,
+        "H": 9.0
+      },
+      "n_trials": 40,
+      "n_exit": 40,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_tab_8x4",
+      "D_mm": 8.0,
+      "T_mm": 4.0,
+      "shape": "tablet",
+      "gap": {
+        "W": 9.0,
+        "H": 5.0
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_ball_10",
+      "D_mm": 10.0,
+      "T_mm": 10.0,
+      "shape": "ball",
+      "gap": {
+        "W": 11.0,
+        "H": 11.0
+      },
+      "n_trials": 40,
+      "n_exit": 40,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_tab_10x5",
+      "D_mm": 10.0,
+      "T_mm": 5.0,
+      "shape": "tablet",
+      "gap": {
+        "W": 11.0,
+        "H": 6.0
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_ball_12",
+      "D_mm": 12.0,
+      "T_mm": 12.0,
+      "shape": "ball",
+      "gap": {
+        "W": 13.0,
+        "H": 13.0
+      },
+      "n_trials": 40,
+      "n_exit": 40,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_tab_12x6",
+      "D_mm": 12.0,
+      "T_mm": 6.0,
+      "shape": "tablet",
+      "gap": {
+        "W": 13.0,
+        "H": 7.0
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_ball_15",
+      "D_mm": 15.0,
+      "T_mm": 15.0,
+      "shape": "ball",
+      "gap": {
+        "W": 16.0,
+        "H": 16.0
+      },
+      "n_trials": 40,
+      "n_exit": 40,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_tab_15x7.5",
+      "D_mm": 15.0,
+      "T_mm": 7.5,
+      "shape": "tablet",
+      "gap": {
+        "W": 16.0,
+        "H": 8.5
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_ball_18",
+      "D_mm": 18.0,
+      "T_mm": 18.0,
+      "shape": "ball",
+      "gap": {
+        "W": 19.0,
+        "H": 19.0
+      },
+      "n_trials": 40,
+      "n_exit": 40,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_tab_18x9",
+      "D_mm": 18.0,
+      "T_mm": 9.0,
+      "shape": "tablet",
+      "gap": {
+        "W": 19.0,
+        "H": 10.0
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_ball_20",
+      "D_mm": 20.0,
+      "T_mm": 20.0,
+      "shape": "ball",
+      "gap": {
+        "W": 21.0,
+        "H": 21.0
+      },
+      "n_trials": 40,
+      "n_exit": 40,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_tab_20x10",
+      "D_mm": 20.0,
+      "T_mm": 10.0,
+      "shape": "tablet",
+      "gap": {
+        "W": 21.0,
+        "H": 11.0
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_ball_22",
+      "D_mm": 22.0,
+      "T_mm": 22.0,
+      "shape": "ball",
+      "gap": {
+        "W": 23.0,
+        "H": 23.0
+      },
+      "n_trials": 40,
+      "n_exit": 40,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_tab_22x11",
+      "D_mm": 22.0,
+      "T_mm": 11.0,
+      "shape": "tablet",
+      "gap": {
+        "W": 23.0,
+        "H": 12.0
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_ball_24",
+      "D_mm": 24.0,
+      "T_mm": 24.0,
+      "shape": "ball",
+      "gap": {
+        "W": 25.0,
+        "H": 25.0
+      },
+      "n_trials": 40,
+      "n_exit": 40,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_tab_24x12",
+      "D_mm": 24.0,
+      "T_mm": 12.0,
+      "shape": "tablet",
+      "gap": {
+        "W": 25.0,
+        "H": 13.0
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_ball_26",
+      "D_mm": 26.0,
+      "T_mm": 26.0,
+      "shape": "ball",
+      "gap": {
+        "W": 26.0,
+        "H": 26.0
+      },
+      "n_trials": 40,
+      "n_exit": 40,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "size_tab_26x13",
+      "D_mm": 26.0,
+      "T_mm": 13.0,
+      "shape": "tablet",
+      "gap": {
+        "W": 26.0,
+        "H": 14.0
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_trapped": 0,
+      "exit_clear_ok": true,
+      "pass": true,
+      "sample_failures": []
+    }
+  ],
+  "note": "Every size 2\u201326 mm from arbitrary (r,\u03b8) must exit; gap\u2248pill+1mm"
+}

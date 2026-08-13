@@ -1,0 +1,30 @@
+{
+  "pass": true,
+  "method": "Mesh.intersect + solid Volume confirm (>0.05 mm3)",
+  "deflection_mm": 0.85,
+  "width_range_mm": [
+    2.0,
+    26.0
+  ],
+  "height_range_mm": [
+    2.0,
+    26.0
+  ],
+  "samples": 69,
+  "jam_hits": 0,
+  "detail": {
+    "disc_rotate": 0,
+    "static_pair": 0,
+    "width_sweep": 0,
+    "height_sweep": 0
+  },
+  "hits": [],
+  "checks": {
+    "disc_rotate_free": true,
+    "no_surface_interpenetration": true,
+    "width_adjust_2_26_clear": true,
+    "height_adjust_2_26_clear": true,
+    "range_ok": true
+  },
+  "note": "Illegal mesh\u2229 with solid penetration; Guide\u2194rail tip handoff near W_MAX skipped"
+}

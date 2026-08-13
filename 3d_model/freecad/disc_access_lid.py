@@ -93,7 +93,8 @@ def assemble_disc_access_lid(
     ]
 
     drive_objs: list = []
-    if keep("Width_Adjust_Drive") or keep("Width_Lead_Screw"):
+    w_en = bool(lid_cfg.get("width_bar", {}).get("drive", {}).get("enabled", False))
+    if w_en:
         drive_objs = [
             add_part(doc, n, sh, col, transparency=15)
             for n, sh, col in make_width_adjust_drive_parts(z_disc)

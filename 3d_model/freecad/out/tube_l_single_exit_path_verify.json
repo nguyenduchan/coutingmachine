@@ -1,0 +1,19 @@
+{
+  "pass": true,
+  "n_samples": 180,
+  "r_probe_mm": 102.8,
+  "z_probe_mm": 20.0,
+  "slot_theta_range_deg": [
+    177.0,
+    230.0
+  ],
+  "slot_arc_deg": 53.0,
+  "n_blocked_trials": 152,
+  "n_blocked_ok": 152,
+  "n_open_trials": 25,
+  "n_open_ok": 25,
+  "blocked_failures": [],
+  "open_failures": [],
+  "single_slot_by_construction": true,
+  "rule": "Bowl_Tube = full ring cut by exactly one _annular_sector (Exit_Track window); every other angle around 360 deg is solid wall."
+}

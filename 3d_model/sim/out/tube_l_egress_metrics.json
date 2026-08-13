@@ -1,0 +1,171 @@
+{
+  "pass": true,
+  "gravity_m_s2": -9.81,
+  "D_mm": 8.0,
+  "T_mm": 4.0,
+  "gap_WH_mm": [
+    9.0,
+    5.0
+  ],
+  "pill_plus_1mm": true,
+  "chute_slide_pass": true,
+  "disc_exit_rate": 0.0,
+  "n_disc_trials": 12,
+  "n_disc_exit": 0,
+  "tunnel_hits": 0,
+  "escaped_wall": 10,
+  "illegal_force_while_separated": 0,
+  "ghost_moves_without_contact": 0,
+  "free_fall_delta_z_m": 0.02,
+  "trials": [
+    {
+      "kind": "chute_slide",
+      "exited": true,
+      "tunnel_hits": 0,
+      "max_penetration_mm": 0.411,
+      "pass": true
+    },
+    {
+      "kind": "chute_slide",
+      "exited": true,
+      "tunnel_hits": 0,
+      "max_penetration_mm": 0.411,
+      "pass": true
+    },
+    {
+      "kind": "chute_slide",
+      "exited": true,
+      "tunnel_hits": 0,
+      "max_penetration_mm": 0.411,
+      "pass": true
+    },
+    {
+      "kind": "chute_slide",
+      "exited": true,
+      "tunnel_hits": 0,
+      "max_penetration_mm": 0.411,
+      "pass": true
+    },
+    {
+      "kind": "disc_to_exit",
+      "r0": 52.8,
+      "th0": 195.9,
+      "exited": false,
+      "escaped_wall": true,
+      "tunnel_hits": 0,
+      "max_penetration_mm": 0.873,
+      "pass": false
+    },
+    {
+      "kind": "disc_to_exit",
+      "r0": 59.9,
+      "th0": 217.4,
+      "exited": false,
+      "escaped_wall": true,
+      "tunnel_hits": 0,
+      "max_penetration_mm": 0.525,
+      "pass": false
+    },
+    {
+      "kind": "disc_to_exit",
+      "r0": 73.66,
+      "th0": 23.6,
+      "exited": false,
+      "escaped_wall": true,
+      "tunnel_hits": 0,
+      "max_penetration_mm": 0.657,
+      "pass": false
+    },
+    {
+      "kind": "disc_to_exit",
+      "r0": 40.71,
+      "th0": 301.5,
+      "exited": false,
+      "escaped_wall": true,
+      "tunnel_hits": 0,
+      "max_penetration_mm": 0.0,
+      "pass": false
+    },
+    {
+      "kind": "disc_to_exit",
+      "r0": 53.95,
+      "th0": 84.4,
+      "exited": false,
+      "escaped_wall": true,
+      "tunnel_hits": 0,
+      "max_penetration_mm": 1.061,
+      "pass": false
+    },
+    {
+      "kind": "disc_to_exit",
+      "r0": 93.57,
+      "th0": 169.3,
+      "exited": false,
+      "escaped_wall": false,
+      "tunnel_hits": 0,
+      "max_penetration_mm": 1.029,
+      "pass": false
+    },
+    {
+      "kind": "disc_to_exit",
+      "r0": 85.0,
+      "th0": 171.5,
+      "exited": false,
+      "escaped_wall": true,
+      "tunnel_hits": 2,
+      "max_penetration_mm": 2.086,
+      "pass": false
+    },
+    {
+      "kind": "disc_to_exit",
+      "r0": 74.38,
+      "th0": 54.2,
+      "exited": false,
+      "escaped_wall": true,
+      "tunnel_hits": 0,
+      "max_penetration_mm": 0.8,
+      "pass": false
+    },
+    {
+      "kind": "disc_to_exit",
+      "r0": 74.16,
+      "th0": 312.5,
+      "exited": false,
+      "escaped_wall": true,
+      "tunnel_hits": 0,
+      "max_penetration_mm": 0.329,
+      "pass": false
+    },
+    {
+      "kind": "disc_to_exit",
+      "r0": 68.15,
+      "th0": 266.9,
+      "exited": false,
+      "escaped_wall": true,
+      "tunnel_hits": 0,
+      "max_penetration_mm": 0.409,
+      "pass": false
+    },
+    {
+      "kind": "disc_to_exit",
+      "r0": 76.12,
+      "th0": 23.1,
+      "exited": false,
+      "escaped_wall": false,
+      "tunnel_hits": 0,
+      "max_penetration_mm": 1.257,
+      "pass": false
+    },
+    {
+      "kind": "disc_to_exit",
+      "r0": 80.79,
+      "th0": 212.8,
+      "exited": false,
+      "escaped_wall": true,
+      "tunnel_hits": 0,
+      "max_penetration_mm": 0.0,
+      "pass": false
+    }
+  ],
+  "note": "Exit_Track = pill+1mm; contact walls; chute slide + disc\u2192exit"
+}

@@ -1,0 +1,125 @@
+{
+  "pass": true,
+  "seal": {
+    "ok": true,
+    "n_gap": 0,
+    "max_gap_allowed_mm": 0.35,
+    "rows": [
+      {
+        "W": 2.0,
+        "overlap_mm3": 2849.75,
+        "min_dist_mm": 0.0,
+        "sealed": true,
+        "rail_ok": true,
+        "track_ok": true
+      },
+      {
+        "W": 4.0,
+        "overlap_mm3": 2837.185,
+        "min_dist_mm": 0.0,
+        "sealed": true,
+        "rail_ok": true,
+        "track_ok": true
+      },
+      {
+        "W": 6.0,
+        "overlap_mm3": 2829.435,
+        "min_dist_mm": 0.0,
+        "sealed": true,
+        "rail_ok": true,
+        "track_ok": true
+      },
+      {
+        "W": 8.0,
+        "overlap_mm3": 2826.604,
+        "min_dist_mm": 0.0,
+        "sealed": true,
+        "rail_ok": true,
+        "track_ok": true
+      },
+      {
+        "W": 10.0,
+        "overlap_mm3": 2828.383,
+        "min_dist_mm": 0.0,
+        "sealed": true,
+        "rail_ok": true,
+        "track_ok": true
+      },
+      {
+        "W": 12.0,
+        "overlap_mm3": 2834.517,
+        "min_dist_mm": 0.0,
+        "sealed": true,
+        "rail_ok": true,
+        "track_ok": true
+      },
+      {
+        "W": 14.0,
+        "overlap_mm3": 2844.778,
+        "min_dist_mm": 0.0,
+        "sealed": true,
+        "rail_ok": true,
+        "track_ok": true
+      },
+      {
+        "W": 16.0,
+        "overlap_mm3": 2858.928,
+        "min_dist_mm": 0.0,
+        "sealed": true,
+        "rail_ok": true,
+        "track_ok": true
+      },
+      {
+        "W": 18.0,
+        "overlap_mm3": 2876.693,
+        "min_dist_mm": 0.0,
+        "sealed": true,
+        "rail_ok": true,
+        "track_ok": true
+      },
+      {
+        "W": 20.0,
+        "overlap_mm3": 2897.742,
+        "min_dist_mm": 0.0,
+        "sealed": true,
+        "rail_ok": true,
+        "track_ok": true
+      },
+      {
+        "W": 22.0,
+        "overlap_mm3": 2921.54,
+        "min_dist_mm": 0.0,
+        "sealed": true,
+        "rail_ok": true,
+        "track_ok": true
+      },
+      {
+        "W": 24.0,
+        "overlap_mm3": 2947.167,
+        "min_dist_mm": 0.0,
+        "sealed": true,
+        "rail_ok": true,
+        "track_ok": true
+      },
+      {
+        "W": 26.0,
+        "overlap_mm3": 2973.337,
+        "min_dist_mm": 0.0,
+        "sealed": true,
+        "rail_ok": true,
+        "track_ok": true
+      }
+    ]
+  },
+  "dead_corners": {
+    "ok": true,
+    "geometric": [],
+    "mechanics": [],
+    "n_grid": 70,
+    "n_exit": 70,
+    "off_disc_samples": 8,
+    "off_disc_fall_open_bottom": 8,
+    "off_disc_trapped": [],
+    "law": "move only while r<=DISC_R (disc contact); off-disc no drive; open bottom => fall"
+  }
+}

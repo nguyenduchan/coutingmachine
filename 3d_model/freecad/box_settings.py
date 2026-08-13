@@ -38,7 +38,7 @@ HUB = {
 # =============================================================================
 GUIDE = {
     "shape": "annulus_floor + wall_sectors",
-    "wall_radial_thickness": 12.0,
+    "wall_radial_thickness": 6.0,  # FDM: 4–6 mm structural bowl (was 12)
     "bore_clearance_on_disc": 0.5,  # bore = disc_d + this
     "wall_sector_step_deg": 10.0,
     # Khoét thủng vách vành nơi máng thẳng (lid chute) cắt qua
@@ -86,6 +86,25 @@ DRIVE = {
 }
 
 # =============================================================================
+# FASTENER — one bolt family for every serviceable joint (FDM)
+# =============================================================================
+FASTENER = {
+    "spec": "M3x16 ISO hex bolt + M3 hex nut (AF 5.5)",
+    "clear_d": 3.6,  # ISO 273 medium + print margin
+    "head_cb_d": 6.5,
+    "head_cb_h": 2.2,
+    "nut_pocket_af": 6.0,
+    "nut_pocket_h": 2.8,
+    "default_len": 16.0,  # grip ≤ ~12 mm (+ nut 2.4)
+    "hub_clamp_t": 6.0,  # remaining hub under well — M3×16 disc+hub
+    "lid_corner_inset": 10.0,  # hole at (±100, ±100) on 220 mm square
+    "hub_pcd": 18.0,  # 4× M3 disc↔hub
+    "guide_n": 4,  # floor↔housing on annulus
+    "guide_wall_hole_h": 6.0,  # only into wall base (not full 26 mm)
+    "note": "One printed-part bolt: M3×16. Motor face stays M3 (datasheet).",
+}
+
+# =============================================================================
 # EXIT TRAY + GAP (lining-up) — Placement restored from FCStd App::Part
 # =============================================================================
 EXIT_TRAY = {
@@ -94,7 +113,7 @@ EXIT_TRAY = {
     "channel_width": 12.0,
     "straight_length": 65.0,
     "wall_height": 20.0,
-    "floor_thickness": 2.5,
+    "floor_thickness": 3.0,  # FDM floor (was 2.5)
     "wall_thickness": 3.0,
     "floor_side_pad": 20.0,
     "wall_front_clear": 30.0,
@@ -125,7 +144,7 @@ GATE = {
 PRESS = {
     "shape": "finger + bypass rail",
     "finger_height": 9.0,
-    "finger_thickness": 2.2,
+    "finger_thickness": 2.4,  # FDM 6 perimeters @ 0.4 mm
     "tip_radius": 3.5,
     "bypass_dr": 14.0,
     "note": "Exit_Press_Guide",
@@ -142,7 +161,7 @@ LID = {
     # Enforced: Disc_Access_Lid parent Placement Pz = 0 (do not sink the group)
     "disc_clear": 0.5,
     "top_thickness": 3.0,  # flat continuous top face
-    "wall_thickness": 2.0,
+    "wall_thickness": 2.4,  # FDM 6 perimeters @ 0.4 mm nozzle (was 2.0)
     "wall_height": 27.0,  # from underside up to under top plate (−1 cm from 37)
     "stack_height": 30.0,  # wall_height + top_thickness (overall lid H)
     # --- adjusters ---
@@ -177,7 +196,7 @@ LID = {
             "nut_l": 18.0,  # ≥ ~6×pitch engagement
             "nut_w": 14.0,
             "nut_h": 12.0,
-            "rail_wall": 2.0,
+            "rail_wall": 2.4,  # FDM (was 2.0)
             "rail_clear": 0.4,
             "rail_overhang": 3.0,
             # Axial lock: flange on screw trapped by retainer bolted to lid underside
@@ -186,7 +205,7 @@ LID = {
             "journal_od": 8.0,
             "retainer_wall": 3.0,
             "retainer_pad_t": 4.0,  # pad against Lid_Top underside
-            "retainer_screw_d": 3.2,  # M3 clearance in pad+cap
+            "retainer_screw_d": 3.6,  # M3 clearance (same as FASTENER.clear_d)
             "retainer_screw_span": 22.0,
         },
     },
@@ -256,7 +275,7 @@ LID = {
             "collar_flange_t": 1.5,
             "block_xy": 36.0,
             "block_h": 8.0,
-            "retainer_screw_d": 3.2,
+            "retainer_screw_d": 3.6,
             "retainer_screw_span": 22.0,
             "at": "bar_center",
             "axis_inset": 0.0,
@@ -318,7 +337,7 @@ LID = {
             # bắt đầu cạnh phải máng thẳng ∩ đường tròn → mép ngoài cửa rộng (3h)
             "rim_seal_wall": {
                 "enabled": True,
-                "thickness": 2.0,  # radial wall T (mm)
+                "thickness": 2.4,  # radial wall T — match LID.wall_thickness
                 "disc_clear_radial": 0.25,  # r_in = disc_r + this
                 "from": "chute_in_rim_south",  # cạnh phải máng (x_inner) ∩ rim, nhánh −Y
                 "to": "wide_mouth_out",  # mép ngoài cửa rộng (+X / 3h)

@@ -49,6 +49,7 @@ from box_settings import DISC as _DISC_CFG
 from box_settings import HUB as _HUB_CFG
 from box_settings import LID as _LID_CFG
 from box_settings import lid_plan_full as _lid_plan_full
+import assembly_bolts as AB
 from disc_access_lid import (
     assemble_disc_access_lid,
     enforce_lid_parent_pz0,
@@ -263,7 +264,7 @@ GAP_CURVE_STROKE_MAX = float(BX.GAP["stroke_max"])
 GAP_RACK_MODULE = float(BX.GAP["rack_module"])
 GAP_PINION_TEETH = int(BX.GAP["pinion_teeth"])
 GAP_RAIL_CLEAR = 0.4
-GAP_RAIL_WALL = 2.5
+GAP_RAIL_WALL = 3.0  # FDM (was 2.5)
 # Exit press / reject: ép viên vào khe hoặc cho trượt vòng lại
 PRESS_FINGER_H = float(BX.PRESS["finger_height"])
 PRESS_FINGER_T = float(BX.PRESS["finger_thickness"])
@@ -381,6 +382,13 @@ MOUNT_AIR_GAP = 5.0
 MOUNT_WALL = 4.5
 MOUNT_BOX_EXTRA = 4.0
 MOUNT_BRACE_W = 8.0
+
+
+def _m3z(shape, xy, z0, h, cbore_top=None, nut_bottom=None):
+    """Cut shared M3 holes (assembly_bolts) without dropping the solid."""
+    return AB.cut_holes_z(
+        shape, xy, z0, h, cbore_top=cbore_top, nut_bottom=nut_bottom
+    )
 
 
 def _keep_largest_solid(shape: Part.Shape) -> Part.Shape:
@@ -640,9 +648,13 @@ def make_outer_guide_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]
 
     parts: list[tuple[str, Part.Shape, tuple]] = []
 
-    # 1) Circular floor disc
+    # 1) Circular floor disc + M3 into Housing_Lid + one M3 per wall sector
     floor = _cyl_z(2.0 * r_out, floor_t, z_floor)
     floor = floor.cut(_cyl_z(DRIVE_SHAFT_D + 0.3, floor_t + 2.0, z_floor - 1.0))
+    gfloor = AB.guide_floor_xy(r_in, r_out)
+    gwalls = AB.guide_wall_xy(0.5 * (r_in + r_out))
+    floor = _m3z(floor, gfloor, z_floor - 1.0, floor_t + 2.0, cbore_top=z_floor + floor_t)
+    floor = _m3z(floor, gwalls, z_floor - 1.0, floor_t + 2.0, nut_bottom=z_floor)
     parts.append(("Outer_Guide_Floor", _keep_largest_solid(floor.removeSplitter()), (0.18, 0.18, 0.2)))
 
     # Chute cutout prism (expanded) — punches through ring where red chute crosses
@@ -685,6 +697,13 @@ def make_outer_guide_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]
         kept = _fuse_significant_solids(seg, min_vol=0.5)
         if kept is None or not kept.Solids:
             continue  # sector fully removed by chute cut
+        mid_a = math.radians(float(i) + 0.5 * step)
+        r_mid = 0.5 * (r_in + r_out)
+        wx, wy = r_mid * math.cos(mid_a), r_mid * math.sin(mid_a)
+        # M3×16: only into wall base (not full 26 mm height)
+        kept = _m3z(kept, [(wx, wy)], z_disc - 1.0, AB.GUIDE_WALL_HOLE_H + 2.0)
+        z_press = z_disc + DISC_T
+        kept = _m3z(kept, AB.press_mount_xy(), z_press - 1.0, AB.GUIDE_WALL_HOLE_H + 2.0)
         name = "Outer_Guide_Wall_%03d" % i
         parts.append((name, kept, (0.12, 0.12, 0.14)))
 
@@ -1114,6 +1133,20 @@ def make_lining_up_gap_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple
     )
     drive_box = drive_box.cut(guard_clear).cut(rack_clear)
     drive_box = _fuse_significant_solids(drive_box.removeSplitter())
+    try:
+        bb = drive_box.BoundBox
+        inset = 8.0
+        box_holes = [
+            (bb.XMin + inset, bb.YMin + inset),
+            (bb.XMax - inset, bb.YMin + inset),
+            (bb.XMin + inset, bb.YMax - inset),
+            (bb.XMax - inset, bb.YMax - inset),
+        ]
+        drive_box = _m3z(
+            drive_box, box_holes, bb.ZMin - 1.0, box_bot_t + 6.0, cbore_top=bb.ZMin + box_bot_t
+        )
+    except Exception:
+        pass
 
     # Shaft spans bottom bearing -> top bearing -> knob above lid
     shaft_z0 = box_z0 - 1.0
@@ -1298,11 +1331,14 @@ def make_exit_tray_floor_basic_parts(
             continue
         if cut.Volume < 50.0:
             continue
+        cut = _m3z(
+            cut, AB.exit_tray_bolt_xy_local(), z0 - 1.0, ft + 2.0, cbore_top=z0 + ft
+        )
         out.append((name, cut.removeSplitter(), col))
 
     print(
         "Exit_Tray_Floor: disc keep-out r=%.1f @ local=(%.1f,%.1f) | "
-        "%d pieces | tray Placement movable"
+        "%d pieces | tray Placement movable | 4×M3"
         % (r_keep, disc_xy[0], disc_xy[1], len(out))
     )
     return out
@@ -1403,12 +1439,12 @@ def make_exit_guide_tray(z_disc: float) -> Part.Shape:
 def make_clear_exit_cover(z_disc: float) -> Part.Shape:
     """Clear acrylic cover over single-file exit path (Rx-4)."""
     z0 = z_disc + DISC_T + 1
-    cover = Part.makeBox(70, GATE_GAP + 16, 2.5)
+    cover = Part.makeBox(70, GATE_GAP + 16, 3.0)
     cover.translate(App.Vector(-DISC_D / 2 - 25, -(GATE_GAP + 16) / 2, z0 + 18))
     # Side walls of clear funnel
-    w1 = Part.makeBox(70, 2, 16)
+    w1 = Part.makeBox(70, 2.4, 16)
     w1.translate(App.Vector(-DISC_D / 2 - 25, GATE_GAP / 2 + 4, z0 + 2))
-    w2 = Part.makeBox(70, 2, 16)
+    w2 = Part.makeBox(70, 2.4, 16)
     w2.translate(App.Vector(-DISC_D / 2 - 25, -GATE_GAP / 2 - 6, z0 + 2))
     return cover.fuse(w1).fuse(w2)
 
@@ -1445,7 +1481,7 @@ def make_sensor_fork(z_disc: float) -> Part.Shape:
 def make_collection_drawer() -> Part.Shape:
     d = Part.makeBox(95, 65, 40)
     d.translate(App.Vector(-DISC_D / 2 - 40, BOX_D / 2 - 75, 28))
-    inn = Part.makeBox(87, 55, 32)
+    inn = Part.makeBox(87, 55, 28)
     inn.translate(App.Vector(-DISC_D / 2 - 36, BOX_D / 2 - 68, 34))
     return d.cut(inn)
 
@@ -1625,6 +1661,49 @@ def make_housing_mount_parts(face_z: float) -> list[tuple[str, Part.Shape, tuple
     pad = Part.makeBox(pad_w, pad_d, 3.0)
     pad.translate(App.Vector(gx - pad_w / 2.0, moy - 2.0, BOX_T))
 
+    # --- M3 service holes (same bolt as rotary_linear / lid) ---
+    corners = AB.lid_corner_xy()
+    wall_g, bore_d, _side = _guide_dims()
+    r_in, r_out = bore_d / 2.0, bore_d / 2.0 + wall_g
+    gfloor = AB.guide_floor_xy(r_in, r_out)
+    # Shelf bosses only (lid nuts sit under Housing_Lid — M3×16 stack)
+    for x, y in corners:
+        shell = shell.fuse(AB.boss_box_z(x, y, SHELF_Z - 6.0, 6.0 + BOX_T, side=12.0))
+    shell = _m3z(shell, corners, SHELF_Z - 2.0, BOX_T + 8.0)
+    for px, py, pz in AB.panel_xy(BOX_D, BOX_H):
+        shell = AB.cut_radial_m3(
+            shell, axis="y", along0=py - 6.0, a=px, b=pz, h=16.0
+        )
+    z_disc_h = TOP_Z + BOX_T + 1.0
+    z_chute_b = z_disc_h + DISC_T - 12.0
+    hx_wall = -BOX_W / 2.0 - 2.0
+    for yy in (-6.0, 6.0):
+        shell = AB.cut_radial_m3(
+            shell, axis="x", along0=hx_wall, a=yy, b=z_chute_b, h=14.0
+        )
+    # Standoffs on Housing_Lid up to Lid_Bottom — grip ≈ 3+6.5+4 mm → M3×16
+    z_under = z_disc_h + DISC_T + LID_DISC_CLEAR
+    standoff_h = max(1.0, z_under - (TOP_Z + BOX_T))
+    for x, y in corners:
+        lid = lid.fuse(
+            AB.boss_box_z(x, y, TOP_Z + BOX_T, standoff_h, side=12.0)
+        )
+    lid = _m3z(
+        lid,
+        corners,
+        TOP_Z - 1.0,
+        BOX_T + standoff_h + 2.0,
+        nut_bottom=TOP_Z,
+    )
+    lid = _m3z(lid, gfloor, TOP_Z - 1.0, BOX_T + 2.0)
+    _pls, _, _, _ = load_state_from_fcstd(FCSTD)
+    tray_pl = _pls.get("Exit_Guide_Tray")
+    tpx = float(tray_pl.Base.x) if tray_pl is not None else 0.0
+    tpy = float(tray_pl.Base.y) if tray_pl is not None else 0.0
+    tray_world = [(x + tpx, y + tpy) for x, y in AB.exit_tray_bolt_xy_local()]
+    lid = _m3z(lid, tray_world, TOP_Z - 1.0, BOX_T + 2.0)
+    shelf = _m3z(shelf, corners, SHELF_Z - 1.0, BOX_T + 2.0)
+
     parts = [
         ("Housing_Shell", _keep_largest_solid(shell.removeSplitter()), hc),
         ("Housing_Lid", _keep_largest_solid(lid.removeSplitter()), hc),
@@ -1634,6 +1713,11 @@ def make_housing_mount_parts(face_z: float) -> list[tuple[str, Part.Shape, tuple
         ("Mount_Web", web.removeSplitter(), hc),
         ("Mount_Floor_Pad", pad.removeSplitter(), hc),
     ] + [(n, s.removeSplitter(), col) for n, s, col in braces]
+    print(
+        "Housing M3: 4 lid corners @ inset %.0f | 4 guide-floor PCD | "
+        "4 shelf | 4 panel | %s"
+        % (AB.LID_CORNER_INSET, AB.FASTENER_SPEC)
+    )
     return parts
 
 
@@ -1641,6 +1725,23 @@ def make_coupler_parts(z0: float) -> list[tuple[str, Part.Shape, tuple]]:
     c = (0.85, 0.55, 0.15)
     body = _cyl_z(COUPLER_OD, COUPLER_L, z0).cut(
         _cyl_z(DRIVE_SHAFT_D + 0.2, COUPLER_L + 1, z0 - 0.5)
+    )
+    # 2× M3 set-screw (radial) — motor shaft end + disc shaft end
+    body = AB.cut_radial_m3(
+        body,
+        axis="x",
+        along0=-COUPLER_OD / 2.0 - 1.0,
+        a=0.0,
+        b=z0 + 6.0,
+        h=COUPLER_OD + 2.0,
+    )
+    body = AB.cut_radial_m3(
+        body,
+        axis="x",
+        along0=-COUPLER_OD / 2.0 - 1.0,
+        a=0.0,
+        b=z0 + COUPLER_L - 6.0,
+        h=COUPLER_OD + 2.0,
     )
     return [("Coupler_Body", _keep_largest_solid(body.removeSplitter()), c)]
 
@@ -1662,6 +1763,14 @@ def make_disc_parts(z0: float) -> list[tuple[str, Part.Shape, tuple]]:
     disc = _cyl_z(DISC_D, DISC_T, z0).cut(
         _cyl_z(DRIVE_SHAFT_D + 0.1, DISC_T + 1, z0 - 0.5)
     )
+    # Nut recessed in disc underside so M3×16 clamps hub pad + disc (not 25 mm through hub)
+    disc = _m3z(
+        disc,
+        AB.hub_disc_xy(),
+        z0 - 1.0,
+        DISC_T + 2.0,
+        nut_bottom=z0,
+    )
     return [("Disc_Plate", _keep_largest_solid(disc.removeSplitter()), c)]
 
 
@@ -1674,6 +1783,29 @@ def make_center_hub_parts(z0: float) -> list[tuple[str, Part.Shape, tuple]]:
         hy = (HUB_D / 2 - 2) * math.sin(a)
         hub = hub.cut(_cyl_z(4.0, HUB_H + 1, z0 + DISC_T - 0.5, hx, hy))
     hub = hub.cut(_cyl_z(DRIVE_SHAFT_D + 0.2, HUB_H + 1, z0 + DISC_T - 0.5))
+    z_hub0 = z0 + DISC_T
+    clamp_t = AB.HUB_CLAMP_T
+    well_h = max(1.0, HUB_H - clamp_t)
+    for hx, hy in AB.hub_disc_xy():
+        try:
+            hub = hub.cut(AB.m3_well_z(hx, hy, z_hub0 + clamp_t, well_h + 0.2))
+        except Exception:
+            pass
+    hub = _m3z(
+        hub,
+        AB.hub_disc_xy(),
+        z_hub0 - 1.0,
+        clamp_t + 2.0,
+        cbore_top=z_hub0 + clamp_t,
+    )
+    hub = AB.cut_radial_m3(
+        hub,
+        axis="x",
+        along0=-HUB_D / 2.0 - 1.0,
+        a=0.0,
+        b=z_hub0 + 0.5 * HUB_H,
+        h=HUB_D + 2.0,
+    )
     return [("Hub_Body", _keep_largest_solid(hub.removeSplitter()), c)]
 
 
@@ -1861,8 +1993,21 @@ def make_lid_bottom_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
     except Exception as exc:
         print("Lid_Bottom_Deck_S_Rim skipped:", exc)
 
+    corners = AB.lid_corner_xy()
+    sq_xy = AB.all_lid_wall_sq_xy(xl, xr, yb, yt)
+    parts2: list[tuple[str, Part.Shape, tuple]] = []
+    for n, sh, col in parts:
+        sh = _m3z(
+            sh, corners, z0 - 1.0, LID_BOTTOM_T + 2.0, cbore_top=z0 + LID_BOTTOM_T
+        )
+        if n == "Lid_Bottom_Floor":
+            sh = _m3z(sh, sq_xy, z0 - 1.0, LID_BOTTOM_T + 2.0)
+            sh = _m3z(sh, AB.width_rail_bolt_xy(), z0 - 1.0, LID_BOTTOM_T + 2.0)
+        parts2.append((n, sh, col))
+    parts = parts2
     print(
-        "Lid_Bottom: underside z=disc+%.1f | T=%.0f | holeD=%.1f | chute_open=%s | seal=%s"
+        "Lid_Bottom: underside z=disc+%.1f | T=%.0f | holeD=%.1f | chute_open=%s | "
+        "seal=%s | M3 corners+sq-walls"
         % (
             LID_DISC_CLEAR,
             LID_BOTTOM_T,
@@ -1895,9 +2040,10 @@ def make_lid_fill_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
     fill = _lid_square_minus_disc(xl, xr, yb, yt, z_fill0, h_fill, hole_d)
     parts: list[tuple[str, Part.Shape, tuple]] = []
     if fill is not None and fill.Solids:
+        # No through-bolts — M3×16 clamps Lid_Bottom → Housing_Lid standoffs only
         parts.append(("Lid_Fill_Outside", fill, fill_c))
     print(
-        "Lid_Fill_Outside: on bottom | H=%.0f holeD=%.1f"
+        "Lid_Fill_Outside: on bottom | H=%.0f holeD=%.1f | no corner through-bolts"
         % (h_fill, hole_d)
     )
     return parts
@@ -2116,7 +2262,7 @@ def make_lid_top_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
 
     vol_sum = sum(sh.Volume for _, sh, _ in parts)
     print(
-        "Lid_Top: sealed split-at-walls | plate=%.0f sum=%.0f (%.1f%%) | %s"
+        "Lid_Top: sealed split-at-walls | plate=%.0f sum=%.0f (%.1f%%) | %s | no corner through-bolts"
         % (
             plate_vol,
             vol_sum,
@@ -2198,6 +2344,21 @@ def make_disc_access_lid_parts(z_disc: float) -> list[tuple[str, Part.Shape, tup
             except Exception:
                 pass
         if w is not None and w.Solids:
+            if name.startswith("Lid_Wall_Sq_"):
+                sq_map = AB.lid_wall_sq_xy(xl, xr, yb, yt)
+                pts = sq_map.get(name, [])
+                fl_w, fl_h = 8.0, 6.0
+                for hx, hy in pts:
+                    fl = Part.makeBox(fl_w, fl_w, fl_h)
+                    fl.translate(
+                        App.Vector(hx - fl_w / 2.0, hy - fl_w / 2.0, z_wall0)
+                    )
+                    try:
+                        w = w.fuse(fl)
+                    except Exception:
+                        pass
+                if pts:
+                    w = _m3z(w, pts, z_wall0 - 1.0, fl_h + 4.0)
             wall_parts.append((name, w, col))
 
     # Sealed rim arc OUTSIDE Ø20 cm disc — SOUTHERN arc:
@@ -2568,6 +2729,13 @@ def make_width_adjust_drive_parts(z_disc: float) -> list[tuple[str, Part.Shape, 
         journal = _cyl_along_xy(cx, jy0, z_sc, 0.0, 1.0, 8.0, j_clear)
         boss = boss.cut(journal)
         rail = rail.fuse(boss)
+    rail = _m3z(
+        rail,
+        AB.width_rail_bolt_xy(),
+        z_floor0 - 1.0,
+        wall + 4.0,
+        cbore_top=z_floor0 + wall,
+    )
     parts.append(("Width_Rail", _keep_largest_solid(_safe_refine(rail)), rail_c))
 
     # --- Retainer clamp on Lid_Top underside: traps collar -> knob cannot pull out ---
@@ -2751,6 +2919,21 @@ def make_exit_press_guide_parts(z_disc: float) -> list[tuple[str, Part.Shape, tu
     mount.translate(App.Vector(-7.0, -9.0, z0))
     mount.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), a_mount + 90.0)
     mount.translate(App.Vector(mx, my, 0.0))
+    clamp_t = AB.HUB_CLAMP_T
+    mount_h = PRESS_FINGER_H + 6.0
+    well_h = max(1.0, mount_h - clamp_t)
+    for hx, hy in AB.press_mount_xy():
+        try:
+            mount = mount.cut(AB.m3_well_z(hx, hy, z0 + clamp_t, well_h + 0.2))
+        except Exception:
+            pass
+    mount = _m3z(
+        mount,
+        AB.press_mount_xy(),
+        z0 - 1.0,
+        clamp_t + 2.0,
+        cbore_top=z0 + clamp_t,
+    )
 
     # Hinge pin (vertical) — spring/compliance cue
     hx = (r_rim - 1.0) * math.cos(math.radians(a_mount))
@@ -2850,12 +3033,31 @@ def make_exit_press_guide_parts(z_disc: float) -> list[tuple[str, Part.Shape, tu
 def make_clear_exit_cover_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
     c = (0.7, 0.85, 0.95)
     z0 = z_disc + DISC_T + 1
-    cover = Part.makeBox(70, GATE_GAP + 16, 2.5)
+    cover_t = 3.0
+    wall_t = 2.4
+    cover = Part.makeBox(70, GATE_GAP + 16, cover_t)
     cover.translate(App.Vector(-DISC_D / 2 - 25, -(GATE_GAP + 16) / 2, z0 + 18))
-    w1 = Part.makeBox(70, 2, 16)
+    w1 = Part.makeBox(70, wall_t, 16)
     w1.translate(App.Vector(-DISC_D / 2 - 25, GATE_GAP / 2 + 4, z0 + 2))
-    w2 = Part.makeBox(70, 2, 16)
+    w2 = Part.makeBox(70, wall_t, 16)
     w2.translate(App.Vector(-DISC_D / 2 - 25, -GATE_GAP / 2 - 6, z0 + 2))
+    cx0 = -DISC_D / 2 - 25
+    cy0 = 0.0
+    cz = z0 + 18
+    cover_holes = [(cx0 + 10.0, cy0 - 4.0), (cx0 + 60.0, cy0 - 4.0)]
+    cover = _m3z(cover, cover_holes, cz - 1.0, cover_t + 2.0, cbore_top=cz + cover_t)
+    w1 = _m3z(
+        w1,
+        [(cx0 + 10.0, GATE_GAP / 2 + 4.0 + wall_t / 2.0)],
+        cz - AB.GUIDE_WALL_HOLE_H,
+        AB.GUIDE_WALL_HOLE_H + 2.0,
+    )
+    w2 = _m3z(
+        w2,
+        [(cx0 + 10.0, -GATE_GAP / 2 - 6.0 + wall_t / 2.0)],
+        cz - AB.GUIDE_WALL_HOLE_H,
+        AB.GUIDE_WALL_HOLE_H + 2.0,
+    )
     return [
         ("Clear_Cover_Top", cover, c),
         ("Clear_Cover_Wall_A", w1, c),
@@ -2866,6 +3068,15 @@ def make_clear_exit_cover_parts(z_disc: float) -> list[tuple[str, Part.Shape, tu
 def make_separator_tab_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]:
     blade = Part.makeBox(35, 6, 8)
     blade.translate(App.Vector(-DISC_D / 2 + 25, -3, z_disc + DISC_T + 2))
+    z_b = z_disc + DISC_T + 2
+    x0 = -DISC_D / 2 + 25
+    blade = _m3z(
+        blade,
+        [(x0 + 6.0, 0.0), (x0 + 28.0, 0.0)],
+        z_b - 1.0,
+        10.0,
+        cbore_top=z_b + 8.0,
+    )
     return [("Separator_Blade", blade, (0.15, 0.15, 0.15))]
 
 
@@ -2877,6 +3088,17 @@ def make_outlet_chute_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]
     hollow = Part.makeBox(24, 22, 38)
     hollow.translate(App.Vector(-DISC_D / 2 - 52, -11, z0 - 14))
     body = chute.cut(hollow)
+    # Flange toward housing (+X) so 2× M3 reach the box wall
+    fl = Part.makeBox(22.0, 28.0, 6.0)
+    fl.translate(App.Vector(-DISC_D / 2 - 25, -14, z0 - 15))
+    body = body.fuse(fl)
+    hx = -BOX_W / 2.0 + 2.0
+    body = AB.cut_radial_m3(
+        body, axis="x", along0=hx - 8.0, a=-6.0, b=z0 - 12.0, h=20.0
+    )
+    body = AB.cut_radial_m3(
+        body, axis="x", along0=hx - 8.0, a=6.0, b=z0 - 12.0, h=20.0
+    )
     return [("Chute_Body", _keep_largest_solid(body.removeSplitter()), c)]
 
 
@@ -2890,6 +3112,15 @@ def make_sensor_fork_parts(z_disc: float) -> list[tuple[str, Part.Shape, tuple]]
     right.translate(App.Vector(x0, -GATE_GAP / 2 - 5, z0))
     top = Part.makeBox(8, GATE_GAP + 10, 3)
     top.translate(App.Vector(x0, -GATE_GAP / 2 - 5, z0 + 17))
+    # 2× M3 through bridge (mount to cover / chute)
+    hy = 0.0
+    top = _m3z(
+        top,
+        [(x0 + 4.0, hy - 4.0), (x0 + 4.0, hy + 4.0)],
+        z0 + 17 - 1.0,
+        5.0,
+        cbore_top=z0 + 20.0,
+    )
     return [
         ("Sensor_Arm_L", left, c),
         ("Sensor_Arm_R", right, c),
@@ -2901,7 +3132,7 @@ def make_collection_drawer_parts() -> list[tuple[str, Part.Shape, tuple]]:
     c = (0.75, 0.85, 0.9)
     d = Part.makeBox(95, 65, 40)
     d.translate(App.Vector(-DISC_D / 2 - 40, BOX_D / 2 - 75, 28))
-    inn = Part.makeBox(87, 55, 32)
+    inn = Part.makeBox(87, 55, 28)
     inn.translate(App.Vector(-DISC_D / 2 - 36, BOX_D / 2 - 68, 34))
     return [("Drawer_Shell", _keep_largest_solid(d.cut(inn).removeSplitter()), c)]
 
@@ -2912,7 +3143,12 @@ def make_control_panel_parts() -> list[tuple[str, Part.Shape, tuple]]:
     panel.translate(App.Vector(15, -BOX_D / 2 - 2, BOX_H - 75))
     disp = Part.makeBox(40, 4, 18)
     disp.translate(App.Vector(25, -BOX_D / 2 - 1, BOX_H - 55))
-    return [("Panel_Bezel", _keep_largest_solid(panel.cut(disp).removeSplitter()), c)]
+    panel = panel.cut(disp)
+    for px, py, pz in AB.panel_xy(BOX_D, BOX_H):
+        panel = AB.cut_radial_m3(
+            panel, axis="y", along0=py - 4.0, a=px, b=pz, h=14.0
+        )
+    return [("Panel_Bezel", _keep_largest_solid(panel.removeSplitter()), c)]
 
 
 def add_part(doc, name, shape, color, transparency=0):
@@ -3139,7 +3375,6 @@ def main() -> None:
 
     assemblies: list[tuple[str, list, int]] = [
         ("L_Bracket_Mount_Frame", make_housing_mount_parts(face_z), 35),
-        ("Hole_Align_Pins", make_hole_align_pin_parts(face_z), 0),
         ("JGB37_520_Motor", make_motor_parts(), 0),
         ("Flexible_Coupler", make_coupler_parts(z_coupler), 0),
         ("Disc_Shaft", make_drive_shaft_parts(z_shaft0, shaft_len), 0),

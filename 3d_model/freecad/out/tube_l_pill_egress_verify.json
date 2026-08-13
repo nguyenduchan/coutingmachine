@@ -1,0 +1,304 @@
+{
+  "pass": true,
+  "assumption": "CCW disc = +\u03b8; Center_Director+Outer_Rim_Funnel spirals push +r; Height_Scraper knocks stand\u2192flat; lane\u2192Exit_Track leaves disc; size 2\u201326 mm; Exit_Track \u2248 pill+1mm (clamp at W/H max)",
+  "guide_chain_ok": true,
+  "guide": {
+    "director_r": [
+      20.0,
+      74.8
+    ],
+    "funnel_r": [
+      20.0,
+      74.8
+    ],
+    "overlap_mm": 0.0,
+    "contiguous_one_solid": true,
+    "entrance_w_mm": 26.0
+  },
+  "n_datasets": 12,
+  "n_pass": 12,
+  "n_fail": 0,
+  "poses": [
+    "flat",
+    "stand"
+  ],
+  "cases": [
+    {
+      "id": "tiny_5x2.5",
+      "D_mm": 5.0,
+      "T_mm": 2.5,
+      "shape": "tablet",
+      "gap": {
+        "W": 6.0,
+        "H": 3.5,
+        "clear_xy_mm": 1.0,
+        "clear_z_mm": 1.0,
+        "entrance_fixed_W": 26.0
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_pose_ok_at_exit": 80,
+      "n_trapped": 0,
+      "tunnel_hits": 0,
+      "knockdown_ok": true,
+      "exit_clear_1mm": true,
+      "no_tunnel_through_parts": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "small_6x3",
+      "D_mm": 6.0,
+      "T_mm": 3.0,
+      "shape": "tablet",
+      "gap": {
+        "W": 7.0,
+        "H": 4.0,
+        "clear_xy_mm": 1.0,
+        "clear_z_mm": 1.0,
+        "entrance_fixed_W": 26.0
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_pose_ok_at_exit": 80,
+      "n_trapped": 0,
+      "tunnel_hits": 0,
+      "knockdown_ok": true,
+      "exit_clear_1mm": true,
+      "no_tunnel_through_parts": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "medium_8x4",
+      "D_mm": 8.0,
+      "T_mm": 4.0,
+      "shape": "tablet",
+      "gap": {
+        "W": 9.0,
+        "H": 5.0,
+        "clear_xy_mm": 1.0,
+        "clear_z_mm": 1.0,
+        "entrance_fixed_W": 26.0
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_pose_ok_at_exit": 80,
+      "n_trapped": 0,
+      "tunnel_hits": 0,
+      "knockdown_ok": true,
+      "exit_clear_1mm": true,
+      "no_tunnel_through_parts": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "large_10x5",
+      "D_mm": 10.0,
+      "T_mm": 5.0,
+      "shape": "tablet",
+      "gap": {
+        "W": 11.0,
+        "H": 6.0,
+        "clear_xy_mm": 1.0,
+        "clear_z_mm": 1.0,
+        "entrance_fixed_W": 26.0
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_pose_ok_at_exit": 80,
+      "n_trapped": 0,
+      "tunnel_hits": 0,
+      "knockdown_ok": true,
+      "exit_clear_1mm": true,
+      "no_tunnel_through_parts": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "xl_12x6",
+      "D_mm": 12.0,
+      "T_mm": 6.0,
+      "shape": "tablet",
+      "gap": {
+        "W": 13.0,
+        "H": 7.0,
+        "clear_xy_mm": 1.0,
+        "clear_z_mm": 1.0,
+        "entrance_fixed_W": 26.0
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_pose_ok_at_exit": 80,
+      "n_trapped": 0,
+      "tunnel_hits": 0,
+      "knockdown_ok": true,
+      "exit_clear_1mm": true,
+      "no_tunnel_through_parts": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "softgel_9",
+      "D_mm": 9.0,
+      "T_mm": 9.0,
+      "shape": "ball",
+      "gap": {
+        "W": 10.0,
+        "H": 10.0,
+        "clear_xy_mm": 1.0,
+        "clear_z_mm": 1.0,
+        "entrance_fixed_W": 26.0
+      },
+      "n_trials": 40,
+      "n_exit": 40,
+      "n_pose_ok_at_exit": 40,
+      "n_trapped": 0,
+      "tunnel_hits": 0,
+      "knockdown_ok": true,
+      "exit_clear_1mm": true,
+      "no_tunnel_through_parts": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "caplet_eq_7x4",
+      "D_mm": 7.0,
+      "T_mm": 4.0,
+      "shape": "tablet",
+      "gap": {
+        "W": 8.0,
+        "H": 5.0,
+        "clear_xy_mm": 1.0,
+        "clear_z_mm": 1.0,
+        "entrance_fixed_W": 26.0
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_pose_ok_at_exit": 80,
+      "n_trapped": 0,
+      "tunnel_hits": 0,
+      "knockdown_ok": true,
+      "exit_clear_1mm": true,
+      "no_tunnel_through_parts": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "thick_8x7",
+      "D_mm": 8.0,
+      "T_mm": 7.0,
+      "shape": "tablet",
+      "gap": {
+        "W": 9.0,
+        "H": 8.0,
+        "clear_xy_mm": 1.0,
+        "clear_z_mm": 1.0,
+        "entrance_fixed_W": 26.0
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_pose_ok_at_exit": 80,
+      "n_trapped": 0,
+      "tunnel_hits": 0,
+      "knockdown_ok": true,
+      "exit_clear_1mm": true,
+      "no_tunnel_through_parts": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "mini_4x2",
+      "D_mm": 4.0,
+      "T_mm": 2.0,
+      "shape": "tablet",
+      "gap": {
+        "W": 5.0,
+        "H": 3.0,
+        "clear_xy_mm": 1.0,
+        "clear_z_mm": 1.0,
+        "entrance_fixed_W": 26.0
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_pose_ok_at_exit": 80,
+      "n_trapped": 0,
+      "tunnel_hits": 0,
+      "knockdown_ok": true,
+      "exit_clear_1mm": true,
+      "no_tunnel_through_parts": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "oblong_11x5",
+      "D_mm": 11.0,
+      "T_mm": 5.0,
+      "shape": "tablet",
+      "gap": {
+        "W": 12.0,
+        "H": 6.0,
+        "clear_xy_mm": 1.0,
+        "clear_z_mm": 1.0,
+        "entrance_fixed_W": 26.0
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_pose_ok_at_exit": 80,
+      "n_trapped": 0,
+      "tunnel_hits": 0,
+      "knockdown_ok": true,
+      "exit_clear_1mm": true,
+      "no_tunnel_through_parts": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "softgel_7",
+      "D_mm": 7.0,
+      "T_mm": 7.0,
+      "shape": "ball",
+      "gap": {
+        "W": 8.0,
+        "H": 8.0,
+        "clear_xy_mm": 1.0,
+        "clear_z_mm": 1.0,
+        "entrance_fixed_W": 26.0
+      },
+      "n_trials": 40,
+      "n_exit": 40,
+      "n_pose_ok_at_exit": 40,
+      "n_trapped": 0,
+      "tunnel_hits": 0,
+      "knockdown_ok": true,
+      "exit_clear_1mm": true,
+      "no_tunnel_through_parts": true,
+      "pass": true,
+      "sample_failures": []
+    },
+    {
+      "id": "flat_9x3",
+      "D_mm": 9.0,
+      "T_mm": 3.0,
+      "shape": "tablet",
+      "gap": {
+        "W": 10.0,
+        "H": 4.0,
+        "clear_xy_mm": 1.0,
+        "clear_z_mm": 1.0,
+        "entrance_fixed_W": 26.0
+      },
+      "n_trials": 80,
+      "n_exit": 80,
+      "n_pose_ok_at_exit": 80,
+      "n_trapped": 0,
+      "tunnel_hits": 0,
+      "knockdown_ok": true,
+      "exit_clear_1mm": true,
+      "no_tunnel_through_parts": true,
+      "pass": true,
+      "sample_failures": []
+    }
+  ],
+  "ref_video": "https://www.youtube.com/shorts/ju5vIg66NNk"
+}
