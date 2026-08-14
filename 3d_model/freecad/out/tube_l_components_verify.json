@@ -1,0 +1,202 @@
+{
+  "pass": true,
+  "assembly": "C:\\workspace\\embedded\\CountingMachine\\3d_model\\freecad\\out\\tube_l_exit_gate.FCStd",
+  "parts_dir": "C:\\workspace\\embedded\\CountingMachine\\3d_model\\freecad\\out\\tube_l_exit_gate_parts",
+  "W_mm": 9.0,
+  "H_mm": 5.0,
+  "dimensions_preserved": {
+    "pass": true,
+    "n_pass": 16,
+    "n_parts": 16,
+    "vol_rtol": 1e-09,
+    "area_rtol": 1e-09,
+    "com_atol_mm": 1e-06,
+    "rows": [
+      {
+        "part": "Rotor_Disc",
+        "file": "Rotor_Disc.FCStd",
+        "file_exists": true,
+        "volume_mm3": 156312.4802312953,
+        "volume_rel_err": 0.0,
+        "area_rel_err": 0.0,
+        "com_max_err_mm": 1.1232315535299715e-16,
+        "bbox_max_err_mm_informational": 0.13259101151695063,
+        "pass": true
+      },
+      {
+        "part": "Hub_Body",
+        "file": "Hub_Body.FCStd",
+        "file_exists": true,
+        "volume_mm3": 4746.732871273735,
+        "volume_rel_err": 0.0,
+        "area_rel_err": 0.0,
+        "com_max_err_mm": 1.6615690372356516e-16,
+        "bbox_max_err_mm_informational": 0.021258769933572452,
+        "pass": true
+      },
+      {
+        "part": "Bowl_Tube",
+        "file": "Bowl_Tube.FCStd",
+        "file_exists": true,
+        "volume_mm3": 88239.79493636603,
+        "volume_rel_err": 0.0,
+        "area_rel_err": 1.464161620655308e-16,
+        "com_max_err_mm": 0.0,
+        "bbox_max_err_mm_informational": 0.1331851151637835,
+        "pass": true
+      },
+      {
+        "part": "Crossbar_Bridge",
+        "file": "Crossbar_Bridge.FCStd",
+        "file_exists": true,
+        "volume_mm3": 56483.47665864477,
+        "volume_rel_err": 0.0,
+        "area_rel_err": 0.0,
+        "com_max_err_mm": 5.256649650516844e-16,
+        "bbox_max_err_mm_informational": 1.5987211554602254e-14,
+        "pass": true
+      },
+      {
+        "part": "Scale_Width",
+        "file": "Scale_Width.FCStd",
+        "file_exists": true,
+        "volume_mm3": 50.699999999999825,
+        "volume_rel_err": 7.007324810257427e-16,
+        "area_rel_err": 0.0,
+        "com_max_err_mm": 1.4210854715202004e-14,
+        "bbox_max_err_mm_informational": 1.0658141036401503e-14,
+        "pass": true
+      },
+      {
+        "part": "Width_Carriage",
+        "file": "Width_Carriage.FCStd",
+        "file_exists": true,
+        "volume_mm3": 14175.458367441297,
+        "volume_rel_err": 1.1548765625465751e-15,
+        "area_rel_err": 1.4037334182719559e-16,
+        "com_max_err_mm": 4.973799150320701e-14,
+        "bbox_max_err_mm_informational": 4.973799150320701e-14,
+        "pass": true
+      },
+      {
+        "part": "Scale_Height",
+        "file": "Scale_Height.FCStd",
+        "file_exists": true,
+        "volume_mm3": 56.16000000000007,
+        "volume_rel_err": 0.0,
+        "area_rel_err": 0.0,
+        "com_max_err_mm": 1.7763568394002505e-14,
+        "bbox_max_err_mm_informational": 1.0658141036401503e-14,
+        "pass": true
+      },
+      {
+        "part": "Inner_Lane_Rail",
+        "file": "Inner_Lane_Rail.FCStd",
+        "file_exists": true,
+        "volume_mm3": 23379.881096074972,
+        "volume_rel_err": 9.336177867138415e-16,
+        "area_rel_err": 1.9183071936842876e-16,
+        "com_max_err_mm": 1.2789769243681803e-13,
+        "bbox_max_err_mm_informational": 0.0011599090796607925,
+        "pass": true
+      },
+      {
+        "part": "Height_Scraper",
+        "file": "Height_Scraper.FCStd",
+        "file_exists": true,
+        "volume_mm3": 5790.820731267114,
+        "volume_rel_err": 3.141159928720216e-16,
+        "area_rel_err": 0.0,
+        "com_max_err_mm": 1.4210854715202004e-14,
+        "bbox_max_err_mm_informational": 3.552713678800501e-15,
+        "pass": true
+      },
+      {
+        "part": "Guide_System",
+        "file": "Guide_System.FCStd",
+        "file_exists": true,
+        "volume_mm3": 51183.03981958686,
+        "volume_rel_err": 2.8431127341518475e-16,
+        "area_rel_err": 0.0,
+        "com_max_err_mm": 1.4210854715202004e-14,
+        "bbox_max_err_mm_informational": 0.04387733209831168,
+        "pass": true
+      },
+      {
+        "part": "Exit_Track",
+        "file": "Exit_Track.FCStd",
+        "file_exists": true,
+        "volume_mm3": 15790.006148987515,
+        "volume_rel_err": 2.303975548055748e-16,
+        "area_rel_err": 0.0,
+        "com_max_err_mm": 7.105427357601002e-15,
+        "bbox_max_err_mm_informational": 0.0011599090796607925,
+        "pass": true
+      },
+      {
+        "part": "Exit_Camera",
+        "file": "Exit_Camera.FCStd",
+        "file_exists": true,
+        "volume_mm3": 49970.04214701959,
+        "volume_rel_err": 1.0192447536753117e-15,
+        "area_rel_err": 6.44198019210122e-16,
+        "com_max_err_mm": 2.842170943040401e-14,
+        "bbox_max_err_mm_informational": 0.01108811537763188,
+        "pass": true
+      },
+      {
+        "part": "Camera_Mount",
+        "file": "Camera_Mount.FCStd",
+        "file_exists": true,
+        "volume_mm3": 30028.290292974114,
+        "volume_rel_err": 0.0,
+        "area_rel_err": 0.0,
+        "com_max_err_mm": 0.0,
+        "bbox_max_err_mm_informational": 0.0,
+        "pass": true
+      },
+      {
+        "part": "Backlight_Panel",
+        "file": "Backlight_Panel.FCStd",
+        "file_exists": true,
+        "volume_mm3": 33599.99999999998,
+        "volume_rel_err": 8.661854302599315e-16,
+        "area_rel_err": 5.596890472448789e-16,
+        "com_max_err_mm": 1.4210854715202004e-14,
+        "bbox_max_err_mm_informational": 2.842170943040401e-14,
+        "pass": true
+      },
+      {
+        "part": "Backlight_Mount",
+        "file": "Backlight_Mount.FCStd",
+        "file_exists": true,
+        "volume_mm3": 21465.13983683791,
+        "volume_rel_err": 0.0,
+        "area_rel_err": 0.0,
+        "com_max_err_mm": 0.0,
+        "bbox_max_err_mm_informational": 0.0,
+        "pass": true
+      },
+      {
+        "part": "Collection_Funnel",
+        "file": "Collection_Funnel.FCStd",
+        "file_exists": true,
+        "volume_mm3": 13577.00709353989,
+        "volume_rel_err": 2.00963591351221e-15,
+        "area_rel_err": 2.467672902596752e-16,
+        "com_max_err_mm": 2.842170943040401e-14,
+        "bbox_max_err_mm_informational": 0.010000000000005116,
+        "pass": true
+      }
+    ]
+  },
+  "edit_propagates": {
+    "pass": true,
+    "probe_part": "Scale_Width",
+    "probe_dz_mm": 7.0,
+    "observed_dz_mm": 7.0,
+    "xy_drift_mm": 0.0,
+    "volume_unchanged": true,
+    "restored_ok": true
+  }
+}

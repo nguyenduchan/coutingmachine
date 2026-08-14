@@ -1,5 +1,5 @@
 {
-  "pass": true,
+  "pass": false,
   "seal": {
     "ok": true,
     "n_gap": 0,
@@ -7,7 +7,7 @@
     "rows": [
       {
         "W": 2.0,
-        "overlap_mm3": 2849.75,
+        "overlap_mm3": 173.305,
         "min_dist_mm": 0.0,
         "sealed": true,
         "rail_ok": true,
@@ -15,7 +15,7 @@
       },
       {
         "W": 4.0,
-        "overlap_mm3": 2837.185,
+        "overlap_mm3": 876.016,
         "min_dist_mm": 0.0,
         "sealed": true,
         "rail_ok": true,
@@ -23,7 +23,7 @@
       },
       {
         "W": 6.0,
-        "overlap_mm3": 2829.435,
+        "overlap_mm3": 173.738,
         "min_dist_mm": 0.0,
         "sealed": true,
         "rail_ok": true,
@@ -31,7 +31,7 @@
       },
       {
         "W": 8.0,
-        "overlap_mm3": 2826.604,
+        "overlap_mm3": 925.182,
         "min_dist_mm": 0.0,
         "sealed": true,
         "rail_ok": true,
@@ -39,7 +39,7 @@
       },
       {
         "W": 10.0,
-        "overlap_mm3": 2828.383,
+        "overlap_mm3": 174.066,
         "min_dist_mm": 0.0,
         "sealed": true,
         "rail_ok": true,
@@ -47,7 +47,7 @@
       },
       {
         "W": 12.0,
-        "overlap_mm3": 2834.517,
+        "overlap_mm3": 174.217,
         "min_dist_mm": 0.0,
         "sealed": true,
         "rail_ok": true,
@@ -55,7 +55,7 @@
       },
       {
         "W": 14.0,
-        "overlap_mm3": 2844.778,
+        "overlap_mm3": 1052.738,
         "min_dist_mm": 0.0,
         "sealed": true,
         "rail_ok": true,
@@ -63,7 +63,7 @@
       },
       {
         "W": 16.0,
-        "overlap_mm3": 2858.928,
+        "overlap_mm3": 1008.125,
         "min_dist_mm": 0.0,
         "sealed": true,
         "rail_ok": true,
@@ -71,7 +71,7 @@
       },
       {
         "W": 18.0,
-        "overlap_mm3": 2876.693,
+        "overlap_mm3": 1035.551,
         "min_dist_mm": 0.0,
         "sealed": true,
         "rail_ok": true,
@@ -79,7 +79,7 @@
       },
       {
         "W": 20.0,
-        "overlap_mm3": 2897.742,
+        "overlap_mm3": 1105.997,
         "min_dist_mm": 0.0,
         "sealed": true,
         "rail_ok": true,
@@ -87,7 +87,7 @@
       },
       {
         "W": 22.0,
-        "overlap_mm3": 2921.54,
+        "overlap_mm3": 1144.83,
         "min_dist_mm": 0.0,
         "sealed": true,
         "rail_ok": true,
@@ -95,7 +95,7 @@
       },
       {
         "W": 24.0,
-        "overlap_mm3": 2947.167,
+        "overlap_mm3": 1168.853,
         "min_dist_mm": 0.0,
         "sealed": true,
         "rail_ok": true,
@@ -103,7 +103,7 @@
       },
       {
         "W": 26.0,
-        "overlap_mm3": 2973.337,
+        "overlap_mm3": 1226.866,
         "min_dist_mm": 0.0,
         "sealed": true,
         "rail_ok": true,
@@ -112,8 +112,113 @@
     ]
   },
   "dead_corners": {
-    "ok": true,
-    "geometric": [],
+    "ok": false,
+    "geometric": [
+      {
+        "W": 2.0,
+        "x": -44.15,
+        "y": 0.0,
+        "r": 44.15,
+        "turn_deg": 89.5,
+        "on_disc": true
+      },
+      {
+        "W": 2.0,
+        "x": -44.15,
+        "y": 0.0,
+        "r": 44.15,
+        "turn_deg": 89.5,
+        "on_disc": true
+      },
+      {
+        "W": 2.0,
+        "x": -44.15,
+        "y": 0.0,
+        "r": 44.15,
+        "turn_deg": 89.5,
+        "on_disc": true
+      },
+      {
+        "W": 2.0,
+        "x": -44.15,
+        "y": 0.0,
+        "r": 44.15,
+        "turn_deg": 89.4,
+        "on_disc": true
+      },
+      {
+        "W": 9.0,
+        "x": -51.15,
+        "y": 0.0,
+        "r": 51.15,
+        "turn_deg": 179.3,
+        "on_disc": true
+      },
+      {
+        "W": 9.0,
+        "x": -51.15,
+        "y": 0.0,
+        "r": 51.15,
+        "turn_deg": 179.3,
+        "on_disc": true
+      },
+      {
+        "W": 9.0,
+        "x": -51.15,
+        "y": 0.0,
+        "r": 51.15,
+        "turn_deg": 89.6,
+        "on_disc": true
+      },
+      {
+        "W": 9.0,
+        "x": -51.15,
+        "y": 0.0,
+        "r": 51.15,
+        "turn_deg": 89.6,
+        "on_disc": true
+      },
+      {
+        "W": 9.0,
+        "x": -51.15,
+        "y": 0.0,
+        "r": 51.15,
+        "turn_deg": 89.6,
+        "on_disc": true
+      },
+      {
+        "W": 26.0,
+        "x": -68.15,
+        "y": 0.0,
+        "r": 68.15,
+        "turn_deg": 89.8,
+        "on_disc": true
+      },
+      {
+        "W": 26.0,
+        "x": -68.15,
+        "y": 0.0,
+        "r": 68.15,
+        "turn_deg": 179.8,
+        "on_disc": true
+      },
+      {
+        "W": 26.0,
+        "x": -68.15,
+        "y": 0.0,
+        "r": 68.15,
+        "turn_deg": 179.8,
+        "on_disc": true
+      },
+      {
+        "W": 26.0,
+        "x": -68.15,
+        "y": 0.0,
+        "r": 68.15,
+        "turn_deg": 179.8,
+        "on_disc": true
+      }
+    ],
     "mechanics": [],
     "n_grid": 70,
     "n_exit": 70,

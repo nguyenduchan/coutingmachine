@@ -1,8 +1,8 @@
 {
   "pass": true,
-  "n_trials": 637,
+  "n_trials": 623,
   "n_gaps": 0,
   "gaps": [],
-  "bowl_slot_before_exit_deg": 3.0,
+  "bowl_slot_before_exit_deg": 0.8,
   "rule": "Outer boundary of the lane (Bowl inner face) must be continuously walled from theta_mouth to theta_exit for every pill size 2-25mm"
 }

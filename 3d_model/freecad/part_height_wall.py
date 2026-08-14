@@ -46,8 +46,8 @@ def make_height_wall(width_open: float, height_open: float) -> Part.Shape:
     miệng lane (θ_mouth), phủ W. Không phủ cả cung tới cửa ra. Thành L ngắn
     phía tâm, trong lane.
     """
-    ap = aperture_from_opens(width_open, height_open)
-    z1 = ap["z1"]
+    ap = chute_slide_aperture(width_open)
+    z1 = height_scraper_z(height_open)
     r_i, r_o = ap["r_inner"], ap["r_outer"]
     r_join = r_o - 0.4
     r_blade_in = min(r_i + 0.6, r_join - 0.5)

@@ -4,14 +4,14 @@
   "r_probe_mm": 102.8,
   "z_probe_mm": 20.0,
   "slot_theta_range_deg": [
-    177.0,
-    230.0
+    179.2,
+    219.04490178939116
   ],
-  "slot_arc_deg": 53.0,
-  "n_blocked_trials": 152,
-  "n_blocked_ok": 152,
-  "n_open_trials": 25,
-  "n_open_ok": 25,
+  "slot_arc_deg": 39.84,
+  "n_blocked_trials": 158,
+  "n_blocked_ok": 158,
+  "n_open_trials": 18,
+  "n_open_ok": 18,
   "blocked_failures": [],
   "open_failures": [],
   "single_slot_by_construction": true,

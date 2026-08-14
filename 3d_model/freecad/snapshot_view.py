@@ -5,7 +5,7 @@ tuong tac.
 
 Chay (giong animate_rotor_disc.py — FreeCAD tu mo FCStd truoc, roi thuc thi script nay):
   "C:\\Users\\Admin\\AppData\\Local\\Programs\\FreeCAD 1.1\\bin\\freecad.exe" ^
-    "3d_model\\freecad\\out\\tube_l_exit_gate.FCStd" ^
+    "3d_model\\freecad\\out\\tube_l_exit_gate_parts\\tube_l_exit_gate.FCStd" ^
     "3d_model\\freecad\\snapshot_view.py"
 """
 import os

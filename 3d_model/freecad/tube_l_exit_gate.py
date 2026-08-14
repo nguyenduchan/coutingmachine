@@ -14,6 +14,7 @@ Kiến trúc (đáy HỞ — đĩa đẩy vật bằng lực tiếp tuyến):
   Guide_System        — vách điều hướng (T-spiral hub→vành)    [part_guide_system.py]
   Width_Carriage      — thanh tịnh tiến ngang (ray T, chỉnh W)  [part_width_carriage.py]
   Inner_Lane_Rail     — vách điều chỉnh độ rộng (W)             [part_inner_lane_rail.py]
+  Chute_Slide         — 2 thanh ngang 8h/10h nối thành đĩa      [part_chute_slide.py]
   Height_Scraper wall — vách điều chỉnh độ cao (H)              [part_height_wall.py]
   Height_Scraper slider — thanh tịnh tiến dọc (ray T, chỉnh H)  [part_height_slider.py]
   Crossbar_Bridge     — thanh ngang có slot, bắc qua đĩa        [mech_common.py]
@@ -58,12 +59,13 @@ if _HERE not in sys.path:
 
 from mech_common import *  # noqa: F401,F403
 from part_rotor_disc import make_rotor_disc, make_hub_body
-from part_bowl_tube import make_bowl_tube
+from part_bowl_tube import make_bowl_tube, make_bowl_tube_complete
 from part_guide_system import make_guide_system
 from part_width_carriage import make_width_clamp, make_width_carriage
 from part_inner_lane_rail import make_inner_lane_rail_body, make_reject_wiper, make_inner_lane_rail
 from part_height_wall import make_height_wall
 from part_height_slider import make_height_slider, make_height_scraper
+from part_chute_slide import make_chute_slide
 
 
 # 4 ham duoi day goi truc tiep vao cac ham part_*.py (make_guide_system,
@@ -204,27 +206,34 @@ def verify_lane_outer_boundary_sealed(
     bowl = make_bowl_tube()
     gaps: list[dict] = []
     n_trials = 0
+    # Máng cố định CHUTE_W_MM — chỉ cần chắn tới sát cửa cắt bát (không gồm
+    # vùng slot cố ý mở tại θ_exit cho viên ra).
+    th_end = THETA_EXIT_DEG - BOWL_SLOT_BEFORE_EXIT_DEG - 0.5
+    track = make_exit_track(W_MAX, 5.0)
+    rail = make_inner_lane_rail_body(W_MAX)
+    slide = make_chute_slide()
+    # Vách ngoài = mặt trong Bowl (BOWL_IR). Không probe trong lòng đĩa
+    # (r_outer máng ≈ DISC_R) — máng dùng thành đĩa + 2 thanh Chute_Slide.
+    r_outer = CHANNEL_R_OUTER - 0.3
     for D, T in sizes:
         gap = recommend_gap_mm(D, T)
         W, H = gap["W"], gap["H"]
-        track = make_exit_track(W, H)
-        rail = make_inner_lane_rail_body(W)
-        ap = aperture_from_opens(W, H)
-        r_outer = ap["r_outer"] - 0.3
+        _ = W, H  # scraper/H vẫn theo viên; máng = CHUTE_W_MM cố định
         th = THETA_MOUTH_DEG
-        while th <= THETA_EXIT_DEG + 0.01:
+        while th <= th_end + 0.01:
             n_trials += 1
             cx = r_outer * math.cos(_deg2rad(th))
             cy = r_outer * math.sin(_deg2rad(th))
-            probe = _cyl_z(2.0, RAIL_H, cx, cy, GAP0)
+            probe = _cyl_z(2.0, CHUTE_WALL_H_MM, cx, cy, GAP0)
             ov = max(
                 _overlap_volume(probe, bowl),
                 _overlap_volume(probe, track),
                 _overlap_volume(probe, rail),
+                _overlap_volume(probe, slide),
             )
             if ov < 1.0:
                 if len(gaps) < 20:
-                    gaps.append({"D": D, "W": W, "th_deg": round(th, 2)})
+                    gaps.append({"D": D, "W": CHUTE_W_MM, "th_deg": round(th, 2)})
             th += step_deg
     result = {
         "pass": len(gaps) == 0 and n_trials > 0,
@@ -325,15 +334,15 @@ def build_tube_l_exit_gate_parts(width_open: float = 8.5, height_open: float = 4
     parts = [
         ("Rotor_Disc", make_rotor_disc(), COLORS["disc"]),
         ("Hub_Body", make_hub_body(), COLORS["disc"]),
-        ("Bowl_Tube", make_bowl_tube(), COLORS["bowl"]),
+        ("Bowl_Tube", make_bowl_tube_complete(), COLORS["bowl"]),
         ("Crossbar_Bridge", make_crossbar_bridge(), COLORS["bar"]),
         ("Scale_Width", make_scale_width(), (0.95, 0.90, 0.15)),
         ("Width_Carriage", make_width_carriage(w), COLORS["clamp"]),
         ("Scale_Height", make_scale_height(w), (0.95, 0.90, 0.15)),
         ("Inner_Lane_Rail", make_inner_lane_rail(w), COLORS["rail"]),
+        ("Chute_Slide", make_chute_slide(), COLORS["slide"]),
         ("Height_Scraper", make_height_scraper(w, h), COLORS["height"]),
         ("Guide_System", make_guide_system(), COLORS["guide"]),
-        ("Exit_Track", make_exit_track(w, h), COLORS["exit"]),
     ]
     # Holes only — do not add Screw_* solids (M3 hardware is not modelled)
     return parts
@@ -405,7 +414,18 @@ def verify_tube_l_exit_gate(
     dir_before_lane = entrance_visible
     dir_open_bottom = True
     dir_at_center = abs(DIR_CLAMP_S) < 1e-9
-    exit_track_fixed = make_exit_track(width_open, height_open)
+    # Inner_Lane_Rail và Exit_Track LUÔN dịch cùng nhau theo W. So rail(ww) với
+    # máng dựng ở W danh nghĩa là so hai cấu hình không bao giờ tồn tại cùng
+    # lúc — máng gần xuyên tâm tình cờ không chồng nên phép kiểm này trước đây
+    # luôn ra 0 (vô nghĩa). So đúng cấu hình: cùng ww, có cache vì make_exit_
+    # track() đắt và w_sweep quét mỗi giá trị 2 lần (xuôi + ngược).
+    _exit_cache: dict[float, object] = {}
+
+    def _exit_at(ww: float):
+        key = round(float(ww), 6)
+        if key not in _exit_cache:
+            _exit_cache[key] = make_exit_track(ww, height_open)
+        return _exit_cache[key]
     rail_exit_guard_ok = (
         EXIT_PEEL_PAST_RIM >= 20.0
         and EXIT_FROM_RADIAL_DEG >= exit_wall_friction_beta()["beta_lock_deg"] + 2.0
@@ -435,7 +455,14 @@ def verify_tube_l_exit_gate(
         # Guide↔rail tại W≈ENTRANCE_W: bàn giao họng — không tính jam
         if abs(ww - ENTRANCE_W) > 3.0:
             _hit(guide, rail, "director_rail", thr=40.0)
-        if _overlap_volume(rail, exit_track_fixed) > 80.0:
+        # Ở cấu hình khớp, rail và máng CỐ Ý chồng nhau: _join_seal_key xuyên
+        # miệng rail để bịt khe, và rail_pts còn bám theo đúng đường máng
+        # (straight[:10] ≈ 100 mm). Mức chồng dựng-sẵn đo được ~2850–3010 mm³ ở
+        # CẢ góc cũ lẫn góc tiếp tuyến, nên ngưỡng đặt trên mức đó để bắt hồi
+        # quy. Việc hai chi tiết in rời chồng nhau chừng đó có hợp lý không là
+        # câu hỏi về khả năng in, tách riêng — không phải kẹt cơ cấu (viên đi
+        # lọt: verify_single_file_multi + verify_size_range_egress đều pass).
+        if _overlap_volume(rail, _exit_at(ww)) > RAIL_EXIT_SHARED_MAX:
             jam["rail_exit"] += 1
 
     for hh in h_sweep:
@@ -462,7 +489,7 @@ def verify_tube_l_exit_gate(
     # rail↔exit có tiếp xúc khớp miệng (cố ý); rail_exit chỉ cảnh báo xâm lấn cánh
     open_bottom = True
     hand_top = BAR_Z >= H_MAX + 10.0
-    track_ok = float(make_exit_track(width_open, height_open).Volume) > 100.0
+    track_ok = float(make_exit_ramp(width_open, height_open).Volume) > 100.0
     exit_pose = exit_tangent_pose(width_open, height_open)
     exit_pose_max = exit_tangent_pose(W_MAX, height_open)
     exit_radial_ok = bool(mouth.get("exit_tangent", {}).get("nearly_radial"))

@@ -1,0 +1,18 @@
+{
+  "pass": true,
+  "GAP0_mm": 0.5,
+  "CHUTE_W_mm": 30.0,
+  "disc_clearance": {
+    "pass": true,
+    "fails": []
+  },
+  "single_exit": {
+    "pass": true
+  },
+  "lane_outer": {
+    "pass": true,
+    "n_gaps": 0
+  },
+  "crossbar_full_span": true,
+  "mouth_guide_on_crossbar": true
+}

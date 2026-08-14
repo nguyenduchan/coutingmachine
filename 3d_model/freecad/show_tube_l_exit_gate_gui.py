@@ -5,12 +5,12 @@ Ref: https://www.youtube.com/shorts/ju5vIg66NNk
 
   Guide_System (cố định)     — xoắn hub→họng CCW
   Crossbar_Bridge + ray W    — ray chữ T xuyên tâm
-  Width_Carriage             — trượt trên ray W (= chỉnh bề rộng lane)
+  Width_Carriage             — trượt trên ray W; phễu vát 2 bên chỉnh họng vào
   Height_Scraper             — trượt trên ray H đứng của carriage (= chỉnh cao)
-  Inner_Lane_Rail + Exit_*   — máng / thoát
+  Inner_Lane_Rail + Chute_Slide + Bowl_Tube_Exit_Chute — cung Ø20 cm; máng 40° tại 9h
 
 THAO TÁC:
-  W: nới Screw_Width_* → kéo Width_Carriage trên ray T (vào tâm = W↑)
+  W: kéo Width_Carriage → Inner_Lane_Rail trượt trên 2 ray T (8h/10h)
   H: nới Screw_Height → nâng/hạ Height_Scraper trên cột T
   Lò xo tì ray (Spring_Width_* / Spring_Height_*) giữ ma sát chống trượt khi nới vít
 """
@@ -40,11 +40,11 @@ except NameError:
 
 OUT = _HERE / "out"
 OUT.mkdir(parents=True, exist_ok=True)
-FCSTD = OUT / "tube_l_exit_gate.FCStd"
+FCSTD = OUT / "tube_l_exit_gate_parts" / "tube_l_exit_gate.FCStd"
 
 sys.path.insert(0, str(_HERE))
+from tube_l_components import build_component_assembly, print_summary
 from tube_l_exit_gate import (
-    build_tube_l_exit_gate_parts,
     verify_tube_l_exit_gate,
     verify_single_file_multi,
     verify_pill_egress_multi,
@@ -62,77 +62,17 @@ WIDTH_OPEN = 9.0
 HEIGHT_OPEN = 5.0
 
 
-def add_part(doc, name, shape, color, transparency=0):
-    obj = doc.addObject("Part::Feature", name)
-    obj.Shape = shape
-    if Gui is not None:
-        try:
-            obj.ViewObject.ShapeColor = color
-            obj.ViewObject.Transparency = int(transparency)
-        except Exception:
-            pass
-    return obj
-
-
-def add_group(doc, name, children):
-    grp = doc.addObject("App::Part", name)
-    for c in children:
-        grp.addObject(c)
-    return grp
-
-
 def main() -> None:
     for name in list(App.listDocuments().keys()):
         App.closeDocument(name)
 
-    doc = App.newDocument("Tube_L_Exit_Gate")
-    parts = build_tube_l_exit_gate_parts(WIDTH_OPEN, HEIGHT_OPEN)
-    objs = []
-    for n, sh, col in parts:
-        tr = 55 if n == "Bowl_Tube" else (15 if n == "Rotor_Disc" else 0)
-        objs.append(add_part(doc, n, sh, col, transparency=tr))
-
-    add_group(
-        doc,
-        "Rotor",
-        [o for o in objs if o.Name in ("Rotor_Disc", "Hub_Body")],
-    )
-    add_group(doc, "Bowl", [o for o in objs if o.Name == "Bowl_Tube"])
-    add_group(doc, "Guide", [o for o in objs if o.Name == "Guide_System"])
-    add_group(
-        doc,
-        "Adjust_Slide",
-        [
-            o
-            for o in objs
-            if o.Name
-            in (
-                "Crossbar_Bridge",
-                "Scale_Width",
-                "Width_Carriage",
-                "Scale_Height",
-                "Height_Scraper",
-            )
-            or o.Name.startswith("Spring_")
-        ],
-    )
-    add_group(
-        doc,
-        "Lane_And_Exit",
-        [
-            o
-            for o in objs
-            if o.Name
-            in (
-                "Inner_Lane_Rail",
-                "Exit_Track",
-            )
-        ],
-    )
-
-    doc.recompute()
-    doc.saveAs(str(FCSTD))
+    # Assembly = App::Link tới cùng thư mục tube_l_exit_gate_parts/*.FCStd — không nhúng
+    # solid ở đây nữa, nếu không mỗi lần chạy script này sẽ xoá mất phần sửa tay
+    # trong các file component. rebuild=False = giữ file component đang có;
+    # muốn dựng lại từ code thì chạy tube_l_components.py --rebuild.
+    doc, info = build_component_assembly(WIDTH_OPEN, HEIGHT_OPEN, rebuild=True)
     print("Saved:", FCSTD)
+    print_summary(info)
 
     v = verify_tube_l_exit_gate(WIDTH_OPEN, HEIGHT_OPEN, OUT / "tube_l_exit_gate_verify.json")
     m, p = v["math"], v["pose"]

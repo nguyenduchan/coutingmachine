@@ -44,14 +44,15 @@ import Part
 from mech_common import *  # noqa: F401,F403
 
 def make_bowl_tube() -> Part.Shape:
+    """Vành bát cố định — chỉ thành, không gồm máng exit."""
     outer = _cyl_z(BOWL_OD, BOWL_H, 0, 0, BOWL_Z0)
     inner = _cyl_z(BOWL_ID, BOWL_H + 2, 0, 0, BOWL_Z0 - 1)
     tube = outer.cut(inner)
-    # Cửa cung: chỉ mở từ sát θ_exit trở đi — thành bát vẫn bao NGOÀI lane
-    # suốt θ_mouth→θ_exit (xem BOWL_SLOT_BEFORE_EXIT_DEG).
+    # Cửa cung: chỉ hở đúng chỗ máng thoát (θ_exit + peel). Thành bát liền
+    # quanh đĩa suốt θ_mouth→θ_exit (xem BOWL_SLOT_* trong mech_common).
     slot = _annular_sector(
-        CHANNEL_R_OUTER - W_MAX - 10.0,
-        BOWL_OR + 8.0,
+        CHANNEL_R_OUTER - CHUTE_W_MM - 10.0,
+        BOWL_OR + 2.0,
         THETA_EXIT_DEG - BOWL_SLOT_BEFORE_EXIT_DEG,
         THETA_EXIT_DEG + BOWL_SLOT_AFTER_EXIT_DEG,
         GAP0 - 1.0,
@@ -61,5 +62,61 @@ def make_bowl_tube() -> Part.Shape:
     tube = tube.cut(slot)
     tube = _cut_m3_sites(tube, guide_mount_sites())
     return _refine(tube)
+
+
+def make_bowl_exit_chute_fitted() -> Part.Shape:
+    """Máng 40° cắt khỏi thành bát đặc — chỉ nằm trong cửa slot + phía ngoài."""
+    chute = make_bowl_exit_chute()
+    wall = make_bowl_tube()
+    try:
+        cut = chute.cut(wall)
+        if _shape_ok(cut, 200.0):
+            return _refine(cut)
+    except Exception:
+        pass
+    return chute
+
+
+def make_bowl_tube_complete() -> Part.Shape:
+    """Thành bát + máng exit nghiêng (cùng volume với App::Part Bowl_Tube)."""
+    wall = make_bowl_tube()
+    chute = make_bowl_exit_chute_fitted()
+    try:
+        fused = wall.fuse(chute)
+        if _shape_ok(fused, 0.5 * float(getattr(wall, "Volume", 1.0) or 1.0)):
+            return _refine(fused)
+    except Exception:
+        pass
+    return wall
+
+
+def write_bowl_tube_component(path, color=(0.92, 0.92, 0.94), style_fn=None) -> None:
+    """Bowl_Tube.FCStd: parent App::Part + Wall + Exit_Chute."""
+    doc = App.newDocument("Bowl_Tube")
+    wall = doc.addObject("Part::Feature", "Bowl_Tube_Wall")
+    wall.Shape = make_bowl_tube()
+    wall.Label = "Bowl_Tube_Wall"
+    chute = doc.addObject("Part::Feature", "Bowl_Tube_Exit_Chute")
+    chute.Shape = make_bowl_exit_chute_fitted()
+    chute.Label = "Bowl_Tube_Exit_Chute"
+    if style_fn is not None:
+        style_fn(wall, color, 55)
+        style_fn(chute, (0.12, 0.12, 0.12), 0)
+    grp = doc.addObject("App::Part", "Bowl_Tube")
+    grp.Label = "Bowl_Tube"
+    kids = [wall, chute]
+    if hasattr(grp, "addObjects"):
+        grp.addObjects(kids)
+    else:
+        grp.Group = kids
+    try:
+        origin = getattr(grp, "Origin", None)
+        if origin is not None and hasattr(origin, "Visibility"):
+            origin.Visibility = False
+    except Exception:
+        pass
+    doc.recompute()
+    doc.saveAs(str(path))
+    App.closeDocument(doc.Name)
 
 

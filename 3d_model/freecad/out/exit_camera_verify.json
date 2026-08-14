@@ -1,0 +1,347 @@
+{
+  "pass": true,
+  "geometry": {
+    "omega_rad_s": 6.283185307179586,
+    "speed_at_rim_mm_s": 58.01884134149157,
+    "drift_dir": [
+      -0.9114747537272335,
+      -0.41135601772415953
+    ],
+    "view_dir": [
+      -0.41135601772415953,
+      0.9114747537272335
+    ],
+    "view_angle_deg": 114.29004621918874,
+    "axis_z_mm": -26.0,
+    "axis_anchor_xy": [
+      -103.81151067547158,
+      -4.518276722448128
+    ],
+    "camera_front_xy": [
+      -33.88098766236446,
+      -159.4689848560778
+    ],
+    "backlight_xy": [
+      -144.94711244788755,
+      86.62919865027521
+    ],
+    "working_distance_mm": 170.0,
+    "fov_mm": [
+      52.84166666666667,
+      70.40833333333333
+    ],
+    "fov_z_range": [
+      -61.204166666666666,
+      9.204166666666666
+    ],
+    "px_per_mm": 20.43841665352468,
+    "sees_rim": true,
+    "funnel_top_z": -64.0,
+    "funnel_below_fov": true
+  },
+  "sizes": [
+    {
+      "D_mm": 2.0,
+      "drop_xy": [
+        -99.99950169522236,
+        -0.3156908412013837
+      ],
+      "at_funnel_xy": [
+        -106.04015869869606,
+        -3.041888795917428
+      ],
+      "t_visible_s": 1.2480141219495755
+    },
+    {
+      "D_mm": 5.0,
+      "drop_xy": [
+        -99.99509281018916,
+        -0.9906633543517436
+      ],
+      "at_funnel_xy": [
+        -106.03574981366286,
+        -3.716861309067788
+      ],
+      "t_visible_s": 1.2997214627139726
+    },
+    {
+      "D_mm": 8.0,
+      "drop_xy": [
+        -99.98616130462817,
+        -1.6635947718355666
+      ],
+      "at_funnel_xy": [
+        -106.02681830810187,
+        -4.389792726551611
+      ],
+      "t_visible_s": 1.3514288034783697
+    },
+    {
+      "D_mm": 12.0,
+      "drop_xy": [
+        -99.96728569610902,
+        -2.557692427270621
+      ],
+      "at_funnel_xy": [
+        -106.00794269958271,
+        -5.283890381986666
+      ],
+      "t_visible_s": 1.420371924497566
+    },
+    {
+      "D_mm": 18.0,
+      "drop_xy": [
+        -99.92422582115545,
+        -3.892183711328588
+      ],
+      "at_funnel_xy": [
+        -105.96488282462914,
+        -6.618381666044632
+      ],
+      "t_visible_s": 1.5237866060263605
+    },
+    {
+      "D_mm": 25.0,
+      "drop_xy": [
+        -99.85196855737577,
+        -5.439152067817449
+      ],
+      "at_funnel_xy": [
+        -105.89262556084947,
+        -8.165350022533493
+      ],
+      "t_visible_s": 1.6444370678099538
+    }
+  ],
+  "line_of_sight": {
+    "pass": true,
+    "z_visible_worst_mm": -6.0,
+    "count_band_mm": 36.0,
+    "band_z_range": [
+      -42.0,
+      -6.0
+    ],
+    "rows": [
+      {
+        "D_mm": 2.0,
+        "z_visible_mm": -6.0,
+        "first_block": {
+          "z_mm": -0.0,
+          "why": [
+            {
+              "toward": "camera",
+              "hits": [
+                {
+                  "part": "Rotor_Disc",
+                  "vol_mm3": 64.598
+                }
+              ]
+            }
+          ]
+        },
+        "band_blocked": [],
+        "pass": true
+      },
+      {
+        "D_mm": 8.0,
+        "z_visible_mm": -6.0,
+        "first_block": {
+          "z_mm": -0.0,
+          "why": [
+            {
+              "toward": "camera",
+              "hits": [
+                {
+                  "part": "Rotor_Disc",
+                  "vol_mm3": 64.118
+                }
+              ]
+            }
+          ]
+        },
+        "band_blocked": [],
+        "pass": true
+      },
+      {
+        "D_mm": 25.0,
+        "z_visible_mm": -6.0,
+        "first_block": {
+          "z_mm": -0.0,
+          "why": [
+            {
+              "toward": "camera",
+              "hits": [
+                {
+                  "part": "Rotor_Disc",
+                  "vol_mm3": 62.754
+                }
+              ]
+            }
+          ]
+        },
+        "band_blocked": [],
+        "pass": true
+      }
+    ]
+  },
+  "fov_coverage": {
+    "pass": true,
+    "band_z_range": [
+      -42.0,
+      -6.0
+    ],
+    "rows": [
+      {
+        "D_mm": 2.0,
+        "pass": true,
+        "max_u_mm": 4.17,
+        "half_fov_w": 26.42,
+        "max_w_mm": 21.0,
+        "half_fov_h": 35.2
+      },
+      {
+        "D_mm": 5.0,
+        "pass": true,
+        "max_u_mm": 5.4,
+        "half_fov_w": 26.42,
+        "max_w_mm": 22.5,
+        "half_fov_h": 35.2
+      },
+      {
+        "D_mm": 8.0,
+        "pass": true,
+        "max_u_mm": 6.63,
+        "half_fov_w": 26.42,
+        "max_w_mm": 24.0,
+        "half_fov_h": 35.2
+      },
+      {
+        "D_mm": 12.0,
+        "pass": true,
+        "max_u_mm": 8.28,
+        "half_fov_w": 26.42,
+        "max_w_mm": 26.0,
+        "half_fov_h": 35.2
+      },
+      {
+        "D_mm": 18.0,
+        "pass": true,
+        "max_u_mm": 10.77,
+        "half_fov_w": 26.42,
+        "max_w_mm": 29.0,
+        "half_fov_h": 35.2
+      },
+      {
+        "D_mm": 25.0,
+        "pass": true,
+        "max_u_mm": 14.64,
+        "half_fov_w": 26.42,
+        "max_w_mm": 32.5,
+        "half_fov_h": 35.2
+      }
+    ]
+  },
+  "funnel_clear_of_band": {
+    "pass": true,
+    "funnel_top_z": -64.0,
+    "must_be_below_z": -56.5,
+    "margin_mm": 7.5
+  },
+  "funnel_catch": {
+    "pass": true,
+    "mouth_center": [
+      -106.03,
+      -4.39
+    ],
+    "rows": [
+      {
+        "D_mm": 2.0,
+        "at_xy": [
+          -106.04,
+          -3.04
+        ],
+        "margin_x_mm": 31.59,
+        "margin_y_mm": 30.25,
+        "pass": true
+      },
+      {
+        "D_mm": 5.0,
+        "at_xy": [
+          -106.04,
+          -3.72
+        ],
+        "margin_x_mm": 30.09,
+        "margin_y_mm": 29.43,
+        "pass": true
+      },
+      {
+        "D_mm": 8.0,
+        "at_xy": [
+          -106.03,
+          -4.39
+        ],
+        "margin_x_mm": 28.6,
+        "margin_y_mm": 28.6,
+        "pass": true
+      },
+      {
+        "D_mm": 12.0,
+        "at_xy": [
+          -106.01,
+          -5.28
+        ],
+        "margin_x_mm": 26.58,
+        "margin_y_mm": 25.71,
+        "pass": true
+      },
+      {
+        "D_mm": 18.0,
+        "at_xy": [
+          -105.96,
+          -6.62
+        ],
+        "margin_x_mm": 23.54,
+        "margin_y_mm": 21.37,
+        "pass": true
+      },
+      {
+        "D_mm": 25.0,
+        "at_xy": [
+          -105.89,
+          -8.17
+        ],
+        "margin_x_mm": 19.97,
+        "margin_y_mm": 16.32,
+        "pass": true
+      }
+    ]
+  },
+  "no_collision": {
+    "pass": true,
+    "collisions": []
+  },
+  "timing": {
+    "pass": true,
+    "speed_at_rim_mm_s": 58.02,
+    "smallest_pill_frames": {
+      "30": 19.6,
+      "60": 39.3,
+      "120": 78.6
+    },
+    "blur_mm_by_exposure_us": {
+      "100": 0.0058,
+      "500": 0.029,
+      "1000": 0.058,
+      "2000": 0.116
+    },
+    "stop_slip_mm_by_t_stop_ms": {
+      "20": 0.58,
+      "50": 1.45,
+      "100": 2.9,
+      "200": 5.8,
+      "500": 14.5
+    },
+    "px_per_mm": 20.44,
+    "smallest_pill_px": 40.9
+  }
+}

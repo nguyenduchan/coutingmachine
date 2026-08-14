@@ -191,6 +191,6 @@ def make_guide_system() -> Part.Shape:
     for foot in mount_feet:
         body = body.fuse(foot)
     body = _cut_m3_sites(body, guide_mount_sites())
-    return _refine(body)
+    return _refine(_enforce_disc_clearance(body))
 
 

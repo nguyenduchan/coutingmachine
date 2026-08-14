@@ -25,7 +25,7 @@ def make_height_slider(width_open: float, height_open: float) -> Part.Shape:
     """Thanh tịnh tiến dọc: ôm cột T ray H trên Width_Carriage (U hẹp trong khe
     thanh + C rộng chỉ phía trên thanh), mang Height_Scraper trượt theo H."""
     ap = aperture_from_opens(width_open, height_open)
-    z1 = ap["z1"]
+    z1 = height_scraper_z(height_open)
     s = width_clamp_s(width_open)
     z_rail = BAR_Z + BAR_T
     z_top = z_rail + SLIDE_W_H

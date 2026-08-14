@@ -3,7 +3,7 @@ Mo phong dia quay Rotor_Disc trong FreeCAD GUI (thoi gian thuc).
 
 Chay bang FreeCAD GUI (khong phai freecadcmd), vi du:
   "C:\\Users\\Admin\\AppData\\Local\\Programs\\FreeCAD 1.1\\bin\\freecad.exe" ^
-    "3d_model\\freecad\\out\\tube_l_exit_gate.FCStd" ^
+    "3d_model\\freecad\\out\\tube_l_exit_gate_parts\\tube_l_exit_gate.FCStd" ^
     "3d_model\\freecad\\animate_rotor_disc.py"
 
 FreeCAD tu dong mo file .FCStd truoc, roi thuc thi script .py nay trong
