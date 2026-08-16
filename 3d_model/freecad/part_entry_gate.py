@@ -13,7 +13,7 @@ Barrier (nhìn dọc dòng chảy = chữ L):
       ▌
       ████████     tấm ngang 20 mm = TRẦN chặn
      ─────────── mặt đĩa
-Nhìn từ TRÊN: rộng 30 mm, cạnh ngoài ôm cung mép đĩa (r = GATE_R_OUT).
+Nhìn từ TRÊN: rộng 40 mm theo phương xuyên tâm, cạnh ngoài ôm cung mép đĩa (r = GATE_R_OUT).
 Khe dưới trần = H (2–26 mm) = chiều cao tối đa vật lọt vào máng.
 
 Trượt H: nới bu-lông núm trên vòng ôm → nâng/hạ cả cụm; 1 mm trượt = 1 mm H.
@@ -191,26 +191,37 @@ def make_entry_gate_post() -> Part.Shape:
     )
     body = _to_gate_frame(_refine(flange.fuse(neck).fuse(spine)))
 
-    # Chân yên ngựa ôm mặt ngoài vành bát (cung tròn) — bắt 2×M3 xuyên tâm.
+    # Chân yên ngựa áp vào MẶT TRONG vành bát (cung tròn) — bắt 2×M3 xuyên tâm.
+    # Chỉ có dải z = GATE_FOOT_Z0 → đỉnh bát (6.1 mm) vì thấp hơn nữa là cắt
+    # vào chính barrier khi mở H lớn nhất.
     th_c = GATE_TH_DEG - 0.5 * GATE_ROOF_DEG
-    d_half = math.degrees(0.5 * (GATE_FOOT_W + 6.0) / BOWL_OR)
+    d_half = math.degrees(0.5 * (GATE_FOOT_W + 6.0) / BOWL_IR)
     foot = _annular_sector(
-        BOWL_OR, GATE_RAIL_R0 + GATE_RAIL_FLANGE_T + GATE_RAIL_NECK_T + GATE_RAIL_SPINE_T,
+        BOWL_IR - GATE_FOOT_T, BOWL_IR + 1.0,
         th_c - d_half, th_c + d_half,
         GATE_FOOT_Z0, (BOWL_Z0 + BOWL_H) - GATE_FOOT_Z0, n=16,
     )
-    # Mặt trong yên ngựa = HÌNH TRỤ đúng bán kính vành bát (cắt bằng trụ thật,
-    # không để cung đa giác ăn vào thành bát vài phần mười mm³).
-    foot = foot.cut(_cyl_z(2.0 * BOWL_OR, BOWL_H + 20.0, 0.0, 0.0, BOWL_Z0 - 10.0))
+    # Mặt ngoài yên ngựa = HÌNH TRỤ đúng bán kính trong vành bát (giao với trụ
+    # thật, không để cung đa giác ăn vào thành bát vài phần mười mm³).
+    foot = foot.common(_cyl_z(2.0 * BOWL_IR, BOWL_H + 20.0, 0.0, 0.0, BOWL_Z0 - 10.0))
     body = _refine(body.fuse(foot))
+    # Sống ray là khối HỘP nên 4 góc của nó nhô qua mặt trụ BOWL_IR (~0.3 mm).
+    # Giao với trụ thật để mặt tì thành cung, ngồi khít vào lòng bát.
+    try:
+        inside = body.common(_cyl_z(2.0 * BOWL_IR, 400.0, 0.0, 0.0, -100.0))
+        if _shape_ok(inside, 0.5 * float(getattr(body, "Volume", 1.0) or 1.0)):
+            body = _refine(inside)
+    except Exception:
+        pass
     body = _cut_m3_sites(body, gate_mount_sites())
 
-    # Vạch chia H: mỗi 2 mm trên mặt ngoài sống trụ, mốc = bụng tay với.
-    x_mark = x_spine + GATE_RAIL_SPINE_T
+    # Vạch chia H: mỗi 2 mm trên MẶT BÊN sống ray (mặt ngoài nay úp vào thành
+    # bát nên không đọc được nữa), mốc = bụng tay với.
+    y_mark = yc + 0.5 * GATE_RAIL_SPINE_W
     marks = []
     for dh in range(0, int(H_TRAVEL) + 1, 2):
         z = entry_gate_geo(H_MIN + dh)["z_arm0_mm"]
-        marks.append(_box(1.2, 6.0, 0.8, x_mark - 0.6, yc - 3.0, z))
+        marks.append(_box(6.0, 1.2, 0.8, x_spine + 1.0, y_mark - 0.6, z))
     if marks:
         tick = marks[0]
         for m in marks[1:]:

@@ -6,15 +6,12 @@ Kiến trúc (đáy HỞ — đĩa đẩy vật bằng lực tiếp tuyến):
   Rotor_Disc          — đĩa quay phẳng
   Bowl_Tube           — vành cố định (outer wall của lane)
   Entry_Gate_*        — cửa chỉnh chiều cao ở đầu máng vào (trụ + trượt + barrier)
-  Inner_Lane_Rail     — tường liên tục + Reject_Wiper dính đầu (cùng dịch W)
   Entry_Gate_Barrier  — barrier chữ L (trần 20 mm + tấm đứng 10 mm); H 2–26 mm
-  Funnel_Guide        — (cũ) → Center_Director: lưỡi cày TÂM đĩa, ép vật ra vành
-  Outer_Rim_Funnel    — cánh ngoài thu hẹp vào lane
+  Guide_System        — vòng tròn tâm Ø35 + MỘT vách thẳng tiếp tuyến
   Bowl_Tube_Exit_Chute — máng dốc 40° tại 9 giờ; cạnh trái lòng máng trùng mép đĩa
 
 THAO TÁC CHỈNH (tay với từ trên — giống video):
-  W: kéo Inner_Lane_Rail trượt xuyên tâm trên 2 ray T của Chute_Slide
-     vào tâm = W↑ | ra vành = W↓ | 1 mm = 1 mm W
+  W: KHÔNG chỉnh được — luồng cố định = họng ra Guide_System (ENTRANCE_W)
   H: nới Screw_Gate_H → nâng/hạ cụm barrier trên ray T đứng ở đầu máng vào
      lên = H↑ | xuống = H↓ | 1 mm = 1 mm H
 """
@@ -42,6 +39,8 @@ import Part
 # ---------------------------------------------------------------------------
 
 from mech_common import *  # noqa: F401,F403
+
+
 
 def _spiral_wall(
     r0: float,
@@ -109,36 +108,54 @@ def _spiral_tee_wall(
     return _refine(web.fuse(flange))
 
 
-def make_guide_system() -> Part.Shape:
+def _cut_flat_at_theta(shape: Part.Shape, th_deg: float, span_deg: float = 150.0) -> Part.Shape:
+    """Gọt phần nhô quá mặt xuyên tâm θ, để lại ĐẦU RA PHẲNG.
+
+    Dùng QUẠT góc (θ, θ+span) chứ KHÔNG dùng nửa không gian: nửa không gian xoá
+    luôn 180° và ăn mất cả vòng tròn tâm lẫn gốc xoắn ở θ≈250°. Quạt 150° đủ
+    gọt phần nhô ở đầu ra mà không chạm hai chỗ đó.
+    Chỉ áp cho VÁCH, không áp cho vòng tròn tâm.
     """
-    Guide_System cố định — một khối:
-      • Xoắn chữ T hub → r = bowl−ENTRANCE_W (hở họng ENTRANCE_W với Bowl)
-      • Tip kéo qua θ_mouth vào cung lane = tường trong lối vào (CCW thấy rõ)
-      • Reject dính tip (inboard) — cùng khối, không khe
-      • Cơ cấu giữ: 2 chân mount NẰM CAO (từ H_MAX+GAP0 lên đỉnh Guide_System,
-        tức z≈28.5–34.5mm) nối xuyên tâm ra Bowl_Tube — cao hơn hẳn viên thuốc
-        cao nhất (H_MAX=26mm) nên KHÔNG chặn đường viên đi trong khe hở
-        ENTRANCE_W giữa Guide_System/Bowl_Tube; đĩa (z≤0) ở rất xa phía dưới nên
-        không thể chạm. (Mount qua tâm — post xuyên xuống dưới đĩa — KHÔNG khả
-        thi: đĩa là khối đặc bán kính 100mm ở z=[-15,0], không có khe hở nào
-        ngoài lỗ trục Ø8mm ở chính giữa.)
-    Lực đĩa = tiếp tuyến; Guide đứng yên → vật trượt ra vành rồi vào họng.
+    try:
+        cutter = _annular_sector(
+            0.5, 4.0 * BOWL_OR, th_deg, th_deg + span_deg,
+            -2.0 * GUIDE_H, 6.0 * (GAP0 + GUIDE_H), n=24,
+        )
+        cut = shape.cut(cutter)
+        if _shape_ok(cut, 100.0):
+            return cut
+    except Exception:
+        pass
+    return shape
+
+
+def make_guide_system() -> Part.Shape:
+    """Guide_System cố định — hai phần:
+
+      (1) VÒNG TRÒN ở tâm: Ø ngoài 50 mm, vành dày 2 mm (lòng Ø46 để trống)
+      (2) VÁCH ĐỊNH HƯỚNG = XOẮN ARCHIMEDES (r tuyến tính theo θ), mọc từ đúng
+          vòng tròn đó (GUIDE_R0 = 17.5) và quét ra tới khi ĐẦU RA cách mép đĩa
+          đúng ENTRANCE_W = 20 mm (mặt ngoài ở r = 80). Đầu ra cắt PHẲNG bằng
+          mặt xuyên tâm tại GUIDE_TH1.
+
+    Bích chữ T trên đỉnh (z ≥ GAP0+H_MAX) chống rung cho vách 2 mm; hai chân
+    mount ra Bowl_Tube cũng nằm cao hơn H_MAX nên không cản vật.
+    Đáy HỞ tại GAP0 — không chạm mặt đĩa.
     """
     blade = _spiral_tee_wall(
         GUIDE_R0, GUIDE_R1, GUIDE_TH0, GUIDE_TH1,
         GUIDE_T, GUIDE_FLANGE_W, GUIDE_FLANGE_T, GAP0, GUIDE_H, n=72,
     )
-    th_n = _deg2rad(GUIDE_TH0)
-    cx, cy = GUIDE_R0 * math.cos(th_n), GUIDE_R0 * math.sin(th_n)
-    nose = _cyl_z(GUIDE_T + 6.0, GUIDE_H, cx, cy, GAP0)
-    hub = _cyl_z(DIR_HUB_D, GUIDE_H, 0.0, 0.0, GAP0)
-    hub = hub.cut(_cyl_z(HUB_D + 2.0, GUIDE_H + 2.0, 0.0, 0.0, GAP0 - 1.0))
-    # Chan mount ra Bowl_Tube — dat CAO (z tu H_MAX+GAP0 toi dinh Guide_System),
-    # han han moi vien thuoc (cao toi da H_MAX) nen khong bao gio can duong.
-    mount_z0 = GAP0 + H_MAX + 2.0  # 28.5mm — an toan tren moi vien
-    mount_h = (GAP0 + GUIDE_H) - mount_z0  # toi dinh Guide_System (~34.5mm)
-    mount_feet = []
-    for u_ft in (0.30, 0.70):
+    # ĐẦU RA PHẲNG — gọt TRƯỚC khi ghép vòng tròn, để vòng tròn còn nguyên 360°
+    blade = _cut_flat_at_theta(blade, GUIDE_TH1)
+    # VÒNG TRÒN TÂM HOÀN CHỈNH: khép kín 360°, không bị cắt bởi bất kỳ phép nào
+    ring = _cyl_z(GUIDE_CIRCLE_D, GUIDE_H, 0.0, 0.0, GAP0)
+    ring = ring.cut(_cyl_z(GUIDE_CIRCLE_ID, GUIDE_H + 2.0, 0.0, 0.0, GAP0 - 1.0))
+    body = blade.fuse(ring)
+
+    mount_z0 = GAP0 + H_MAX + 2.0
+    mount_h = (GAP0 + GUIDE_H) - mount_z0
+    for u_ft in (0.55, 0.95):
         th_ft = GUIDE_TH0 + (GUIDE_TH1 - GUIDE_TH0) * u_ft
         r_wall = GUIDE_R0 + (GUIDE_R1 - GUIDE_R0) * u_ft
         r_mid = 0.5 * (r_wall + BOWL_IR)
@@ -147,50 +164,7 @@ def make_guide_system() -> Part.Shape:
             r_mid * math.cos(_deg2rad(th_ft)), r_mid * math.sin(_deg2rad(th_ft)),
             mount_z0, th_ft,
         )
-        mount_feet.append(foot)
-    gusset = _place_oriented_box(
-        GUIDE_R0 - 2.0, GUIDE_T + 2.0, GUIDE_H,
-        0.5 * (GUIDE_R0 + 2.0) * math.cos(th_n),
-        0.5 * (GUIDE_R0 + 2.0) * math.sin(th_n),
-        GAP0,
-        GUIDE_TH0,
-    )
-    u_br = 0.40
-    th_br = GUIDE_TH0 + (GUIDE_TH1 - GUIDE_TH0) * u_br
-    r_br = GUIDE_R0 + (GUIDE_R1 - GUIDE_R0) * u_br
-    brace = _place_oriented_box(
-        max(8.0, r_br - 6.0), GUIDE_T + 1.0, GUIDE_H * 0.55,
-        0.5 * (r_br + 6.0) * math.cos(_deg2rad(th_br)),
-        0.5 * (r_br + 6.0) * math.sin(_deg2rad(th_br)),
-        GAP0 + GUIDE_H * 0.45,
-        th_br,
-    )
-    # Reject tại tip Guide (upstream miệng) — inboard, không bịt họng ra Bowl
-    th_tip = GUIDE_TH1
-    r_att = GUIDE_R1 - 0.5 * GUIDE_T
-    th_dir = th_tip - 90.0 - REJECT_ANGLE_DEG
-    ux, uy = math.cos(_deg2rad(th_dir)), math.sin(_deg2rad(th_dir))
-    ax = r_att * math.cos(_deg2rad(th_tip))
-    ay = r_att * math.sin(_deg2rad(th_tip))
-    reject = _place_oriented_box(
-        REJECT_LEN, REJECT_T, GUIDE_H,
-        ax + 0.5 * REJECT_LEN * ux, ay + 0.5 * REJECT_LEN * uy, GAP0, th_dir,
-    )
-    join_rej = _place_oriented_box(
-        GUIDE_T + 3.0, GUIDE_T + 1.0, GUIDE_H,
-        GUIDE_R1 * math.cos(_deg2rad(th_tip)),
-        GUIDE_R1 * math.sin(_deg2rad(th_tip)),
-        GAP0,
-        th_tip - 90.0,
-    )
-    rej_keep = Part.makeCylinder(
-        GUIDE_R1 + 0.2, GUIDE_H + 4.0, App.Vector(0, 0, GAP0 - 1.0)
-    )
-    reject = _refine(reject.fuse(join_rej).common(rej_keep))
-    body = blade.fuse(nose).fuse(hub).fuse(gusset).fuse(brace).fuse(reject)
-    for foot in mount_feet:
         body = body.fuse(foot)
+
     body = _cut_m3_sites(body, guide_mount_sites())
     return _refine(_enforce_disc_clearance(body))
-
-

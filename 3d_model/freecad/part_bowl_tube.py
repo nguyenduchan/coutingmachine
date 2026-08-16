@@ -6,15 +6,14 @@ Kiến trúc (đáy HỞ — đĩa đẩy vật bằng lực tiếp tuyến):
   Rotor_Disc          — đĩa quay phẳng
   Bowl_Tube           — vành cố định (outer wall của lane)
   Entry_Gate_*        — cửa chỉnh chiều cao ở đầu máng vào (trụ + trượt + barrier)
-  Inner_Lane_Rail     — tường liên tục + Reject_Wiper dính đầu (cùng dịch W)
   Entry_Gate_Barrier  — barrier chữ L (trần 20 mm + tấm đứng 10 mm); H 2–26 mm
   Funnel_Guide        — (cũ) → Center_Director: lưỡi cày TÂM đĩa, ép vật ra vành
   Outer_Rim_Funnel    — cánh ngoài thu hẹp vào lane
-  Bowl_Tube_Exit_Chute — máng dốc 40° tại 9 giờ; cạnh trái lòng máng trùng mép đĩa
+  Bowl_Tube_Exit_Chute — máng dốc 40° hứng NGAY DƯỚI kênh exit; lòng rộng 2 cm,
+                         x ∈ [−77, −57] (mặt trong vách 1 → hết hành trình vách 2)
 
 THAO TÁC CHỈNH (tay với từ trên — giống video):
-  W: kéo Inner_Lane_Rail trượt xuyên tâm trên 2 ray T của Chute_Slide
-     vào tâm = W↑ | ra vành = W↓ | 1 mm = 1 mm W
+  W: KHÔNG chỉnh được — luồng cố định = họng ra Guide_System (ENTRANCE_W)
   H: nới Screw_Gate_H → nâng/hạ cụm barrier trên ray T đứng ở đầu máng vào
      lên = H↑ | xuống = H↓ | 1 mm = 1 mm H
 """
@@ -48,18 +47,15 @@ def make_bowl_tube() -> Part.Shape:
     outer = _cyl_z(BOWL_OD, BOWL_H, 0, 0, BOWL_Z0)
     inner = _cyl_z(BOWL_ID, BOWL_H + 2, 0, 0, BOWL_Z0 - 1)
     tube = outer.cut(inner)
-    # Cửa cung: chỉ hở đúng chỗ máng thoát (θ_exit + peel). Thành bát liền
-    # quanh đĩa suốt θ_mouth→θ_exit (xem BOWL_SLOT_* trong mech_common).
-    slot = _annular_sector(
-        CHANNEL_R_OUTER - CHUTE_W_MM - 10.0,
-        BOWL_OR + 2.0,
-        THETA_EXIT_DEG - BOWL_SLOT_BEFORE_EXIT_DEG,
-        THETA_EXIT_DEG + BOWL_SLOT_AFTER_EXIT_DEG,
-        GAP0 - 1.0,
-        H_MAX + 14.0,
-        n=32,
-    )
-    tube = tube.cut(slot)
+    # THÀNH LIỀN: khe cung cũ ở θ 179–219° đã bỏ — vành bát kín suốt 360°,
+    # chỗ hở duy nhất là dải giữa hai vách exit (khoét ngay dưới đây).
+    for cutter in (make_exit_channel_slot_cutter(), make_exit_wall2_slot_cutter()):
+        try:
+            notched = tube.cut(cutter)
+            if _shape_ok(notched, 0.5 * float(getattr(tube, "Volume", 1.0) or 1.0)):
+                tube = notched
+        except Exception:
+            continue
     tube = _cut_m3_sites(tube, guide_mount_sites())
     return _refine(tube)
 

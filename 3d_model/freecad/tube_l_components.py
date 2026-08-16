@@ -56,7 +56,6 @@ FCSTD = PARTS_DIR / "tube_l_exit_gate.FCStd"
 
 sys.path.insert(0, str(_HERE))
 from part_exit_camera import build_exit_camera_parts  # noqa: E402
-from part_chute_slide import write_chute_slide_component  # noqa: E402
 from part_bowl_tube import write_bowl_tube_component  # noqa: E402
 from tube_l_exit_gate import build_tube_l_exit_gate_parts  # noqa: E402
 
@@ -78,6 +77,7 @@ GROUPS = (
     ("Rotor", ("Rotor_Disc", "Hub_Body")),
     ("Bowl", ("Bowl_Tube",)),
     ("Guide", ("Guide_System",)),
+    ("Exit", ("Exit_Inner_Wall", "Exit_Inner_Wall_2", "Exit_Slide")),
     (
         "Entry_Height_Gate",
         (
@@ -86,7 +86,6 @@ GROUPS = (
             "Entry_Gate_Barrier",
         ),
     ),
-    ("Lane_And_Exit", ("Inner_Lane_Rail", "Chute_Slide")),
     (
         "Vision_Count",
         (
@@ -166,11 +165,6 @@ def export_components(
         path = component_path(name)
         if path.exists() and not rebuild:
             kept.append(name)
-            continue
-        if name == "Chute_Slide":
-            _close_doc_for(path)
-            write_chute_slide_component(path, color, style_fn=_style)
-            written.append(name)
             continue
         if name == "Bowl_Tube":
             _close_doc_for(path)
