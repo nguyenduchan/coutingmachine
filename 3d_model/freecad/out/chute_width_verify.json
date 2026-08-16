@@ -3,67 +3,66 @@
     "W_nominal": 3.0,
     "H_nominal": 2.0,
     "n_station": 42,
-    "min_mm": 2.6,
-    "max_mm": 46.8,
-    "spread_mm": 44.2,
+    "min_mm": 1.8,
+    "max_mm": 67.0,
+    "spread_mm": 65.2,
     "n_blocked": 0,
     "blocked": [],
-    "n_narrow": 0,
-    "narrow": [],
-    "n_wide": 1,
-    "wide": [
+    "n_narrow": 1,
+    "narrow": [
       {
-        "seg": "RAMP",
-        "at": 11.7,
-        "width_mm": 46.8,
-        "off_lo": -2.0,
-        "off_hi": 44.8,
-        "by_lo": "Exit_Ramp",
-        "by_hi": "(ho)"
+        "seg": "LANE",
+        "at": 165.0,
+        "width_mm": 1.8,
+        "off_lo": -0.4,
+        "off_hi": 1.4,
+        "by_lo": "Width_Carriage",
+        "by_hi": "Bowl_Tube"
       }
     ],
-    "rows": [
+    "n_wide": 41,
+    "wide": [
       {
         "seg": "LANE",
         "at": 90.0,
-        "width_mm": 4.2,
-        "off_lo": -2.8,
+        "width_mm": 46.2,
+        "off_lo": -44.8,
         "off_hi": 1.4,
-        "by_lo": "Inner_Lane_Rail",
+        "by_lo": "(ho)",
         "by_hi": "Bowl_Tube"
       },
       {
         "seg": "LANE",
         "at": 95.0,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
+        "width_mm": 46.2,
+        "off_lo": -44.8,
         "off_hi": 1.4,
-        "by_lo": "Inner_Lane_Rail",
+        "by_lo": "(ho)",
         "by_hi": "Bowl_Tube"
       },
       {
         "seg": "LANE",
         "at": 100.0,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
+        "width_mm": 46.2,
+        "off_lo": -44.8,
         "off_hi": 1.4,
-        "by_lo": "Inner_Lane_Rail",
+        "by_lo": "(ho)",
         "by_hi": "Bowl_Tube"
       },
       {
         "seg": "LANE",
         "at": 105.0,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
+        "width_mm": 46.2,
+        "off_lo": -44.8,
         "off_hi": 1.4,
-        "by_lo": "Inner_Lane_Rail",
+        "by_lo": "(ho)",
         "by_hi": "Bowl_Tube"
       },
       {
         "seg": "LANE",
         "at": 110.0,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
+        "width_mm": 10.8,
+        "off_lo": -9.4,
         "off_hi": 1.4,
         "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
@@ -71,8 +70,8 @@
       {
         "seg": "LANE",
         "at": 115.0,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
+        "width_mm": 12.6,
+        "off_lo": -11.2,
         "off_hi": 1.4,
         "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
@@ -80,8 +79,8 @@
       {
         "seg": "LANE",
         "at": 120.0,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
+        "width_mm": 14.2,
+        "off_lo": -12.8,
         "off_hi": 1.4,
         "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
@@ -89,8 +88,8 @@
       {
         "seg": "LANE",
         "at": 125.0,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
+        "width_mm": 15.6,
+        "off_lo": -14.2,
         "off_hi": 1.4,
         "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
@@ -98,8 +97,8 @@
       {
         "seg": "LANE",
         "at": 130.0,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
+        "width_mm": 17.0,
+        "off_lo": -15.6,
         "off_hi": 1.4,
         "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
@@ -107,8 +106,100 @@
       {
         "seg": "LANE",
         "at": 135.0,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
+        "width_mm": 18.2,
+        "off_lo": -16.8,
+        "off_hi": 1.4,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "Bowl_Tube"
+      }
+    ],
+    "rows": [
+      {
+        "seg": "LANE",
+        "at": 90.0,
+        "width_mm": 46.2,
+        "off_lo": -44.8,
+        "off_hi": 1.4,
+        "by_lo": "(ho)",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 95.0,
+        "width_mm": 46.2,
+        "off_lo": -44.8,
+        "off_hi": 1.4,
+        "by_lo": "(ho)",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 100.0,
+        "width_mm": 46.2,
+        "off_lo": -44.8,
+        "off_hi": 1.4,
+        "by_lo": "(ho)",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 105.0,
+        "width_mm": 46.2,
+        "off_lo": -44.8,
+        "off_hi": 1.4,
+        "by_lo": "(ho)",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 110.0,
+        "width_mm": 10.8,
+        "off_lo": -9.4,
+        "off_hi": 1.4,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 115.0,
+        "width_mm": 12.6,
+        "off_lo": -11.2,
+        "off_hi": 1.4,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 120.0,
+        "width_mm": 14.2,
+        "off_lo": -12.8,
+        "off_hi": 1.4,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 125.0,
+        "width_mm": 15.6,
+        "off_lo": -14.2,
+        "off_hi": 1.4,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 130.0,
+        "width_mm": 17.0,
+        "off_lo": -15.6,
+        "off_hi": 1.4,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 135.0,
+        "width_mm": 18.2,
+        "off_lo": -16.8,
         "off_hi": 1.4,
         "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
@@ -116,8 +207,8 @@
       {
         "seg": "LANE",
         "at": 140.0,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
+        "width_mm": 19.4,
+        "off_lo": -18.0,
         "off_hi": 1.4,
         "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
@@ -125,8 +216,8 @@
       {
         "seg": "LANE",
         "at": 145.0,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
+        "width_mm": 20.4,
+        "off_lo": -19.0,
         "off_hi": 1.4,
         "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
@@ -134,8 +225,8 @@
       {
         "seg": "LANE",
         "at": 150.0,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
+        "width_mm": 21.2,
+        "off_lo": -19.8,
         "off_hi": 1.4,
         "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
@@ -143,8 +234,8 @@
       {
         "seg": "LANE",
         "at": 155.0,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
+        "width_mm": 22.0,
+        "off_lo": -20.6,
         "off_hi": 1.4,
         "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
@@ -152,8 +243,8 @@
       {
         "seg": "LANE",
         "at": 160.0,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
+        "width_mm": 22.6,
+        "off_lo": -21.2,
         "off_hi": 1.4,
         "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
@@ -161,17 +252,17 @@
       {
         "seg": "LANE",
         "at": 165.0,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
+        "width_mm": 1.8,
+        "off_lo": -0.4,
         "off_hi": 1.4,
-        "by_lo": "Inner_Lane_Rail",
+        "by_lo": "Width_Carriage",
         "by_hi": "Bowl_Tube"
       },
       {
         "seg": "LANE",
         "at": 170.0,
-        "width_mm": 4.4,
-        "off_lo": -3.0,
+        "width_mm": 23.4,
+        "off_lo": -22.0,
         "off_hi": 1.4,
         "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
@@ -179,8 +270,8 @@
       {
         "seg": "LANE",
         "at": 175.0,
-        "width_mm": 4.4,
-        "off_lo": -3.0,
+        "width_mm": 23.6,
+        "off_lo": -22.2,
         "off_hi": 1.4,
         "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
@@ -188,216 +279,216 @@
       {
         "seg": "LANE",
         "at": 180.0,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
-        "off_hi": 1.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
+        "width_mm": 67.0,
+        "off_lo": -22.2,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
       },
       {
         "seg": "CHUTE",
         "at": 0.0,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
-        "off_hi": 1.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 1.2,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
-        "off_hi": 1.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 2.4,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
-        "off_hi": 1.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 3.5,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
-        "off_hi": 1.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 4.7,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
-        "off_hi": 1.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 5.9,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
-        "off_hi": 1.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 7.1,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
-        "off_hi": 1.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 8.3,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
-        "off_hi": 1.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 9.4,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
-        "off_hi": 1.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 10.6,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
-        "off_hi": 1.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 11.8,
-        "width_mm": 2.8,
-        "off_lo": -1.4,
-        "off_hi": 1.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "RAMP",
-        "at": 5.8,
-        "width_mm": 2.6,
-        "off_lo": -2.0,
-        "off_hi": 0.6,
-        "by_lo": "Exit_Ramp",
-        "by_hi": "Rotor_Disc"
-      },
-      {
-        "seg": "RAMP",
-        "at": 11.7,
-        "width_mm": 46.8,
-        "off_lo": -2.0,
+        "width_mm": 45.6,
+        "off_lo": -0.8,
         "off_hi": 44.8,
-        "by_lo": "Exit_Ramp",
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 45.6,
+        "off_lo": -0.8,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 45.6,
+        "off_lo": -0.8,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 45.6,
+        "off_lo": -0.8,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 45.6,
+        "off_lo": -0.8,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 45.6,
+        "off_lo": -0.8,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 45.6,
+        "off_lo": -0.8,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 45.6,
+        "off_lo": -0.8,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 45.6,
+        "off_lo": -0.8,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 45.6,
+        "off_lo": -0.8,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 45.6,
+        "off_lo": -0.8,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
         "by_hi": "(ho)"
       },
       {
         "seg": "RAMP",
-        "at": 17.5,
-        "width_mm": 4.0,
-        "off_lo": -2.0,
-        "off_hi": 2.0,
+        "at": 6.1,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 23.3,
-        "width_mm": 4.0,
-        "off_lo": -2.0,
-        "off_hi": 2.0,
+        "at": 12.2,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 29.2,
-        "width_mm": 4.0,
-        "off_lo": -2.0,
-        "off_hi": 2.0,
+        "at": 18.2,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 35.0,
-        "width_mm": 4.0,
-        "off_lo": -2.0,
-        "off_hi": 2.0,
+        "at": 24.3,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 40.8,
-        "width_mm": 4.0,
-        "off_lo": -2.0,
-        "off_hi": 2.0,
+        "at": 30.4,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 46.7,
-        "width_mm": 4.0,
-        "off_lo": -2.0,
-        "off_hi": 2.0,
+        "at": 36.5,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 52.5,
-        "width_mm": 4.0,
-        "off_lo": -2.0,
-        "off_hi": 2.0,
+        "at": 42.5,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 58.3,
-        "width_mm": 4.0,
-        "off_lo": -2.0,
-        "off_hi": 2.0,
+        "at": 48.6,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 64.2,
-        "width_mm": 4.0,
-        "off_lo": -2.0,
-        "off_hi": 2.0,
+        "at": 54.7,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 70.0,
-        "width_mm": 4.0,
-        "off_lo": -2.0,
-        "off_hi": 2.0,
+        "at": 60.8,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
+        "by_lo": "Exit_Ramp",
+        "by_hi": "Exit_Ramp"
+      },
+      {
+        "seg": "RAMP",
+        "at": 66.9,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
+        "by_lo": "Exit_Ramp",
+        "by_hi": "Exit_Ramp"
+      },
+      {
+        "seg": "RAMP",
+        "at": 72.9,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       }
@@ -407,48 +498,174 @@
     "W_nominal": 9.0,
     "H_nominal": 5.0,
     "n_station": 42,
-    "min_mm": 6.4,
-    "max_mm": 49.8,
-    "spread_mm": 43.4,
-    "n_blocked": 0,
-    "blocked": [],
-    "n_narrow": 2,
-    "narrow": [
+    "min_mm": 9.0,
+    "max_mm": 58.0,
+    "spread_mm": 49.0,
+    "n_blocked": 1,
+    "blocked": [
       {
         "seg": "LANE",
-        "at": 175.0,
-        "width_mm": 8.4,
-        "off_lo": -4.0,
+        "at": 165.0,
+        "width_mm": 0.0,
+        "off_lo": 0.0,
+        "off_hi": 0.0,
+        "by_lo": "Width_Carriage",
+        "by_hi": "Width_Carriage"
+      }
+    ],
+    "n_narrow": 0,
+    "narrow": [],
+    "n_wide": 38,
+    "wide": [
+      {
+        "seg": "LANE",
+        "at": 90.0,
+        "width_mm": 49.2,
+        "off_lo": -44.8,
         "off_hi": 4.4,
-        "by_lo": "Exit_Track",
+        "by_lo": "(ho)",
         "by_hi": "Bowl_Tube"
       },
       {
-        "seg": "RAMP",
-        "at": 5.8,
-        "width_mm": 6.4,
-        "off_lo": -5.0,
-        "off_hi": 1.4,
-        "by_lo": "Exit_Ramp",
-        "by_hi": "Rotor_Disc"
-      }
-    ],
-    "n_wide": 1,
-    "wide": [
+        "seg": "LANE",
+        "at": 95.0,
+        "width_mm": 49.2,
+        "off_lo": -44.8,
+        "off_hi": 4.4,
+        "by_lo": "(ho)",
+        "by_hi": "Bowl_Tube"
+      },
       {
-        "seg": "RAMP",
-        "at": 11.7,
-        "width_mm": 49.8,
-        "off_lo": -5.0,
-        "off_hi": 44.8,
-        "by_lo": "Exit_Ramp",
-        "by_hi": "(ho)"
+        "seg": "LANE",
+        "at": 100.0,
+        "width_mm": 49.2,
+        "off_lo": -44.8,
+        "off_hi": 4.4,
+        "by_lo": "(ho)",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 105.0,
+        "width_mm": 49.2,
+        "off_lo": -44.8,
+        "off_hi": 4.4,
+        "by_lo": "(ho)",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 110.0,
+        "width_mm": 49.2,
+        "off_lo": -44.8,
+        "off_hi": 4.4,
+        "by_lo": "(ho)",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 130.0,
+        "width_mm": 12.4,
+        "off_lo": -8.0,
+        "off_hi": 4.4,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 135.0,
+        "width_mm": 13.4,
+        "off_lo": -9.0,
+        "off_hi": 4.4,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 140.0,
+        "width_mm": 14.2,
+        "off_lo": -9.8,
+        "off_hi": 4.4,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 145.0,
+        "width_mm": 15.0,
+        "off_lo": -10.6,
+        "off_hi": 4.4,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 150.0,
+        "width_mm": 15.6,
+        "off_lo": -11.2,
+        "off_hi": 4.4,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "Bowl_Tube"
       }
     ],
     "rows": [
       {
         "seg": "LANE",
         "at": 90.0,
+        "width_mm": 49.2,
+        "off_lo": -44.8,
+        "off_hi": 4.4,
+        "by_lo": "(ho)",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 95.0,
+        "width_mm": 49.2,
+        "off_lo": -44.8,
+        "off_hi": 4.4,
+        "by_lo": "(ho)",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 100.0,
+        "width_mm": 49.2,
+        "off_lo": -44.8,
+        "off_hi": 4.4,
+        "by_lo": "(ho)",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 105.0,
+        "width_mm": 49.2,
+        "off_lo": -44.8,
+        "off_hi": 4.4,
+        "by_lo": "(ho)",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 110.0,
+        "width_mm": 49.2,
+        "off_lo": -44.8,
+        "off_hi": 4.4,
+        "by_lo": "(ho)",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 115.0,
+        "width_mm": 9.0,
+        "off_lo": -4.6,
+        "off_hi": 4.4,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 120.0,
         "width_mm": 10.2,
         "off_lo": -5.8,
         "off_hi": 4.4,
@@ -457,63 +674,9 @@
       },
       {
         "seg": "LANE",
-        "at": 95.0,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
-        "off_hi": 4.4,
-        "by_lo": "Inner_Lane_Rail",
-        "by_hi": "Bowl_Tube"
-      },
-      {
-        "seg": "LANE",
-        "at": 100.0,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
-        "off_hi": 4.4,
-        "by_lo": "Inner_Lane_Rail",
-        "by_hi": "Bowl_Tube"
-      },
-      {
-        "seg": "LANE",
-        "at": 105.0,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
-        "off_hi": 4.4,
-        "by_lo": "Inner_Lane_Rail",
-        "by_hi": "Bowl_Tube"
-      },
-      {
-        "seg": "LANE",
-        "at": 110.0,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
-        "off_hi": 4.4,
-        "by_lo": "Inner_Lane_Rail",
-        "by_hi": "Bowl_Tube"
-      },
-      {
-        "seg": "LANE",
-        "at": 115.0,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
-        "off_hi": 4.4,
-        "by_lo": "Inner_Lane_Rail",
-        "by_hi": "Bowl_Tube"
-      },
-      {
-        "seg": "LANE",
-        "at": 120.0,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
-        "off_hi": 4.4,
-        "by_lo": "Inner_Lane_Rail",
-        "by_hi": "Bowl_Tube"
-      },
-      {
-        "seg": "LANE",
         "at": 125.0,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
+        "width_mm": 11.4,
+        "off_lo": -7.0,
         "off_hi": 4.4,
         "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
@@ -521,8 +684,8 @@
       {
         "seg": "LANE",
         "at": 130.0,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
+        "width_mm": 12.4,
+        "off_lo": -8.0,
         "off_hi": 4.4,
         "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
@@ -530,8 +693,8 @@
       {
         "seg": "LANE",
         "at": 135.0,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
+        "width_mm": 13.4,
+        "off_lo": -9.0,
         "off_hi": 4.4,
         "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
@@ -539,8 +702,8 @@
       {
         "seg": "LANE",
         "at": 140.0,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
+        "width_mm": 14.2,
+        "off_lo": -9.8,
         "off_hi": 4.4,
         "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
@@ -548,8 +711,8 @@
       {
         "seg": "LANE",
         "at": 145.0,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
+        "width_mm": 15.0,
+        "off_lo": -10.6,
         "off_hi": 4.4,
         "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
@@ -557,8 +720,8 @@
       {
         "seg": "LANE",
         "at": 150.0,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
+        "width_mm": 15.6,
+        "off_lo": -11.2,
         "off_hi": 4.4,
         "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
@@ -566,8 +729,8 @@
       {
         "seg": "LANE",
         "at": 155.0,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
+        "width_mm": 16.2,
+        "off_lo": -11.8,
         "off_hi": 4.4,
         "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
@@ -575,8 +738,8 @@
       {
         "seg": "LANE",
         "at": 160.0,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
+        "width_mm": 16.8,
+        "off_lo": -12.4,
         "off_hi": 4.4,
         "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
@@ -584,17 +747,17 @@
       {
         "seg": "LANE",
         "at": 165.0,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
-        "off_hi": 4.4,
-        "by_lo": "Inner_Lane_Rail",
-        "by_hi": "Bowl_Tube"
+        "width_mm": 0.0,
+        "off_lo": 0.0,
+        "off_hi": 0.0,
+        "by_lo": "Width_Carriage",
+        "by_hi": "Width_Carriage"
       },
       {
         "seg": "LANE",
         "at": 170.0,
-        "width_mm": 10.4,
-        "off_lo": -6.0,
+        "width_mm": 17.4,
+        "off_lo": -13.0,
         "off_hi": 4.4,
         "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
@@ -602,225 +765,225 @@
       {
         "seg": "LANE",
         "at": 175.0,
-        "width_mm": 8.4,
-        "off_lo": -4.0,
+        "width_mm": 17.6,
+        "off_lo": -13.2,
         "off_hi": 4.4,
-        "by_lo": "Exit_Track",
+        "by_lo": "Inner_Lane_Rail",
         "by_hi": "Bowl_Tube"
       },
       {
         "seg": "LANE",
         "at": 180.0,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
-        "off_hi": 4.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
+        "width_mm": 58.0,
+        "off_lo": -13.2,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
       },
       {
         "seg": "CHUTE",
         "at": 0.0,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
-        "off_hi": 4.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 2.7,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
-        "off_hi": 4.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 5.4,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
-        "off_hi": 4.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 8.1,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
-        "off_hi": 4.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 10.8,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
-        "off_hi": 4.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 13.5,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
-        "off_hi": 4.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 16.2,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
-        "off_hi": 4.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 18.9,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
-        "off_hi": 4.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 21.6,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
-        "off_hi": 4.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 24.3,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
-        "off_hi": 4.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 27.0,
-        "width_mm": 8.8,
-        "off_lo": -4.4,
-        "off_hi": 4.4,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "RAMP",
-        "at": 5.8,
-        "width_mm": 6.4,
-        "off_lo": -5.0,
-        "off_hi": 1.4,
-        "by_lo": "Exit_Ramp",
-        "by_hi": "Rotor_Disc"
-      },
-      {
-        "seg": "RAMP",
-        "at": 11.7,
-        "width_mm": 49.8,
-        "off_lo": -5.0,
+        "width_mm": 48.6,
+        "off_lo": -3.8,
         "off_hi": 44.8,
-        "by_lo": "Exit_Ramp",
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 48.6,
+        "off_lo": -3.8,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 48.6,
+        "off_lo": -3.8,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 48.6,
+        "off_lo": -3.8,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 48.6,
+        "off_lo": -3.8,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 48.6,
+        "off_lo": -3.8,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 48.6,
+        "off_lo": -3.8,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 48.6,
+        "off_lo": -3.8,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 48.6,
+        "off_lo": -3.8,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 48.6,
+        "off_lo": -3.8,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 48.6,
+        "off_lo": -3.8,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
         "by_hi": "(ho)"
       },
       {
         "seg": "RAMP",
-        "at": 17.5,
-        "width_mm": 10.0,
-        "off_lo": -5.0,
-        "off_hi": 5.0,
+        "at": 6.1,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 23.3,
-        "width_mm": 10.0,
-        "off_lo": -5.0,
-        "off_hi": 5.0,
+        "at": 12.2,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 29.2,
-        "width_mm": 10.0,
-        "off_lo": -5.0,
-        "off_hi": 5.0,
+        "at": 18.2,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 35.0,
-        "width_mm": 10.0,
-        "off_lo": -5.0,
-        "off_hi": 5.0,
+        "at": 24.3,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 40.8,
-        "width_mm": 10.0,
-        "off_lo": -5.0,
-        "off_hi": 5.0,
+        "at": 30.4,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 46.7,
-        "width_mm": 10.0,
-        "off_lo": -5.0,
-        "off_hi": 5.0,
+        "at": 36.5,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 52.5,
-        "width_mm": 10.0,
-        "off_lo": -5.0,
-        "off_hi": 5.0,
+        "at": 42.5,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 58.3,
-        "width_mm": 10.0,
-        "off_lo": -5.0,
-        "off_hi": 5.0,
+        "at": 48.6,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 64.2,
-        "width_mm": 10.0,
-        "off_lo": -5.0,
-        "off_hi": 5.0,
+        "at": 54.7,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 70.0,
-        "width_mm": 10.0,
-        "off_lo": -5.0,
-        "off_hi": 5.0,
+        "at": 60.8,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
+        "by_lo": "Exit_Ramp",
+        "by_hi": "Exit_Ramp"
+      },
+      {
+        "seg": "RAMP",
+        "at": 66.9,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
+        "by_lo": "Exit_Ramp",
+        "by_hi": "Exit_Ramp"
+      },
+      {
+        "seg": "RAMP",
+        "at": 72.9,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       }
@@ -830,474 +993,492 @@
     "W_nominal": 26.0,
     "H_nominal": 13.5,
     "n_station": 42,
-    "min_mm": 16.2,
-    "max_mm": 58.2,
-    "spread_mm": 42.0,
+    "min_mm": 20.0,
+    "max_mm": 57.6,
+    "spread_mm": 37.6,
     "n_blocked": 0,
     "blocked": [],
-    "n_narrow": 5,
+    "n_narrow": 1,
     "narrow": [
       {
         "seg": "LANE",
-        "at": 160.0,
-        "width_mm": 20.8,
-        "off_lo": -8.0,
-        "off_hi": 12.8,
-        "by_lo": "Exit_Track",
-        "by_hi": "Bowl_Tube"
-      },
-      {
-        "seg": "LANE",
         "at": 165.0,
-        "width_mm": 23.0,
-        "off_lo": -10.2,
-        "off_hi": 12.8,
-        "by_lo": "Exit_Track",
-        "by_hi": "Bowl_Tube"
-      },
-      {
-        "seg": "LANE",
-        "at": 170.0,
-        "width_mm": 24.4,
-        "off_lo": -11.6,
-        "off_hi": 12.8,
-        "by_lo": "Exit_Track",
-        "by_hi": "Bowl_Tube"
-      },
-      {
-        "seg": "LANE",
-        "at": 175.0,
-        "width_mm": 25.2,
-        "off_lo": -12.4,
-        "off_hi": 12.8,
-        "by_lo": "Exit_Track",
-        "by_hi": "Bowl_Tube"
-      },
-      {
-        "seg": "RAMP",
-        "at": 5.8,
-        "width_mm": 16.2,
-        "off_lo": -13.4,
-        "off_hi": 2.8,
-        "by_lo": "Exit_Ramp",
-        "by_hi": "Rotor_Disc"
+        "width_mm": 20.0,
+        "off_lo": -11.0,
+        "off_hi": 9.0,
+        "by_lo": "Width_Carriage",
+        "by_hi": "Inner_Lane_Rail"
       }
     ],
-    "n_wide": 4,
+    "n_wide": 41,
     "wide": [
       {
         "seg": "LANE",
-        "at": 180.0,
-        "width_mm": 57.6,
-        "off_lo": -12.8,
-        "off_hi": 44.8,
-        "by_lo": "Exit_Track",
-        "by_hi": "(ho)"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 0.0,
+        "at": 90.0,
         "width_mm": 57.6,
         "off_lo": -44.8,
         "off_hi": 12.8,
         "by_lo": "(ho)",
-        "by_hi": "Exit_Track"
+        "by_hi": "Bowl_Tube"
       },
       {
-        "seg": "CHUTE",
-        "at": 4.8,
+        "seg": "LANE",
+        "at": 95.0,
         "width_mm": 57.6,
         "off_lo": -44.8,
         "off_hi": 12.8,
         "by_lo": "(ho)",
-        "by_hi": "Exit_Track"
+        "by_hi": "Bowl_Tube"
       },
       {
-        "seg": "RAMP",
-        "at": 11.7,
-        "width_mm": 58.2,
-        "off_lo": -13.4,
-        "off_hi": 44.8,
-        "by_lo": "Exit_Ramp",
-        "by_hi": "(ho)"
+        "seg": "LANE",
+        "at": 100.0,
+        "width_mm": 57.6,
+        "off_lo": -44.8,
+        "off_hi": 12.8,
+        "by_lo": "(ho)",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 105.0,
+        "width_mm": 57.6,
+        "off_lo": -44.8,
+        "off_hi": 12.8,
+        "by_lo": "(ho)",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 110.0,
+        "width_mm": 57.6,
+        "off_lo": -44.8,
+        "off_hi": 12.8,
+        "by_lo": "(ho)",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 115.0,
+        "width_mm": 57.6,
+        "off_lo": -44.8,
+        "off_hi": 12.8,
+        "by_lo": "(ho)",
+        "by_hi": "Bowl_Tube"
+      },
+      {
+        "seg": "LANE",
+        "at": 120.0,
+        "width_mm": 53.8,
+        "off_lo": -44.8,
+        "off_hi": 9.0,
+        "by_lo": "(ho)",
+        "by_hi": "Inner_Lane_Rail"
+      },
+      {
+        "seg": "LANE",
+        "at": 125.0,
+        "width_mm": 53.8,
+        "off_lo": -44.8,
+        "off_hi": 9.0,
+        "by_lo": "(ho)",
+        "by_hi": "Inner_Lane_Rail"
+      },
+      {
+        "seg": "LANE",
+        "at": 130.0,
+        "width_mm": 53.8,
+        "off_lo": -44.8,
+        "off_hi": 9.0,
+        "by_lo": "(ho)",
+        "by_hi": "Inner_Lane_Rail"
+      },
+      {
+        "seg": "LANE",
+        "at": 135.0,
+        "width_mm": 53.8,
+        "off_lo": -44.8,
+        "off_hi": 9.0,
+        "by_lo": "(ho)",
+        "by_hi": "Inner_Lane_Rail"
       }
     ],
     "rows": [
       {
         "seg": "LANE",
         "at": 90.0,
-        "width_mm": 27.2,
-        "off_lo": -14.4,
+        "width_mm": 57.6,
+        "off_lo": -44.8,
         "off_hi": 12.8,
-        "by_lo": "Inner_Lane_Rail",
+        "by_lo": "(ho)",
         "by_hi": "Bowl_Tube"
       },
       {
         "seg": "LANE",
         "at": 95.0,
-        "width_mm": 25.8,
-        "off_lo": -13.0,
+        "width_mm": 57.6,
+        "off_lo": -44.8,
         "off_hi": 12.8,
-        "by_lo": "Inner_Lane_Rail",
+        "by_lo": "(ho)",
         "by_hi": "Bowl_Tube"
       },
       {
         "seg": "LANE",
         "at": 100.0,
-        "width_mm": 25.8,
-        "off_lo": -13.0,
+        "width_mm": 57.6,
+        "off_lo": -44.8,
         "off_hi": 12.8,
-        "by_lo": "Inner_Lane_Rail",
+        "by_lo": "(ho)",
         "by_hi": "Bowl_Tube"
       },
       {
         "seg": "LANE",
         "at": 105.0,
-        "width_mm": 25.8,
-        "off_lo": -13.0,
+        "width_mm": 57.6,
+        "off_lo": -44.8,
         "off_hi": 12.8,
-        "by_lo": "Inner_Lane_Rail",
+        "by_lo": "(ho)",
         "by_hi": "Bowl_Tube"
       },
       {
         "seg": "LANE",
         "at": 110.0,
-        "width_mm": 25.8,
-        "off_lo": -13.0,
+        "width_mm": 57.6,
+        "off_lo": -44.8,
         "off_hi": 12.8,
-        "by_lo": "Inner_Lane_Rail",
+        "by_lo": "(ho)",
         "by_hi": "Bowl_Tube"
       },
       {
         "seg": "LANE",
         "at": 115.0,
-        "width_mm": 25.8,
-        "off_lo": -13.0,
+        "width_mm": 57.6,
+        "off_lo": -44.8,
         "off_hi": 12.8,
-        "by_lo": "Inner_Lane_Rail",
+        "by_lo": "(ho)",
         "by_hi": "Bowl_Tube"
       },
       {
         "seg": "LANE",
         "at": 120.0,
-        "width_mm": 25.8,
-        "off_lo": -13.0,
-        "off_hi": 12.8,
-        "by_lo": "Inner_Lane_Rail",
-        "by_hi": "Bowl_Tube"
+        "width_mm": 53.8,
+        "off_lo": -44.8,
+        "off_hi": 9.0,
+        "by_lo": "(ho)",
+        "by_hi": "Inner_Lane_Rail"
       },
       {
         "seg": "LANE",
         "at": 125.0,
-        "width_mm": 25.8,
-        "off_lo": -13.0,
-        "off_hi": 12.8,
-        "by_lo": "Inner_Lane_Rail",
-        "by_hi": "Bowl_Tube"
+        "width_mm": 53.8,
+        "off_lo": -44.8,
+        "off_hi": 9.0,
+        "by_lo": "(ho)",
+        "by_hi": "Inner_Lane_Rail"
       },
       {
         "seg": "LANE",
         "at": 130.0,
-        "width_mm": 25.8,
-        "off_lo": -13.0,
-        "off_hi": 12.8,
-        "by_lo": "Inner_Lane_Rail",
-        "by_hi": "Bowl_Tube"
+        "width_mm": 53.8,
+        "off_lo": -44.8,
+        "off_hi": 9.0,
+        "by_lo": "(ho)",
+        "by_hi": "Inner_Lane_Rail"
       },
       {
         "seg": "LANE",
         "at": 135.0,
-        "width_mm": 25.8,
-        "off_lo": -13.0,
-        "off_hi": 12.8,
-        "by_lo": "Inner_Lane_Rail",
-        "by_hi": "Bowl_Tube"
+        "width_mm": 53.8,
+        "off_lo": -44.8,
+        "off_hi": 9.0,
+        "by_lo": "(ho)",
+        "by_hi": "Inner_Lane_Rail"
       },
       {
         "seg": "LANE",
         "at": 140.0,
-        "width_mm": 25.8,
-        "off_lo": -13.0,
-        "off_hi": 12.8,
-        "by_lo": "Inner_Lane_Rail",
-        "by_hi": "Bowl_Tube"
+        "width_mm": 53.8,
+        "off_lo": -44.8,
+        "off_hi": 9.0,
+        "by_lo": "(ho)",
+        "by_hi": "Inner_Lane_Rail"
       },
       {
         "seg": "LANE",
         "at": 145.0,
-        "width_mm": 25.8,
-        "off_lo": -13.0,
-        "off_hi": 12.8,
-        "by_lo": "Inner_Lane_Rail",
-        "by_hi": "Bowl_Tube"
+        "width_mm": 53.8,
+        "off_lo": -44.8,
+        "off_hi": 9.0,
+        "by_lo": "(ho)",
+        "by_hi": "Inner_Lane_Rail"
       },
       {
         "seg": "LANE",
         "at": 150.0,
-        "width_mm": 25.8,
-        "off_lo": -13.0,
-        "off_hi": 12.8,
-        "by_lo": "Inner_Lane_Rail",
-        "by_hi": "Bowl_Tube"
+        "width_mm": 53.8,
+        "off_lo": -44.8,
+        "off_hi": 9.0,
+        "by_lo": "(ho)",
+        "by_hi": "Inner_Lane_Rail"
       },
       {
         "seg": "LANE",
         "at": 155.0,
-        "width_mm": 25.8,
-        "off_lo": -13.0,
-        "off_hi": 12.8,
-        "by_lo": "Inner_Lane_Rail",
-        "by_hi": "Bowl_Tube"
+        "width_mm": 53.8,
+        "off_lo": -44.8,
+        "off_hi": 9.0,
+        "by_lo": "(ho)",
+        "by_hi": "Inner_Lane_Rail"
       },
       {
         "seg": "LANE",
         "at": 160.0,
-        "width_mm": 20.8,
-        "off_lo": -8.0,
-        "off_hi": 12.8,
-        "by_lo": "Exit_Track",
-        "by_hi": "Bowl_Tube"
+        "width_mm": 53.8,
+        "off_lo": -44.8,
+        "off_hi": 9.0,
+        "by_lo": "(ho)",
+        "by_hi": "Inner_Lane_Rail"
       },
       {
         "seg": "LANE",
         "at": 165.0,
-        "width_mm": 23.0,
-        "off_lo": -10.2,
-        "off_hi": 12.8,
-        "by_lo": "Exit_Track",
-        "by_hi": "Bowl_Tube"
+        "width_mm": 20.0,
+        "off_lo": -11.0,
+        "off_hi": 9.0,
+        "by_lo": "Width_Carriage",
+        "by_hi": "Inner_Lane_Rail"
       },
       {
         "seg": "LANE",
         "at": 170.0,
-        "width_mm": 24.4,
-        "off_lo": -11.6,
-        "off_hi": 12.8,
-        "by_lo": "Exit_Track",
-        "by_hi": "Bowl_Tube"
+        "width_mm": 53.8,
+        "off_lo": -44.8,
+        "off_hi": 9.0,
+        "by_lo": "(ho)",
+        "by_hi": "Inner_Lane_Rail"
       },
       {
         "seg": "LANE",
         "at": 175.0,
-        "width_mm": 25.2,
-        "off_lo": -12.4,
-        "off_hi": 12.8,
-        "by_lo": "Exit_Track",
-        "by_hi": "Bowl_Tube"
+        "width_mm": 53.8,
+        "off_lo": -44.8,
+        "off_hi": 9.0,
+        "by_lo": "(ho)",
+        "by_hi": "Inner_Lane_Rail"
       },
       {
         "seg": "LANE",
         "at": 180.0,
-        "width_mm": 57.6,
-        "off_lo": -12.8,
+        "width_mm": 53.8,
+        "off_lo": -44.8,
+        "off_hi": 9.0,
+        "by_lo": "(ho)",
+        "by_hi": "Inner_Lane_Rail"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 57.0,
+        "off_lo": -12.2,
         "off_hi": 44.8,
-        "by_lo": "Exit_Track",
+        "by_lo": "Inner_Lane_Rail",
         "by_hi": "(ho)"
       },
       {
         "seg": "CHUTE",
         "at": 0.0,
-        "width_mm": 57.6,
-        "off_lo": -44.8,
-        "off_hi": 12.8,
-        "by_lo": "(ho)",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 4.8,
-        "width_mm": 57.6,
-        "off_lo": -44.8,
-        "off_hi": 12.8,
-        "by_lo": "(ho)",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 9.6,
-        "width_mm": 25.6,
-        "off_lo": -12.8,
-        "off_hi": 12.8,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 14.4,
-        "width_mm": 25.6,
-        "off_lo": -12.8,
-        "off_hi": 12.8,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 19.1,
-        "width_mm": 25.6,
-        "off_lo": -12.8,
-        "off_hi": 12.8,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 23.9,
-        "width_mm": 25.6,
-        "off_lo": -12.8,
-        "off_hi": 12.8,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 28.7,
-        "width_mm": 25.6,
-        "off_lo": -12.8,
-        "off_hi": 12.8,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 33.5,
-        "width_mm": 25.6,
-        "off_lo": -12.8,
-        "off_hi": 12.8,
-        "by_lo": "Exit_Track",
-        "by_hi": "Exit_Track"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 38.3,
-        "width_mm": 25.6,
-        "off_lo": -12.8,
-        "off_hi": 12.8,
-        "by_lo": "Exit_Track",
-        "by_hi": "Inner_Lane_Rail"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 43.1,
-        "width_mm": 25.6,
-        "off_lo": -12.8,
-        "off_hi": 12.8,
-        "by_lo": "Exit_Track",
-        "by_hi": "Inner_Lane_Rail"
-      },
-      {
-        "seg": "CHUTE",
-        "at": 47.9,
-        "width_mm": 25.6,
-        "off_lo": -12.8,
-        "off_hi": 12.8,
-        "by_lo": "Exit_Track",
-        "by_hi": "Inner_Lane_Rail"
-      },
-      {
-        "seg": "RAMP",
-        "at": 5.8,
-        "width_mm": 16.2,
-        "off_lo": -13.4,
-        "off_hi": 2.8,
-        "by_lo": "Exit_Ramp",
-        "by_hi": "Rotor_Disc"
-      },
-      {
-        "seg": "RAMP",
-        "at": 11.7,
-        "width_mm": 58.2,
-        "off_lo": -13.4,
+        "width_mm": 57.0,
+        "off_lo": -12.2,
         "off_hi": 44.8,
-        "by_lo": "Exit_Ramp",
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 57.0,
+        "off_lo": -12.2,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 57.0,
+        "off_lo": -12.2,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 57.0,
+        "off_lo": -12.2,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 57.0,
+        "off_lo": -12.2,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 57.0,
+        "off_lo": -12.2,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 57.0,
+        "off_lo": -12.2,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 57.0,
+        "off_lo": -12.2,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 57.0,
+        "off_lo": -12.2,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
+        "by_hi": "(ho)"
+      },
+      {
+        "seg": "CHUTE",
+        "at": 0.0,
+        "width_mm": 57.0,
+        "off_lo": -12.2,
+        "off_hi": 44.8,
+        "by_lo": "Inner_Lane_Rail",
         "by_hi": "(ho)"
       },
       {
         "seg": "RAMP",
-        "at": 17.5,
-        "width_mm": 26.8,
-        "off_lo": -13.4,
-        "off_hi": 13.4,
+        "at": 6.1,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 23.3,
-        "width_mm": 26.8,
-        "off_lo": -13.4,
-        "off_hi": 13.4,
+        "at": 12.2,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 29.2,
-        "width_mm": 26.8,
-        "off_lo": -13.4,
-        "off_hi": 13.4,
+        "at": 18.2,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 35.0,
-        "width_mm": 26.8,
-        "off_lo": -13.4,
-        "off_hi": 13.4,
+        "at": 24.3,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 40.8,
-        "width_mm": 26.8,
-        "off_lo": -13.4,
-        "off_hi": 13.4,
+        "at": 30.4,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 46.7,
-        "width_mm": 26.8,
-        "off_lo": -13.4,
-        "off_hi": 13.4,
+        "at": 36.5,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 52.5,
-        "width_mm": 26.8,
-        "off_lo": -13.4,
-        "off_hi": 13.4,
+        "at": 42.5,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 58.3,
-        "width_mm": 26.8,
-        "off_lo": -13.4,
-        "off_hi": 13.4,
+        "at": 48.6,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 64.2,
-        "width_mm": 26.8,
-        "off_lo": -13.4,
-        "off_hi": 13.4,
+        "at": 54.7,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       },
       {
         "seg": "RAMP",
-        "at": 70.0,
-        "width_mm": 26.8,
-        "off_lo": -13.4,
-        "off_hi": 13.4,
+        "at": 60.8,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
+        "by_lo": "Exit_Ramp",
+        "by_hi": "Exit_Ramp"
+      },
+      {
+        "seg": "RAMP",
+        "at": 66.9,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
+        "by_lo": "Exit_Ramp",
+        "by_hi": "Exit_Ramp"
+      },
+      {
+        "seg": "RAMP",
+        "at": 72.9,
+        "width_mm": 29.6,
+        "off_lo": -14.8,
+        "off_hi": 14.8,
         "by_lo": "Exit_Ramp",
         "by_hi": "Exit_Ramp"
       }

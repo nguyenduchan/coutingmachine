@@ -79,13 +79,11 @@ GROUPS = (
     ("Bowl", ("Bowl_Tube",)),
     ("Guide", ("Guide_System",)),
     (
-        "Adjust_Slide",
+        "Entry_Height_Gate",
         (
-            "Crossbar_Bridge",
-            "Scale_Width",
-            "Width_Carriage",
-            "Scale_Height",
-            "Height_Scraper",
+            "Entry_Gate_Post",
+            "Entry_Gate_Slider",
+            "Entry_Gate_Barrier",
         ),
     ),
     ("Lane_And_Exit", ("Inner_Lane_Rail", "Chute_Slide")),

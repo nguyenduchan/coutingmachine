@@ -56,7 +56,7 @@ OUT = _HERE / "out"
 VOL_RTOL = 1e-9
 AREA_RTOL = 1e-9
 COM_ATOL = 1e-6  # mm — bắt mọi phép dời/xoay
-PROBE_PART = "Scale_Width"
+PROBE_PART = "Entry_Gate_Barrier"
 PROBE_DZ = 7.0
 
 

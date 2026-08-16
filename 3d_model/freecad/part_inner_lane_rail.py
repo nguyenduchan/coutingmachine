@@ -8,13 +8,13 @@ Kiến trúc (đáy HỞ — đĩa đẩy vật bằng lực tiếp tuyến):
   Crossbar_Bridge     — thanh ngang có slot, bắc qua đĩa, vít chỉnh từ TRÊN
   Inner_Lane_Rail     — cung Ø20 cm 7h→11h; trượt trên ray T của Chute_Slide
   Chute_Slide         — 2 thanh T nằm trên máng (8h / 10h), nối thành đĩa
-  Width_Carriage      — phễu họng + thanh nối máng trượt
   Exit_Track          — (đã bỏ — không máng trên đĩa)
-  Bowl_Tube_Exit_Chute — máng nghiêng 40° có đáy, 9 giờ ra Front
+  Bowl_Tube_Exit_Chute — máng nghiêng 40° có đáy, 9 giờ ra Front; cạnh trái
+                        lòng máng trùng mép đĩa, thân máng luồn dưới đĩa
 
 THAO TÁC CHỈNH:
-  W: kéo Width_Carriage → Inner_Lane_Rail trượt trên 2 ray T (8h/10h)
-  H: nâng/hạ Height_Scraper
+  W: kéo Inner_Lane_Rail trượt trên 2 ray T (8h/10h)
+  H: nâng/hạ cụm Entry_Gate_* ở đầu máng vào
 """
 from __future__ import annotations
 

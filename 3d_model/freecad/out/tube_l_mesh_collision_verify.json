@@ -1,5 +1,5 @@
 {
-  "pass": true,
+  "pass": false,
   "method": "Mesh.intersect + solid Volume confirm (>0.05 mm3)",
   "deflection_mm": 0.85,
   "width_range_mm": [
@@ -11,18 +11,51 @@
     26.0
   ],
   "samples": 69,
-  "jam_hits": 0,
+  "jam_hits": 4,
   "detail": {
     "disc_rotate": 0,
-    "static_pair": 0,
-    "width_sweep": 0,
+    "static_pair": 1,
+    "width_sweep": 3,
     "height_sweep": 0
   },
-  "hits": [],
+  "hits": [
+    {
+      "kind": "static_pair",
+      "pair": "Inner_Lane_Rail\u00d7Bowl_Tube",
+      "facets": 1,
+      "solid_mm3": 59.7717,
+      "W": 26.0,
+      "H": 2.0
+    },
+    {
+      "kind": "width_sweep",
+      "pair": "Inner_Lane_Rail\u00d7Bowl_Tube",
+      "facets": 15,
+      "solid_mm3": 8.8302,
+      "W": 24.0,
+      "H": 5.0
+    },
+    {
+      "kind": "width_sweep",
+      "pair": "Inner_Lane_Rail\u00d7Bowl_Tube",
+      "facets": 28,
+      "solid_mm3": 59.7717,
+      "W": 26.0,
+      "H": 5.0
+    },
+    {
+      "kind": "width_sweep",
+      "pair": "Inner_Lane_Rail\u00d7Bowl_Tube",
+      "facets": 15,
+      "solid_mm3": 8.8302,
+      "W": 24.0,
+      "H": 5.0
+    }
+  ],
   "checks": {
     "disc_rotate_free": true,
-    "no_surface_interpenetration": true,
-    "width_adjust_2_26_clear": true,
+    "no_surface_interpenetration": false,
+    "width_adjust_2_26_clear": false,
     "height_adjust_2_26_clear": true,
     "range_ok": true
   },

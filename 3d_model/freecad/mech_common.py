@@ -5,17 +5,19 @@ Tube_L_Exit_Gate — rotary disc feeder kiểu SchanerDesigns short:
 Kiến trúc (đáy HỞ — đĩa đẩy vật bằng lực tiếp tuyến):
   Rotor_Disc          — đĩa quay phẳng
   Bowl_Tube           — vành cố định (outer wall của lane)
-  Crossbar_Bridge     — trục đỡ NGANG phía miệng (+Y) + ray W; chân trái/phải
+  Entry_Gate_*        — cửa chỉnh chiều cao ở đầu máng vào (trụ + trượt + barrier)
   Inner_Lane_Rail     — tường liên tục + Reject_Wiper dính đầu (cùng dịch W)
-  Height_Scraper      — lưỡi 2 mm + thành đầu vào 30×10×2 mm; H chỉnh 2–26 mm
+  Entry_Gate_Barrier  — barrier chữ L (trần 20 mm + tấm đứng 10 mm); H 2–26 mm
   Funnel_Guide        — (cũ) → Center_Director: lưỡi cày TÂM đĩa, ép vật ra vành
   Outer_Rim_Funnel    — cánh ngoài thu hẹp vào lane
-  Exit_Track          — máng ngắn 50 mm; θ=180° đổ −Y; thành bát liền chỉ hở cửa ra
+  Bowl_Tube_Exit_Chute — máng dốc 40° tại 9 giờ, đổ −Y ra Front; cạnh TRÁI của
+                        lòng máng trùng mép đĩa (x = −DISC_R), thân máng luồn
+                        dưới đĩa để hứng viên vừa rời vành
 
 THAO TÁC CHỈNH (tay với từ trên — giống video):
-  W: nới vít trên Crossbar → kéo clamp + Inner_Lane_Rail xuyên tâm
+  W: kéo Inner_Lane_Rail trượt xuyên tâm trên 2 ray T của Chute_Slide
      vào tâm = W↑ | ra vành = W↓ | 1 mm = 1 mm W
-  H: nới vít đứng trên clamp → nâng/hạ Height_Scraper
+  H: nới Screw_Gate_H → nâng/hạ cụm barrier trên ray T đứng ở đầu máng vào
      lên = H↑ | xuống = H↓ | 1 mm = 1 mm H
 """
 from __future__ import annotations
@@ -108,23 +110,7 @@ INLET_WING_R_GAP = 0.8
 RAIL_T = 3.0
 RAIL_H = H_MAX + 10.0  # tường đủ cao hơn H_MAX
 
-# Crossbar + ray trượt chỉnh W/H — sát miệng lane (θ_mouth), không giữa cung
-TH_ADJ_DEG = THETA_MOUTH_DEG
-# BAR_Z=36.0 (= H_MAX+10, đúng bằng ngưỡng tối thiểu của check hand_top) khiến cần nối
-# (hang, trong make_width_clamp) gần như KHÔNG còn chỗ: hang_z1=BAR_Z-2=34 <
-# hang_z0=GAP0+RAIL_H-2=34.5 → an toàn bằng cách kẹp về mẩu 2mm lửng lơ, không thực sự
-# chạm xuống đỉnh Inner_Lane_Rail. Nâng lên 42.0 để cần nối có khoang ~5.5mm, chạm liền
-# xuống ray — vẫn giữ hand_top=True (42>=36) và moi z-offset khac deu tinh tuong doi
-# theo BAR_Z nen khong lech hinh hoc noi khac.
-BAR_Z = 42.0
-BAR_W = 20.0
-BAR_T = 8.0
-BAR_SLOT_W = 11.0  # cổ ray H + thành U scraper (trượt H 2–26, không kẹt thanh)
-# Ray trượt W: ray chữ T trên crossbar (nhìn rõ hướng xuyên tâm)
-SLIDE_W_NECK = 5.0
-SLIDE_W_TOP = 11.0
-SLIDE_W_H = 5.5
-SLIDE_W_FIT = 0.25
+TH_ADJ_DEG = THETA_MOUTH_DEG  # tham chiếu cũ (cụm Crossbar 12h đã bỏ)
 # M3 printed-part fastener — holes only (never model bolt/nut solids)
 M3_CLEAR = 3.6  # ISO 273 medium + FDM margin
 M3_HEAD_CB_D = 6.5
@@ -135,42 +121,76 @@ M3_BOLT_L = 16.0  # grip ≤ ~12 mm + nut 2.4
 HUB_M3_PCD = 18.0
 HUB_CLAMP_T = 6.0
 SCREW_D = M3_CLEAR  # clamp / assembly holes = M3 clearance
-CLAMP_L = 34.0
-CLAMP_JAW_T = 5.0
-CLAMP_FIT = 0.18
-CLAMP_H = 14.0
-CLAMP_W = BAR_W + 2.0 * (CLAMP_JAW_T + CLAMP_FIT)
-LOCK_SPAN = 16.0
-POST_H = BAR_Z + 6.0
 SCRAPER_T = 2.4  # FDM 6 perimeters @ 0.4 mm (was 2.0)
-# Lưỡi ngang sát mặt miệng lane (vào trong máng một đoạn ngắn)
-SCRAPER_BLADE_ALONG = 6.0
-# Thành L chỉ nối lưỡi tại miệng — KHÔNG quét đĩa
-SCRAPER_ENTRY_LEN = 5.0
-SCRAPER_ENTRY_H = 8.0
-SCRAPER_ENTRY_T = 2.4  # FDM 6 perimeters @ 0.4 mm (was 2.0)
-SCRAPER_ENTRY_MAX_INBOARD = 6.0
-# Ray trượt H: cột đứng chữ T trên carriage W
-STEM_W = 8.0
-STEM_T = 4.0
 STEM_FIT = 0.25
-H_RAIL_TOP = 12.0   # mặt T của ray H
-H_RAIL_NECK = 5.0
-H_SLIDER_H = 16.0   # khối trượt H ôm ray
-HAND_TOP_CLEAR = 8.0
-# Bu-lông kẹp (thay lò xo tì trước đây) — núm vặn LỚN (siết tay, không cần dụng cụ),
-# xuyên theo phương NGANG (trục Y cục bộ — vuông góc hướng trượt), siết trực tiếp
-# thanh tịnh tiến (má kẹp W trên ray T; vòng ôm ray H) — vị trí bu-lông cố định theo
-# thân carriage/slider (luôn nằm đúng trên ray dù trượt tới đâu trong dải W_MIN..W_MAX
-# / H_MIN..H_MAX vì ray là thanh liền suốt hành trình). Đặt ở độ cao thấp, trong lòng
-# đĩa (ngang mức má kẹp/vòng ray), không nhô cao khỏi mép bát như thiết kế cũ.
 KNOB_D = 11.0
 KNOB_L = 5.0
 
 W_TRAVEL = W_MAX - W_MIN
 H_TRAVEL = H_MAX - H_MIN
-S_AT_WMAX = CHANNEL_R_OUTER - W_MAX
-S_AT_WMIN = CHANNEL_R_OUTER - W_MIN
+
+# ---------------------------------------------------------------------------
+# CỬA CHỈNH CHIỀU CAO tại ĐẦU MÁNG (11 giờ) — Entry_Gate_*
+# ---------------------------------------------------------------------------
+# Thay cụm Crossbar_Bridge / Width_Carriage / Height_Scraper ở 12 giờ (đã bỏ).
+#
+#   Entry_Gate_Post    — trụ CỐ ĐỊNH bắt vào vành Bowl_Tube tại 11h, mang ray T đứng
+#   Entry_Gate_Slider  — con trượt TỊNH TIẾN ĐỨNG ôm ray T + tay với vào trong đĩa
+#   Entry_Gate_Barrier — barrier chữ L treo dưới con trượt
+#
+# Barrier nhìn DỌC DÒNG CHẢY = chữ L: tấm ngang 20 mm làm TRẦN, tấm đứng 10 mm
+# dựng LÊN ở mép đón vật. Nhìn từ TRÊN: rộng 30 mm (đúng bề rộng lane), cạnh
+# ngoài ôm cung mép đĩa. Khe hở dưới trần = H = chiều cao tối đa vật vào máng.
+#
+# Vì sao khớp trượt nằm NGOÀI vành bát: mọi thứ cố định treo trong lòng lane mà
+# thấp hơn GAP0+H_MAX (26.5) sẽ chặn vật khi mở H lớn. Đưa ray ra ngoài bát, chỉ
+# tay với (đi theo con trượt) bắc qua vành ⇒ lane trống suốt dải H 2–26.
+# VỊ TRÍ GÓC — vì sao KHÔNG đặt đúng 120°:
+#   Inner_Lane_Rail dịch +X theo W (dx = W_MAX − W, tới 24 mm) nên ĐẦU cung rail
+#   lùi từ 120° (dx=0) xuống 106.5° (dx=24), và tại 110–131° thân rail nằm ở
+#   r = 81–98 mm — tức là NGAY TRONG dải 30 mm của barrier. Tường rail cao 30 mm
+#   nên trần barrier (z ≤ GAP0+26) không thể đi qua nó.
+#   ⇒ đặt cửa NGAY TRƯỚC đầu rail ở mọi W: mép SAU (hạ lưu) của trần = góc lùi
+#   xa nhất của đầu rail trừ biên; trần trải 20 mm ngược dòng. Ở đó mặt đĩa
+#   trống suốt 30 mm nên giữ đúng kích thước barrier người dùng yêu cầu.
+_RAIL_TIP_R = INNER_LANE_ARC_R - 0.5 * RAIL_T
+_RAIL_TIP_X = _RAIL_TIP_R * math.cos(math.radians(INNER_LANE_CLOCK_TH1_DEG)) + (W_MAX - W_MIN)
+_RAIL_TIP_Y = _RAIL_TIP_R * math.sin(math.radians(INNER_LANE_CLOCK_TH1_DEG))
+_RAIL_TIP_TH_DEG = math.degrees(math.atan2(_RAIL_TIP_Y, _RAIL_TIP_X)) - math.degrees(
+    0.5 * RAIL_T / math.hypot(_RAIL_TIP_X, _RAIL_TIP_Y)
+)
+GATE_MARGIN_DEG = 1.5
+GATE_TH_DEG = _RAIL_TIP_TH_DEG - GATE_MARGIN_DEG  # mép SAU của trần (~104°)
+GATE_R_OUT = DISC_R - CHUTE_DISC_GUIDE_CLEAR  # cạnh ngoài ôm sát mép đĩa
+GATE_W_MM = CHUTE_W_MM  # 30 mm nhìn từ trên
+GATE_R_IN = GATE_R_OUT - GATE_W_MM
+GATE_ROOF_ALONG_MM = 20.0  # tấm ngang (dọc dòng chảy)
+GATE_ROOF_T = SCRAPER_T
+GATE_WALL_H_MM = 10.0  # tấm đứng
+GATE_WALL_T = SCRAPER_T
+GATE_ARM_CLEAR_Z = BOWL_H + 4.0  # bụng tay với tại H_MIN — vượt vành bát
+GATE_ARM_T = 8.0
+GATE_ARM_W = 12.0
+GATE_STEM_W = 10.0  # cột nối trần → tay với: bề radial
+GATE_STEM_ALONG = 8.0  # dọc dòng chảy (đế cột đặt trên trần, sau tấm đứng)
+GATE_STEM_FOOT_T = 3.0
+GATE_RAIL_R0 = BOWL_OR + 0.8  # mặt trong bích ray T (ngoài vành bát)
+GATE_RAIL_FLANGE_T = 3.5
+GATE_RAIL_FLANGE_W = 16.0
+GATE_RAIL_NECK_T = 4.5
+GATE_RAIL_NECK_W = 7.0
+GATE_RAIL_SPINE_T = 8.0
+GATE_RAIL_SPINE_W = 16.0
+GATE_COLLAR_H = 14.0
+GATE_COLLAR_WALL = 4.0
+GATE_FIT = STEM_FIT
+GATE_FOOT_Z0 = GAP0 + H_MAX + 0.5  # 27.0 — chân bắt bát, TRÊN vùng vật đi
+GATE_FOOT_T = 4.0
+GATE_FOOT_W = 20.0
+GATE_ROOF_DEG = math.degrees(GATE_ROOF_ALONG_MM / GATE_R_OUT)
+# Khung cục bộ của cụm cửa: gốc góc = mép ĐÓN VẬT của trần; local +x = xuyên
+# tâm, +y = xuôi dòng (mm cung), +z = lên.
+GATE_FRAME_TH_DEG = GATE_TH_DEG - GATE_ROOF_DEG
 
 # Guide_System cố định — xoắn hub→vành; HỌNG LANE mở theo CCW (lực tiếp tuyến)
 # Tip Guide DỪNG trước θ_mouth → khe góc + khe bán kính với Bowl = lối vào nhìn thấy
@@ -291,10 +311,18 @@ EXIT_FROM_RADIAL_DEG = 90.0
 
 # Dốc thoát sau khi rời đĩa: có ĐÁY, nghiêng xuống RAMP_ANGLE_DEG.
 # Trượt được ⇔ tan(40°)=0.839 > μ_wall=0.35 (góc tự hãm 19.3°) — dư biên.
+#
+# ĐẶT MÁNG (quan trọng — trước đây SAI): viên đi tiếp tuyến từ θ_exit nên nó
+# luôn ở PHÍA TRONG đường tiếp tuyến x = −DISC_R (x_tâm = −r_lane ≥ −DISC_R),
+# rời đĩa khi vành đĩa lùi khỏi nó chứ không bao giờ văng ra ngoài tiếp tuyến.
+# Vậy lòng máng phải nằm PHÍA TRONG: cạnh TRÁI (nhìn Front) của lòng máng trùng
+# đúng mép đĩa x = −DISC_R, phần còn lại luồn DƯỚI đĩa. Máng cũ nằm hẳn ngoài
+# tiếp tuyến (x ∈ [−130, −103]) nên không hứng được viên nào.
 RAMP_ANGLE_DEG = 40.0
 RAMP_FLOOR_T = 3.0
 RAMP_WALL_T = 3.0
-RAMP_LEN = EXIT_CHUTE_LEN_MM  # máng dốc 50 mm
+RAMP_DISC_GAP = 1.0  # khe đáy đĩa → mặt máng (đĩa quay, máng đứng yên)
+RAMP_CATCH_MARGIN = 8.0  # phủ thêm sau điểm rời đĩa xa nhất (lane rộng nhất)
 RAMP_START_DROP = 0.0
 RAMP_SIDE_CLEAR = 0.6
 RAMP_TAKEOVER_OVERLAP = 6.0  # máng phẳng chồng đầu dốc chừng này rồi mới hết
@@ -509,44 +537,23 @@ def _knob_bolt_along(origin, axis, shank_len: float) -> Part.Shape:
     return _refine(knob.fuse(shank))
 
 
-def _width_bolt_sites(s: float) -> list[dict]:
-    """2 bu-lông kẹp má W — phương NGANG (trục Y), xuyên qua má kẹp + khe ray T,
-    núm ở mép ngoài má trái (y nhỏ nhất — phía trong lòng đĩa, thấp ngang tâm má
-    kẹp, không nhô cao như vít đứng cũ). Vị trí (s+ds) bám theo carriage nên LUÔN
-    nằm đúng trên ray T (ray liền suốt hành trình W_MIN..W_MAX) dù trượt tới đâu."""
-    y_l = -0.5 * BAR_W - CLAMP_FIT - CLAMP_JAW_T
-    z_bolt = (BAR_Z - 1.0) + 0.5 * (BAR_T + SLIDE_W_H + 2.0)
-    span = CLAMP_W + 2.0
+def gate_mount_sites() -> list[dict]:
+    """2 bu-lông M3 xuyên tâm bắt chân Entry_Gate_Post vào vành Bowl_Tube tại 11h.
+
+    Đặt CAO hơn GAP0+H_MAX để lỗ xuyên vành không thành đường vật lọt ra."""
     out = []
-    for i, ds in enumerate((-0.5 * LOCK_SPAN, 0.5 * LOCK_SPAN)):
+    th = GATE_TH_DEG - 0.5 * GATE_ROOF_DEG  # giữa cửa
+    c, s_ = math.cos(_deg2rad(th)), math.sin(_deg2rad(th))
+    r0 = BOWL_IR - 2.0
+    for z in (GATE_FOOT_Z0 + 4.0, GATE_FOOT_Z0 + 11.0):
         out.append({
-            "name": f"Screw_Width_{i + 1}",
-            "knob_origin": (s + ds, y_l - KNOB_L - 1.0, z_bolt),
-            "hole_origin": (s + ds, y_l - 1.0, z_bolt),
-            "axis": (0.0, 1.0, 0.0),
-            "shank_len": span,
+            "origin": (r0 * c, r0 * s_, z),
+            "axis": (c, s_, 0.0),
+            "h": (GATE_RAIL_R0 + GATE_FOOT_T + 4.0) - r0,
+            "th_deg": th,
+            "z": z,
         })
     return out
-
-
-def _height_bolt_site(s: float) -> dict:
-    """1 bu-lông kẹp vòng ôm ray H — phương NGANG (trục Y), xuyên qua vòng ôm
-    (collar "above" trong make_height_scraper), siết ép vào mặt bích H_RAIL_TOP.
-    Vị trí bám theo stem_x0 (=s+2.8) nên luôn đúng ray dù H thay đổi (ray T doc
-    theo carriage, lien suot H_MIN..H_MAX)."""
-    stem_x0 = s + 2.8
-    uy_slot = 0.5 * (BAR_SLOT_W - 1.6)
-    z_rail = BAR_Z + BAR_T
-    x_bolt = stem_x0 - 0.6 + 0.5 * (H_RAIL_TOP + 5.0)
-    z_bolt = z_rail + 0.35 + 4.0
-    span = 2.0 * uy_slot + 4.0
-    return {
-        "name": "Screw_Height",
-        "knob_origin": (x_bolt, -uy_slot - 1.0 - KNOB_L, z_bolt),
-        "hole_origin": (x_bolt, -uy_slot - 1.0, z_bolt),
-        "axis": (0.0, 1.0, 0.0),
-        "shank_len": span,
-    }
 
 
 def _clamp(v: float, lo: float, hi: float) -> float:
@@ -695,12 +702,6 @@ def aperture_from_opens(width_open: float, height_open: float) -> dict:
         "theta_exit_deg": THETA_EXIT_DEG,
         "arc_deg": CHUTE_ARC_DEG,
     }
-
-
-def width_clamp_s(width_open: float) -> float:
-    """Vị trí trượt trên thanh ngang — đồng bộ dịch máng theo W."""
-    w = _clamp(width_open, WIDTH_MIN, WIDTH_MAX)
-    return CHANNEL_R_OUTER - w
 
 
 def _radial_slide_bar(
@@ -867,28 +868,6 @@ def make_chute_slide_bars(width_open: float | None = None) -> Part.Shape:
     return _refine(a)
 
 
-def make_chute_slide_link(width_open: float) -> Part.Shape:
-    """Thanh nối Width_Carriage → máng trượt (nhìn thấy cơ cấn W)."""
-    ap = chute_slide_aperture(width_open)
-    th = CHUTE_SLIDE_THETA_DEG
-    th_r = _deg2rad(th)
-    s = width_clamp_s(width_open)
-    x_car = s * math.cos(_deg2rad(TH_ADJ_DEG))
-    y_car = s * math.sin(_deg2rad(TH_ADJ_DEG))
-    x_ch = ap["r_outer"] * math.cos(th_r)
-    y_ch = ap["r_outer"] * math.sin(th_r)
-    z0 = CHUTE_SLIDE_RAIL_Z0
-    z1 = BAR_Z + 1.0
-    ln = math.hypot(x_ch - x_car, y_ch - y_car)
-    if ln < 4.0:
-        return Part.Shape()
-    mid_x = 0.5 * (x_car + x_ch)
-    mid_y = 0.5 * (y_car + y_ch)
-    hdg = math.degrees(math.atan2(y_ch - y_car, x_ch - x_car))
-    link = _place_oriented_box(ln, 3.0, max(4.0, z1 - z0), mid_x, mid_y, z0, hdg)
-    return _to_adj_frame(_refine(_enforce_disc_clearance(link)))
-
-
 def inlet_throat_params(width_open: float) -> dict:
     """Họng đầu vào — W chỉnh độ hẹp; máng trượt CHUTE_W_MM trên ray bát."""
     w = _clamp(width_open, WIDTH_MIN, WIDTH_MAX)
@@ -912,18 +891,69 @@ def height_scraper_z(height_open: float) -> float:
     return GAP0 + _clamp(height_open, HEIGHT_MIN, HEIGHT_MAX)
 
 
-def width_clamp_r(width_open: float) -> float:
-    return width_clamp_s(width_open)
+def entry_gate_geo(height_open: float) -> dict:
+    """Toạ độ then chốt của cụm cửa chỉnh chiều cao 11h (nguồn sự thật cho CAD
+    lẫn verify). H = khe hở dưới TRẦN barrier = chiều cao vật lọt vào máng."""
+    h = _clamp(height_open, HEIGHT_MIN, HEIGHT_MAX)
+    z_roof0 = height_scraper_z(h)  # đáy trần
+    z_roof1 = z_roof0 + GATE_ROOF_T
+    z_wall1 = z_roof1 + GATE_WALL_H_MM
+    # Cột nối dài CỐ ĐỊNH: chọn theo H_MIN để bụng tay với luôn vượt vành bát.
+    stem_len = GATE_ARM_CLEAR_Z - (height_scraper_z(HEIGHT_MIN) + GATE_ROOF_T)
+    z_arm0 = z_roof1 + stem_len
+    r_mid = 0.5 * (GATE_R_IN + GATE_R_OUT)
+    d_roof = math.degrees(GATE_ROOF_ALONG_MM / GATE_R_OUT)
+    d_wall = math.degrees(GATE_WALL_T / GATE_R_OUT)
+    d_stem = math.degrees(GATE_STEM_ALONG / GATE_R_OUT)
+    th1 = GATE_TH_DEG            # mép SAU (hạ lưu) — sát đầu Inner_Lane_Rail
+    th0 = th1 - d_roof           # mép ĐÓN vật (thượng lưu) — chỗ tấm đứng
+    return {
+        "H": h,
+        "th_gate_deg": GATE_TH_DEG,
+        "th_roof0_deg": th0,
+        "th_roof1_deg": th1,
+        "th_wall1_deg": th0 + d_wall,
+        "th_stem0_deg": th0 + d_wall,
+        "th_stem1_deg": th0 + d_wall + d_stem,
+        "th_center_deg": 0.5 * (th0 + th1),
+        "rail_tip_min_deg": _RAIL_TIP_TH_DEG,
+        "r_in_mm": GATE_R_IN,
+        "r_out_mm": GATE_R_OUT,
+        "r_mid_mm": r_mid,
+        "top_view_w_mm": GATE_W_MM,
+        "roof_along_mm": GATE_ROOF_ALONG_MM,
+        "roof_deg": d_roof,
+        "wall_deg": d_wall,
+        "stem_deg": d_stem,
+        "z_roof0_mm": z_roof0,
+        "z_roof1_mm": z_roof1,
+        "z_wall1_mm": z_wall1,
+        "z_arm0_mm": z_arm0,
+        "z_arm1_mm": z_arm0 + GATE_ARM_T,
+        "z_collar0_mm": z_arm0 - 0.5 * (GATE_COLLAR_H - GATE_ARM_T),
+        "z_collar1_mm": z_arm0 + 0.5 * (GATE_COLLAR_H + GATE_ARM_T),
+        "stem_len_mm": stem_len,
+        "travel_mm": H_TRAVEL,
+        "clear_h_mm": z_roof0 - DISC_TOP_Z,
+        "eq_H": "H = z_roof0 - GAP0 (khe dưới trần)",
+        "check_H_from_z": abs((z_roof0 - GAP0) - h) < 1e-9,
+        "check_outer_edge_on_rim": abs(GATE_R_OUT - (DISC_R - CHUTE_DISC_GUIDE_CLEAR)) < 1e-9,
+        "check_top_view_w": abs((GATE_R_OUT - GATE_R_IN) - GATE_W_MM) < 1e-9,
+        "collar_above_bowl": (z_arm0 - 0.5 * (GATE_COLLAR_H - GATE_ARM_T)) > BOWL_Z0 + BOWL_H,
+    }
 
 
 def adjust_pose_math(width_open: float, height_open: float) -> dict:
-    """Closed-form pose — source of truth for CAD + verify."""
+    """Closed-form pose — nguồn sự thật cho CAD + verify.
+
+    W: kéo Inner_Lane_Rail xuyên tâm trên 2 ray T của Chute_Slide (1 mm = 1 mm).
+    H: hạ/nâng Entry_Gate_Slider trên ray T đứng ở 11h (1 mm = 1 mm)."""
     ap = chute_slide_aperture(width_open)
-    throat = inlet_throat_params(width_open)
-    w = throat["throat_w_mm"]
+    w = _clamp(width_open, WIDTH_MIN, WIDTH_MAX)
     h = _clamp(height_open, HEIGHT_MIN, HEIGHT_MAX)
-    s = width_clamp_s(width_open)
-    z1 = height_scraper_z(height_open)
+    g = entry_gate_geo(h)
+    s = inner_lane_slide_x(w)
+    z1 = g["z_roof0_mm"]
     return {
         "W": w,
         "H": h,
@@ -932,14 +962,12 @@ def adjust_pose_math(width_open: float, height_open: float) -> dict:
         "s_mm": round(s, 6),
         "r_inner_mm": ap["r_inner"],
         "r_outer_mm": ap["r_outer"],
-        "throat_r_in_mm": round(throat["r_in_mm"], 6),
-        "throat_r_out_mm": round(throat["r_out_mm"], 6),
-        "z_scraper_mm": round(z1, 6),
-        "theta_adj_deg": TH_ADJ_DEG,
-        "eq_W": "W = inlet throat + chute slide on bowl rails",
-        "eq_H": "H = z_scraper - GAP0",
-        "eq_s": "s = CHANNEL_R_OUTER - W (carriage slide)",
-        "check_W_from_s": abs((CHANNEL_R_OUTER - s) - w) < 1e-9,
+        "z_gate_roof_mm": round(z1, 6),
+        "z_gate_arm_mm": round(g["z_arm0_mm"], 6),
+        "theta_gate_deg": GATE_TH_DEG,
+        "eq_W": "s = W_MAX - W (rail truot tren ray T Chute_Slide)",
+        "eq_H": "H = z_roof0 - GAP0 (khe duoi tran barrier)",
+        "check_W_from_s": abs((W_MAX - s) - w) < 1e-9,
         "check_H_from_z": abs((z1 - GAP0) - h) < 1e-9,
         "check_chute_slides": abs(ap["slide_mm"] - (W_MAX - w)) < 1e-9,
     }
@@ -1026,8 +1054,9 @@ def _enforce_disc_clearance(shape: Part.Shape, z_min: float = GAP0) -> Part.Shap
     return shape
 
 
-def _to_adj_frame(shape: Part.Shape) -> Part.Shape:
-    shape.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), TH_ADJ_DEG)
+def _to_gate_frame(shape: Part.Shape) -> Part.Shape:
+    """Local: +x = xuyên tâm, +y = xuôi dòng (CCW) → đặt về mép đón vật của cửa."""
+    shape.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), GATE_FRAME_TH_DEG)
     return _refine(shape)
 
 
@@ -1041,171 +1070,6 @@ BOWL_SLOT_AFTER_EXIT_DEG = math.degrees(math.atan2(_S_BOWL_EXIT, max(1.0, _R_LAN
 
 BOWL_SLOT_TH0_DEG = THETA_EXIT_DEG - BOWL_SLOT_BEFORE_EXIT_DEG
 BOWL_SLOT_TH1_DEG = THETA_EXIT_DEG + BOWL_SLOT_AFTER_EXIT_DEG
-
-
-def _inlet_wing_stepped(
-    r_wall: float,
-    r_throat: float,
-    th_deg: float,
-    y_back: float,
-    y_fwd: float,
-    z0: float,
-    h_wall: float,
-    h_throat: float,
-) -> Part.Shape:
-    """Cánh vát dạng bậc: cao ở mép lane, thấp ở mép họng."""
-    r_lo, r_hi = min(r_wall, r_throat), max(r_wall, r_throat)
-    length = r_hi - r_lo
-    if length < 0.55 or h_throat < 1.0 or h_wall < h_throat + 0.5:
-        return Part.Shape()
-    th_r = _deg2rad(th_deg)
-    tx, ty = -math.sin(th_r), math.cos(th_r)
-    y_mid = 0.5 * (y_back + y_fwd)
-    along = y_fwd - y_back
-
-    def _at(r_c: float, ln: float, h: float, dz: float = 0.0) -> Part.Shape:
-        cx = r_c * math.cos(th_r) + y_mid * tx
-        cy = r_c * math.sin(th_r) + y_mid * ty
-        return _place_oriented_box(ln, along, h, cx, cy, z0 + dz, th_deg)
-
-    r_mid = 0.5 * (r_lo + r_hi)
-    base = _at(r_mid, length, h_throat)
-    shelf_len = max(1.2, 0.62 * length)
-    if abs(r_wall - r_lo) < 0.05:
-        r_shelf = r_lo + 0.5 * shelf_len
-    else:
-        r_shelf = r_hi - 0.5 * shelf_len
-    shelf = _at(r_shelf, shelf_len, h_wall - h_throat, h_throat)
-    try:
-        body = base.fuse(shelf)
-        return _refine(body) if _shape_ok(body, 6.0) else Part.Shape()
-    except Exception:
-        return Part.Shape()
-
-
-def _inlet_upstream_chamfer(body: Part.Shape, th_deg: float, r_in: float, r_out: float) -> Part.Shape:
-    """Vát mặt upstream (−θ) — tránh viên đọng trước họng."""
-    if body is None or getattr(body, "isNull", lambda: True)():
-        return body
-    th = _deg2rad(th_deg)
-    ct, st = math.cos(th), math.sin(th)
-    y_back = -INLET_DEFLECTOR_UPSTREAM
-    r_mid = 0.5 * (r_in + r_out)
-    cx = r_mid * ct - y_back * st
-    cy = r_mid * st + y_back * ct
-    chamfer_h = 0.55 * CHUTE_WALL_H_MM
-    cutter = _box(48.0, 10.0, chamfer_h, -24.0, -2.0, GAP0 + CHUTE_WALL_H_MM - 0.6)
-    cutter.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), th_deg - 35.0)
-    cutter.translate(App.Vector(cx, cy, 0))
-    try:
-        cut = body.cut(cutter)
-        if _shape_ok(cut, 0.55 * float(getattr(body, "Volume", 1.0) or 1.0)):
-            return _refine(cut)
-    except Exception:
-        pass
-    return body
-
-
-def make_inlet_deflector(width_open: float) -> Part.Shape:
-    """Phễu vát 2 bên trong khe Guide→lane (θ < θ_mouth) — họng W, tách khỏi máng."""
-    p = inlet_throat_params(width_open)
-    # Đặt trong khe Guide (θ≈72°) → miệng lane (θ=90°), không dính máng
-    z0 = GAP0
-    h_wall = CHUTE_WALL_H_MM - 3.0
-    bevel = math.radians(INLET_DEFLECTOR_BEVEL_DEG)
-    th0 = GUIDE_TH1 + 2.0
-    th1 = THETA_MOUTH_DEG - 11.0
-    span_in = max(1.2, p["r_in_mm"] - (GUIDE_R1 + 2.0))
-    span_out = max(1.2, (CHANNEL_R_OUTER - 2.0) - p["r_out_mm"])
-    h_throat_in = max(5.0, h_wall - span_in * math.tan(bevel))
-    h_throat_out = max(5.0, h_wall - span_out * math.tan(bevel))
-
-    def _bevel_pair(r_wall: float, r_throat: float, h_wall_side: float, h_throat_side: float) -> Part.Shape:
-        r_lo, r_hi = min(r_wall, r_throat), max(r_wall, r_throat)
-        if r_hi - r_lo < 0.55:
-            return Part.Shape()
-        base = _annular_sector(r_lo, r_hi, th0, th1, z0, h_throat_side, n=14)
-        shelf_frac = 0.58
-        if abs(r_wall - r_lo) < 0.05:
-            rs, re = r_lo, r_lo + shelf_frac * (r_hi - r_lo)
-        else:
-            re, rs = r_hi, r_hi - shelf_frac * (r_hi - r_lo)
-        if re - rs < 0.45:
-            return _refine(base)
-        shelf = _annular_sector(rs, re, th0, th1, z0 + h_throat_side, h_wall_side - h_throat_side, n=10)
-        try:
-            body = base.fuse(shelf)
-            return _refine(body) if _shape_ok(body, 8.0) else _refine(base)
-        except Exception:
-            return _refine(base)
-
-    inner = _bevel_pair(GUIDE_R1 + 2.0, p["r_in_mm"], h_wall, h_throat_in)
-    outer = _bevel_pair(CHANNEL_R_OUTER - 2.0, p["r_out_mm"], h_wall, h_throat_out)
-    body = inner
-    for wing in (outer,):
-        if wing is None or getattr(wing, "isNull", lambda: True)():
-            continue
-        try:
-            fused = body.fuse(wing)
-            if _shape_ok(fused, 0.4 * float(getattr(body, "Volume", 1.0) or 1.0)):
-                body = fused
-        except Exception:
-            pass
-    if body is None or getattr(body, "isNull", lambda: True)():
-        return Part.Shape()
-    body = _inlet_upstream_chamfer(body, th0 + 2.0, p["r_in_mm"], p["r_out_mm"])
-    return _refine(_enforce_disc_clearance(body))
-
-
-def make_crossbar_bridge() -> Part.Shape:
-    """Thanh ngang BẮC QUA đĩa: ray T chỉnh W + slot H. Phễu họng nằm trên Width_Carriage."""
-    half = BOWL_OR + 28.0
-    bar = _box(2.0 * half, BAR_W, BAR_T, -half, -0.5 * BAR_W, BAR_Z)
-    tongue_half = 0.5 * (CLAMP_L - 10.0)
-    slot_x0 = S_AT_WMAX - tongue_half - 3.0
-    slot_len = (S_AT_WMIN + tongue_half + 3.0) - slot_x0
-    bar = bar.cut(
-        _box(slot_len, BAR_SLOT_W, BAR_T + 2.0, slot_x0, -0.5 * BAR_SLOT_W, BAR_Z - 1.0)
-    )
-    rail_x0 = S_AT_WMAX - 6.0
-    rail_len = (S_AT_WMIN + 6.0) - rail_x0
-    neck = _box(rail_len, SLIDE_W_NECK, SLIDE_W_H, rail_x0, -0.5 * SLIDE_W_NECK, BAR_Z + BAR_T)
-    rail_flange_t = 2.4
-    top = _box(
-        rail_len, SLIDE_W_TOP, rail_flange_t,
-        rail_x0, -0.5 * SLIDE_W_TOP, BAR_Z + BAR_T + SLIDE_W_H - rail_flange_t,
-    )
-    stop_t = 4.0
-    stop_a = _box(
-        stop_t, SLIDE_W_TOP + 4.0, SLIDE_W_H + 3.0,
-        S_AT_WMAX - 0.5 * CLAMP_L - stop_t,
-        -0.5 * (SLIDE_W_TOP + 4.0), BAR_Z + BAR_T,
-    )
-    stop_b = _box(
-        stop_t, SLIDE_W_TOP + 4.0, SLIDE_W_H + 3.0,
-        S_AT_WMIN + 0.5 * CLAMP_L,
-        -0.5 * (SLIDE_W_TOP + 4.0), BAR_Z + BAR_T,
-    )
-    post_p = _box(14.0, 14.0, POST_H, half - 16.0, -7.0, 0.0)
-    post_m = _box(14.0, 14.0, POST_H, -half + 2.0, -7.0, 0.0)
-    body = bar.fuse(neck).fuse(top).fuse(stop_a).fuse(stop_b)
-    body = body.fuse(post_p).fuse(post_m)
-    post_xy = [(half - 9.0, 0.0), (-half + 9.0, 0.0)]
-    body = _cut_m3_z(body, post_xy, -1.0, 8.0, cbore_top=6.0)
-    return _to_adj_frame(_enforce_disc_clearance(body))
-
-
-def make_scale_width() -> Part.Shape:
-    """Vạch W nằm ngoài carriage (không nằm trên ray T / xuyên khối trượt)."""
-    y0 = 0.5 * CLAMP_W + 1.2
-    marks = []
-    for dw in range(0, int(W_TRAVEL) + 1, 2):
-        s = S_AT_WMAX + dw
-        marks.append(_box(0.6, 5.0, 1.3, s - 0.3, y0, BAR_Z + BAR_T))
-    body = marks[0]
-    for m in marks[1:]:
-        body = body.fuse(m)
-    return _to_adj_frame(body)
 
 
 def _dedupe_xy(pts_xy: list[tuple[float, float]], eps: float = 0.12) -> list[tuple[float, float]]:
@@ -1359,7 +1223,7 @@ def _funnel_params(width_open: float) -> dict | None:
     r_cline = r_i - 0.5 * RAIL_T
     r0 = GUIDE_R1 + 1.2
     th0 = GUIDE_TH1 + 2.5
-    # Dừng trước thành đứng scraper (θ_mouth−7°) — không cắt Height_Scraper
+    # Dừng trước cửa chỉnh chiều cao — không cắt Entry_Gate_*
     th1 = THETA_MOUTH_DEG - 8.5
     if r_cline <= r0 + 0.8 or th1 <= th0 + 0.5:
         return None
@@ -1582,36 +1446,6 @@ def _rail_pill_clearance_cut(width_open: float) -> Part.Shape:
     return _refine(cut_arc.fuse(cut_line))
 
 
-def make_scale_height(width_open: float) -> Part.Shape:
-    s = width_clamp_s(width_open)
-    marks = []
-    for dh in range(0, int(H_TRAVEL) + 1, 2):
-        z = GAP0 + H_MIN + dh
-        marks.append(_box(1.2, 6.0, 0.6, s + H_RAIL_TOP + 5.0, 0.5 * CLAMP_W + 2.0, z))
-    body = marks[0]
-    for m in marks[1:]:
-        body = body.fuse(m)
-    return _to_adj_frame(body)
-
-
-def make_screws(width_open: float, height_open: float) -> list:
-    """Bu-lông kẹp núm vặn lớn (thay lò xo tì trước đây) — cả 2 thanh tịnh tiến
-    (Width_Carriage=ngang, Height_Scraper=dọc) đều siết bằng bu-lông phương NGANG
-    (trục Y), đặt ở độ cao thấp trong lòng đĩa. Vị trí bám theo carriage/slider nên
-    LUÔN nằm đúng trên ray T dù trượt tới đâu trong dải W_MIN..W_MAX / H_MIN..H_MAX
-    (ray liền suốt hành trình). Xem _width_bolt_sites()/_height_bolt_site()."""
-    _ = height_open
-    s = width_clamp_s(width_open)
-    out = []
-    for site in _width_bolt_sites(s):
-        sh = _knob_bolt_along(site["knob_origin"], site["axis"], site["shank_len"])
-        out.append((site["name"], _refine(_to_adj_frame(sh))))
-    h_site = _height_bolt_site(s)
-    sh = _knob_bolt_along(h_site["knob_origin"], h_site["axis"], h_site["shank_len"])
-    out.append((h_site["name"], _refine(_to_adj_frame(sh))))
-    return out
-
-
 def make_lane_entrance_marker() -> Part.Shape:
     """
     Khung hồng — HỌNG VÀO lane nhìn từ Top.
@@ -1656,26 +1490,53 @@ def make_exit_track(width_open: float, height_open: float) -> Part.Shape:
     return Part.Shape()
 
 
+def rim_leave_y_mm(width_open: float) -> float:
+    """|y| chỗ tâm viên rời đĩa: đi tiếp tuyến từ (−r_lane, 0) tới r = DISC_R."""
+    ap = aperture_from_opens(width_open, H_MAX)
+    r_lane = 0.5 * (ap["r_inner"] + ap["r_outer"])
+    return math.sqrt(max(0.0, DISC_R ** 2 - r_lane ** 2))
+
+
+def ramp_catch_run_mm() -> float:
+    """Máng phải chạy đủ xa theo −Y để hứng cả viên rời đĩa muộn nhất (W lớn)."""
+    return rim_leave_y_mm(W_MAX) + RAMP_CATCH_MARGIN
+
+
 def ramp_geo(width_open: float, height_open: float) -> dict:
-    """Máng nghiêng 40°: mép đĩa 9 giờ, tiếp tuyến −Y (Front), có đáy."""
+    """Máng nghiêng 40°, đổ −Y (ra Front), có đáy.
+
+    Cạnh TRÁI của lòng máng = đường tiếp tuyến mép đĩa tại 9 giờ (x = −DISC_R);
+    lòng máng rộng CHUTE_W_MM chạy vào PHÍA TRONG (luồn dưới đĩa, cách đáy đĩa
+    RAMP_DISC_GAP). Viên rời đĩa ở x ∈ [−DISC_R, −r_lane_min] nên rơi thẳng
+    xuống lòng máng.
+    """
     _ = width_open, height_open
     ux, uy = 0.0, -1.0
-    x0, y0 = -DISC_R, 0.0
+    x0, y0 = -DISC_R, 0.0  # cạnh trái lòng máng, ngay mép đĩa
     a = _deg2rad(RAMP_ANGLE_DEG)
-    run = RAMP_LEN * math.cos(a)
-    drop = RAMP_LEN * math.sin(a)
+    run = ramp_catch_run_mm()
+    L = run / math.cos(a)
+    drop = L * math.sin(a)
     w = CHUTE_W_MM
+    z0 = DISC_TOP_Z - DISC_T - RAMP_DISC_GAP  # luồn dưới đĩa
     return {
         "s_cross_mm": 0.0,
         "start_xy": (x0, y0),
-        "start_z": GAP0,
+        "start_z": z0,
+        "center_xy": (x0 + 0.5 * w, y0),  # tâm lòng máng (đo bề rộng ở đây)
         "end_xy": (x0 + run * ux, y0 + run * uy),
-        "end_z": GAP0 - drop,
+        "end_z": z0 - drop,
         "dir_xy": (ux, uy),
         "run_mm": run,
+        "len_mm": L,
         "drop_mm": drop,
         "angle_deg": RAMP_ANGLE_DEG,
         "lumen_w_mm": w,
+        "lumen_x_mm": (x0, x0 + w),
+        "left_edge_x_mm": x0,
+        "left_edge_on_rim": abs(x0 + DISC_R) < 1e-9,
+        "rim_leave_y_mm": (rim_leave_y_mm(W_MIN), rim_leave_y_mm(W_MAX)),
+        "under_disc_gap_mm": RAMP_DISC_GAP,
         "wall_h_mm": CHUTE_WALL_H_MM,
         "slides": math.tan(a) > MU_WALL,
         "self_lock_deg": math.degrees(math.atan(MU_WALL)),
@@ -1686,22 +1547,32 @@ def ramp_geo(width_open: float, height_open: float) -> dict:
 
 
 def make_bowl_exit_chute(_width_open: float | None = None, _height_open: float | None = None) -> Part.Shape:
-    """Máng nghiêng 40° có đáy — child của Bowl_Tube, bắt đầu 9 giờ ra Front."""
+    """Máng nghiêng 40° có đáy — child của Bowl_Tube, cạnh trái trùng mép đĩa 9h.
+
+    Dựng ở gốc: +x = dọc máng (chưa nghiêng), +y = hướng vào TÂM đĩa sau khi
+    quay. Lòng máng y ∈ [0, w]; vách trái (ngoài mép đĩa) y ∈ [−t, 0] nên MẶT
+    TRONG của nó nằm đúng x = −DISC_R sau khi đặt.
+    """
     g = ramp_geo(W_MAX, CHUTE_WALL_H_MM)
     w = g["lumen_w_mm"]
     t = RAMP_WALL_T
     ft = RAMP_FLOOR_T
     h = g["wall_h_mm"]
-    L = RAMP_LEN
-    floor = _box(L, w, ft, 0.0, -w, -ft)
-    wall_in = _box(L, t, h, 0.0, -t, 0.0)
-    wall_out = _box(L, t, h, 0.0, -w - t, 0.0)
-    body = floor.fuse(wall_in).fuse(wall_out)
+    L = g["len_mm"]
+    floor = _box(L, w + 2.0 * t, ft, 0.0, -t, -ft)
+    wall_left = _box(L, t, h, 0.0, -t, 0.0)  # phía ngoài mép đĩa
+    wall_right = _box(L, t, h, 0.0, w, 0.0)  # phía tâm đĩa
+    body = floor.fuse(wall_left).fuse(wall_right)
     body.rotate(App.Vector(0, 0, 0), App.Vector(0, 1, 0), RAMP_ANGLE_DEG)
     body.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), -90.0)
     x0, y0 = g["start_xy"]
     body.translate(App.Vector(x0, y0, g["start_z"]))
-    keep_out = _cyl_z(2.0 * DISC_R + 0.8, 400.0, 0.0, 0.0, -200.0)
+    # Keep-out = BAO ĐĨA (không phải cả trụ vô hạn như trước): máng được phép
+    # luồn DƯỚI đĩa, chỉ không được chạm đĩa. Đáy keep-out = mặt máng tại 9h nên
+    # sàn máng không bị cắt; phần vách nhô lên trong lòng đĩa thì bị gọt đi.
+    keep_out = _cyl_z(
+        2.0 * (DISC_R + DISC_RADIAL_CLEAR), 400.0, 0.0, 0.0, g["start_z"],
+    )
     try:
         cut = body.cut(keep_out)
         if _shape_ok(cut, 200.0):

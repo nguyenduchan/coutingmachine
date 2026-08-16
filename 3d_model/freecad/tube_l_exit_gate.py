@@ -12,18 +12,17 @@ Kiến trúc (đáy HỞ — đĩa đẩy vật bằng lực tiếp tuyến):
   Rotor_Disc          — đĩa quay phẳng                         [part_rotor_disc.py]
   Bowl_Tube           — thành bao xung quanh đĩa (outer wall)  [part_bowl_tube.py]
   Guide_System        — vách điều hướng (T-spiral hub→vành)    [part_guide_system.py]
-  Width_Carriage      — thanh tịnh tiến ngang (ray T, chỉnh W)  [part_width_carriage.py]
+  Entry_Gate_Post     — trụ cố định + ray T ĐỨNG ở đầu máng vào  [part_entry_gate.py]
   Inner_Lane_Rail     — vách điều chỉnh độ rộng (W)             [part_inner_lane_rail.py]
   Chute_Slide         — 2 thanh ngang 8h/10h nối thành đĩa      [part_chute_slide.py]
-  Height_Scraper wall — vách điều chỉnh độ cao (H)              [part_height_wall.py]
-  Height_Scraper slider — thanh tịnh tiến dọc (ray T, chỉnh H)  [part_height_slider.py]
-  Crossbar_Bridge     — thanh ngang có slot, bắc qua đĩa        [mech_common.py]
+  Entry_Gate_Slider   — thanh tịnh tiến ĐỨNG (chỉnh H)          [part_entry_gate.py]
+  Entry_Gate_Barrier  — barrier chữ L chặn chiều cao vào máng    [part_entry_gate.py]
   Exit_Track          — máng sát cuối lane; θ=180° đổ −Y ra Front [mech_common.py]
 
 THAO TÁC CHỈNH (bu-lông núm vặn lớn, phương ngang, trong lòng đĩa — không còn lò xo):
-  W: nới 2 bu-lông Screw_Width trên má kẹp Width_Carriage → trượt xuyên tâm
+  W: kéo Inner_Lane_Rail trên 2 ray T của Chute_Slide → trượt xuyên tâm
      vào tâm = W↑ | ra vành = W↓ | 1 mm = 1 mm W
-  H: nới bu-lông Screw_Height trên vòng ôm slider → nâng/hạ Height_Scraper
+  H: nới Screw_Gate_H trên vòng ôm → nâng/hạ cụm barrier ở đầu máng vào
      lên = H↑ | xuống = H↓ | 1 mm = 1 mm H
 """
 from __future__ import annotations
@@ -61,15 +60,16 @@ from mech_common import *  # noqa: F401,F403
 from part_rotor_disc import make_rotor_disc, make_hub_body
 from part_bowl_tube import make_bowl_tube, make_bowl_tube_complete
 from part_guide_system import make_guide_system
-from part_width_carriage import make_width_clamp, make_width_carriage
 from part_inner_lane_rail import make_inner_lane_rail_body, make_reject_wiper, make_inner_lane_rail
-from part_height_wall import make_height_wall
-from part_height_slider import make_height_slider, make_height_scraper
+from part_entry_gate import (
+    make_entry_gate_barrier, make_entry_gate_slider, make_entry_gate_post,
+    build_entry_gate_parts, entry_gate_bolt_site,
+)
 from part_chute_slide import make_chute_slide
 
 
 # 4 ham duoi day goi truc tiep vao cac ham part_*.py (make_guide_system,
-# make_inner_lane_rail_body, make_reject_wiper, make_height_scraper, make_inner_lane_rail)
+# make_inner_lane_rail_body, make_reject_wiper, make_inner_lane_rail)
 # — chuyen tu mech_common.py sang day de tranh vong lap import (mech_common khong
 # duoc phep goi nguoc vao part_*.py, xem docstring mech_common.py).
 def make_center_director() -> Part.Shape:
@@ -89,7 +89,7 @@ def _sample_pill_along_arc(D, T, W, H, n=8) -> dict:
     # Viên trong lane chỉ so tường rail — Reject_Wiper cố ý chặn phía tâm
     rail = make_inner_lane_rail_body(W)
     reject = make_reject_wiper(W)
-    scraper = make_height_scraper(W, H)
+    scraper = make_entry_gate_barrier(H)
     jam_r = jam_s = out = 0
     for i in range(n):
         th = THETA_MOUTH_DEG + (THETA_EXIT_DEG - THETA_MOUTH_DEG) * (i / max(1, n - 1))
@@ -130,55 +130,51 @@ def _sample_pill_along_arc(D, T, W, H, n=8) -> dict:
 
 
 def make_l_gate(w, h):
-    return make_inner_lane_rail(w).fuse(make_height_scraper(w, h))
+    return make_inner_lane_rail(w).fuse(make_entry_gate_barrier(h))
 
 
 def adjust_howto() -> dict:
     return {
         "overview": (
-            "Ray trượt chữ T: Crossbar có ray W cố định; Width_Carriage trượt xuyên tâm (=W); "
-            "cột ray H trên carriage; Height_Scraper trượt đứng (=H). Guide_System cố định."
+            "W: kéo Inner_Lane_Rail xuyên tâm trên 2 ray T của Chute_Slide (8h/10h). "
+            "H: hạ/nâng Entry_Gate_Slider trên ray T ĐỨNG của Entry_Gate_Post ở đầu "
+            "máng vào — barrier chữ L treo dưới, khe dưới trần = H. Guide_System cố định."
         ),
         "anti_play": {
-            "width_t_rail": "Carriage ôm ray T trên Crossbar — chống nhấc/xoay",
-            "width_dual_screws": "Siết đều Screw_Width_1/_2 (bu-lông núm vặn, phương ngang) sau khi chỉnh",
-            "height_t_rail": "Slider H ôm cột T trên carriage — chống nghiêng",
-            "height_lock_screw": "Screw_Height (bu-lông núm vặn, phương ngang) siết ép vòng ôm vào mặt bích ray H",
-            "width_bolt_clamp": (
-                "2 bu-lông núm vặn lớn xuyên má kẹp (phương ngang, trục Y) ép trực tiếp "
-                "vào ray T của Crossbar — không còn lò xo, siết tay là khóa cứng vị trí"
-            ),
-            "height_bolt_clamp": (
-                "1 bu-lông núm vặn lớn xuyên vòng ôm slider H (phương ngang, trục Y) ép "
-                "vào mặt bích H_RAIL_TOP — không còn lò xo, siết tay là khóa cứng vị trí"
+            "height_t_rail": "Vòng ôm chữ C ôm bích ray T đứng — chống nghiêng/xoay",
+            "height_lock_screw": (
+                "Screw_Gate_H (bu-lông núm vặn, phương ngang) siết vòng ôm ép vào bích "
+                "ray T — siết tay là khóa cứng vị trí, không dùng lò xo"
             ),
             "print_tips": [
-                "Fit ray T ~0.2–0.3 mm (PETG)",
-                "Heat-set insert M3 trên má kẹp/vòng ôm (bu-lông ren M3, núm lớn Ø11mm siết tay)",
-                "Siết đều 2 bu-lông W + 1 bu-lông H trước khi chạy đĩa",
+                "Fit ray T ~0.25 mm (PETG)",
+                "Heat-set insert M3 trên vòng ôm + 2×M3 bắt chân trụ vào vành bát",
+                "Siết bu-lông H trước khi chạy đĩa",
             ],
         },
         "width": {
-            "part": "Width_Carriage trên Slide_Rail_W (Crossbar_Bridge)",
-            "screws": ["Screw_Width_1", "Screw_Width_2"],
-            "rail": "T-rail xuyên tâm trên Crossbar",
-            "math": "s = CHANNEL_R_OUTER - W; slide toward center => W up",
-            "move_inboard_toward_center": "W increases (1 mm slide = 1 mm W)",
-            "move_outboard": "W decreases",
+            "part": "Inner_Lane_Rail trượt trên 2 ray T của Chute_Slide",
+            "rail": "2 thanh T tại 8h/10h",
+            "math": "s = W_MAX - W (dịch +X); ra vành = W lên",
             "range_mm": [W_MIN, W_MAX],
             "travel_mm": W_TRAVEL,
-            "s_at_Wmax_mm": S_AT_WMAX,
-            "s_at_Wmin_mm": S_AT_WMIN,
         },
         "height": {
-            "part": "Height_Scraper trên ray H của Width_Carriage",
-            "screws": ["Screw_Height"],
-            "rail": "vertical T-rail on Width_Carriage",
-            "math": "z = GAP0 + H; raise scraper => H up",
+            "part": "Entry_Gate_Slider + Entry_Gate_Barrier trên Entry_Gate_Post",
+            "screws": ["Screw_Gate_H"],
+            "rail": "ray T ĐỨNG ngoài vành bát tại đầu máng vào",
+            "math": "z_roof0 = GAP0 + H; nâng cụm => H lên",
             "move_up": "H increases (1 mm = 1 mm H)",
             "move_down": "H decreases",
             "range_mm": [H_MIN, H_MAX],
             "travel_mm": H_TRAVEL,
+            "gate_theta_deg": GATE_TH_DEG,
+            "barrier_mm": {
+                "top_view_w": GATE_W_MM,
+                "roof_along": GATE_ROOF_ALONG_MM,
+                "wall_h": GATE_WALL_H_MM,
+                "outer_edge_r": GATE_R_OUT,
+            },
             "open_bottom": True,
         },
         "cad_preview": "WIDTH_OPEN / HEIGHT_OPEN in show_tube_l_exit_gate_gui.py",
@@ -335,15 +331,10 @@ def build_tube_l_exit_gate_parts(width_open: float = 8.5, height_open: float = 4
         ("Rotor_Disc", make_rotor_disc(), COLORS["disc"]),
         ("Hub_Body", make_hub_body(), COLORS["disc"]),
         ("Bowl_Tube", make_bowl_tube_complete(), COLORS["bowl"]),
-        ("Crossbar_Bridge", make_crossbar_bridge(), COLORS["bar"]),
-        ("Scale_Width", make_scale_width(), (0.95, 0.90, 0.15)),
-        ("Width_Carriage", make_width_carriage(w), COLORS["clamp"]),
-        ("Scale_Height", make_scale_height(w), (0.95, 0.90, 0.15)),
         ("Inner_Lane_Rail", make_inner_lane_rail(w), COLORS["rail"]),
         ("Chute_Slide", make_chute_slide(), COLORS["slide"]),
-        ("Height_Scraper", make_height_scraper(w, h), COLORS["height"]),
         ("Guide_System", make_guide_system(), COLORS["guide"]),
-    ]
+    ] + list(build_entry_gate_parts(h))
     # Holes only — do not add Screw_* solids (M3 hardware is not modelled)
     return parts
 
@@ -359,10 +350,10 @@ def verify_tube_l_exit_gate(
     mouth = mouth_geometry()
 
     # --- closed-form math ---
-    math_ok = all([pose["check_W_from_s"], pose["check_H_from_z"], pose["check_s_eq_rin"]])
-    map_w = abs(width_clamp_s(W_MIN) - width_clamp_s(W_MAX) - W_TRAVEL) < 1e-9
+    math_ok = all([pose["check_W_from_s"], pose["check_H_from_z"], pose["check_chute_slides"]])
+    map_w = abs(inner_lane_slide_x(W_MIN) - inner_lane_slide_x(W_MAX) - W_TRAVEL) < 1e-9
     map_h = abs(height_scraper_z(H_MAX) - height_scraper_z(H_MIN) - H_TRAVEL) < 1e-9
-    mono_w = width_clamp_s(W_MIN) > width_clamp_s(W_MAX)
+    mono_w = inner_lane_slide_x(W_MIN) > inner_lane_slide_x(W_MAX)
     mono_h = height_scraper_z(H_MAX) > height_scraper_z(H_MIN)
     indep_h = abs(aperture_from_opens(W_MIN, height_open)["height_mm"] - aperture_from_opens(W_MAX, height_open)["height_mm"]) < 1e-9
     indep_w = abs(aperture_from_opens(width_open, H_MIN)["width_mm"] - aperture_from_opens(width_open, H_MAX)["width_mm"]) < 1e-9
@@ -372,20 +363,20 @@ def verify_tube_l_exit_gate(
     for ww in _grid(W_MIN, W_MAX, 2.0):
         for hh in (H_MIN, height_open, H_MAX):
             p = adjust_pose_math(ww, hh)
-            table.append({"W": ww, "H": hh, "s": p["s_mm"], "z": p["z_scraper_mm"], "ok": p["check_W_from_s"] and p["check_H_from_z"]})
+            table.append({"W": ww, "H": hh, "s": p["s_mm"], "z": p["z_gate_roof_mm"], "ok": p["check_W_from_s"] and p["check_H_from_z"]})
     table_ok = all(r["ok"] for r in table)
 
     disc = make_rotor_disc()
     bowl = make_bowl_tube()
-    bar = make_crossbar_bridge()
+    post = make_entry_gate_post()
     guide = make_guide_system()
 
     jam = {
-        "rail_disc": 0, "scraper_disc": 0, "clamp_disc": 0,
-        "rail_bowl": 0, "scraper_rail": 0,
+        "rail_disc": 0, "gate_disc": 0, "post_disc": 0,
+        "rail_bowl": 0, "gate_rail": 0,
         "funnel_rail": 0, "director_disc": 0, "director_rail": 0,
-        "director_funnel": 0, "rail_exit": 0, "clamp_bar_bad": 0,
-        "clamp_scale": 0, "scraper_carriage": 0, "scraper_bar": 0,
+        "director_funnel": 0, "rail_exit": 0,
+        "gate_post": 0, "gate_bowl": 0, "gate_guide": 0,
     }
     samples = 0
 
@@ -437,19 +428,28 @@ def verify_tube_l_exit_gate(
     w_sweep = list(_grid(W_MIN, W_MAX, 2.0)) + list(reversed(_grid(W_MIN, W_MAX, 2.0)))
     h_sweep = list(_grid(H_MIN, H_MAX, 2.0)) + list(reversed(_grid(H_MIN, H_MAX, 2.0)))
 
+    gate_cache: dict[float, Part.Shape] = {}
+
+    def _gate_at(hh: float) -> Part.Shape:
+        key = round(float(hh), 6)
+        if key not in gate_cache:
+            gate_cache[key] = _refine(
+                make_entry_gate_barrier(hh).fuse(make_entry_gate_slider(hh))
+            )
+        return gate_cache[key]
+
     for ww in w_sweep:
         samples += 1
         rail = make_inner_lane_rail(ww)  # wall + reject fused — một khối
-        scrap = make_height_scraper(ww, height_open)
-        clamp = make_width_clamp(ww)
+        gate = _gate_at(height_open)
         _hit(rail, disc, "rail_disc")
-        _hit(scrap, disc, "scraper_disc")
-        _hit(clamp, disc, "clamp_disc")
+        _hit(gate, disc, "gate_disc")
+        _hit(post, disc, "post_disc")
         _hit(rail, bowl, "rail_bowl")
-        _hit(scrap, make_inner_lane_rail_body(ww), "scraper_rail")
-        _hit(clamp, make_scale_width(), "clamp_scale")
-        _hit(scrap, clamp, "scraper_carriage")
-        _hit(scrap, bar, "scraper_bar")
+        _hit(gate, make_inner_lane_rail_body(ww), "gate_rail")
+        _hit(gate, post, "gate_post")
+        _hit(gate, bowl, "gate_bowl")
+        _hit(gate, guide, "gate_guide")
         # Bỏ qua chỉnh: không jam scrap↔reject/Guide (Guide cố định)
         _hit(guide, make_inner_lane_rail_body(ww), "funnel_rail", thr=80.0)
         # Guide↔rail tại W≈ENTRANCE_W: bàn giao họng — không tính jam
@@ -467,28 +467,30 @@ def verify_tube_l_exit_gate(
 
     for hh in h_sweep:
         samples += 1
-        rail = make_inner_lane_rail(width_open)
-        scrap = make_height_scraper(width_open, hh)
-        _hit(scrap, disc, "scraper_disc")
-        _hit(scrap, make_inner_lane_rail_body(width_open), "scraper_rail")
-        _hit(scrap, make_width_carriage(width_open), "scraper_carriage")
-        _hit(scrap, bar, "scraper_bar")
-        # scraper bottom may sit at GAP0 when H=0
+        gate = _gate_at(hh)
+        _hit(gate, disc, "gate_disc")
+        _hit(gate, make_inner_lane_rail_body(width_open), "gate_rail")
+        _hit(gate, post, "gate_post")
+        _hit(gate, bowl, "gate_bowl")
+        # trần barrier không được hạ dưới GAP0 (chạm đĩa)
         if height_scraper_z(hh) < GAP0 - 1e-9:
-            jam["scraper_disc"] += 1
+            jam["gate_disc"] += 1
 
     for ww, hh in ((W_MIN, H_MIN), (W_MIN, H_MAX), (W_MAX, H_MIN), (W_MAX, H_MAX), (width_open, height_open)):
         samples += 1
         rail = make_inner_lane_rail(ww)
-        scrap = make_height_scraper(ww, hh)
+        gate = _gate_at(hh)
         _hit(rail, disc, "rail_disc")
-        _hit(scrap, disc, "scraper_disc")
-        _hit(scrap, make_inner_lane_rail_body(ww), "scraper_rail")
+        _hit(gate, disc, "gate_disc")
+        _hit(gate, make_inner_lane_rail_body(ww), "gate_rail")
 
     jam_hits = sum(v for k, v in jam.items() if k != "rail_exit")
     # rail↔exit có tiếp xúc khớp miệng (cố ý); rail_exit chỉ cảnh báo xâm lấn cánh
     open_bottom = True
-    hand_top = BAR_Z >= H_MAX + 10.0
+    gate_geo_lo = entry_gate_geo(H_MIN)
+    gate_geo_hi = entry_gate_geo(H_MAX)
+    # Với tay: khớp trượt + bu-lông kẹp nằm NGOÀI vành bát, trên đỉnh bát
+    hand_top = bool(gate_geo_lo["collar_above_bowl"] and gate_geo_hi["collar_above_bowl"])
     track_ok = float(make_exit_ramp(width_open, height_open).Volume) > 100.0
     exit_pose = exit_tangent_pose(width_open, height_open)
     exit_pose_max = exit_tangent_pose(W_MAX, height_open)
@@ -507,17 +509,16 @@ def verify_tube_l_exit_gate(
     flush_exit = bool(exit_pose.get("flush_to_lane"))
     clear_1mm_ok = abs(PILL_CLEAR_XY - 1.0) < 1e-9 and abs(PILL_CLEAR_Z - 1.0) < 1e-9
     scraper_t_ok = abs(SCRAPER_T - 2.4) < 1e-9
-    blade_at_mouth = (
-        abs(TH_ADJ_DEG - THETA_MOUTH_DEG) < 0.5
-        and SCRAPER_BLADE_ALONG >= 4.0
-        and SCRAPER_BLADE_ALONG <= 12.0
-    )
+    # Cửa chỉnh H phải nằm TRƯỚC đầu Inner_Lane_Rail ở mọi W (rail lùi tới
+    # _RAIL_TIP_TH_DEG khi W=W_MIN) — nếu không, barrier 30 mm cắt vào tường rail.
+    blade_at_mouth = GATE_TH_DEG <= _RAIL_TIP_TH_DEG - 1.0
     entry_ok = (
         blade_at_mouth
-        and SCRAPER_ENTRY_LEN <= SCRAPER_ENTRY_MAX_INBOARD + 1e-9
         and EXIT_GUARD_INBOARD < 0.5
-        and abs(SCRAPER_ENTRY_T - 2.4) < 1e-9
-        and SCRAPER_ENTRY_LEN > 0.5
+        and abs(GATE_ROOF_T - 2.4) < 1e-9
+        and abs(GATE_WALL_H_MM - 10.0) < 1e-9
+        and abs(GATE_ROOF_ALONG_MM - 20.0) < 1e-9
+        and abs((GATE_R_OUT - GATE_R_IN) - 30.0) < 1e-9
     )
     disc_ok = abs(DISC_D - 200.0) < 1e-9
     w_range_ok = abs(W_MIN - 2.0) < 1e-9 and abs(W_MAX - 26.0) < 1e-9
@@ -542,30 +543,16 @@ def verify_tube_l_exit_gate(
     track_dot_chute = vx * hx + vy * hy
     track_along_chute = track_dot_chute > 0.85 and track_dot_r > 0.85
 
-    scrap_vol = float(make_height_scraper(width_open, height_open).Volume)
-    # M3 holes only (no bolt solids): 2× W clamp + 1× H clamp + disc↔hub + guide↔bowl
-    carriage = make_width_carriage(width_open)
-    scraper_body = make_height_scraper(width_open, height_open)
-    s_w = width_clamp_s(width_open)
-    w_sites = _width_bolt_sites(s_w)
-    h_site = _height_bolt_site(s_w)
+    scrap_vol = float(make_entry_gate_barrier(height_open).Volume)
+    # M3 holes only (no bolt solids): 1× kẹp H trên vòng ôm + 2× chân trụ vào
+    # bát + disc↔hub + guide↔bowl
+    slider_body = make_entry_gate_slider(height_open)
+    h_site = entry_gate_bolt_site(height_open)
 
-    def _rot90(x, y):
-        # _to_adj_frame rotates +TH_ADJ_DEG (90°) about Z: (x,y) → (−y, x)
-        return (-y, x)
+    def _to_gate(x, y):
+        a = _deg2rad(GATE_FRAME_TH_DEG)
+        return (x * math.cos(a) - y * math.sin(a), x * math.sin(a) + y * math.cos(a))
 
-    w_holes_ok = True
-    for site in w_sites:
-        ox, oy, oz = site["hole_origin"]
-        ax, ay, az = site["axis"]
-        mid = (
-            ox + 0.45 * site["shank_len"] * ax,
-            oy + 0.45 * site["shank_len"] * ay,
-            oz + 0.45 * site["shank_len"] * az,
-        )
-        wx, wy = _rot90(mid[0], mid[1])
-        if not hole_is_empty(carriage, wx, wy, mid[2], tol=0.6):
-            w_holes_ok = False
     hx, hy, hz = h_site["hole_origin"]
     hax, hay, haz = h_site["axis"]
     hmid = (
@@ -573,8 +560,17 @@ def verify_tube_l_exit_gate(
         hy + 0.45 * h_site["shank_len"] * hay,
         hz + 0.45 * h_site["shank_len"] * haz,
     )
-    hwx, hwy = _rot90(hmid[0], hmid[1])
-    h_hole_ok = hole_is_empty(scraper_body, hwx, hwy, hmid[2], tol=0.6)
+    hwx, hwy = _to_gate(hmid[0], hmid[1])
+    h_hole_ok = hole_is_empty(slider_body, hwx, hwy, hmid[2], tol=0.6)
+    post_body = make_entry_gate_post()
+    w_holes_ok = True
+    for site in gate_mount_sites():
+        ox, oy, oz = site["origin"]
+        ax, ay, az = site["axis"]
+        px = ox + 0.92 * site["h"] * ax
+        py = oy + 0.92 * site["h"] * ay
+        if not hole_is_empty(post_body, px, py, oz, tol=0.7):
+            w_holes_ok = False
     hub = make_hub_body()
     disc_hub_ok = all(
         hole_is_empty(disc, x, y, -0.5 * DISC_T, tol=0.5)
@@ -627,8 +623,8 @@ def verify_tube_l_exit_gate(
             "height_travel_mm": H_TRAVEL,
             "open_bottom_disc_drive": open_bottom,
             "hand_access_from_top": hand_top,
-            "crossbar_z_mm": BAR_Z,
-            "theta_adj_deg": TH_ADJ_DEG,
+            "gate_theta_deg": GATE_TH_DEG,
+            "gate_arm_z_mm": [gate_geo_lo["z_arm0_mm"], gate_geo_hi["z_arm0_mm"]],
         },
         "pose_samples": table,
         "mouth": mouth,
@@ -684,14 +680,16 @@ def verify_tube_l_exit_gate(
         },
         "height_range_mm": [H_MIN, H_MAX],
         "height_scraper": {
-            "thickness_mm": SCRAPER_T,
-            "blade_along_mm": SCRAPER_BLADE_ALONG,
-            "blade_at_lane_mouth": blade_at_mouth,
-            "theta_adj_deg": TH_ADJ_DEG,
-            "theta_mouth_deg": THETA_MOUTH_DEG,
-            "entry_stop_len_mm": SCRAPER_ENTRY_LEN,
-            "entry_stop_h_mm": SCRAPER_ENTRY_H,
-            "entry_stop_t_mm": SCRAPER_ENTRY_T,
+            "part": "Entry_Gate_Barrier (chữ L) + Entry_Gate_Slider trên Entry_Gate_Post",
+            "thickness_mm": GATE_ROOF_T,
+            "roof_along_mm": GATE_ROOF_ALONG_MM,
+            "top_view_w_mm": GATE_W_MM,
+            "outer_edge_r_mm": GATE_R_OUT,
+            "before_rail_tip": blade_at_mouth,
+            "theta_gate_deg": GATE_TH_DEG,
+            "rail_tip_min_deg": _RAIL_TIP_TH_DEG,
+            "entry_wall_h_mm": GATE_WALL_H_MM,
+            "entry_wall_t_mm": GATE_WALL_T,
             "entry_perpendicular_to_blade": True,
             "entry_along": "horizontal_bar_flush_at_lane_mouth",
             "entry_joined_at_mouth": True,
@@ -800,18 +798,20 @@ def verify_mesh_collision(
             _record(kind, pair, fac, vol, **extra)
 
     bowl = make_bowl_tube()
-    bar = make_crossbar_bridge()
+    post = make_entry_gate_post()
     guide = make_guide_system()
     disc0 = make_rotor_disc()
+
+    def _gate(hh: float) -> Part.Shape:
+        return _refine(make_entry_gate_barrier(hh).fuse(make_entry_gate_slider(hh)))
 
     # --- 1) Disc rotate (axisymmetric; still sweep to prove free spin) ---
     disc_opponents = {
         "Bowl_Tube": bowl,
         "Guide_System": guide,
-        "Crossbar_Bridge": bar,
+        "Entry_Gate_Post": post,
         "Inner_Lane_Rail": make_inner_lane_rail(width_open),
-        "Height_Scraper": make_height_scraper(width_open, height_open),
-        "Width_Carriage": make_width_carriage(width_open),
+        "Entry_Gate": _gate(height_open),
         "Exit_Track": make_exit_track(width_open, height_open),
     }
     for th in _grid(0.0, 360.0, 30.0):
@@ -836,14 +836,15 @@ def verify_mesh_collision(
         ("Rotor_Disc", "Bowl_Tube"),
         ("Rotor_Disc", "Guide_System"),
         ("Rotor_Disc", "Inner_Lane_Rail"),
-        ("Rotor_Disc", "Height_Scraper"),
-        ("Rotor_Disc", "Width_Carriage"),
-        ("Rotor_Disc", "Crossbar_Bridge"),
+        ("Rotor_Disc", "Entry_Gate"),
+        ("Rotor_Disc", "Entry_Gate_Post"),
         ("Rotor_Disc", "Exit_Track"),
-        ("Height_Scraper", "Inner_Lane_Rail_body"),
-        ("Width_Carriage", "Bowl_Tube"),
+        ("Entry_Gate", "Inner_Lane_Rail_body"),
+        ("Entry_Gate", "Bowl_Tube"),
+        ("Entry_Gate", "Guide_System"),
+        ("Entry_Gate", "Entry_Gate_Post"),
+        ("Entry_Gate_Post", "Bowl_Tube"),
         ("Inner_Lane_Rail", "Bowl_Tube"),
-        ("Width_Carriage", "Crossbar_Bridge"),
     )
     for ww, hh in corners:
         samples += 1
@@ -851,11 +852,10 @@ def verify_mesh_collision(
             "Rotor_Disc": make_rotor_disc(),
             "Bowl_Tube": bowl,
             "Guide_System": guide,
-            "Crossbar_Bridge": bar,
+            "Entry_Gate_Post": post,
             "Inner_Lane_Rail": make_inner_lane_rail(ww),
             "Inner_Lane_Rail_body": make_inner_lane_rail_body(ww),
-            "Height_Scraper": make_height_scraper(ww, hh),
-            "Width_Carriage": make_width_carriage(ww),
+            "Entry_Gate": _gate(hh),
             "Exit_Track": make_exit_track(ww, hh),
         }
         seen = set()
@@ -884,18 +884,15 @@ def verify_mesh_collision(
         samples += 1
         rail = make_inner_lane_rail(ww)
         body = make_inner_lane_rail_body(ww)
-        scrap = make_height_scraper(ww, height_open)
-        clamp = make_width_carriage(ww)
+        gate = _gate(height_open)
         for name, a, b in (
             ("Inner_Lane_Rail×Rotor_Disc", rail, disc0),
-            ("Height_Scraper×Rotor_Disc", scrap, disc0),
-            ("Width_Carriage×Rotor_Disc", clamp, disc0),
+            ("Entry_Gate×Rotor_Disc", gate, disc0),
+            ("Entry_Gate_Post×Rotor_Disc", post, disc0),
             ("Inner_Lane_Rail×Bowl_Tube", rail, bowl),
-            ("Height_Scraper×Inner_Lane_Rail_body", scrap, body),
-            ("Width_Carriage×Crossbar_Bridge", clamp, bar),
-            ("Width_Carriage×Scale_Width", clamp, make_scale_width()),
-            ("Height_Scraper×Width_Carriage", scrap, clamp),
-            ("Height_Scraper×Crossbar_Bridge", scrap, bar),
+            ("Entry_Gate×Inner_Lane_Rail_body", gate, body),
+            ("Entry_Gate×Entry_Gate_Post", gate, post),
+            ("Entry_Gate_Post×Bowl_Tube", post, bowl),
         ):
             _check("width_sweep", name, a, b, W=ww, H=height_open)
         if abs(ww - ENTRANCE_W) > 3.0:
@@ -906,17 +903,16 @@ def verify_mesh_collision(
     body_w = make_inner_lane_rail_body(width_open)
     for hh in h_sweep:
         samples += 1
-        scrap = make_height_scraper(width_open, hh)
-        clamp_h = make_width_carriage(width_open)
+        gate = _gate(hh)
         for name, a, b in (
-            ("Height_Scraper×Rotor_Disc", scrap, disc0),
-            ("Height_Scraper×Inner_Lane_Rail_body", scrap, body_w),
-            ("Height_Scraper×Width_Carriage", scrap, clamp_h),
-            ("Height_Scraper×Crossbar_Bridge", scrap, bar),
+            ("Entry_Gate×Rotor_Disc", gate, disc0),
+            ("Entry_Gate×Inner_Lane_Rail_body", gate, body_w),
+            ("Entry_Gate×Entry_Gate_Post", gate, post),
+            ("Entry_Gate×Bowl_Tube", gate, bowl),
         ):
             _check("height_sweep", name, a, b, W=width_open, H=hh)
         if height_scraper_z(hh) < GAP0 - 1e-9:
-            _record("height_sweep", "Height_Scraper_below_GAP0", 1, 1.0, H=hh)
+            _record("height_sweep", "Entry_Gate_below_GAP0", 1, 1.0, H=hh)
 
     jam_hits = sum(jam.values())
     range_ok = (
@@ -965,7 +961,7 @@ def verify_one_pill_dataset(pill: dict) -> dict:
     path = _sample_pill_along_arc(D, T, W, H)
     mech = (
         _overlap_volume(make_inner_lane_rail(W), make_rotor_disc()) < 1e-2
-        and _overlap_volume(make_height_scraper(W, H), make_rotor_disc()) < 1e-2
+        and _overlap_volume(make_entry_gate_barrier(H), make_rotor_disc()) < 1e-2
     )
     path_ok = (
         path["out_of_channel_hits"] == 0
@@ -1534,7 +1530,7 @@ def verify_pill_egress_multi(datasets=None, out_path: Path | None = None) -> dic
         "pass": n_pass == len(cases) and guide_ok,
         "assumption": (
             "CCW disc = +θ; Center_Director+Outer_Rim_Funnel spirals push +r; "
-            "Height_Scraper knocks stand→flat; lane→Exit_Track leaves disc; "
+            "Entry_Gate_Barrier knocks stand→flat; lane→Exit_Track leaves disc; "
             "size 2–26 mm; Exit_Track ≈ pill+1mm (clamp at W/H max)"
         ),
         "guide_chain_ok": guide_ok,
@@ -1671,12 +1667,12 @@ def verify_disc_contact_any(out_path: Path | None = None) -> dict:
     disc = make_rotor_disc()
     guide = make_guide_system()
     rail = make_inner_lane_rail(ENTRANCE_W)
-    scrap = make_height_scraper(9.0, 5.0)
+    scrap = make_entry_gate_barrier(5.0)
     # Đáy mở: phần cố định không cắt đĩa
     open_parts = {
         "Guide_System": guide,
         "Inner_Lane_Rail": rail,
-        "Height_Scraper": scrap,
+        "Entry_Gate_Barrier": scrap,
     }
     jam_disc = {n: round(_overlap_volume(sh, disc), 4) for n, sh in open_parts.items()}
     open_bottom_ok = all(v < 1e-2 for v in jam_disc.values())
@@ -1914,7 +1910,7 @@ def verify_sanity_100_mechanics(
         },
         "blockers_removed": {
             "exit_inboard_guard_mm": EXIT_GUARD_INBOARD,
-            "scraper_entry_inboard_mm": SCRAPER_ENTRY_LEN,
+            "gate_roof_along_mm": GATE_ROOF_ALONG_MM,
             "reject_len_mm": REJECT_LEN,
             "entrance_marker_on_disc": False,
         },

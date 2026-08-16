@@ -1,6 +1,6 @@
 """
 Chup anh 3D view hien tai (FreeCAD GUI) ra file PNG — dung de kiem tra vi tri
-cac phan (VD: Width_Carriage so voi Rotor_Disc/Bowl_Tube) ma khong can mo GUI
+cac phan (VD: Entry_Gate_Barrier so voi Rotor_Disc/Bowl_Tube) ma khong can mo GUI
 tuong tac.
 
 Chay (giong animate_rotor_disc.py — FreeCAD tu mo FCStd truoc, roi thuc thi script nay):

@@ -4,15 +4,14 @@ Standalone FreeCAD: Tube_L_Exit_Gate — chỉnh W/H bằng ray trượt chữ T
 Ref: https://www.youtube.com/shorts/ju5vIg66NNk
 
   Guide_System (cố định)     — xoắn hub→họng CCW
-  Crossbar_Bridge + ray W    — ray chữ T xuyên tâm
-  Width_Carriage             — trượt trên ray W; phễu vát 2 bên chỉnh họng vào
-  Height_Scraper             — trượt trên ray H đứng của carriage (= chỉnh cao)
+  Entry_Gate_Post            — trụ cố định trên vành bát + ray T ĐỨNG (đầu máng vào)
+  Entry_Gate_Slider          — thanh trượt tịnh tiến đứng (= chỉnh cao)
+  Entry_Gate_Barrier         — barrier chữ L: trần 20 mm + tấm đứng 10 mm, rộng 30 mm
   Inner_Lane_Rail + Chute_Slide + Bowl_Tube_Exit_Chute — cung Ø20 cm; máng 40° tại 9h
 
 THAO TÁC:
-  W: kéo Width_Carriage → Inner_Lane_Rail trượt trên 2 ray T (8h/10h)
-  H: nới Screw_Height → nâng/hạ Height_Scraper trên cột T
-  Lò xo tì ray (Spring_Width_* / Spring_Height_*) giữ ma sát chống trượt khi nới vít
+  W: kéo Inner_Lane_Rail trượt trên 2 ray T (8h/10h)
+  H: nới Screw_Gate_H → nâng/hạ cụm barrier trên ray T đứng; khe dưới trần = H
 """
 from __future__ import annotations
 
@@ -84,15 +83,15 @@ def main() -> None:
             v["width_open_mm"],
             v["height_open_mm"],
             p["s_mm"],
-            p["z_scraper_mm"],
+            p["z_gate_roof_mm"],
             v["collision"]["jam_hits"],
             m["map_width_1to1_mm"],
             m["map_height_1to1_mm"],
         )
     )
     print(
-        "ADJUST SLIDE: Width_Carriage on T-rail (Crossbar) | "
-        "Height_Scraper on vertical T-rail | 1mm = 1mm W/H"
+        "ADJUST SLIDE: Inner_Lane_Rail on Chute_Slide T-rails | "
+        "Entry_Gate_Slider on vertical T-rail | 1mm = 1mm W/H"
     )
     if v["collision"]["jam_hits"]:
         print("JAM DETAIL:", v["collision"]["detail"])

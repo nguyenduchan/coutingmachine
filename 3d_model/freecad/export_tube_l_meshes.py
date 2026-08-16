@@ -76,7 +76,7 @@ def main() -> None:
     # Export TAT CA cac phan (khong loc "want" nua) — dung cho mo phong PyBullet
     # hien thi giong het model FreeCAD (yeu cau: "model 3d trong mo phong vat ly
     # phai giong het trong freecad"). Truoc day chi export 6 phan chinh (bo qua
-    # Crossbar_Bridge/Scale_Width/Width_Carriage/Scale_Height/screws/springs).
+    # Entry_Gate_Post/Entry_Gate_Slider/screws).
     all_parts = build_tube_l_exit_gate_parts(W, H)
     manifest = {
         "units": "mm",

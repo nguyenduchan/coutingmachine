@@ -39,10 +39,11 @@ sys.path.insert(0, str(_HERE))
 import mech_common as M  # noqa: E402
 from part_bowl_tube import make_bowl_tube  # noqa: E402
 from part_guide_system import make_guide_system  # noqa: E402
-from part_height_slider import make_height_scraper  # noqa: E402
+from part_entry_gate import (  # noqa: E402
+    make_entry_gate_barrier, make_entry_gate_post, make_entry_gate_slider,
+)
 from part_inner_lane_rail import make_inner_lane_rail  # noqa: E402
 from part_rotor_disc import make_rotor_disc  # noqa: E402
-from part_width_carriage import make_width_carriage  # noqa: E402
 
 OUT = _HERE / "out"
 SCAN_HALF = 45.0  # nửa đoạn quét vuông góc (mm)
@@ -64,8 +65,9 @@ def _solids(W: float, H: float) -> list[tuple[str, object]]:
         ("Exit_Track", lambda: M.make_exit_track(W, H)),
         ("Exit_Ramp", lambda: M.make_exit_ramp(W, H)),
         ("Guide_System", lambda: make_guide_system()),
-        ("Width_Carriage", lambda: make_width_carriage(W)),
-        ("Height_Scraper", lambda: make_height_scraper(W, H)),
+        ("Entry_Gate_Post", lambda: make_entry_gate_post()),
+        ("Entry_Gate_Slider", lambda: make_entry_gate_slider(H)),
+        ("Entry_Gate_Barrier", lambda: make_entry_gate_barrier(H)),
     ):
         try:
             s = fn()
@@ -162,10 +164,12 @@ def _stations(W: float, H: float) -> list[dict]:
         })
     # RAMP: dọc mặt dốc
     a = math.radians(M.RAMP_ANGLE_DEG)
-    x0, y0 = g["start_xy"]
+    # Đo ở TÂM lòng máng (cạnh trái lòng máng nằm đúng mép đĩa → lấy start_xy
+    # sẽ rơi trúng mặt vách, không phải chỗ viên đi).
+    x0, y0 = g["center_xy"]
     n_rp = 12
     for i in range(1, n_rp + 1):
-        L = M.RAMP_LEN * i / n_rp
+        L = g["len_mm"] * i / n_rp
         run, drop = L * math.cos(a), L * math.sin(a)
         st.append({
             "seg": "RAMP", "at": round(L, 1),
