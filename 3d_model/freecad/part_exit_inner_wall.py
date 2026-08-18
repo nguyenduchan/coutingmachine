@@ -16,6 +16,25 @@ Nhìn từ TOP (9 giờ ở bên TRÁI, −Y là xuống dưới màn hình):
 Vách là DÂY CUNG đầy đủ của đĩa tại x = −80 (dài 120 mm giữa hai mép đĩa).
 
 Đáy HỞ tại GAP0 như mọi vách khác — không chạm mặt đĩa.
+
+CHỈNH BỀ RỘNG (W) BẰNG NÚM XOAY — cam lệch tâm trong khung Scotch yoke NẰM
+NGANG, trục THẲNG ĐỨNG, vặn từ trên xuống:
+
+   nhìn từ TRÊN                       nhìn từ SƯỜN (theo −Y)
+   ┌──────────────────────┐              ╔═══╗  ← núm vặn Ø36     z 68.4–81.4
+   │ ┌──────────────────┐ │           ═══╩═══╩═══ đĩa số Ø52      z 58.4–68.4
+   │ │  ╭────╮          │ │   rãnh    ┌───┼───┐
+   │ │ │ cam  │  ← lắc  │ │ ← DÀI     │ ▓▓▓▓▓ │ ← tấm yoke + cam  z 48–58
+   │ │  ╰────╯    theo Y│ │   theo Y  └───┼───┘
+   │ └──────────────────┘ │             ══╪══ ray T (Exit_Slide)  z 36.4–47
+   └──────────────────────┘               │  cầu nối len giữa 2 con trượt
+     ↑ KẸP theo X = 2·R_cam                │
+       ⇒ đẩy ra VÀ kéo vào đều cưỡng bức  vách 2
+
+  gap = EXIT_GAP_MAX − e·(1 − cosθ), e = 5 mm ⇒ NỬA VÒNG núm phủ hết 13→3 mm.
+  Hai vách ĐẦU rãnh (theo Y) là CHẶN CỨNG hai đầu dải gap.
+  Tự giữ: vít M3 ở tâm núm kẹp đĩa số CỐ ĐỊNH vào giữa (đỉnh đĩa cam một bên,
+  đáy núm bên kia) như phanh đĩa — không lò xo, không dây thun, không bánh răng.
 """
 from __future__ import annotations
 
@@ -91,8 +110,64 @@ def make_exit_slide_rail(y_mm: float) -> Part.Shape:
     return _refine(out)
 
 
+def make_exit_dial() -> Part.Shape:
+    """ĐĨA SỐ Ø52 nằm ngang + tai bắt vít — CHI TIẾT RỜI, 2 vít M3 thẳng đứng
+    xuống đỉnh cột của Exit_Slide.
+
+    Vì sao PHẢI rời (không đúc liền vào Exit_Slide): đĩa cam Ø30 phải nằm ở
+    z ∈ [47.6, 58.4]; trên nó là đĩa số Ø52 mà lỗ tâm chỉ Ø11.6, dưới nó chỉ còn
+    0.6 mm tới đỉnh ray T ⇒ đúc liền thì KHÔNG có đường nào đưa đĩa cam vào chỗ.
+    Rời ra thì lắp được: lắp ray+cột → lồng vách 2 → THẢ đĩa cam từ trên xuống
+    rãnh yoke → úp đĩa số lên, bắt 2 vít → lắp núm."""
+    x_p, y_p = EXIT_CAM_PIVOT_X, EXIT_CAM_PIVOT_Y
+    disc = _cyl_z(EXIT_DIAL_D, EXIT_DIAL_T, x_p, y_p, EXIT_DIAL_Z0)
+    tab = _box(
+        EXIT_DIAL_TAB_X1 - EXIT_DIAL_TAB_X0, 2.0 * EXIT_DIAL_TAB_HALF_W, EXIT_DIAL_T,
+        EXIT_DIAL_TAB_X0, y_p - EXIT_DIAL_TAB_HALF_W, EXIT_DIAL_Z0,
+    )
+    disc = disc.fuse(tab)
+    ticks = None
+    for _g, th, long in exit_cam_dial_tick_angles():
+        r0 = EXIT_DIAL_TICK_R0
+        r1 = EXIT_DIAL_TICK_R1 if long else EXIT_DIAL_TICK_R0 + 3.0
+        tick = _box(r1 - r0, 1.2, 0.8, x_p + r0, y_p - 0.6, EXIT_DIAL_Z1)
+        tick = _exit_rot_cam(tick, th)
+        ticks = tick if ticks is None else ticks.fuse(tick)
+    body = disc if ticks is None else disc.fuse(ticks)
+    bore = _cyl_z(GATE_JOURNAL_D + 2.0 * GATE_JOURNAL_FIT, EXIT_DIAL_T + 4.0,
+                  x_p, y_p, EXIT_DIAL_Z0 - 2.0)
+    body = body.cut(bore)
+    for bx, by in exit_dial_bolt_sites():
+        body = body.cut(_cyl_z(M3_CLEAR, EXIT_DIAL_T + 4.0, bx, by, EXIT_DIAL_Z0 - 2.0))
+        body = body.cut(_cyl_z(M3_HEAD_CB_D, M3_HEAD_CB_H + 0.2, bx, by,
+                               EXIT_DIAL_Z1 - M3_HEAD_CB_H))
+    return _refine(body)
+
+
+def _exit_dial_col() -> Part.Shape:
+    """CỘT ốp mặt trong thành bát (hàn liền ray T y = −20), đỉnh phẳng ở mặt dưới
+    đĩa số, mang 2 heat-set M3 để bắt đĩa số RỜI xuống.
+
+    Mép TRONG của bản ốp đặt tại EXIT_COL_X1 — ngoài hành trình xa nhất của tấm
+    yoke (tấm lùi hết ở gap nhỏ nhất). Chính điều kiện này quyết định bán kính
+    đặt trục cam: đẩy trục vào gần tâm hơn thì bản ốp không còn chỗ đi vào."""
+    col = _box(
+        (EXIT_COL_X1 + 14.0) - (EXIT_COL_X1 - 14.0), EXIT_COL_Y1 - EXIT_COL_Y0,
+        EXIT_COL_Z1 - EXIT_COL_Z0,
+        EXIT_COL_X1 - 14.0, EXIT_COL_Y0, EXIT_COL_Z0,
+    )
+    # mép trong THẲNG (không theo cung) để luôn cách tấm yoke đúng 1.2 mm
+    col = col.cut(_box(60.0, 200.0, 200.0, EXIT_COL_X1, -150.0, -50.0))
+    # mặt ngoài ôm thành bát, cắm vào bát EXIT_SLIDE_BOWL_EMBED như ray T
+    col = col.common(_cyl_z(2.0 * EXIT_COL_R_OUT, 200.0, 0.0, 0.0, -50.0))
+    for bx, by in exit_dial_bolt_sites():
+        col = col.cut(_cyl_z(M3_INSERT_D, M3_INSERT_L + 0.5, bx, by,
+                             EXIT_COL_Z1 - M3_INSERT_L))
+    return _refine(col)
+
+
 def make_exit_slide() -> Part.Shape:
-    """Exit_Slide = 2 ray T cố định (component riêng)."""
+    """Exit_Slide = 2 ray T cố định + CỘT đỡ đĩa số (đĩa số là chi tiết rời)."""
     rails = [make_exit_slide_rail(y) for y in EXIT_SLIDE_Y]
     rails = [r for r in rails if _shape_ok(r, 10.0)]
     if not rails:
@@ -100,7 +175,73 @@ def make_exit_slide() -> Part.Shape:
     out = rails[0]
     for r in rails[1:]:
         out = out.fuse(r)
+    for extra in (_exit_dial_col(),):
+        try:
+            fused = out.fuse(extra)
+            if _shape_ok(fused, 0.5 * float(getattr(out, "Volume", 1.0) or 1.0)):
+                out = fused
+        except Exception:
+            continue
     return _refine(out)
+
+
+# ---------------------------------------------------------------------------
+# Đĩa cam W + cổ trục (in liền) và núm vặn rời
+# ---------------------------------------------------------------------------
+def make_exit_cam(gap_mm: float | None = None) -> Part.Shape:
+    """Đĩa cam Ø30 lệch tâm 9 mm, trục ĐỨNG, cổ trục Ø14 xuyên đĩa số lên núm."""
+    th = exit_cam_angle_for_gap(gap_mm)
+    x_p, y_p = EXIT_CAM_PIVOT_X, EXIT_CAM_PIVOT_Y
+    cam = _cyl_z(2.0 * EXIT_CAM_R, EXIT_CAM_T,
+                 x_p + EXIT_CAM_ECC, y_p, EXIT_CAM_Z0)
+    # Cổ trục ĂN SÂU vào đĩa cam GATE_JOURNAL_EMBED chứ không chỉ tì mặt: trục
+    # nằm cách tâm đĩa đúng e < R nên phần cắm vào hoàn toàn trong lòng đĩa ⇒
+    # fuse ra một khối liền, in một lần, không có mối nối phẳng dễ tách lớp.
+    journal = _cyl_z(
+        GATE_JOURNAL_D, EXIT_JOURNAL_Z1 - (EXIT_CAM_Z1 - GATE_JOURNAL_EMBED),
+        x_p, y_p, EXIT_CAM_Z1 - GATE_JOURNAL_EMBED,
+    )
+    body = _refine(cam.fuse(journal))
+    # chốt D trong đoạn nằm trong núm
+    body = body.cut(_box(
+        GATE_JOURNAL_D, GATE_JOURNAL_D, EXIT_JOURNAL_Z1 - EXIT_KNOB_Z0,
+        x_p + GATE_KNOB_DKEY, y_p - 0.5 * GATE_JOURNAL_D, EXIT_KNOB_Z0,
+    ))
+    # lỗ ép heat-set M3 ở đầu trục — vít từ đỉnh núm siết xuống, kẹp đĩa số
+    body = body.cut(_cyl_z(M3_INSERT_D, M3_INSERT_L + 0.5, x_p, y_p,
+                           EXIT_JOURNAL_Z1 - M3_INSERT_L))
+    return _refine(_exit_rot_cam(body, th))
+
+
+def make_exit_knob(gap_mm: float | None = None) -> Part.Shape:
+    """Núm vặn W — cùng dáng núm khía với núm H, ngửa lên trời."""
+    th = exit_cam_angle_for_gap(gap_mm)
+    x_p, y_p = EXIT_CAM_PIVOT_X, EXIT_CAM_PIVOT_Y
+    body = _cyl_z(GATE_KNOB_D, GATE_KNOB_T, x_p, y_p, EXIT_KNOB_Z0)
+    r_f = 0.5 * GATE_KNOB_D
+    for i in range(GATE_KNOB_FLUTES):
+        a = 2.0 * math.pi * (i + 0.5) / GATE_KNOB_FLUTES
+        body = body.cut(_cyl_z(
+            GATE_KNOB_FLUTE_D, GATE_KNOB_T + 4.0,
+            x_p + r_f * math.cos(a), y_p + r_f * math.sin(a), EXIT_KNOB_Z0 - 2.0,
+        ))
+    # gân mũi chỉ: θ=0 chỉ theo +X = gap lớn nhất
+    body = body.fuse(_box(
+        GATE_KNOB_PTR_L, GATE_KNOB_PTR_W, GATE_KNOB_PTR_H,
+        x_p + 2.0, y_p - 0.5 * GATE_KNOB_PTR_W, EXIT_KNOB_Z1,
+    ))
+    fit = GATE_JOURNAL_FIT
+    sock = _cyl_z(GATE_JOURNAL_D + 2.0 * fit, GATE_KNOB_SOCKET_D + 1.0,
+                  x_p, y_p, EXIT_KNOB_Z0 - 0.5)
+    sock = sock.cut(_box(
+        GATE_JOURNAL_D, GATE_JOURNAL_D + 2.0, GATE_KNOB_SOCKET_D + 2.0,
+        x_p + GATE_KNOB_DKEY + fit, y_p - 0.5 * GATE_JOURNAL_D - 1.0, EXIT_KNOB_Z0 - 1.0,
+    ))
+    body = body.cut(_refine(sock))
+    body = body.cut(_cyl_z(M3_CLEAR, GATE_KNOB_T + 4.0, x_p, y_p, EXIT_JOURNAL_Z1 - 0.5))
+    body = body.cut(_cyl_z(M3_HEAD_CB_D, M3_HEAD_CB_H + 0.2, x_p, y_p,
+                           EXIT_KNOB_Z1 - M3_HEAD_CB_H))
+    return _refine(_exit_rot_cam(body, th))
 
 
 def make_exit_slide_shoe(y_mm: float, gap_mm: float | None = None) -> Part.Shape:
@@ -144,6 +285,56 @@ def make_exit_slide_shoe(y_mm: float, gap_mm: float | None = None) -> Part.Shape
     return _refine(shoe)
 
 
+def _exit_rot_cam(shape: Part.Shape, theta_deg: float) -> Part.Shape:
+    """Quay quanh TRỤC CAM W (thẳng đứng qua pivot) đi góc θ của núm.
+
+    Quay quanh +z góc α đưa (e, 0) → (e·cosα, e·sinα) nên α = −θ mới cho tâm cam
+    ở (x_p + e·cosθ, y_p − e·sinθ) đúng như exit_cam_center()."""
+    shape.rotate(
+        App.Vector(EXIT_CAM_PIVOT_X, EXIT_CAM_PIVOT_Y, 0.0),
+        App.Vector(0.0, 0.0, 1.0),
+        -float(theta_deg),
+    )
+    return shape
+
+
+def _exit_yoke_plate(gap_mm: float | None = None) -> Part.Shape:
+    """Tấm yoke NẰM NGANG + cầu nối xuống đỉnh vách 2.
+
+    Cầu nối bám vào dải thịt phía +X của tấm (đĩa cam không bao giờ ra khỏi rãnh
+    nên chỗ đó luôn trống), và len GIỮA HAI con trượt theo Y nên không đụng ray."""
+    g = exit_cam_geo(gap_mm)
+    x2 = g["wall2_x_in"]
+    dy = EXIT_RISER_Y1 - EXIT_RISER_Y0
+    plate = _box(
+        g["yoke_x1_mm"] - g["yoke_x0_mm"], g["yoke_y1_mm"] - g["yoke_y0_mm"], EXIT_YOKE_T,
+        g["yoke_x0_mm"], g["yoke_y0_mm"], EXIT_YOKE_Z0,
+    )
+    slot = _box(
+        g["slot_x1_mm"] - g["slot_x0_mm"], g["slot_y1_mm"] - g["slot_y0_mm"],
+        EXIT_YOKE_T + 4.0,
+        g["slot_x0_mm"], g["slot_y0_mm"], EXIT_YOKE_Z0 - 2.0,
+    )
+    body = plate.cut(slot)
+    z_wall_top = GAP0 + EXIT_WALL_H
+    # bệ trên đỉnh vách 2 → dầm ngang (lọt dưới đáy đĩa cam) → cột lên tấm yoke
+    post = _box(EXIT_RISER_POST_W, dy, EXIT_BEAM_Z1 - z_wall_top,
+                x2, EXIT_RISER_Y0, z_wall_top)
+    beam = _box(g["yoke_x1_mm"] - x2, dy, EXIT_BEAM_T,
+                x2, EXIT_RISER_Y0, EXIT_BEAM_Z1 - EXIT_BEAM_T)
+    riser = _box(g["yoke_x1_mm"] - g["slot_x1_mm"], dy,
+                 EXIT_YOKE_Z1 - (EXIT_BEAM_Z1 - EXIT_BEAM_T),
+                 g["slot_x1_mm"], EXIT_RISER_Y0, EXIT_BEAM_Z1 - EXIT_BEAM_T)
+    for extra in (post, beam, riser):
+        try:
+            fused = body.fuse(extra)
+            if _shape_ok(fused, 0.5 * float(getattr(body, "Volume", 1.0) or 1.0)):
+                body = fused
+        except Exception:
+            continue
+    return _refine(body)
+
+
 def make_exit_inner_wall_2(gap_mm: float | None = None) -> Part.Shape:
     """Vách 2 + 2 con trượt — TỊNH TIẾN theo +X để chỉnh bề rộng kênh.
 
@@ -164,6 +355,12 @@ def make_exit_inner_wall_2(gap_mm: float | None = None) -> Part.Shape:
                 body = fused
         except Exception:
             continue
+    try:
+        fused = body.fuse(_exit_yoke_plate(gap_mm))
+        if _shape_ok(fused, 0.5 * float(getattr(body, "Volume", 1.0) or 1.0)):
+            body = fused
+    except Exception:
+        pass
     return _refine(_enforce_disc_clearance(body))
 
 

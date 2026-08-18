@@ -67,7 +67,8 @@ def all_source_parts(width_open: float, height_open: float) -> list[tuple]:
     return list(build_tube_l_exit_gate_parts(width_open, height_open)) + \
         list(build_exit_camera_parts())
 
-# Preview = medium_8x4 + 1 mm clear → máng 9×5 (giống show_tube_l_exit_gate_gui)
+# Preview = medium_8x4 + 1 mm clear → kênh exit 9 × khe cửa 5
+# (W = bề rộng thông thuỷ kênh exit, do núm Exit_Knob đặt)
 WIDTH_OPEN = 9.0
 HEIGHT_OPEN = 5.0
 
@@ -77,13 +78,26 @@ GROUPS = (
     ("Rotor", ("Rotor_Disc", "Hub_Body")),
     ("Bowl", ("Bowl_Tube",)),
     ("Guide", ("Guide_System",)),
-    ("Exit", ("Exit_Inner_Wall", "Exit_Inner_Wall_2", "Exit_Slide")),
+    (
+        "Exit_Width_Knob",
+        (
+            "Exit_Inner_Wall",
+            "Exit_Inner_Wall_2",
+            "Exit_Slide",
+            "Exit_Dial",
+            "Exit_Cam",
+            "Exit_Knob",
+        ),
+    ),
     (
         "Entry_Height_Gate",
         (
             "Entry_Gate_Post",
+            "Entry_Gate_Dial",
             "Entry_Gate_Slider",
             "Entry_Gate_Barrier",
+            "Entry_Gate_Cam",
+            "Entry_Gate_Knob",
         ),
     ),
     (

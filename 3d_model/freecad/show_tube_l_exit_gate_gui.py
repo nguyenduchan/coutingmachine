@@ -6,13 +6,21 @@ Ref: https://www.youtube.com/shorts/ju5vIg66NNk
   Guide_System (cố định)     — xoắn hub→họng CCW; họng ra 20 mm tính từ mép đĩa
   Entry_Gate_Post            — trụ cố định trên vành bát + ray T ĐỨNG (đầu máng vào)
   Entry_Gate_Slider          — thanh trượt tịnh tiến đứng (= chỉnh cao)
-  Entry_Gate_Barrier         — barrier chữ L: trần 20 mm + tấm đứng 10 mm, rộng 30 mm
-  Exit_Inner_Wall            — vách trong tại 9h, lùi 2 cm vào tâm, chạy tới vành đĩa
+  Entry_Gate_Barrier         — barrier chữ L: trần 20 mm + tấm đứng 10 mm, rộng 40 mm
+  Entry_Gate_Cam             — đĩa cam Ø30 lệch tâm 9 mm, nhốt trong khung yoke
+  Entry_Gate_Knob            — núm vặn Ø36 khía 8 hõm + mũi chỉ, đọc vạch trên đĩa số
+  Exit_Inner_Wall            — vách trong CỐ ĐỊNH tại 9h, lùi 2 cm vào tâm
+  Exit_Inner_Wall_2          — vách TRƯỢT theo +X (chỉnh W) + khung yoke nằm ngang
+  Exit_Slide                 — 2 ray T + giá đĩa số của núm W
+  Exit_Cam / Exit_Knob       — cam Ø30 lệch tâm 9 mm + núm Ø36, trục ĐỨNG (vặn từ trên)
   Bowl_Tube_Exit_Chute       — máng 40° rộng 2 cm, hứng ngay dưới kênh hai vách exit
 
 THAO TÁC:
-  W: cố định = họng ra Guide_System (ENTRANCE_W) — không còn cơ cấu trượt
-  H: nới Screw_Gate_H → nâng/hạ cụm barrier trên ray T đứng; khe dưới trần = H
+  W: VẶN NÚM Exit_Knob (trục đứng, từ trên xuống) — nửa vòng đưa bề rộng thông
+     thuỷ kênh exit 13 → 3 mm. Họng ra Guide_System (ENTRANCE_W) vẫn cố định.
+  H: VẶN NÚM — nửa vòng (0°=20 mm → 180°=2 mm). Cam lệch tâm khít trong khung
+     Scotch yoke nên đẩy xuống VÀ kéo lên đều cưỡng bức (không lò xo/dây thun);
+     vít M3 tâm núm siết là khoá. Screw_Gate_H chỉ là khoá phụ.
 
 CHẠY: phải dùng freecad.exe (KHÔNG phải freecadcmd) — save headless mất
 GuiDocument.xml nên model mở ra bị ẩn sạch, không màu.
@@ -47,10 +55,12 @@ FCSTD = OUT / "tube_l_exit_gate_parts" / "tube_l_exit_gate.FCStd"
 
 sys.path.insert(0, str(_HERE))
 from tube_l_components import build_component_assembly, print_summary
-from mech_common import ENTRANCE_W, GATE_TH_DEG, H_MIN, H_MAX
+from mech_common import (
+    ENTRANCE_W, GATE_TH_DEG, H_MIN, H_MAX, EXIT_GAP_MIN, EXIT_GAP_MAX,
+)
 
-# Preview = medium_8x4 + 1 mm clear → khe cửa H = 5
-WIDTH_OPEN = 9.0
+# Preview = medium_8x4 + 1 mm clear → kênh exit W = 9, khe cửa H = 5
+WIDTH_OPEN = 9.0  # dải kênh exit 3–13 mm
 HEIGHT_OPEN = 5.0
 
 
@@ -64,9 +74,10 @@ def main() -> None:
     print("Saved:", FCSTD)
     print_summary(info)
     print(
-        "LANE: W cố định %.1f mm (họng Guide, đo từ mép đĩa) | "
-        "H chỉnh %.0f–%.0f mm tại cửa %.1f°"
-        % (ENTRANCE_W, H_MIN, H_MAX, GATE_TH_DEG)
+        "LANE: họng Guide cố định %.1f mm (đo từ mép đĩa) | "
+        "W kênh exit chỉnh %.0f–%.0f mm (núm Exit_Knob) | "
+        "H chỉnh %.0f–%.0f mm tại cửa %.1f° (núm Entry_Gate_Knob)"
+        % (ENTRANCE_W, EXIT_GAP_MIN, EXIT_GAP_MAX, H_MIN, H_MAX, GATE_TH_DEG)
     )
 
     if App.GuiUp and Gui is not None:

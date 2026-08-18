@@ -101,6 +101,8 @@ M3_HEAD_CB_H = 2.2
 M3_NUT_POCKET_AF = 6.0
 M3_NUT_POCKET_H = 2.8
 M3_BOLT_L = 16.0  # grip ≤ ~12 mm + nut 2.4
+M3_INSERT_D = 4.6  # heat-set insert M3 (ống đồng ép nóng)
+M3_INSERT_L = 6.0
 HUB_M3_PCD = 18.0
 HUB_CLAMP_T = 6.0
 SCREW_D = M3_CLEAR  # clamp / assembly holes = M3 clearance
@@ -184,6 +186,107 @@ GATE_ROOF_DEG = math.degrees(GATE_ROOF_ALONG_MM / GATE_R_OUT)
 # Khung cục bộ của cụm cửa: gốc góc = mép ĐÓN VẬT của trần; local +x = xuyên
 # tâm, +y = xuôi dòng (mm cung), +z = lên.
 GATE_FRAME_TH_DEG = GATE_TH_DEG - GATE_ROOF_DEG
+
+# Vòng ôm (con trượt) — đưa ra đây vì cụm cam cần biết tâm/bề rộng của nó.
+GATE_COLLAR_R0 = GATE_RAIL_R0 - GATE_COLLAR_WALL                              # 80.8
+GATE_COLLAR_R1 = GATE_RAIL_R0 + GATE_RAIL_FLANGE_T + GATE_COLLAR_WALL         # 92.3
+GATE_COLLAR_RC = 0.5 * (GATE_COLLAR_R0 + GATE_COLLAR_R1)                      # 86.55
+GATE_COLLAR_HALF_Y = 0.5 * (GATE_RAIL_FLANGE_W + 2.0 * GATE_COLLAR_WALL)      # 12.0
+
+# ---------------------------------------------------------------------------
+# NÚM XOAY CHỈNH H — cam lệch tâm nhốt trong KHUNG SCOTCH YOKE
+# ---------------------------------------------------------------------------
+# Vì sao Scotch yoke (không dây thun / không lò xo / không bánh răng):
+#   * đĩa cam TRÒN lệch tâm nằm khít trong rãnh ngang cao đúng 2·R_cam ⇒ mặt
+#     trên rãnh và mặt dưới rãnh kẹp đĩa cả hai phía: xoay chiều nào con trượt
+#     cũng bị CƯỠNG BỨC đi theo (positive drive) — bỏ hẳn cơ cấu hồi vị.
+#   * tiếp xúc luôn là "mặt phẳng ↔ mặt trụ" nên pháp tuyến LUÔN thẳng đứng
+#     ⇒ pressure angle = 0 ở mọi góc, không bao giờ tự kẹt (cam rãnh/groove cam
+#     thì pháp tuyến nghiêng tới ~50° ở giữa hành trình → kẹt; xem docstring
+#     verify_entry_gate_cam.py).
+#   * lực truyền qua diện tích lớn (đường sinh dài GATE_CAM_T), không có chốt
+#     nhỏ chịu uốn/cắt như cam rãnh ⇒ in FDM bền.
+#
+# Toán: tâm đĩa cam cách trục xoay đúng GATE_CAM_ECC ⇒
+#     z_tâm(θ) = z_pivot + e·cosθ,  x_tâm(θ) = x_pivot − e·sinθ
+#     H(θ)     = H_MAX − e·(1 − cosθ)          θ ∈ [0°, 180°]
+#   nghĩa là NỬA VÒNG núm phủ TOÀN BỘ dải H, và hành trình = 2·e.
+GATE_CAM_ECC = 0.5 * H_TRAVEL          # 9.0 — lệch tâm; hành trình = 2·e = H_TRAVEL
+GATE_CAM_R = 15.0                      # đĩa cam Ø30 (R_cam − e = 6 mm thịt tại chỗ mỏng nhất)
+GATE_CAM_T = 10.0                      # bề dày đĩa cam (dọc trục)
+GATE_CAM_FIT = 0.30                    # khe đĩa cam ↔ rãnh yoke, mỗi phía
+GATE_YOKE_WALL = 5.0                   # bề dày vách khung yoke
+GATE_YOKE_BACK_T = 3.5                 # lưng khung (dính vào vòng ôm)
+GATE_YOKE_GAP = 0.8                    # khe lưng khung ↔ mặt trong đĩa cam
+GATE_YOKE_TAIL = 1.3                   # vách khung vươn quá mặt ngoài đĩa cam
+GATE_YOKE_TAIL = 1.3                   # khe vách khung ↔ mặt đĩa số
+
+# Trục cam nằm NGANG, song song local +y (xuôi dòng) ⇒ đĩa cam nằm trong mặt
+# phẳng xuyên tâm–đứng, núm quay hướng ra hạ lưu (với tay từ ngoài bát vào).
+# x_pivot đặt sao cho tâm đĩa cam ở GIỮA dải trượt của nó nằm đúng trên tâm
+# vòng ôm ⇒ momen lật tác dụng lên vòng ôm nhỏ nhất.
+GATE_CAM_PIVOT_X = GATE_COLLAR_RC + 0.5 * GATE_CAM_ECC                        # 91.05
+# Đáy khung yoke ở H_MIN phải nằm TRÊN vành bát: khung dài hơn bán kính bát nên
+# nếu thấp hơn đỉnh bát nó sẽ cắt vào thành bát.
+GATE_YOKE_BOT_Z_MIN = BOWL_Z0 + BOWL_H + 2.0                                  # 42.0
+GATE_CAM_PIVOT_Z = (
+    GATE_YOKE_BOT_Z_MIN + GATE_YOKE_WALL + GATE_CAM_R + GATE_CAM_FIT
+    + H_TRAVEL - GATE_CAM_ECC
+)                                                                             # 71.3
+
+# Bố trí theo local y (mm): vòng ôm | lưng khung | đĩa cam | đĩa số | núm vặn.
+# Mặt NGOÀI đĩa cam áp SÁT mặt trong đĩa số, mặt trong núm áp sát mặt ngoài đĩa
+# số ⇒ siết bu-lông tâm là kẹp đĩa số vào giữa như phanh đĩa: đó là toàn bộ cơ
+# cấu tự giữ (không lò xo, không cóc).
+GATE_ARM_YC = GATE_WALL_T + 0.5 * GATE_STEM_ALONG        # 6.0 — tâm tay với / vòng ôm
+GATE_YOKE_Y0 = GATE_ARM_YC + GATE_COLLAR_HALF_Y          # 18.0 — mặt hạ lưu vòng ôm
+GATE_CAM_Y0 = GATE_YOKE_Y0 + GATE_YOKE_BACK_T + GATE_YOKE_GAP                 # 22.3
+GATE_CAM_Y1 = GATE_CAM_Y0 + GATE_CAM_T                                        # 32.3
+GATE_YOKE_Y1 = GATE_CAM_Y1 - GATE_YOKE_TAIL                                   # 31.0
+GATE_DIAL_T = 10.0                     # đĩa số (bạc đỡ trục) — CỐ ĐỊNH
+GATE_DIAL_D = 52.0                     # Ø đĩa số: chừa vành r 18→26 để khắc vạch
+GATE_DIAL_Y0 = GATE_CAM_Y1             # mặt tì trong (đĩa cam áp vào)          32.3
+GATE_DIAL_Y1 = GATE_DIAL_Y0 + GATE_DIAL_T                                     # 42.3
+# Cổ trục phải nằm TRỌN trong lòng đĩa cam (e + R_trục ≤ R_cam) thì mới cắm sâu
+# vào đĩa được; nếu nhô quá vành đĩa, phần nhô đó chạy trong rãnh yoke và sẽ đụng
+# vách rãnh ở hai đầu hành trình. Núm H lệch tâm 9 mm nên Ø14 là quá to (9+7=16
+# > 15) — Ø11 cho 9+5.5 = 14.5, còn dư 0.5 mm.
+GATE_JOURNAL_D = 11.0                  # cổ trục in liền cam, chạy trong đĩa số
+GATE_JOURNAL_FIT = 0.30
+GATE_JOURNAL_EMBED = 3.0               # cổ trục cắm vào lòng đĩa cam (in liền)
+GATE_KNOB_D = 36.0                     # núm vặn tay (dáng núm khía phổ thông)
+GATE_KNOB_T = 13.0
+GATE_KNOB_FLUTES = 8                   # số hõm ngón tay quanh vành núm
+GATE_KNOB_FLUTE_D = 11.0
+GATE_KNOB_Y0 = GATE_DIAL_Y1                                                   # 42.3
+GATE_KNOB_Y1 = GATE_KNOB_Y0 + GATE_KNOB_T                                     # 55.3
+GATE_KNOB_SOCKET_D = 7.3               # sâu lỗ chốt D trong núm
+GATE_JOURNAL_Y1 = GATE_KNOB_Y0 + GATE_KNOB_SOCKET_D                           # 49.6
+GATE_KNOB_DKEY = 4.0                   # mặt vát chống trượt: cách trục 4 mm
+GATE_KNOB_PTR_L = 15.0                 # gân mũi chỉ trên mặt núm
+GATE_KNOB_PTR_W = 4.0
+GATE_KNOB_PTR_H = 2.0
+GATE_DIAL_TICK_R0 = 0.5 * GATE_KNOB_D + 1.0                                   # 19.0
+GATE_DIAL_TICK_R1 = 0.5 * GATE_DIAL_D - 2.0                                   # 24.0
+
+# Giá cố định của đĩa số: bản ốp MẶT TRONG thành bát, nối tiếp chân trụ ray hiện
+# có rồi vươn xuôi dòng tới chỗ đĩa số. Mép thượng lưu của bản ốp phải cách
+# khung yoke (local y ≤ GATE_YOKE_Y1) một khe an toàn.
+# CỘT ĐỠ: khối hộp NGỒI TRÊN vành bát (z ≥ đỉnh bát) — trên đó thành bát không
+# còn nên cột được vươn ra ngoài bán kính bát thoải mái. Dải local y của cột bị
+# kẹp CHẶT giữa mặt ngoài đĩa cam (đang trượt lên xuống) và mặt trong núm vặn:
+# đúng bằng bề dày đĩa số, đó là cửa sổ duy nhất giá đỡ được phép đi vào.
+GATE_COL_Y0 = GATE_CAM_Y1 + 1.2                                               # 33.5
+GATE_COL_Y1 = GATE_DIAL_Y1 - 1.0                                              # 41.3
+GATE_COL_X0 = GATE_CAM_PIVOT_X - 6.0                                          # 85.05
+GATE_COL_X1 = BOWL_OR + 2.0                                                   # 104.8
+GATE_COL_Z0 = BOWL_Z0 + BOWL_H         # ngồi trên vành bát
+GATE_COL_Z1 = GATE_CAM_PIVOT_Z - 0.5 * GATE_KNOB_D - 2.0  # dưới mép núm 2 mm  51.3
+# Dải yên ngựa dưới cột: ốp MẶT TRONG thành bát, nối về chân trụ ray, mang 2 vít
+GATE_SKIRT_T = GATE_FOOT_T
+GATE_SKIRT_TH1_DEG = GATE_FRAME_TH_DEG + math.degrees(
+    math.asin(min(0.99, GATE_COL_Y1 / BOWL_IR))
+)
 
 # Guide_System cố định — xoắn hub→vành; HỌNG LANE mở theo CCW (lực tiếp tuyến)
 # Tip Guide DỪNG trước θ_mouth → khe góc + khe bán kính với Bowl = lối vào nhìn thấy
@@ -297,9 +400,11 @@ EXIT_WALL_H = CHUTE_WALL_H_MM  # 30.0 — bằng các vách lane khác
 #     gap = x2 − (EXIT_WALL_X + EXIT_WALL_T)      (x2 = mặt trong vách 2)
 # Ray gắn vào mặt trong Bowl_Tube, chạy vào tâm theo +X, nằm CAO hơn đỉnh vách
 # nên không cản vật; con trượt mọc từ đỉnh vách 2 lên ôm bích ray.
-EXIT_GAP_MIN = 2.0
-EXIT_GAP_MAX = 20.0          # = W_MAX — bằng họng ra Guide_System
-EXIT_GAP_DEFAULT = 17.0      # vị trí hiện tại (x2 = −60)
+# Dải LÀM VIỆC của kênh exit = 3–13 mm (yêu cầu người dùng 2026-08-19). Hành
+# trình 10 mm ⇒ cam lệch tâm e = 5 mm, đúng con số trong guide gốc.
+EXIT_GAP_MIN = 3.0
+EXIT_GAP_MAX = 13.0
+EXIT_GAP_DEFAULT = 8.0       # giữa dải
 EXIT_WALL2_PAST_RIM_MM = 20.0  # thò ra quá vành đĩa
 EXIT_WALL2_X = EXIT_WALL_X + EXIT_WALL_T + EXIT_GAP_DEFAULT  # −60.0
 EXIT_WALL2_Y_RIM = -math.sqrt(max(0.0, DISC_R ** 2 - EXIT_WALL2_X ** 2))  # −80.0
@@ -327,6 +432,78 @@ EXIT_SLIDE_SHOE_LEN = 18.0
 EXIT_SLIDE_FIT = 0.35                              # khe trượt mỗi bên
 EXIT_SLIDE_BOWL_EMBED = 3.0                        # ray cắm vào bát để bắt chặt
 
+# ---------------------------------------------------------------------------
+# NÚM XOAY CHỈNH W — cam lệch tâm + khung Scotch yoke NẰM NGANG
+# ---------------------------------------------------------------------------
+# Cùng nguyên lý với núm chỉnh H (xem khối GATE_CAM_* / entry_gate_cam_geo) chỉ
+# khác PHƯƠNG: vách 2 tịnh tiến theo X nên rãnh yoke phải KẸP theo X và DÀI ra
+# theo Y, ⇒ trục cam THẲNG ĐỨNG (song song Z) và núm nằm ngửa lên trời — vặn từ
+# trên xuống. Hành trình = 2·e = EXIT_GAP_MAX − EXIT_GAP_MIN = 10 mm ⇒ e = 5 mm
+# (núm H có e = 9 vì dải H rộng 18 mm); ĐĨA CAM, NÚM, CỔ TRỤC, VÍT vẫn dùng
+# chung kích thước — chỉ khác vị trí lỗ trục trên đĩa.
+EXIT_CAM_ECC = 0.5 * (EXIT_GAP_MAX - EXIT_GAP_MIN)   # 5.0
+EXIT_CAM_R = GATE_CAM_R                              # 15.0 → đĩa cam Ø30
+EXIT_CAM_FIT = GATE_CAM_FIT                          # 0.30
+EXIT_YOKE_T = 10.0                                   # bề dày TẤM yoke (theo Z)
+EXIT_CAM_T = EXIT_YOKE_T + 0.8                       # đĩa dày hơn tấm → luôn đủ
+EXIT_YOKE_WALL = GATE_YOKE_WALL                      # 5.0
+
+# Tâm cam luôn cách MẶT TRONG vách 2 đúng EXIT_CAM_OFFSET_X ⇒ lực đẩy đi ngay
+# trên thân vách, không tạo momen lật lớn cho hai con trượt.
+EXIT_CAM_OFFSET_X = 5.0
+EXIT_CAM_PIVOT_X = (
+    (EXIT_WALL_X + EXIT_WALL_T) + EXIT_CAM_OFFSET_X + EXIT_GAP_MAX - EXIT_CAM_ECC
+)                                                                        # −62.0
+EXIT_CAM_PIVOT_Y = -25.0
+
+# Cao độ: đĩa cam + tấm yoke phải NẰM TRÊN đỉnh ray T (không thì cắn vào ray).
+EXIT_RAIL_TOP_Z = EXIT_SLIDE_T_BODY_Z0 + EXIT_SLIDE_RAIL_H               # 47.0
+EXIT_CAM_Z0 = EXIT_RAIL_TOP_Z + 0.6                                      # 47.6
+EXIT_CAM_Z1 = EXIT_CAM_Z0 + EXIT_CAM_T                                   # 58.4
+EXIT_YOKE_Z0 = EXIT_RAIL_TOP_Z + 1.0                                     # 48.0
+EXIT_YOKE_Z1 = EXIT_YOKE_Z0 + EXIT_YOKE_T                                # 58.0
+EXIT_DIAL_Z0 = EXIT_CAM_Z1             # mặt tì: đỉnh đĩa cam áp vào đáy đĩa số
+EXIT_DIAL_T = GATE_DIAL_T
+EXIT_DIAL_Z1 = EXIT_DIAL_Z0 + EXIT_DIAL_T                                # 68.4
+EXIT_DIAL_D = GATE_DIAL_D
+EXIT_KNOB_Z0 = EXIT_DIAL_Z1
+EXIT_KNOB_Z1 = EXIT_KNOB_Z0 + GATE_KNOB_T                                # 81.4
+EXIT_JOURNAL_Z1 = EXIT_KNOB_Z0 + GATE_KNOB_SOCKET_D                      # 75.7
+EXIT_DIAL_TICK_R0 = GATE_DIAL_TICK_R0
+EXIT_DIAL_TICK_R1 = GATE_DIAL_TICK_R1
+
+# Cầu nối vách 2 → tấm yoke: phải len GIỮA HAI con trượt theo Y, và bám vào tấm
+# yoke ở dải thịt phía +X của nó (đĩa cam không bao giờ ra khỏi rãnh nên chỗ đó
+# luôn trống).
+EXIT_SHOE_HALF_W = 0.5 * (EXIT_SLIDE_T_FLANGE_W + 2.0 * (2.5 + EXIT_SLIDE_FIT))  # 7.35
+EXIT_RISER_CLR = 1.15
+EXIT_RISER_Y0 = min(EXIT_SLIDE_Y) + EXIT_SHOE_HALF_W + EXIT_RISER_CLR     # −36.5
+EXIT_RISER_Y1 = max(EXIT_SLIDE_Y) - EXIT_SHOE_HALF_W - EXIT_RISER_CLR     # −28.5
+EXIT_RISER_POST_W = 8.0                # bệ mọc trên đỉnh vách 2
+EXIT_BEAM_Z1 = EXIT_CAM_Z0 - 0.2       # dầm ngang phải LỌT dưới đáy đĩa cam
+EXIT_BEAM_T = 7.8
+
+# Giá CỐ ĐỊNH đỡ đĩa số: bản ốp mặt trong thành bát, hàn liền ray T y = −20.
+# Mép trong của nó phải nằm ngoài hành trình tấm yoke (tấm lùi xa nhất ở gap
+# nhỏ nhất) — đó là điều quyết định bán kính đặt trục cam.
+EXIT_COL_X1 = (
+    (EXIT_WALL_X + EXIT_WALL_T) + EXIT_GAP_MIN + EXIT_CAM_OFFSET_X
+    - (EXIT_CAM_R + EXIT_CAM_FIT + EXIT_YOKE_WALL) - 1.2
+)                                                                        # −92.5
+EXIT_COL_Y1 = max(EXIT_SLIDE_Y) + 0.5 * EXIT_SLIDE_RAIL_W                # −17.0
+EXIT_COL_Y0 = -(math.sqrt(max(1.0, BOWL_IR ** 2 - EXIT_COL_X1 ** 2)) - 4.0)  # ≈−36.1
+EXIT_COL_Z0 = EXIT_SLIDE_T_BODY_Z0 - EXIT_SLIDE_T_NECK_H - EXIT_SLIDE_T_FLANGE_H  # 36.4
+# Đỉnh cột dừng ĐÚNG ở mặt dưới đĩa số: đĩa số là CHI TIẾT RỜI bắt 2 vít M3
+# thẳng đứng xuống cột. Bắt buộc phải rời — đĩa cam Ø30 nằm dưới đĩa số Ø52 mà
+# lỗ tâm chỉ Ø11.6, nếu đúc liền thì không đường nào đưa cam vào chỗ được.
+EXIT_COL_Z1 = EXIT_DIAL_Z0
+EXIT_COL_R_OUT = BOWL_IR + EXIT_SLIDE_BOWL_EMBED  # cắm vào bát như ray T
+EXIT_DIAL_TAB_X0 = -100.0              # tai bắt vít của đĩa số, phủ lên đỉnh cột
+EXIT_DIAL_TAB_X1 = EXIT_CAM_PIVOT_X - 0.5 * EXIT_DIAL_D + 3.0
+EXIT_DIAL_TAB_HALF_W = 8.0
+EXIT_DIAL_BOLT_X = -96.5
+EXIT_DIAL_BOLT_DY = 5.0
+
 # Máng thoát ngắn 50 mm (phần nhô ngoài mép đĩa / chiều dài dốc).
 EXIT_CHUTE_LEN_MM = 50.0
 EXIT_TRACK_LEN = DISC_R + EXIT_CHUTE_LEN_MM  # envelope dựng tường tới chỗ cắt vành + stub
@@ -337,7 +514,8 @@ EXIT_TRACK_LEN = DISC_R + EXIT_CHUTE_LEN_MM  # envelope dựng tường tới ch
 # Vật KHÔNG còn rời đĩa ở mép 9 giờ nữa: nó chạy trong kênh hẹp giữa
 # Exit_Inner_Wall (mặt trong x = −77) và Exit_Inner_Wall_2 (mặt trong x = −57…−75
 # tuỳ gap) theo −Y, rời đĩa khi vành đĩa lùi khỏi nó. Vậy máng phải nằm ngay
-# DƯỚI kênh đó, rộng đúng 2 cm = bề rộng kênh lớn nhất (EXIT_GAP_MAX):
+# DƯỚI kênh đó. Lòng máng giữ nguyên 2 cm — RỘNG HƠN kênh lớn nhất (13 mm) từ
+# khi dải chỉnh thu về 3–13, nên vẫn hứng trọn kênh ở mọi vị trí vách 2:
 #     lòng máng x ∈ [−77, −57]  ← trùng mặt trong vách 1 → hết hành trình vách 2
 # Mép trái lòng máng thẳng hàng mặt trong vách 1 nên vật đi từ kênh xuống máng
 # không vấp bậc.
@@ -844,6 +1022,137 @@ def entry_gate_geo(height_open: float) -> dict:
     }
 
 
+# ---------------------------------------------------------------------------
+# Núm xoay ↔ H: cam lệch tâm trong khung Scotch yoke
+# ---------------------------------------------------------------------------
+def cam_height_for_angle(theta_deg: float) -> float:
+    """H khi núm ở góc θ (0° = H_MAX, 180° = H_MIN). H = H_MAX − e(1−cosθ)."""
+    return H_MAX - GATE_CAM_ECC * (1.0 - math.cos(_deg2rad(theta_deg)))
+
+
+def cam_angle_for_height(height_open: float) -> float:
+    """θ (0–180°) để đạt H. Nghịch đảo của cam_height_for_angle."""
+    h = _clamp(height_open, HEIGHT_MIN, HEIGHT_MAX)
+    c = _clamp(1.0 - (H_MAX - h) / GATE_CAM_ECC, -1.0, 1.0)
+    return math.degrees(math.acos(c))
+
+
+def cam_center_local(theta_deg: float) -> tuple[float, float]:
+    """Tâm đĩa cam trong khung cửa (local x, z). θ tăng = núm quay theo chiều
+    kim đồng hồ khi nhìn từ phía núm (từ +y vào) = H GIẢM."""
+    t = _deg2rad(theta_deg)
+    return (
+        GATE_CAM_PIVOT_X - GATE_CAM_ECC * math.sin(t),
+        GATE_CAM_PIVOT_Z + GATE_CAM_ECC * math.cos(t),
+    )
+
+
+def entry_gate_cam_geo(height_open: float) -> dict:
+    """Toàn bộ toạ độ cụm núm xoay + khung yoke (nguồn sự thật CAD ↔ verify).
+
+    Rãnh yoke cao đúng 2(R_cam+fit) nên kẹp đĩa cam cả trên lẫn dưới ⇒ đẩy
+    xuống VÀ kéo lên đều cưỡng bức. Hai vách ĐẦU rãnh (theo x) là CHẶN CỨNG:
+    quá 0°/180° một chút là đĩa cam đụng vách, không thể vặn quá dải H."""
+    h = _clamp(height_open, HEIGHT_MIN, HEIGHT_MAX)
+    th = cam_angle_for_height(h)
+    xc, zc = cam_center_local(th)
+    e, r, fit, wall = GATE_CAM_ECC, GATE_CAM_R, GATE_CAM_FIT, GATE_YOKE_WALL
+    # Rãnh: cao 2(r+fit), dài đủ cho tâm cam chạy hết dải x ∈ [x_p−e, x_p]
+    z_sb = GATE_CAM_PIVOT_Z + e - (H_MAX - h) - r - fit   # đáy rãnh
+    z_st = z_sb + 2.0 * (r + fit)
+    x_s0 = GATE_CAM_PIVOT_X - e - r - fit
+    x_s1 = GATE_CAM_PIVOT_X + r + fit
+    # Góc vượt tới khi đĩa cam đụng vách đầu rãnh (chặn cứng hai đầu hành trình)
+    over = math.degrees(math.asin(_clamp(fit / e, -1.0, 1.0)))
+    return {
+        "H": h,
+        "theta_deg": th,
+        "ecc_mm": e,
+        "cam_r_mm": r,
+        "pivot_local": (GATE_CAM_PIVOT_X, 0.5 * (GATE_CAM_Y0 + GATE_CAM_Y1), GATE_CAM_PIVOT_Z),
+        "cam_center_local": (xc, zc),
+        "cam_z0_mm": zc - r,
+        "cam_z1_mm": zc + r,
+        "cam_x0_mm": xc - r,
+        "cam_x1_mm": xc + r,
+        "slot_z0_mm": z_sb,
+        "slot_z1_mm": z_st,
+        "slot_x0_mm": x_s0,
+        "slot_x1_mm": x_s1,
+        "slot_h_mm": z_st - z_sb,
+        "slot_l_mm": x_s1 - x_s0,
+        "yoke_x0_mm": x_s0 - wall,
+        "yoke_x1_mm": x_s1 + wall,
+        "yoke_z0_mm": z_sb - wall,
+        "yoke_z1_mm": z_st + wall,
+        "yoke_y0_mm": GATE_YOKE_Y0,
+        "yoke_y1_mm": GATE_YOKE_Y1,
+        "cam_y0_mm": GATE_CAM_Y0,
+        "cam_y1_mm": GATE_CAM_Y1,
+        "travel_mm": 2.0 * e,
+        "turn_deg": 180.0,
+        "overtravel_deg": over,
+        "overtravel_h_mm": e * (1.0 - math.cos(_deg2rad(over))),
+        "mm_per_deg_max": e * _deg2rad(1.0),
+        "positive_drive": True,
+        "return_spring": False,
+        "eq_H": "H = H_MAX - e*(1-cos(theta)); hanh trinh = 2*e",
+        # Rãnh phải cao đúng đĩa cam + fit hai phía, nếu không mất khoá 2 chiều
+        "check_slot_h": abs((z_st - z_sb) - 2.0 * (r + fit)) < 1e-9,
+        "check_cam_in_slot": (zc - r) >= z_sb - 1e-9 and (zc + r) <= z_st + 1e-9,
+        "check_travel": abs(2.0 * e - H_TRAVEL) < 1e-9,
+        "check_half_turn": abs(cam_height_for_angle(0.0) - H_MAX) < 1e-9
+        and abs(cam_height_for_angle(180.0) - H_MIN) < 1e-9,
+        "check_yoke_above_bowl": (z_sb - wall) >= BOWL_Z0 + BOWL_H,
+        "check_cam_x_in_slot": (xc - r) >= x_s0 - 1e-9 and (xc + r) <= x_s1 + 1e-9,
+    }
+
+
+def _gate_skirt_th0_deg() -> float:
+    """Mép thượng lưu dải yên ngựa = ngay sau chân trụ ray hiện có."""
+    th_c = GATE_TH_DEG - 0.5 * GATE_ROOF_DEG
+    # +0.5° chứ không phải −1°: yên ngựa nay thuộc CHI TIẾT RỜI Entry_Gate_Dial
+    # nên phải chừa khe với chân trụ của Entry_Gate_Post, không được chồng lên.
+    return th_c + math.degrees(0.5 * (GATE_FOOT_W + 6.0) / BOWL_IR) + 0.5
+
+
+def gate_cam_mount_sites() -> list[dict]:
+    """2 bu-lông M3 xuyên tâm bắt bản ốp giá đĩa số vào thành Bowl_Tube."""
+    out = []
+    z = 0.5 * (GATE_FOOT_Z0 + (BOWL_Z0 + BOWL_H))
+    r0 = BOWL_IR - GATE_SKIRT_T + 1.0
+    th0 = _gate_skirt_th0_deg()
+    span = GATE_SKIRT_TH1_DEG - th0
+    for u in (0.35, 0.8):
+        th = th0 + span * u
+        c, s_ = math.cos(_deg2rad(th)), math.sin(_deg2rad(th))
+        out.append({
+            "origin": (r0 * c, r0 * s_, z),
+            "axis": (c, s_, 0.0),
+            "h": (BOWL_OR + 4.0) - r0,
+            "th_deg": th,
+            "z": z,
+        })
+    return out
+
+
+def exit_dial_bolt_sites() -> list[tuple[float, float]]:
+    """2 vít M3 THẲNG ĐỨNG bắt đĩa số W xuống đỉnh cột (đầu vít quay lên trời,
+    vặn được bằng lục giác từ trên — không vướng gì)."""
+    return [(EXIT_DIAL_BOLT_X, EXIT_CAM_PIVOT_Y - EXIT_DIAL_BOLT_DY),
+            (EXIT_DIAL_BOLT_X, EXIT_CAM_PIVOT_Y + EXIT_DIAL_BOLT_DY)]
+
+
+def cam_dial_tick_angles() -> list[tuple[float, float, bool]]:
+    """(H, θ, vạch dài?) — vạch chia trên mặt đĩa số, mỗi 1 mm H, dài mỗi 4 mm."""
+    out = []
+    n = int(round(H_TRAVEL))
+    for i in range(n + 1):
+        h = H_MIN + i
+        out.append((float(h), cam_angle_for_height(h), (int(h) % 4) == 0 or i in (0, n)))
+    return out
+
+
 def adjust_pose_math(width_open: float, height_open: float) -> dict:
     """Closed-form pose — nguồn sự thật cho CAD + verify.
 
@@ -962,6 +1271,103 @@ def exit_wall2_geo(gap_mm: float | None = None) -> dict:
         "y_end": y_rim - EXIT_WALL2_PAST_RIM_MM,
         "slide_mm": x2 - EXIT_WALL2_X,
     }
+
+
+# ---------------------------------------------------------------------------
+# Núm xoay ↔ W: cam lệch tâm trong khung Scotch yoke nằm ngang
+# ---------------------------------------------------------------------------
+def exit_cam_gap_for_angle(theta_deg: float) -> float:
+    """gap khi núm W ở góc θ (0° = GAP_MAX, 180° = GAP_MIN)."""
+    return EXIT_GAP_MAX - EXIT_CAM_ECC * (1.0 - math.cos(_deg2rad(theta_deg)))
+
+
+def exit_cam_angle_for_gap(gap_mm: float | None = None) -> float:
+    """θ (0–180°) để đạt gap. Nghịch đảo của exit_cam_gap_for_angle."""
+    g = EXIT_GAP_DEFAULT if gap_mm is None else _clamp(
+        float(gap_mm), EXIT_GAP_MIN, EXIT_GAP_MAX)
+    c = _clamp(1.0 - (EXIT_GAP_MAX - g) / EXIT_CAM_ECC, -1.0, 1.0)
+    return math.degrees(math.acos(c))
+
+
+def exit_cam_center(theta_deg: float) -> tuple[float, float]:
+    """Tâm đĩa cam W (x, y). θ tăng = núm quay theo chiều kim đồng hồ khi nhìn
+    TỪ TRÊN XUỐNG = gap GIẢM (cùng quy ước với núm H)."""
+    t = _deg2rad(theta_deg)
+    return (
+        EXIT_CAM_PIVOT_X + EXIT_CAM_ECC * math.cos(t),
+        EXIT_CAM_PIVOT_Y - EXIT_CAM_ECC * math.sin(t),
+    )
+
+
+def exit_cam_geo(gap_mm: float | None = None) -> dict:
+    """Toàn bộ toạ độ cụm núm W + khung yoke (nguồn sự thật CAD ↔ verify).
+
+    Rãnh KẸP theo X (đúng 2(R+fit)) nên đẩy ra VÀ kéo vào đều cưỡng bức; rãnh
+    DÀI theo Y đủ cho tâm cam lắc ngang, hai vách đầu Y là CHẶN CỨNG hai đầu
+    dải gap."""
+    g = EXIT_GAP_DEFAULT if gap_mm is None else _clamp(
+        float(gap_mm), EXIT_GAP_MIN, EXIT_GAP_MAX)
+    th = exit_cam_angle_for_gap(g)
+    xc, yc = exit_cam_center(th)
+    e, r, fit, wall = EXIT_CAM_ECC, EXIT_CAM_R, EXIT_CAM_FIT, EXIT_YOKE_WALL
+    x2 = exit_wall2_x(g)
+    slot_x0 = (x2 + EXIT_CAM_OFFSET_X) - r - fit
+    slot_x1 = (x2 + EXIT_CAM_OFFSET_X) + r + fit
+    slot_y0 = EXIT_CAM_PIVOT_Y - e - r - fit
+    slot_y1 = EXIT_CAM_PIVOT_Y + r + fit
+    over = math.degrees(math.asin(_clamp(fit / e, -1.0, 1.0)))
+    return {
+        "gap_mm": g,
+        "theta_deg": th,
+        "ecc_mm": e,
+        "cam_r_mm": r,
+        "pivot_xy": (EXIT_CAM_PIVOT_X, EXIT_CAM_PIVOT_Y),
+        "cam_center_xy": (xc, yc),
+        "wall2_x_in": x2,
+        "cam_x0_mm": xc - r,
+        "cam_x1_mm": xc + r,
+        "cam_y0_mm": yc - r,
+        "cam_y1_mm": yc + r,
+        "slot_x0_mm": slot_x0,
+        "slot_x1_mm": slot_x1,
+        "slot_y0_mm": slot_y0,
+        "slot_y1_mm": slot_y1,
+        "slot_grip_mm": slot_x1 - slot_x0,
+        "slot_len_mm": slot_y1 - slot_y0,
+        "yoke_x0_mm": slot_x0 - wall,
+        "yoke_x1_mm": slot_x1 + wall,
+        "yoke_y0_mm": slot_y0 - wall,
+        "yoke_y1_mm": slot_y1 + wall,
+        "yoke_z0_mm": EXIT_YOKE_Z0,
+        "yoke_z1_mm": EXIT_YOKE_Z1,
+        "travel_mm": 2.0 * e,
+        "turn_deg": 180.0,
+        "overtravel_deg": over,
+        "overtravel_gap_mm": e * (1.0 - math.cos(_deg2rad(over))),
+        "mm_per_deg_max": e * _deg2rad(1.0),
+        "positive_drive": True,
+        "return_spring": False,
+        "eq_gap": "gap = EXIT_GAP_MAX - e*(1-cos(theta)); hanh trinh = 2*e",
+        # cam luôn cách mặt trong vách 2 đúng OFFSET ⇒ lực đi trên thân vách
+        "check_cam_tracks_wall2": abs((xc - x2) - EXIT_CAM_OFFSET_X) < 1e-9,
+        "check_slot_grip": abs((slot_x1 - slot_x0) - 2.0 * (r + fit)) < 1e-9,
+        "check_cam_in_slot": (xc - r) >= slot_x0 - 1e-9 and (xc + r) <= slot_x1 + 1e-9,
+        "check_cam_y_in_slot": (yc - r) >= slot_y0 - 1e-9 and (yc + r) <= slot_y1 + 1e-9,
+        "check_travel": abs(2.0 * e - (EXIT_GAP_MAX - EXIT_GAP_MIN)) < 1e-9,
+        "check_half_turn": abs(exit_cam_gap_for_angle(0.0) - EXIT_GAP_MAX) < 1e-9
+        and abs(exit_cam_gap_for_angle(180.0) - EXIT_GAP_MIN) < 1e-9,
+        "check_above_rail": EXIT_CAM_Z0 > EXIT_RAIL_TOP_Z,
+    }
+
+
+def exit_cam_dial_tick_angles() -> list[tuple[float, float, bool]]:
+    """(gap, θ, vạch dài?) — vạch chia mỗi 1 mm gap, vạch dài mỗi 4 mm."""
+    out = []
+    n = int(round(EXIT_GAP_MAX - EXIT_GAP_MIN))
+    for i in range(n + 1):
+        g = EXIT_GAP_MIN + i
+        out.append((float(g), exit_cam_angle_for_gap(g), (int(g) % 4) == 0 or i in (0, n)))
+    return out
 
 
 def exit_slide_rail_x_bowl(y_mm: float) -> float:
