@@ -22,21 +22,21 @@ Nguồn kích thước động cơ: bản vẽ datasheet GA12-N20 (Unit: mm)
   trục ra Ø3 x 10, có vạt phẳng chữ D (chỗ cho vít khớp nối tì vào)
 
 CƠ CẤU (trục nằm theo +X, đế nằm trên mặt XY):
-  Housing           — VỎ HỘP: đáy + 4 vách + 4 TAI bắt bu lông M4 + KHE cho thanh chạy
-  Housing_Lid       — nắp đậy, 4 vít M3 xuống 4 trụ góc
-  Motor_Bracket     — bích đứng bắt 2 vít M1.6 CHÌM + máng ôm thân + vấu công tắc MIN
-  Motor_Clamp       — nắp kẹp trên, 4 vít M3
+  Housing           — VỎ + KHUNG LIỀN: đáy, 4 vách, tai M4, bích/máng ĐC, gối đỡ,
+                      vấu CT, boss bắt nắp — MỘT khối in (không bu lông giữa gá/đế)
+  Housing_Lid       — nắp đậy, 4 vít M3 xuống boss trên khung
+  Motor_Clamp       — nắp kẹp trên lon ĐC, 4 vít M3 xuống máng (chi tiết rời để lắp)
   Coupler           — KHỚP NỐI TRỤC (mua sẵn): lỗ Ø3 + vít | lỗ Ø4 + vít
   Coupler_Spacer    — CỮ Ø3.8 thả đáy lỗ Ø4, chặn ty ren ở đúng chiều sâu cắm
   Thread_Rod        — TY REN M4 x 40, cắm COUP_ROD_IN mm vào lỗ Ø4
-  Guide_Shaft       — TRỤC TRƠN Ø5 SONG SONG với ty ren, lệch +Y 17 mm; hai đầu cắm
-                      vào HỐC MÙ, không xuyên thủng
+  Guide_Shaft       — TRỤC TRƠN Ø5 + vạt dưới vít hãm; lệch +Y 17 mm; hai đầu hốc mù
+  Guide_Lock_Screw  — vít hãm M3 khóa trục lúc chạy (siết sau khi ngồi tư thế gối)
   Slide_Bar         — THANH TỊNH TIẾN: bạc ôm trục trơn + LỖ CHO KHỚP NỐI CHUI QUA
                       + HUB liền khối ôm đai ốc (khe HỞ NÓC), KHÔNG có chi tiết rời
                       + BỆ GÁ TẢI ở đầu tự do, 2 bộ lỗ trên 2 mặt vuông góc
   Hex_Nut           — đai ốc lục giác M4 thường (mua sẵn)
-  End_Block         — gối đỡ trục trơn + lỗ đỡ đầu ty ren + vấu công tắc MAX
   Limit_Switch_Min/Max — 2 công tắc KW11 bánh xe, bị ấn DỌC TRỤC
+                      (siết M2 từ ngoài qua lỗ trên vách -Y)
 
 NGUYÊN LÝ: động cơ quay → khớp nối quay → ty ren quay → đai ốc bị khe TRÊN CHÍNH THANH
 giữ không cho xoay → đai ốc chạy dọc trục → kéo Slide_Bar. Trục trơn song song chịu
@@ -73,12 +73,14 @@ mối ren nào để tự tháo, nên bỏ được cả con đai ốc lẫn ph�
 quay lại loại khớp nối có ren thì PHẢI thêm đai ốc hãm trở lại.
 
 NGÂN SÁCH HÀNH TRÌNH — mọi thứ khác KHÔNG ảnh hưởng, đừng mất công chỉnh:
-    hành trình = ROD_LEN
+    hành trình dừng (trip↔trip) = ROD_LEN
                  - COUP_ROD_IN        (ty ren cắm vào khớp nối)
                  - ROD_END_SUPPORT    (ty ren cắm vào lỗ đỡ End_Block)
                  - (2*NUT_WALL + NUT_POCKET)   (chồng ôm đai ốc trên thanh)
                  - 2*END_CLEAR        (khe an toàn 2 đầu)
-                 - 2*SW_PRESS         (công tắc tác động sớm hơn chặn cơ)
+                 + END_HUB_RECESS     (hub/bạc chui vào hốc mặt End_Block)
+                 - 2*SW_PRESS         (dự phòng sau khi CT tác động, trước chặn cơ)
+Thanh DỪNG khi công tắc tác động; chặn cơ chỉ là failsafe sau SW_PRESS.
 Vị trí động cơ, độ dày bích, chiều dài khớp nối, chiều dài bạc trục trơn, độ dày thân
 thanh — TẤT CẢ triệt tiêu khỏi công thức này. Dời khớp nối ra/vào chỉ dời cả cụm chứ
 không đổi hành trình, vì ty ren dời theo. Đã kiểm bằng đại số, đừng thử lại.
@@ -93,37 +95,24 @@ qua một KHE trên vách -Y. Khe tính theo CHẶN CƠ KHÍ chứ không theo �
 động — công tắc chết thì thanh vẫn chạy thêm SW_PRESS mm nữa, khe phải chứa nổi.
 Khe XẺ HỞ NÓC tới mép vách rồi để nắp đậy nốt: khỏi phải in cầu vượt hơn 30 mm, và
 hạ được cả cụm thanh + trục trơn vào từ trên xuống khi lắp.
-4 TAI bắt bu lông M4 chìa ra hai bên +-Y, đặt ở HAI ĐẦU theo X — ngoài đoạn x mà bệ gá
-quét qua — để cả phía -Y còn trống cho cơ cấu người dùng lắp lên bệ.
-4 TRỤ GÓC bắt nắp bắt đầu từ z = POST_Z0 (trên mặt chân gá) chứ không từ đáy: hai chân
-gá trải tới y = +-18 nên trụ mà xuống thấp hơn là đâm vào chúng.
-Vách -X có lỗ Ø CABLE_D luồn dây động cơ + 2 công tắc.
+4 TAI bắt bu lông M4 chìa +-Y ở hai đầu hộp. Boss nắp trên khung liền.
+Vách -X: lỗ CABLE_D. Vách -Y: lỗ M2 siết công tắc. Nắp: khe cho trụ bệ gá.
 
-BỆ GÁ TẢI — HAI BỘ LỖ CHO HAI KIỂU LẮP: cụm này dùng được ở hai tư thế, và mỗi tư thế
-cần bắt bu lông theo một hướng khác nhau, nên đầu tự do của thanh mang CẢ HAI:
-  (a) MẶT ĐẦU (-Y): 4 lỗ TARÔ M3 xếp chữ nhật %g x %g mm, sâu LOAD_TAP_DEPTH.
-      Dùng khi cụm nằm NGANG và tải là tấm VÁCH NGĂN úp vào mặt đầu — 4 điểm chữ nhật
-      chặn được cả xoay lẫn lật, vặn từ ngoài vào, không cần với tay ra sau.
-  (b) MẶT TRÊN/DƯỚI (+-Z): 2 lỗ M3 XUYÊN SUỐT, cách nhau %g mm.
-      Dùng khi cụm dựng ĐỨNG (thanh chạy lên xuống) và tải là cơ cấu chỉnh độ cao kẹp
-      lên mặt trên hay mặt dưới — xuyên suốt nên bắt bu lông + đai ốc, hai mặt đều với
-      tới được vì bệ nhô hẳn ra ngoài mép đế.
-Hai bộ lỗ đặt lệch nhau theo X nên KHÔNG cắt vào nhau: lỗ tarô ở +-LOAD_TAP_DX, lỗ
-xuyên ở +-LOAD_BOLT_DX, chừa >= 2 mm thịt giữa chúng.
+BỆ GÁ TẢI — trụ hẹp xuyên NẮP (+Z), phía trên nắp là VÁCH DẸT:
+  Vách nằm ngoài hộp, dẹt theo X (MOUNT_T), dài theo chiều ngang hộp (Y), mặt phẳng
+  YZ VUÔNG GÓC trục tịnh tiến. 4 lỗ M3 XUYÊN theo X trên mặt vách (bắt bulông tải).
+  Trụ xuyên khe nắp hẹp Y (né boss); vách phía trên nắp xoè rộng gần hết chiều ngang hộp.
+VÙNG z > WALL_Z1 và hai phía ±X của mặt vách trống cho cơ cấu người dùng.
 
-VÙNG GÁ TẢI TRỐNG: toàn bộ nửa không gian y <= BAR_PAD_Y1 - 1 là TRỐNG HOÀN TOÀN ở mọi
-x và mọi z — mép đế dừng ở y = BASE_Y0, hai công tắc dừng ở y = SW_FIN_Y0 - SW_T. Thứ
-gì bắt lên bệ gá mà nằm trong nửa không gian đó thì không bao giờ va, dù thanh chạy tới
-đâu. Có check `Nua khong gian gan tai la trong` canh điều này.
-
-TRỤC TRƠN CẮM HỐC MÙ: hai lỗ trên Motor_Bracket và End_Block đều BỊT ĐÁY bằng một vách
-mỏng GUIDE_BLIND_WALL, nên trục trơn bị chặn dọc trục ở cả hai phía — ép chặt cỡ nào rồi
-cũng có lúc rão, mà lỗ thủng thì không còn gì giữ. Bích đứng chỉ dày FACE_T = 3 nên
-không đủ chỗ cho hốc sâu; đắp thêm một vấu Ø GUIDE_BOSS_D mọc về +X để hốc sâu tới
-FACE_T + GUIDE_BOSS_L - GUIDE_BLIND_WALL (>= 1 x đường kính trục, đủ chống lật).
-Giữa mỗi vách mỏng có LỖ THÔNG HƠI Ø GUIDE_VENT_D: nó thoát khí khi đóng trục vào hốc
-mù, và về sau muốn tháo thì lấy que xuyên qua đó đẩy trục ra. Ø1.5 không cho trục Ø5
-lọt nên vách vẫn là vách.
+TRỤC TRƠN CẮM HỐC MÙ + RƠ DỌC (tháo lắp với Slide_Bar khi Housing liền):
+Hai hốc BỊT ĐÁY (GUIDE_BLIND_WALL). Trục ngắn hơn khoảng 2 vách một đoạn GUIDE_AXIAL_PLAY
+(~1 x sâu hốc gối): đẩy hết về ĐC thì đầu +X LỌT miệng gối → hạ/nhấc được cụm
+Slide_Bar+trục; đẩy về gối thì hai đầu ngồi hốc. Vấu Ø GUIDE_BOSS_D dài hơn để hốc ĐC
+vẫn còn >= GUIDE_MIN_ENG khi trục tì vách gối (tư thế chạy). Lỗ thông hơi Ø GUIDE_VENT_D
+xả khí / chọc đẩy trục về ĐC khi tháo — không phải lối trục Ø5.
+CỐ ĐỊNH LÚC CHẠY: vít hãm M3 từ trên xuống qua vấu hốc ĐC, tì vào vạt trên trục
+(GUIDE_LOCK_X). Siết sau khi ngồi tư thế tì gối — trục không còn trôi theo play.
+Tháo: nới vít hãm trước, rồi mới đẩy trục về ĐC.
 
 CHẶN DỌC TRỤC CỦA TY REN: đẩy thanh về +X thì phản lực đẩy ty ren về -X, ty tì vào CỮ
 rồi tới vách COUP_WALL — chặn cứng. Chiều ngược lại chỉ có vít hãm giữ, nên vít phía ty
@@ -135,24 +124,23 @@ KHÔNG dùng đai ốc hãm thứ 2 cho ĐAI ỐC CHẠY (double nut chống rơ
 CÔNG TẮC HÀNH TRÌNH: thân công tắc đặt sao cho MẶT TRƯỚC của nó chính là chặn cơ khí;
 thanh chạm bánh xe trước đó nên giới hạn điện luôn tới trước giới hạn cơ.
 
-THỨ TỰ LẮP (quan trọng — ty ren không luồn thẳng vào được nếu lắp End_Block trước):
-  1. Ép trục trơn vào Motor_Bracket; bắt động cơ 2 vít M1.6 chìm; lồng khớp nối vào
-     trục Ø3, siết vít đầu -X vào mặt vạt D.
-  2. THẢ Coupler_Spacer vào đáy lỗ Ø4 của khớp nối (làm TRƯỚC, sau này không với tới).
-  3. Xỏ Slide_Bar vào trục trơn.
-  4. THẢ đai ốc M4 từ trên xuống khe hở nóc trên hub của thanh.
-  5. Vặn ty ren từ phía xa vào: qua vách sau, qua đai ốc, qua vách trước, cắm vào lỗ Ø4
-     tới khi CHẠM CỮ, rồi siết vít đầu +X.
-  6. Xỏ End_Block vào trục trơn + đầu ty ren THEO PHƯƠNG X rồi mới bắt xuống đế.
-     Hai hốc đều mù nên chỉ lắp được kiểu này: đóng trục vào hốc bích trước, rồi đẩy
-     End_Block dọc trục trùm lên đầu còn lại. CẮT TRỤC 60.0 mm, thà NGẮN 0.3 còn hơn
-     dài — dài quá thì End_Block bị đội, không hạ hết xuống đế (lỗ M3 chỉ rơ 0.4 mm).
+THỨ TỰ LẮP (Housing liền — trục + thanh lên cùng lúc nhờ rơ dọc GUIDE_AXIAL_PLAY):
+  1. Bắt động cơ 2 vít M1.6 chìm; lồng khớp nối vào trục Ø3, siết vít -X vào mặt vạt D.
+  2. THẢ Coupler_Spacer vào đáy lỗ Ø4 (làm TRƯỚC).
+  3. Xỏ Guide_Shaft qua bạc Slide_Bar; THẢ đai ốc M4 vào khe hở nóc.
+  4. Nắp mở: đẩy trục hết về hốc ĐC (đầu +X lọt miệng gối) → hạ thanh+trục vào khoang
+     → đẩy trục về +X cho hai đầu ngồi hốc (tì nhẹ vách gối = tư thế chạy)
+     → SIẾT vít hãm M3 trên vấu hốc ĐC (cố định trục, hết rơ lúc chạy).
+  5. Vặn ty ren: qua hub/đai ốc, cắm lỗ Ø4 tới CỮ, siết vít +X; đậy nắp.
+THÁO trục/thanh: tháo ty ren → NỚI vít hãm M3 → chọc lỗ thông hơi gối đẩy trục hết
+về ĐC → nhấc đầu +X cùng Slide_Bar ra.
 
 CHẠY: freecad.exe 3d_model/freecad/n20_leadscrew_stage.py
   (KHÔNG dùng freecadcmd — save headless mất GuiDocument.xml nên mở ra mất màu)
 """
 from __future__ import annotations
 
+import json
 import math
 import sys
 from pathlib import Path
@@ -201,25 +189,25 @@ SHAFT_FLAT_X0 = 3.0                       # vạt bắt đầu cách mặt bích
 # 2. Bố trí chung (mm). Đế: mặt dưới z=0. Trục quay: y=0, z=AXIS_Z.
 # ---------------------------------------------------------------------------
 BASE_T = 4.0
-AXIS_Z = 20.0                             # tâm trục so với mặt bàn máy
-GUIDE_Y = 17.0                            # trục trơn song song, lệch +Y
+AXIS_Z = 18.0                             # hạ trục → hộp thấp hơn (was 20)
+GUIDE_Y = 13.5                            # thu hẹp (was 17); >= HUB_Y + BOSS_R + khe
 GUIDE_D = 5.0                             # Ø5 trục trơn (loại phổ thông)
 
 FACE_X0, FACE_T = 0.0, 3.0                # bích đứng x = 0..3, mặt ĐC áp tại x=0
 SHAFT_CLEAR_D = SHAFT_D + 0.6             # lỗ cho trục Ø3 chui qua bích
-BASE_X0 = -30.0                           # BASE_* = KHOANG TRONG của vỏ hộp; vách
-BASE_Y0, BASE_Y1 = -29.0, 29.0            # dựng ra phía ngoài các số này
-WING_Y = GUIDE_Y + 7.0                    # chân đế nới rộng tới phía trục trơn
+CRADLE_X0 = -MOT_LEN - 1.5                # máng ôm thân — sát đuôi ĐC
+BASE_X0 = CRADLE_X0 - 0.4                 # khoang trong sát máng (~0.4 mm)
+# BASE_Y* tính SAU công tắc / WING (ép sát thành)
+WING_CLEAR = 0.5                          # khe nội thất ↔ vách trong
 RIB_T = 4.0                               # gân chống lật cho bích đứng
 RIB_Y0 = GUIDE_Y + 2.0                    # gân đặt SÁT (không trùng) lỗ trục trơn
 
-CRADLE_X0 = -MOT_LEN - 2.0                # máng ôm thân: -27.2 .. 0
 FOOT_T = 4.0                              # bề dày chân đế của gá (z = 4..8)
-FOOT_Y = 18.0                             # nửa bề rộng chân đế
-FOOT_BOLT_Y = 15.0                        # vít M3 bắt xuống đế (đủ chỗ cho mũ vít)
-CRADLE_Y = 11.0                           # nửa bề rộng máng + nắp kẹp
-CLAMP_BOLT_Y = 8.5                        # vít M3 giữ nắp kẹp, hai bên thân ĐC
-PLATE_TOP = 28.0                          # đỉnh bích đứng
+FOOT_Y = 14.0                             # đủ y_neg boss nắp + cắt chân dưới CT
+FOOT_BOLT_Y = 10.0
+CRADLE_Y = 8.0                            # thu hẹp; nắp kẹp ±8, boss nắp y_neg ngoài
+CLAMP_BOLT_Y = 6.0
+PLATE_TOP = 26.0
 
 # --- KHỚP NỐI TRỤC (mua sẵn): 2 LỖ TRƠN 3 mm - 4 mm, 2 VÍT HÃM ------------
 # GIẢ ĐỊNH kích thước: trang bán chỉ ghi cỡ lỗ (3-4), không ghi thân. Lấy theo khớp
@@ -263,38 +251,33 @@ NUT_AC = NUT_AF * 2.0 / math.sqrt(3.0)    # ngang hai đỉnh = 8.08
 NUT_H = 3.2                               # bề dày
 THREAD_MARGIN = 1.5                       # ren dự phòng chừa ở cuối hành trình
 
-# Thanh tịnh tiến
+# Thanh tịnh tiến — thân GỌN trong hộp; trụ/vách gá CHÌA LÊN qua nắp (+Z)
 BAR_X = 7.0                               # bề dày thanh theo phương chạy (X)
-BAR_Y0, BAR_Y1 = -41.0, GUIDE_Y           # đầu tự do ở -41: bệ gá phải nằm HẲN ngoài
-                                          # vách -Y của vỏ hộp (mặt ngoài y = -32)
 COUP_CLEAR_D = COUP_D + 1.2               # lỗ cho KHỚP NỐI chui qua thanh
 BAR_WALL = 2.5                            # thịt còn lại trên/dưới lỗ đó
 BAR_Z0 = AXIS_Z - COUP_CLEAR_D / 2.0 - BAR_WALL
 BAR_Z1 = AXIS_Z + COUP_CLEAR_D / 2.0 + BAR_WALL
-BAR_PAD_Y1 = -33.0                        # BỆ GÁ TẢI nằm ngoài vỏ, y = -41..-33 (hở
-BAR_PAD_X = 32.0                          # 1 mm với mặt ngoài vách). Nới rộng bao nhiêu
-                                          # cũng KHÔNG tốn hành trình vì ở ngoài hộp
-LOAD_TAP_DX, LOAD_TAP_DZ = 7.0, 6.0       # 4 lỗ tarô M3 trên MẶT ĐẦU (-Y)
-LOAD_TAP_DEPTH = 8.0                      # = đúng bề dày bệ theo Y
-LOAD_BOLT_DX = 12.0                       # 2 lỗ M3 XUYÊN theo Z (mặt trên/mặt dưới)
-LOAD_BOLT_Y = 0.5 * (BAR_Y0 + BAR_PAD_Y1)  # -30, giữa bề dày bệ
-BOSS_D, BOSS_L = 13.0, 18.0               # bạc ôm trục trơn
+BOSS_D, BOSS_L = 12.0, 18.0               # bạc ôm trục trơn (was Ø13)
 BOSS_BORE = GUIDE_D + 0.3                 # trượt: Ø5.3
+WING_Y = GUIDE_Y + BOSS_D / 2.0 + 0.5     # chân/vách +Y sát bạc
 
 # --- HUB ÔM ĐAI ỐC: khoét thẳng vào thanh, mọc ra phía +X (phía gối đỡ) ----
-# Ở phía +X chứ không phải -X: bên -X có khớp nối chắn, hốc nằm bên đó thì nó và
-# thanh tranh nhau cùng một vùng chết. HUB_FRONT đặt BẰNG ĐÚNG BOSS_L/2 nên mặt
-# trước hub trùng mặt trước bạc trục trơn — hub không ăn thêm mm hành trình nào.
-HUB_FRONT = BOSS_L / 2.0                  # 9.0, mặt trước hub so với tâm thanh
-HUB_Y = 10.0                              # nửa bề rộng hub (bạc trục trơn bắt đầu ở 10.5)
-NUT_WALL = 2.0                            # 2 vách chặn dọc trục, liền khối với thanh
-NUT_POCKET = NUT_H + 0.2                  # hốc dài hơn đai ốc 0.2 → rơ dọc trục 0.2
-NUT_SLOT_W = NUT_AF + 0.5                 # khe rộng hơn S 0.5 → đai ốc còn BƠI
-NUT_SLOT_Z0 = AXIS_Z - NUT_AC / 2.0 - 1.0  # đáy khe; phía trên HỞ hoàn toàn
-ROD_CLEAR_D = ROD_D + 1.2                 # lỗ ty ren xuyên 2 vách
-# Đáy lỗ khoét Ø(khớp nối) = mặt ngoài vách trước. Đây là mặt duy nhất không chui
-# qua được khớp nối / đai ốc hãm, tức là thứ quyết định giới hạn GẦN.
+HUB_FRONT = BOSS_L / 2.0                  # 9.0
+HUB_Y = 7.0                               # thu hẹp (was 10); đủ khe đai ốc + thịt
+assert GUIDE_Y + 1e-9 >= HUB_Y + BOSS_D / 2.0 + 0.3
+NUT_WALL = 1.5
+NUT_POCKET = NUT_H + 0.2
+NUT_SLOT_W = NUT_AF + 0.5
+NUT_SLOT_Z0 = AXIS_Z - NUT_AC / 2.0 - 1.0
 BORE_FRONT = HUB_FRONT - 2.0 * NUT_WALL - NUT_POCKET
+
+# Trụ xuyên nắp (hẹp Y, né boss) + VÁCH DẸT ngoài hộp (mặt ⊥ X, dài theo Y)
+MOUNT_T = 4.0                             # bề dày vách theo X (dẹt)
+STEM_Y0, STEM_Y1 = -6.0, 6.0              # trụ qua khe nắp
+WALL_H = 16.0                             # cao vách trên mặt nắp
+LOAD_HOLE_DY = 12.0                       # 4 lỗ M3 xuyên X: ±DY × ±DZ trên mặt vách
+LOAD_HOLE_DZ = 4.0
+SLOT_CLEAR = 0.8
 
 # --- Gối đỡ đầu kia: đỡ trục trơn VÀ đầu ty ren ---------------------------
 # Lỗ đỡ nằm NGAY TRONG VÁCH (bản cũ có thêm mỏ đỡ Ø14 chìa ra -X; bỏ đi vì nó ăn
@@ -311,94 +294,125 @@ ROD_END_SUPPORT = 2.0                     # đoạn ty ren nằm trong lỗ vác
                                           # 2 mm là đủ — mỗi mm thêm là 1 mm hành trình.
                                           # Lỗ sâu END_T = 6 nên ty dài sai +4 mm vẫn lọt.
 ROD_HOLE_D = ROD_D + 0.6
-END_X0 = ROD_X1 - ROD_END_SUPPORT         # mặt trước vách = 51.0
+END_X0 = ROD_X1 - ROD_END_SUPPORT         # mặt trước vách
+# Hốc mặt -X của End_Block: hub + bạc chui vào → +END_HUB_RECESS mm hành trình.
+# Ty ren vẫn cắm ROD_END_SUPPORT mm qua mặt hốc (đoạn này nằm trong khoang hốc,
+# lỗ đỡ đặc chỉ còn ở phần vách sau đáy hốc — đủ để hứng ty cong / ty dài hơn).
+END_HUB_RECESS = 5.0
+END_RECESS_CLEAR = 0.6
+ROD_CLEAR_D = ROD_D + 1.2                 # lỗ ty ren xuyên 2 vách hub
 
 NUT_CLEAR = 0.5                           # khe an toàn hốc <-> khớp nối
-END_CLEAR = 0.5                           # khe an toàn thanh <-> vách gối đỡ
+END_CLEAR = 0.5                           # khe an toàn thanh <-> đáy hốc End_Block
 
 # Giới hạn GẦN: VÁCH TRƯỚC của hốc đai ốc không được đụng mặt trước KHỚP NỐI.
 # (Thân thanh KHÔNG chặn ở đây — lỗ khoét cho nó trườn qua khớp nối; chỉ vách có lỗ
-# Ø5.2 là không chui qua được.)
+# Ø rod-clear là không chui qua được.)
 _X_MIN_MECH = COUP_X1 + NUT_CLEAR - BORE_FRONT
-# Giới hạn XA: ba thứ cùng chạy về phía gối đỡ — hub, bạc trục trơn (bằng nhau theo
-# thiết kế), và chiều dài ren còn lại để đai ốc còn ăn ren. Lấy cái chặn sớm nhất.
-_X_MAX_HOLDER = END_X0 - END_CLEAR - HUB_FRONT
-_X_MAX_BOSS = END_X0 - END_CLEAR - BOSS_L / 2.0
+# Giới hạn XA: hub/bạc được phép chui END_HUB_RECESS vào mặt End_Block; hết ren vẫn chặn.
+_X_MAX_HOLDER = END_X0 + END_HUB_RECESS - END_CLEAR - HUB_FRONT
+_X_MAX_BOSS = END_X0 + END_HUB_RECESS - END_CLEAR - BOSS_L / 2.0
 _X_MAX_THREAD = ROD_X1 - THREAD_MARGIN - (HUB_FRONT - NUT_WALL)
 _X_MAX_MECH = min(_X_MAX_HOLDER, _X_MAX_BOSS, _X_MAX_THREAD)
 
 # --- HỐC MÙ giữ trục trơn (trục KHÔNG xuyên thủng 2 gối) ------------------
 GUIDE_BLIND_WALL = 1.5                    # vách mỏng bịt đáy hốc, chặn trục dọc trục
-GUIDE_VENT_D = 1.5                        # lỗ thông hơi giữa vách: thoát khí khi đóng
-                                          # trục vào, và để chọc trục ra khi cần tháo
-GUIDE_BOSS_D = 10.0                       # vấu nối dài hốc trên bích đứng (bích chỉ
-GUIDE_BOSS_L = 5.0                        # dày 3 mm, không đủ sâu cho hốc mù)
+GUIDE_VENT_D = 1.5                        # lỗ thông hơi: xả khí / chọc đẩy trục về ĐC
+GUIDE_AXIAL_PLAY = 6.5                    # rơ dọc: đủ đẩy về ĐC rồi thả đầu gối
+GUIDE_TIP_CLEAR = 0.5                     # khi đẩy hết về ĐC, đầu +X cách miệng gối
+GUIDE_MIN_ENG = 4.0                       # eng tối thiểu phía ĐC khi trục tì vách gối
+GUIDE_BOSS_D = 10.0                       # vấu nối dài hốc trên bích đứng
+# Hốc ĐC phải sâu >= PLAY + MIN_ENG kẻo lúc chạy (tì gối) đầu ĐC tuột khỏi hốc
+GUIDE_BOSS_L = GUIDE_AXIAL_PLAY + GUIDE_MIN_ENG - FACE_T + GUIDE_BLIND_WALL  # 9.0
 GUIDE_X0 = FACE_X0 + GUIDE_BLIND_WALL
 GUIDE_X1 = END_X0 + END_T - GUIDE_BLIND_WALL
+GUIDE_SPAN = GUIDE_X1 - GUIDE_X0          # khoảng giữa 2 mặt trong vách mù
+GUIDE_SHAFT_LEN = GUIDE_SPAN - GUIDE_AXIAL_PLAY
 GUIDE_SOCKET_M = FACE_T + GUIDE_BOSS_L - GUIDE_BLIND_WALL   # hốc phía động cơ
 GUIDE_SOCKET_E = END_T - GUIDE_BLIND_WALL                   # hốc phía gối đỡ
-END_FOOT_X0, END_FOOT_X1 = END_X0 - 8.0, END_X0 + END_T + 6.0
-# (rút từ +10 xuống +6: gân gối đỡ phải kết thúc trước trụ góc bắt nắp ở x = 69)
+# Tư thế CHẠY trong model: tì vách gối (+X) — eng gối đầy, eng ĐC = SOCKET_M - PLAY
+GUIDE_SHAFT_X0 = GUIDE_X1 - GUIDE_SHAFT_LEN
+# Tư thế THÁO: tì vách ĐC — đầu +X lọt miệng gối
+GUIDE_SHAFT_X0_SERVICE = GUIDE_X0
+# Vít hãm M3 (+Z) qua vấu hốc ĐC → vạt trên trục — khóa play lúc chạy
+GUIDE_LOCK_FLAT = 0.5                     # độ sâu vạt phẳng cho mũi vít
+GUIDE_LOCK_X = GUIDE_SHAFT_X0 + 0.5 * GUIDE_MIN_ENG  # giữa đoạn eng ĐC lúc chạy
+assert END_HUB_RECESS + GUIDE_BLIND_WALL <= END_T + 1e-9
+assert GUIDE_SOCKET_M + 1e-9 >= GUIDE_AXIAL_PLAY + GUIDE_MIN_ENG
+assert GUIDE_X0 + GUIDE_SHAFT_LEN <= END_X0 - GUIDE_TIP_CLEAR + 1e-9
+assert GUIDE_SHAFT_LEN > 0.0
+assert FACE_X0 + FACE_T - 1e-9 <= GUIDE_LOCK_X <= FACE_X0 + FACE_T + GUIDE_BOSS_L + 1e-9
+assert GUIDE_SHAFT_X0 - 1e-9 <= GUIDE_LOCK_X <= GUIDE_SHAFT_X0 + GUIDE_SHAFT_LEN + 1e-9
+# Chân gối — không còn đội thêm trụ nắp ra ngoài (lỗ nắp khoan trên khung liền)
+POST_W = 6.0                              # trụ/boss bắt nắp trên khung
+END_FOOT_EXTRA = 2.0
+END_FOOT_X0 = END_X0 - 5.0
+END_FOOT_X1 = END_X0 + END_T + END_FOOT_EXTRA
+END_RIB_X1 = END_X0 + END_T
 
 # --- 2 CÔNG TẮC HÀNH TRÌNH KW11 CÓ BÁNH XE (5A 250V) --------------------
-# Thân 20 x 6.4 x 10, cần gạt 16 mm có bánh xe ở đầu, 2 lỗ M2 cách nhau 9.5.
-# Đặt nằm: thân dài dọc Z, dày 6.4 dọc Y (áp vào vấu), cao 10 dọc X — tức là
-# cần gạt bị ấn DỌC TRỤC CHẠY, đúng phương thanh đi tới.
-SW_L, SW_T, SW_H = 20.0, 6.4, 10.0        # dài(Z) x dày(Y) x cao/phương ấn(X)
-SW_HOLE_PITCH = 9.5                       # 2 lỗ M2 trên thân công tắc
-SW_BODY_HOLE_D = 2.0                      # lỗ trên công tắc
-SW_HOLE_D = 2.4                           # lỗ thông M2 trên vấu (bắt bu lông)
-SW_FIN_T, SW_FIN_Y0 = 3.0, -18.5          # vấu đỡ; công tắc áp vào mặt -Y
-SW_Z0 = BASE_T                            # đáy thân công tắc — đặt THẤP để bánh xe
-                                          # ở đầu cần gạt rơi vào giữa mặt thanh
+SW_L, SW_T, SW_H = 20.0, 6.4, 10.0
+SW_HOLE_PITCH = 9.5
+SW_BODY_HOLE_D = 2.0
+SW_HOLE_D = 2.4
+SW_FIN_T = 3.0
+# Vấu CT ngoài bao khớp nối (coupler y±6) và ngoài chân FOOT khi cắt chân dưới CT
+SW_FIN_Y0 = -(COUP_D / 2.0 + SW_FIN_T + 1.5)  # -10.5
+SW_Z0 = BASE_T
 
-SW_LEVER_L, SW_LEVER_W = 16.0, 4.0        # cần gạt
-SW_ROLLER_D, SW_ROLLER_W = 4.8, 2.5       # bánh xe
-SW_ROLLER_PROUD = 6.0                     # mặt ngoài bánh xe nhô khỏi mặt thân (tự do)
-SW_TRIP_TRAVEL = 2.0                      # ấn bánh xe 2 mm là tác động
-SW_PRESS = 1.0                            # thanh ấn thêm bao nhiêu trước khi chạm chặn cơ
+SW_LEVER_L, SW_LEVER_W = 16.0, 4.0
+SW_ROLLER_D, SW_ROLLER_W = 4.8, 2.5
+SW_ROLLER_PROUD = 6.0
+SW_TRIP_TRAVEL = 2.0
+SW_PRESS = 0.5
 
-# Bánh xe cho over-travel dư dả hơn hẳn loại nút ấn: sau khi tác động còn
-# (SW_ROLLER_PROUD - SW_TRIP_TRAVEL) mm nữa cần gạt mới chạm đáy, nên sai số
-# lắp ráp vài mm vẫn không làm hỏng công tắc.
 _SW_OVERTRAVEL = SW_ROLLER_PROUD - SW_TRIP_TRAVEL
 X_TRIP_MIN = _X_MIN_MECH + SW_PRESS
 X_TRIP_MAX = _X_MAX_MECH - SW_PRESS
-# Mặt thân công tắc (mặt có cần gạt) suy ngược từ điểm tác động mong muốn
 SW_MIN_FRONT = (X_TRIP_MIN - BAR_X / 2.0) - _SW_OVERTRAVEL
 SW_MAX_FRONT = (X_TRIP_MAX + BAR_X / 2.0) + _SW_OVERTRAVEL
 
-# Chân đế của Motor_Bracket phải nối dài tới hết vấu công tắc MIN, nếu không vấu
-# đứng công-xôn hơn 10 mm chỉ dính vào bích. Chỉ nới phía -Y để không chiếm chỗ
-# 4 lỗ bắt cụm xuống thân máy.
 MB_FOOT_X1 = max(FACE_X0 + FACE_T, SW_MIN_FRONT)
-MB_FOOT_Y1 = -7.0
-FIN_BOLT_Y = MB_FOOT_Y1 - 4.0             # vít cạnh vấu công tắc: né mũ vít khỏi vấu
-END_BOLT_Y = 16.0                         # vít trước của gối đỡ, né hub của thanh quét qua
+MB_FOOT_Y1 = -6.0
+FIN_BOLT_Y = MB_FOOT_Y1 - 3.5
 
 BAR_HOME_X = 0.5 * (X_TRIP_MIN + X_TRIP_MAX)
+# Thân thanh: từ mặt ngoài CT tới trục trơn (không chìa ra cạnh hộp)
+BAR_Y0 = SW_FIN_Y0 - SW_T
+BAR_Y1 = GUIDE_Y
 
 # ---------------------------------------------------------------------------
-# VỎ HỘP: cả cơ cấu nằm gọn trong một hình hộp, chỉ thanh trượt chui ra qua KHE
+# VỎ HỘP — khoang ôm sát; khung ĐC + gối đỡ MERGE vào Housing
 # ---------------------------------------------------------------------------
-POST_W = 8.0                              # trụ góc bắt nắp
-BASE_X1 = END_FOOT_X1 + POST_W            # khoang trong phải chứa được trụ góc
-WALL_T = 3.0                              # bề dày vách
-BOX_TOP = 31.0                            # mép trên vách = trần khoang (thanh cao 29.1)
+_SW_Y_MIN = SW_FIN_Y0 - SW_T
+BASE_Y0 = _SW_Y_MIN - WING_CLEAR
+BASE_Y1 = WING_Y + WING_CLEAR
+_SW_MAX_BODY_X1 = (X_TRIP_MAX + BAR_X / 2.0) + _SW_OVERTRAVEL + SW_H
+# Chân gối kéo dài đủ chỗ boss nắp -Y sau CT MAX (tránh boss treo → 2 khối)
+END_FOOT_X1 = max(END_FOOT_X1, _SW_MAX_BODY_X1 + POST_W + 1.0)
+_LID_X_END = END_FOOT_X1 - POST_W / 2.0
+BASE_X1 = max(END_FOOT_X1, _SW_MAX_BODY_X1, _LID_X_END + POST_W / 2.0) + WING_CLEAR
+WALL_T = 2.5
+BOX_TOP = BAR_Z1 + 0.8
 BOX_X0, BOX_X1 = BASE_X0 - WALL_T, BASE_X1 + WALL_T
 BOX_Y0, BOX_Y1 = BASE_Y0 - WALL_T, BASE_Y1 + WALL_T
-LID_T = 3.0                               # nắp đậy
-POST_Z0 = BASE_T + FOOT_T                 # trụ góc bắt đầu TRÊN mặt chân gá (z = 8):
-                                          # hai chân gá trải tới y = +-18 nên trụ mà
-                                          # xuống thấp hơn là đâm vào chúng
-EAR_X, EAR_OUT, EAR_HOLE = 12.0, 9.0, 4.5  # tai bắt bu lông M4, chìa ra hai bên +-Y
-SLOT_CLEAR = 1.0                          # khe rộng hơn thanh 1 mm mỗi phía
-CABLE_D = 9.0                             # lỗ luồn dây động cơ + 2 công tắc, vách -X
-
+LID_T = 2.5
+POST_Z0 = BASE_T + FOOT_T
+LID_BOSS_Z0 = POST_Z0
+EAR_X, EAR_OUT, EAR_HOLE = 11.0, 9.0, 4.5
+CABLE_D = 8.0
 M3_CLEAR = 3.4
-M3_TAP = 2.5                              # lỗ mồi cho vít M3 tự tarô (nhựa in)
-M16_CLEAR = 2.0                           # lỗ thông cho vít M1.6 (in FDM)
-M16_HEAD_D = 3.2                          # mũ vít M1.6 ĐẦU CHÌM
+M3_TAP = 2.5
+M16_CLEAR = 2.0
+M16_HEAD_D = 3.2
+# Vách gá ngoài hộp: mặt trên nắp, dài gần hết chiều ngang hộp (Y)
+WALL_Y0 = BOX_Y0 + 1.0
+WALL_Y1 = BOX_Y1 - 1.0
+WALL_Z0 = BOX_TOP + LID_T
+WALL_Z1 = WALL_Z0 + WALL_H
+WALL_Z_MID = 0.5 * (WALL_Z0 + WALL_Z1)
+assert WALL_Y1 - WALL_Y0 + 1e-9 >= 2.0 * LOAD_HOLE_DY + M3_CLEAR + 4.0
+assert WALL_H + 1e-9 >= 2.0 * LOAD_HOLE_DZ + M3_CLEAR + 4.0
 
 
 # ---------------------------------------------------------------------------
@@ -489,10 +503,9 @@ def motor_face_holes() -> list[tuple[float, float]]:
 
 
 def travel_range() -> tuple[float, float]:
-    """Khoảng chạy hợp lệ của tâm thanh trượt (điểm TÁC ĐỘNG của 2 công tắc).
+    """Khoảng chạy hợp lệ = điểm TÁC ĐỘNG của 2 công tắc (thanh dừng tại đây).
 
-    Đầu gần: vách trước hốc đai ốc đụng mặt trước ĐAI ỐC HÃM.
-    Đầu xa : hub / bạc trục trơn (hoặc hết ren) đụng vách gối đỡ.
+    Chặn cơ (_X_MIN/_X_MAX_MECH) chỉ là failsafe sau SW_PRESS.
     """
     return X_TRIP_MIN, X_TRIP_MAX
 
@@ -562,32 +575,38 @@ def make_thread_rod() -> Part.Shape:
 
 
 def slot_x() -> tuple[float, float]:
-    """Khoảng X của KHE trên vách -Y.
+    """Khoảng X của KHE trên NẮP (trụ gá chạy).
 
-    Tính theo CHẶN CƠ KHÍ chứ không theo điểm công tắc tác động: nếu một công tắc
-    chết thì thanh vẫn chạy thêm SW_PRESS mm nữa, khe phải chứa được cả đoạn đó.
+    Theo CHẶN CƠ KHÍ (+ clear), không chỉ theo điểm CT tác động.
     """
-    return (_X_MIN_MECH - BAR_X / 2.0 - SLOT_CLEAR,
-            _X_MAX_MECH + BAR_X / 2.0 + SLOT_CLEAR)
+    return (_X_MIN_MECH - MOUNT_T / 2.0 - SLOT_CLEAR,
+            _X_MAX_MECH + MOUNT_T / 2.0 + SLOT_CLEAR)
 
 
-def post_boxes() -> list[tuple[float, float]]:
-    """4 trụ góc bắt nắp, đặt ở 4 GÓC TRONG của khoang."""
-    return [(x, y)
-            for x in (BASE_X0, BASE_X1 - POST_W)
-            for y in (BASE_Y0, BASE_Y1 - POST_W)]
+def slot_y() -> tuple[float, float]:
+    """Khoảng Y của khe nắp — ôm trụ gá (hẹp; vách xoè rộng phía trên nắp)."""
+    return (STEM_Y0 - SLOT_CLEAR, STEM_Y1 + SLOT_CLEAR)
 
 
-def post_hole_xy() -> list[tuple[float, float]]:
-    return [(x + POST_W / 2.0, y + POST_W / 2.0) for x, y in post_boxes()]
+def lid_tap_xy() -> list[tuple[float, float]]:
+    """4 lỗ tarô M3 bắt nắp — né trụ gá / máng; boss cuối nằm trên END_FOOT."""
+    y_pos = WING_Y - 2.5
+    y_neg = -CRADLE_Y - POST_W / 2.0 - 2.5
+    return [
+        (CRADLE_X0 + 4.0, y_pos),
+        (CRADLE_X0 + 4.0, y_neg),
+        (END_FOOT_X1 - POST_W / 2.0, y_pos),
+        (END_FOOT_X1 - POST_W / 2.0, y_neg),
+    ]
+
+
+def lid_boss_boxes() -> list[tuple[float, float]]:
+    """Boss hình hộp quanh mỗi lỗ nắp, từ mặt chân lên tới trần."""
+    return [(x - POST_W / 2.0, y - POST_W / 2.0) for x, y in lid_tap_xy()]
 
 
 def ear_boxes() -> list[tuple[float, float]]:
-    """4 tai bắt bu lông, chìa ra +-Y ở hai đầu hộp.
-
-    Đặt ở hai đầu theo X (ngoài khoảng x mà bệ gá quét qua) để phía -Y vẫn trống
-    cho cơ cấu người dùng lắp lên bệ.
-    """
+    """4 tai M4 bắt máy — +-Y ở hai đầu (bệ gá đã lên nắp, không va tai -Y)."""
     xs = (BOX_X0 + 2.0, BOX_X1 - 2.0 - EAR_X)
     return [(x, BOX_Y0 - EAR_OUT) for x in xs] + [(x, BOX_Y1) for x in xs]
 
@@ -596,8 +615,83 @@ def ear_hole_xy() -> list[tuple[float, float]]:
     return [(x + EAR_X / 2.0, y + EAR_OUT / 2.0) for x, y in ear_boxes()]
 
 
+def make_motor_bracket() -> Part.Shape:
+    """Bích đứng + máng + chân + vấu CT MIN — sẽ fuse vào Housing (không lỗ xuống đế)."""
+    foot = _box2(CRADLE_X0, FACE_X0 + FACE_T, -FOOT_Y, WING_Y, BASE_T, BASE_T + FOOT_T)
+    foot = foot.fuse(_box2(FACE_X0 + FACE_T, MB_FOOT_X1, -FOOT_Y, MB_FOOT_Y1,
+                           BASE_T, BASE_T + FOOT_T))
+    plate = _box2(FACE_X0, FACE_X0 + FACE_T, -CRADLE_Y, WING_Y, BASE_T, PLATE_TOP)
+    cradle = _box2(CRADLE_X0, FACE_X0, -CRADLE_Y, CRADLE_Y, BASE_T, AXIS_Z)
+    rib = _tri_rib(
+        FACE_X0, CRADLE_X0 + 11.0, PLATE_TOP - 2.0, BASE_T + FOOT_T, RIB_Y0, RIB_T
+    )
+    guide_boss = _cyl_x(GUIDE_BOSS_D, GUIDE_BOSS_L, FACE_X0 + FACE_T, GUIDE_Y, AXIS_Z)
+    body = (foot.fuse(plate).fuse(cradle).fuse(rib)
+            .fuse(guide_boss).fuse(make_sw_fin(False)))
+
+    body = _cut(body, motor_pocket_tool())
+    body = _cut(body, _cyl_x(SHAFT_CLEAR_D, FACE_T + 2.0, FACE_X0 - 1.0, 0.0, AXIS_Z))
+    for dy, dz in motor_face_holes():
+        body = _cut(body, _cyl_x(M16_CLEAR, FACE_T + 2.0, FACE_X0 - 1.0, dy, AXIS_Z + dz))
+        body = _cut(body, m16_head_cone(dy, dz))
+    body = _cut(body, _cyl_x(GUIDE_D + 0.05, GUIDE_SOCKET_M + 1.0,
+                             GUIDE_X0, GUIDE_Y, AXIS_Z))
+    body = _cut(body, _cyl_x(GUIDE_VENT_D, GUIDE_BLIND_WALL + 2.0,
+                             FACE_X0 - 1.0, GUIDE_Y, AXIS_Z))
+    body = _cut(body, guide_lock_tap_tool())
+    for x, y in clamp_bolt_xy():
+        body = _cut(body, _cyl_z(M3_TAP, AXIS_Z - BASE_T, x, y, BASE_T))
+    # Khoét chân dưới CT MIN (tránh đâm thân CT)
+    sw0, sw1 = sw_body_x(False)
+    body = _cut(body, _box2(
+        sw0 - 1.0, sw1 + 1.0,
+        -FOOT_Y - 1.0, SW_FIN_Y0 + 0.05,
+        BASE_T - 0.05, BASE_T + FOOT_T + 0.5,
+    ))
+    return _refine(body)
+
+
+def make_end_block() -> Part.Shape:
+    """Gối đỡ + hốc hub + vấu CT MAX — fuse vào Housing (không lỗ xuống đế)."""
+    foot = _box2(END_FOOT_X0, END_FOOT_X1, -FOOT_Y, WING_Y, BASE_T, BASE_T + FOOT_T)
+    wall = _box2(END_X0, END_X0 + END_T, -CRADLE_Y, WING_Y, BASE_T, PLATE_TOP)
+    ribs = None
+    if END_RIB_X1 > END_X0 + END_T + 0.5:
+        for y0 in (-RIB_T / 2.0, RIB_Y0):
+            r = _tri_rib(
+                END_X0 + END_T, END_RIB_X1, PLATE_TOP - 2.0, BASE_T + FOOT_T, y0, RIB_T
+            )
+            ribs = r if ribs is None else ribs.fuse(r)
+    body = foot.fuse(wall).fuse(make_sw_fin(True))
+    if ribs is not None:
+        body = body.fuse(ribs)
+
+    sw0, sw1 = sw_body_x(True)
+    body = _cut(body, _box2(
+        sw0 - 1.0, sw1 + 1.0,
+        -FOOT_Y - 1.0, SW_FIN_Y0 + SW_FIN_T + 0.5,
+        BASE_T - 1.0, SW_Z0 + SW_L + 4.0,
+    ))
+    body = _cut(body, _box2(
+        END_X0 - 0.05, END_X0 + END_HUB_RECESS,
+        -HUB_Y - END_RECESS_CLEAR, HUB_Y + END_RECESS_CLEAR,
+        BAR_Z0 - END_RECESS_CLEAR, BAR_Z1 + END_RECESS_CLEAR,
+    ))
+    body = _cut(body, _cyl_x(BOSS_D + 2.0 * END_RECESS_CLEAR, END_HUB_RECESS + 0.2,
+                             END_X0 - 0.05, GUIDE_Y, AXIS_Z))
+    body = _cut(body, _cyl_x(GUIDE_D + 0.05, GUIDE_X1 - (END_X0 - 1.0),
+                             END_X0 - 1.0, GUIDE_Y, AXIS_Z))
+    body = _cut(body, _cyl_x(GUIDE_VENT_D, GUIDE_BLIND_WALL + 2.0,
+                             GUIDE_X1, GUIDE_Y, AXIS_Z))
+    body = _cut(body, _cyl_x(ROD_HOLE_D, END_T + 2.0, END_X0 - 1.0, 0.0, AXIS_Z))
+    return _refine(body)
+
+
 def make_housing() -> Part.Shape:
-    """VỎ HỘP: đáy + 4 vách + 4 tai bắt bu lông + KHE cho thanh trượt chui ra."""
+    """VỎ HỘP LIỀN KHUNG: đáy + vách + tai M4 + Motor_Bracket + End_Block + boss nắp.
+
+    Không còn bu lông M3 giữa gá/gối và đế — mọi thứ là một khối in.
+    """
     floor = _box2(BOX_X0, BOX_X1, BOX_Y0, BOX_Y1, 0.0, BASE_T)
     shell = _box2(BOX_X0, BOX_X1, BOX_Y0, BOX_Y1, BASE_T, BOX_TOP)
     shell = _cut(shell, _box2(BASE_X0, BASE_X1, BASE_Y0, BASE_Y1,
@@ -605,103 +699,76 @@ def make_housing() -> Part.Shape:
     body = floor.fuse(shell)
     for x, y in ear_boxes():
         body = body.fuse(_box2(x, x + EAR_X, y, y + EAR_OUT, 0.0, BASE_T))
-    for x, y in post_boxes():
-        body = body.fuse(_box2(x, x + POST_W, y, y + POST_W, POST_Z0, BOX_TOP))
 
-    # KHE: hở tới mép trên vách, nắp đậy nốt phần trên. Xẻ hở nóc thay vì lỗ kín để
-    # khỏi phải in cầu vượt dài, và để hạ cả cụm thanh + trục vào từ trên xuống.
-    sx0, sx1 = slot_x()
-    body = _cut(body, _box2(sx0, sx1, BOX_Y0 - 1.0, BASE_Y0 + 1.0,
-                            BAR_Z0 - SLOT_CLEAR, BOX_TOP + 1.0))
-    # lỗ luồn dây ở vách -X, ngay sau đuôi động cơ
+    # Khung cơ cấu — merge
+    body = body.fuse(make_motor_bracket()).fuse(make_end_block())
+
+    # Boss bắt nắp từ mặt chân
+    for x, y in lid_boss_boxes():
+        body = body.fuse(_box2(x, x + POST_W, y, y + POST_W, LID_BOSS_Z0, BOX_TOP))
+
+    # Cắt lại các hốc quan trọng SAU fuse (tránh boolean làm đầy lỗ)
+    body = _cut(body, motor_pocket_tool())
+    body = _cut(body, _cyl_x(SHAFT_CLEAR_D, FACE_T + 2.0, FACE_X0 - 1.0, 0.0, AXIS_Z))
+    for dy, dz in motor_face_holes():
+        body = _cut(body, _cyl_x(M16_CLEAR, FACE_T + 2.0, FACE_X0 - 1.0, dy, AXIS_Z + dz))
+        body = _cut(body, m16_head_cone(dy, dz))
+    # Hốc mù: đúng GUIDE_SOCKET_* — không +0.2 kẻo đục vào vách chặn
+    body = _cut(body, _cyl_x(GUIDE_D + 0.05, GUIDE_SOCKET_M,
+                             GUIDE_X0, GUIDE_Y, AXIS_Z))
+    body = _cut(body, _cyl_x(GUIDE_D + 0.05, GUIDE_SOCKET_E,
+                             END_X0, GUIDE_Y, AXIS_Z))
+    body = _cut(body, _cyl_x(GUIDE_VENT_D, GUIDE_BLIND_WALL + 2.0,
+                             FACE_X0 - 1.0, GUIDE_Y, AXIS_Z))
+    body = _cut(body, _cyl_x(GUIDE_VENT_D, GUIDE_BLIND_WALL + 2.0,
+                             GUIDE_X1, GUIDE_Y, AXIS_Z))
+    # Vít hãm M3 khóa trục lúc chạy (sau fuse — tránh boolean lấp lỗ)
+    body = _cut(body, guide_lock_tap_tool())
+    # Lỗ M2: xuyên thân CT + vấu + vách -Y (siết từ ngoài hộp)
+    _m2_y0 = BOX_Y0 - 1.0
+    _m2_len = (SW_FIN_Y0 + SW_FIN_T + 2.0) - _m2_y0
+    for is_max in (False, True):
+        for xc, z in sw_hole_sites(is_max):
+            body = _cut(body, _cyl_y(SW_HOLE_D, _m2_len, xc, _m2_y0, z))
+    body = _cut(body, _box2(
+        END_X0 - 0.05, END_X0 + END_HUB_RECESS,
+        -HUB_Y - END_RECESS_CLEAR, HUB_Y + END_RECESS_CLEAR,
+        BAR_Z0 - END_RECESS_CLEAR, BAR_Z1 + END_RECESS_CLEAR,
+    ))
+    body = _cut(body, _cyl_x(BOSS_D + 2.0 * END_RECESS_CLEAR, END_HUB_RECESS + 0.2,
+                             END_X0 - 0.05, GUIDE_Y, AXIS_Z))
+    body = _cut(body, _cyl_x(ROD_HOLE_D, END_T + 2.0, END_X0 - 1.0, 0.0, AXIS_Z))
+    for x, y in clamp_bolt_xy():
+        body = _cut(body, _cyl_z(M3_TAP, AXIS_Z - BASE_T, x, y, BASE_T))
+
+    # Không cắt nguyên thân CT khỏi Housing (dễ tách thành nhiều khối).
+    # Chân dưới CT đã khoét ở make_motor_bracket / make_end_block + pocket chân.
+
+    # Không khe vách -Y — bệ gá ra qua nắp
     body = _cut(body, _cyl_x(CABLE_D, WALL_T + 2.0, BOX_X0 - 1.0, 0.0, AXIS_Z))
     for x, y in ear_hole_xy():
         body = _cut(body, _cyl_z(EAR_HOLE, BASE_T + 2.0, x, y, -1.0))
-    for x, y in post_hole_xy():
+    for x, y in lid_tap_xy():
         body = _cut(body, _cyl_z(M3_TAP, 10.0, x, y, BOX_TOP - 9.0))
-    for x, y in base_bolt_xy():
-        body = _cut(body, _cyl_z(M3_CLEAR, BASE_T + 2.0, x, y, -1.0))
     return _refine(body)
 
 
 def make_housing_lid() -> Part.Shape:
-    """Nắp đậy phẳng, 4 vít M3 xuống 4 trụ góc. Tai bắt bu lông nằm ngoài mép nắp
-    nên vẫn siết được bu lông xuống máy khi đã đậy nắp."""
+    """Nắp đậy + KHE cho trụ bệ gá; 4 vít M3 xuống boss khung."""
     body = _box2(BOX_X0, BOX_X1, BOX_Y0, BOX_Y1, BOX_TOP, BOX_TOP + LID_T)
-    for x, y in post_hole_xy():
+    sx0, sx1 = slot_x()
+    sy0, sy1 = slot_y()
+    body = _cut(body, _box2(sx0, sx1, sy0, sy1, BOX_TOP - 1.0, BOX_TOP + LID_T + 1.0))
+    for x, y in lid_tap_xy():
         body = _cut(body, _cyl_z(M3_CLEAR, LID_T + 2.0, x, y, BOX_TOP - 1.0))
     return _refine(body)
 
 
-def base_bolt_xy() -> list[tuple[float, float]]:
-    """Vít M3 bắt chân gá động cơ + gối đỡ xuống đế."""
-    # Né bích đứng, 2 gân chống lật, VÀ vấu công tắc (y = -18.5..-15.5) để còn chỗ
-    # vặn mũ vít — nên hai bên -Y / +Y không đối xứng theo X.
-    return [
-        (-25.0, -FOOT_BOLT_Y), (-16.0, -FOOT_BOLT_Y),      # gá ĐC, phía công tắc
-        (CRADLE_X0 + 5.0, FOOT_BOLT_Y), (-6.0, FOOT_BOLT_Y),
-        (MB_FOOT_X1 - 3.0, FIN_BOLT_Y),                    # đuôi chân đỡ vấu CT MIN
-        # Gối đỡ: phía -Y KHÔNG bắt được ở đầu trước — mũ vít Ø6.5 ở đó bị kẹp giữa
-        # vấu công tắc MAX (y <= -15.5) và hub của thanh quét qua (|y| <= 10). Dồn 2
-        # vít -Y ra sau vách, nơi vấu đã hết.
-        (END_FOOT_X0 + 4.5, END_BOLT_Y),
-        (END_X0 + END_T + 3.5, -FOOT_BOLT_Y), (END_X0 + END_T + 3.5, FOOT_BOLT_Y),
-    ]
-
-
 def m16_head_cone(dy: float, dz: float) -> Part.Shape:
-    """Côn 90 độ cho mũ vít M1.6 ĐẦU CHÌM, miệng đúng bằng mặt +X của bích.
-
-    Bắt buộc phải chìm: mũ vít đầu trụ cao ~1.6 mm sẽ đội khớp nối ra xa đúng
-    bấy nhiêu, mà mỗi mm ở đây là 1 mm hành trình.
-    """
-    depth = (M16_HEAD_D - M16_CLEAR) / 2.0   # côn 90 độ
+    """Côn 90 độ cho mũ vít M1.6 ĐẦU CHÌM, miệng đúng bằng mặt +X của bích."""
+    depth = (M16_HEAD_D - M16_CLEAR) / 2.0
     return _cone_x(M16_CLEAR, M16_HEAD_D, depth,
                    FACE_X0 + FACE_T - depth, dy, AXIS_Z + dz)
-
-
-def make_motor_bracket() -> Part.Shape:
-    """Bích đứng (bắt 2 vít M1.6 chìm) + máng ôm thân + chân đế + vấu công tắc MIN."""
-    # chân đế — nới rộng sang phía trục trơn để đỡ gân
-    foot = _box2(CRADLE_X0, FACE_X0 + FACE_T, -FOOT_Y, WING_Y, BASE_T, BASE_T + FOOT_T)
-    # nối dài chân đế phía -Y để đỡ vấu công tắc MIN
-    foot = foot.fuse(_box2(FACE_X0 + FACE_T, MB_FOOT_X1, -FOOT_Y, MB_FOOT_Y1,
-                           BASE_T, BASE_T + FOOT_T))
-    # bích đứng — kéo dài tới trục trơn để cắm luôn trục
-    plate = _box2(FACE_X0, FACE_X0 + FACE_T, -CRADLE_Y, WING_Y, BASE_T, PLATE_TOP)
-    # máng ôm thân động cơ
-    cradle = _box2(CRADLE_X0, FACE_X0, -CRADLE_Y, CRADLE_Y, BASE_T, AXIS_Z)
-    # gân chống lật ở phía trục trơn (chỗ không có máng đỡ)
-    rib = _tri_rib(
-        FACE_X0, CRADLE_X0 + 11.0, PLATE_TOP - 2.0, BASE_T + FOOT_T, RIB_Y0, RIB_T
-    )
-    # vấu nối dài hốc trục trơn — bích 3 mm không đủ sâu cho hốc mù
-    guide_boss = _cyl_x(GUIDE_BOSS_D, GUIDE_BOSS_L, FACE_X0 + FACE_T, GUIDE_Y, AXIS_Z)
-    body = (foot.fuse(plate).fuse(cradle).fuse(rib)
-            .fuse(guide_boss).fuse(make_sw_fin(False)))
-
-    body = _cut(body, motor_pocket_tool())
-    # lỗ cho trục D Ø3 chui qua bích
-    body = _cut(body, _cyl_x(SHAFT_CLEAR_D, FACE_T + 2.0, FACE_X0 - 1.0, 0.0, AXIS_Z))
-    # 2 lỗ thông vít M1.6 + côn CHÌM ở mặt +X (mũ vít không được đội khớp nối)
-    for dy, dz in motor_face_holes():
-        body = _cut(body, _cyl_x(M16_CLEAR, FACE_T + 2.0, FACE_X0 - 1.0, dy, AXIS_Z + dz))
-        body = _cut(body, m16_head_cone(dy, dz))
-    # HỐC MÙ cắm trục trơn: mở từ x = GUIDE_X0 ra +X, chừa vách mỏng phía -X
-    body = _cut(body, _cyl_x(GUIDE_D + 0.05, GUIDE_SOCKET_M + 1.0,
-                             GUIDE_X0, GUIDE_Y, AXIS_Z))
-    body = _cut(body, _cyl_x(GUIDE_VENT_D, GUIDE_BLIND_WALL + 2.0,
-                             FACE_X0 - 1.0, GUIDE_Y, AXIS_Z))
-    # vít M3 giữ nắp kẹp
-    for x, y in clamp_bolt_xy():
-        body = _cut(body, _cyl_z(M3_TAP, AXIS_Z - BASE_T, x, y, BASE_T))
-    # vít M3 bắt xuống đế
-    for x, y in base_bolt_xy():
-        if x > MB_FOOT_X1 + 1.0:
-            continue
-        body = _cut(body, _cyl_z(M3_CLEAR, FOOT_T + 2.0, x, y, BASE_T - 1.0))
-    return _refine(body)
-
 
 def motor_pocket_tool() -> Part.Shape:
     """Hốc chứa động cơ = hợp của lon Ø12.4 và hộp số 12.4 x 10.4 (có khe hở)."""
@@ -722,48 +789,47 @@ def clamp_bolt_xy() -> list[tuple[float, float]]:
 
 
 def make_motor_clamp() -> Part.Shape:
-    """Nắp kẹp trên: ép lon mô tơ xuống máng, 4 vít M3."""
-    body = _box2(-25.0, -4.0, -CRADLE_Y, CRADLE_Y, AXIS_Z, AXIS_Z + 6.0)
+    """Nắp kẹp trên: 1 khối cầu vượt trên lon ĐC (để nóc), 4 vít M3."""
+    can_r = (CAN_D + 0.4) / 2.0
+    clamp_z0 = AXIS_Z + 1.0               # khe ngồi trên máng
+    clamp_z1 = AXIS_Z + can_r + 2.0
+    body = _box2(CRADLE_X0 + 1.0, -4.0, -CRADLE_Y + 0.5, CRADLE_Y - 0.5, clamp_z0, clamp_z1)
     body = _cut(body, motor_pocket_tool())
     for x, y in clamp_bolt_xy():
-        body = _cut(body, _cyl_z(M3_CLEAR, 8.0, x, y, AXIS_Z - 1.0))
+        body = _cut(body, _cyl_z(M3_CLEAR, clamp_z1 - clamp_z0 + 2.0, x, y, clamp_z0 - 1.0))
     return _refine(body)
 
 
-def make_guide_shaft() -> Part.Shape:
-    """Trục trơn Ø5, hai đầu nằm trong HỐC MÙ nên không tự trượt ra được."""
-    return _cyl_x(GUIDE_D, GUIDE_X1 - GUIDE_X0, GUIDE_X0, GUIDE_Y, AXIS_Z)
+def guide_lock_tap_tool() -> Part.Shape:
+    """Lỗ tarô M3 từ +Z xuyên vấu hốc ĐC vào tâm trục trơn."""
+    z0 = AXIS_Z - 1.0
+    z1 = AXIS_Z + GUIDE_BOSS_D / 2.0 + 2.0
+    return _cyl_z(M3_TAP, z1 - z0, GUIDE_LOCK_X, GUIDE_Y, z0)
 
 
-def make_end_block() -> Part.Shape:
-    """Gối đỡ đầu kia — đỡ trục trơn VÀ đầu ty ren, mang luôn vấu công tắc MAX.
+def make_guide_lock_screw() -> Part.Shape:
+    """Vít hãm M3 (mô hình) — mũi tì vạt trên Guide_Shaft ở tư thế chạy."""
+    z_tip = AXIS_Z + GUIDE_D / 2.0 - GUIDE_LOCK_FLAT
+    z_head = AXIS_Z + GUIDE_BOSS_D / 2.0 + 3.0
+    # Ø < M3_TAP để nằm trong lỗ tarô (mô hình, không ren)
+    return _refine(_cyl_z(M3_TAP - 0.3, z_head - z_tip, GUIDE_LOCK_X, GUIDE_Y, z_tip))
 
-    Lỗ đỡ ty ren nằm ngay trong vách (không có mỏ đỡ chìa ra): mặt trước vách
-    x = %.1f vừa là bạc đỡ vừa là chặn cơ khí đầu xa.
-    """ % END_X0
-    foot = _box2(END_FOOT_X0, END_FOOT_X1, -FOOT_Y, WING_Y, BASE_T, BASE_T + FOOT_T)
-    wall = _box2(END_X0, END_X0 + END_T, -CRADLE_Y, WING_Y, BASE_T, PLATE_TOP)
-    # gân đặt PHÍA NGOÀI (x > vách) — phía trong là vùng thanh trượt chạy tới
-    ribs = None
-    for y0 in (-RIB_T / 2.0, RIB_Y0):
-        r = _tri_rib(
-            END_X0 + END_T, END_FOOT_X1, PLATE_TOP - 2.0, BASE_T + FOOT_T, y0, RIB_T
-        )
-        ribs = r if ribs is None else ribs.fuse(r)
-    body = foot.fuse(wall).fuse(ribs).fuse(make_sw_fin(True))
-    # HỐC MÙ cắm trục trơn: mở từ mặt -X của vách vào, chừa vách mỏng phía +X
-    body = _cut(body, _cyl_x(GUIDE_D + 0.05, GUIDE_X1 - (END_X0 - 1.0),
-                             END_X0 - 1.0, GUIDE_Y, AXIS_Z))
-    body = _cut(body, _cyl_x(GUIDE_VENT_D, GUIDE_BLIND_WALL + 2.0,
-                             GUIDE_X1, GUIDE_Y, AXIS_Z))
-    # lỗ đỡ đầu ty ren — rộng 0.6 mm, chỉ chặn đảo chứ không làm bạc
-    body = _cut(body, _cyl_x(ROD_HOLE_D, END_T + 2.0, END_X0 - 1.0, 0.0, AXIS_Z))
-    for x, y in base_bolt_xy():
-        if x < MB_FOOT_X1 + 1.0:
-            continue
-        body = _cut(body, _cyl_z(M3_CLEAR, FOOT_T + 2.0, x, y, BASE_T - 1.0))
+
+def make_guide_shaft(x0: float | None = None) -> Part.Shape:
+    """Trục trơn Ø5 + vạt dưới vít hãm; mặc định tư thế chạy (tì vách gối)."""
+    if x0 is None:
+        x0 = GUIDE_SHAFT_X0
+    body = _cyl_x(GUIDE_D, GUIDE_SHAFT_LEN, x0, GUIDE_Y, AXIS_Z)
+    # Vạt cố định trên thân (cách đầu -X đúng offset tư thế chạy ↔ GUIDE_LOCK_X)
+    fx = x0 + (GUIDE_LOCK_X - GUIDE_SHAFT_X0)
+    if x0 - 1e-9 <= fx <= x0 + GUIDE_SHAFT_LEN + 1e-9:
+        z_cut = AXIS_Z + GUIDE_D / 2.0 - GUIDE_LOCK_FLAT
+        body = _cut(body, _box2(
+            fx - 2.5, fx + 2.5,
+            GUIDE_Y - GUIDE_D, GUIDE_Y + GUIDE_D,
+            z_cut, AXIS_Z + GUIDE_D + 1.0,
+        ))
     return _refine(body)
-
 
 # ---------------------------------------------------------------------------
 # Công tắc hành trình + vấu đỡ
@@ -868,18 +934,13 @@ def make_limit_switch(is_max: bool) -> Part.Shape:
 # ---------------------------------------------------------------------------
 # Thanh tịnh tiến + hốc đai ốc
 # ---------------------------------------------------------------------------
-def load_tap_sites() -> list[tuple[float, float]]:
-    """4 lỗ TARÔ M3 trên mặt đầu -Y: (lệch x so với tâm thanh, cao độ z)."""
+def load_hole_sites() -> list[tuple[float, float]]:
+    """4 lỗ M3 XUYÊN theo X trên mặt vách gá: (lệch y, z tuyệt đối)."""
     return [
-        (sx * LOAD_TAP_DX, AXIS_Z + sz * LOAD_TAP_DZ)
-        for sx in (-1.0, 1.0)
+        (sy * LOAD_HOLE_DY, WALL_Z_MID + sz * LOAD_HOLE_DZ)
+        for sy in (-1.0, 1.0)
         for sz in (-1.0, 1.0)
     ]
-
-
-def load_bolt_sites() -> list[float]:
-    """2 lỗ M3 XUYÊN theo Z: lệch x so với tâm thanh."""
-    return [-LOAD_BOLT_DX, LOAD_BOLT_DX]
 
 
 def hub_x(xc: float) -> tuple[float, float]:
@@ -912,40 +973,29 @@ def make_hex_nut(xc: float) -> Part.Shape:
 
 
 def make_slide_bar(xc: float) -> Part.Shape:
-    """THANH TỊNH TIẾN — nay gồm cả hốc đai ốc, không còn chi tiết gá rời.
-
-    Từ -X sang +X: lỗ khoét Ø(khớp nối) xuyên thân thanh → vách trước → khe đai ốc
-    HỞ NÓC → vách sau. Mặt trước hub trùng mặt trước bạc trục trơn nên phần thêm này
-    không lấn thêm mm hành trình nào.
-    """
+    """THANH TỊNH TIẾN — thân trong hộp + trụ/vách gá dẹt (mặt ⊥ X) ngoài nắp."""
     bar = _box2(xc - BAR_X / 2.0, xc + BAR_X / 2.0, BAR_Y0, BAR_Y1, BAR_Z0, BAR_Z1)
     boss = _cyl_x(BOSS_D, BOSS_L, xc - BOSS_L / 2.0, GUIDE_Y, AXIS_Z)
     hub = _box2(*hub_x(xc), -HUB_Y, HUB_Y, BAR_Z0, BAR_Z1)
-    # đầu tự do dày hơn để còn thịt quanh 2 lỗ M3; nằm ở y < BAR_PAD_Y1 nên không
-    # chạm bích/gối đỡ/công tắc, tức là KHÔNG ăn vào hành trình
-    pad = _box2(xc - BAR_PAD_X / 2.0, xc + BAR_PAD_X / 2.0,
-                BAR_Y0, BAR_PAD_Y1, BAR_Z0, BAR_Z1)
-    body = bar.fuse(boss).fuse(hub).fuse(pad)
+    # Trụ hẹp xuyên nắp + vách dẹt xoè theo Y phía trên nắp (mặt YZ ⊥ trục chạy)
+    stem = _box2(xc - MOUNT_T / 2.0, xc + MOUNT_T / 2.0,
+                 STEM_Y0, STEM_Y1, BAR_Z1 - 1.0, WALL_Z0)
+    wall = _box2(xc - MOUNT_T / 2.0, xc + MOUNT_T / 2.0,
+                 WALL_Y0, WALL_Y1, WALL_Z0, WALL_Z1)
+    body = bar.fuse(boss).fuse(hub).fuse(stem).fuse(wall)
 
-    # lỗ trượt trên trục trơn
     body = _cut(body, _cyl_x(BOSS_BORE, BOSS_L + 4.0, xc - BOSS_L / 2.0 - 2.0, GUIDE_Y, AXIS_Z))
-    # LỖ KHOÉT cho khớp nối + đai ốc hãm trườn qua, đáy là mặt ngoài vách trước
     b0, b1 = bore_x(xc)
     body = _cut(body, _cyl_x(COUP_CLEAR_D, b1 - (b0 - 2.0), b0 - 2.0, 0.0, AXIS_Z))
-    # KHE HỞ NÓC chứa đai ốc — nằm hẳn ở phía +X của thân thanh nên tấm thân vẫn đặc
     px0, px1 = pocket_x(xc)
     body = _cut(body, _box2(px0, px1, -NUT_SLOT_W / 2.0, NUT_SLOT_W / 2.0,
                             NUT_SLOT_Z0, BAR_Z1 + 1.0))
-    # lỗ ty ren xuyên 2 vách
     body = _cut(body, _cyl_x(ROD_CLEAR_D, HUB_FRONT + BAR_X / 2.0 + 3.0,
                              xc - BAR_X / 2.0 - 1.0, 0.0, AXIS_Z))
-    # BỆ GÁ TẢI, bộ (a): 4 lỗ tarô M3 trên MẶT ĐẦU -Y — bắt tấm vách ngăn úp vào
-    for dx, z in load_tap_sites():
-        body = _cut(body, _cyl_y(M3_TAP, LOAD_TAP_DEPTH, xc + dx, BAR_Y0 - 0.001, z))
-    # BỆ GÁ TẢI, bộ (b): 2 lỗ M3 XUYÊN theo Z — kẹp cơ cấu chỉnh cao lên trên/dưới
-    for dx in load_bolt_sites():
-        body = _cut(body, _cyl_z(M3_CLEAR, BAR_Z1 - BAR_Z0 + 2.0,
-                                 xc + dx, LOAD_BOLT_Y, BAR_Z0 - 1.0))
+    # 4 lỗ M3 xuyên suốt vách theo X
+    for y, z in load_hole_sites():
+        body = _cut(body, _cyl_x(M3_CLEAR, MOUNT_T + 4.0,
+                                 xc - MOUNT_T / 2.0 - 2.0, y, z))
     return _refine(body)
 
 
@@ -966,7 +1016,7 @@ def verify(parts: dict) -> list[tuple[str, bool, str]]:
 
     # dùng THÂN công tắc, không kể cần gạt — cần gạt BỊ ẤN ở cuối hành trình là
     # đúng ý đồ, đưa cả cần gạt vào đây sẽ báo động giả
-    static = (parts["Motor_Bracket"].fuse(parts["End_Block"])
+    static = (parts["Housing"]
               .fuse(make_sw_body_only(False)).fuse(make_sw_body_only(True)))
     for label, x in (("dau hanh trinh", x_min), ("cuoi hanh trinh", x_max)):
         v = _common_vol(make_slide_bar(x), static)
@@ -983,7 +1033,7 @@ def verify(parts: dict) -> list[tuple[str, bool, str]]:
     v = _common_vol(make_slide_bar(x_min), parts["Coupler"])
     checks.append(("Vach hoc dai oc khong dung khop noi", v < 1e-6,
                    "chong lan %.2f mm3, khe %.1f mm" % (v, NUT_CLEAR)))
-    v = _common_vol(parts["Coupler"], parts["Motor_Bracket"])
+    v = _common_vol(parts["Coupler"], parts["Housing"])
     checks.append(("Khop noi khong co xat bich dung", v < 1e-6,
                    "chong lan %.2f mm3, khe %.1f mm" % (v, COUP_GAP)))
     grip = SHAFT_LEN - COUP_X0
@@ -1032,9 +1082,85 @@ def verify(parts: dict) -> list[tuple[str, bool, str]]:
     v = _common_vol(parts["Slide_Bar"], parts["Guide_Shaft"])
     checks.append(("Truc tron chui lot qua bac thanh truot", v < 1e-6, "chong lan %.2f mm3" % v))
 
+    # --- tháo lắp Guide_Shaft + Slide_Bar (Housing liền, rơ dọc) ---
+    mouth_m = FACE_X0 + FACE_T + GUIDE_BOSS_L
+    mouth_e = END_X0
+    checks.append(
+        ("Ro doc truc tron >= sau hoc goi (service)",
+         GUIDE_AXIAL_PLAY + 1e-9 >= GUIDE_SOCKET_E,
+         "play %.1f, hoc goi %.1f" % (GUIDE_AXIAL_PLAY, GUIDE_SOCKET_E))
+    )
+    tip_service = GUIDE_SHAFT_X0_SERVICE + GUIDE_SHAFT_LEN
+    checks.append(
+        ("Day het ve DC: dau +X lot mieng goi",
+         tip_service <= mouth_e - GUIDE_TIP_CLEAR + 1e-9,
+         "tip x=%.2f, mieng goi=%.2f, clear %.1f"
+         % (tip_service, mouth_e, GUIDE_TIP_CLEAR))
+    )
+    # Tư thế chạy (tì gối): còn eng đủ ở ĐC; gối ôm đầy
+    eng_m_run = mouth_m - GUIDE_SHAFT_X0
+    eng_e_run = (GUIDE_SHAFT_X0 + GUIDE_SHAFT_LEN) - mouth_e
+    checks.append(
+        ("Tu the chay: eng DC >= MIN va eng goi >= MIN",
+         eng_m_run + 1e-9 >= GUIDE_MIN_ENG and eng_e_run + 1e-9 >= GUIDE_MIN_ENG,
+         "eng DC %.1f / goi %.1f (min %.1f)" % (eng_m_run, eng_e_run, GUIDE_MIN_ENG))
+    )
+    shaft_svc = make_guide_shaft(GUIDE_SHAFT_X0_SERVICE)
+    checks.append(
+        ("Tu the thao: truc khong dung Housing",
+         _common_vol(shaft_svc, parts["Housing"]) < 1e-6,
+         "chong lan %.2f mm3" % _common_vol(shaft_svc, parts["Housing"]))
+    )
+    # Cụm thanh+trục: bạc vẫn lọt trục ở cả hai tư thế X của trục (trục trượt trong bạc)
+    bad = 0
+    for x0 in (GUIDE_SHAFT_X0, GUIDE_SHAFT_X0_SERVICE):
+        if _common_vol(parts["Slide_Bar"], make_guide_shaft(x0)) > 1e-6:
+            bad += 1
+    checks.append(
+        ("Slide_Bar + Guide_Shaft lot nhau o ca 2 tu the", bad == 0,
+         "%d tu the bi bit" % bad)
+    )
+    # Khi đẩy về ĐC, đầu +X nằm trong khe hở giữa hai miệng — có thể nhấc lên (không còn trong hốc gối)
+    tip_probe = _cyl_x(GUIDE_D - 0.4, 1.0, tip_service - 0.5, GUIDE_Y, AXIS_Z)
+    # đoạn tip phải ngoài khối gối (x < END_X0)
+    end_wall_box = _box2(END_X0, END_X0 + END_T, GUIDE_Y - 6.0, GUIDE_Y + 6.0,
+                         AXIS_Z - 6.0, AXIS_Z + 6.0)
+    checks.append(
+        ("Dau +X o tu the thao nam ngoai vach goi",
+         tip_service <= END_X0 + 1e-9
+         and _common_vol(tip_probe, end_wall_box) < 1e-6,
+         "tip x=%.2f vs END_X0=%.2f" % (tip_service, END_X0))
+    )
+    # Vít hãm M3: lỗ thông trên Housing, mũi nằm đúng chỗ vạt trục ở tư thế chạy
+    lock_probe = _cyl_z(M3_TAP - 0.3, GUIDE_BOSS_D / 2.0 + 3.0,
+                        GUIDE_LOCK_X, GUIDE_Y, AXIS_Z + 0.5)
+    lock_open = _common_vol(parts["Housing"], lock_probe) < 1e-6
+    checks.append(
+        ("Lo vit ham M3 tren vau hoc DC thong", lock_open,
+         "OK x=%.1f" % GUIDE_LOCK_X if lock_open else "lo bi bit / x=%.1f" % GUIDE_LOCK_X)
+    )
+    tip = _cyl_z(M3_TAP - 0.4, GUIDE_LOCK_FLAT - 0.05, GUIDE_LOCK_X, GUIDE_Y,
+                 AXIS_Z + GUIDE_D / 2.0 - GUIDE_LOCK_FLAT)
+    checks.append(
+        ("Vit ham ti dung vat Guide_Shaft o tu the chay",
+         _common_vol(parts["Guide_Shaft"], tip) < 1e-6
+         and abs(parts["Guide_Shaft"].BoundBox.XMin - GUIDE_SHAFT_X0) < 1e-6,
+         "vat sau %.1f @ x=%.1f, xb=%.1f" % (
+             GUIDE_LOCK_FLAT, GUIDE_LOCK_X, parts["Guide_Shaft"].BoundBox.XMin))
+    )
+    # Khi đã siết: vít mô hình nằm trong lỗ + trong vạt (không ăn Housing/shaft)
+    if "Guide_Lock_Screw" in parts:
+        v_h = _common_vol(parts["Guide_Lock_Screw"], parts["Housing"])
+        v_s = _common_vol(parts["Guide_Lock_Screw"], parts["Guide_Shaft"])
+        checks.append(
+            ("Vit ham M3 lot lo + ti vat (khong an Housing)",
+             v_h < 1e-6 and v_s < 1e-6,
+             "hous %.2f / shaft %.2f mm3" % (v_h, v_s))
+        )
+
     # --- trục trơn phải nằm trong HỐC MÙ, KHÔNG xuyên thủng 2 gối ---
     bad = []
-    for nm, x0 in (("Motor_Bracket", FACE_X0), ("End_Block", GUIDE_X1)):
+    for nm, x0 in (("Housing", FACE_X0), ("Housing", GUIDE_X1)):
         # khối trụ Ø5 ngay ngoài đầu trục phải ĐẶC hoàn toàn -> đó là vách chặn
         wall = _cyl_x(GUIDE_D, GUIDE_BLIND_WALL, x0, GUIDE_Y, AXIS_Z)
         wall = _cut(wall, _cyl_x(GUIDE_VENT_D, GUIDE_BLIND_WALL + 2.0,
@@ -1045,7 +1171,7 @@ def verify(parts: dict) -> list[tuple[str, bool, str]]:
         ("Truc tron bi vach mong chan o CA HAI dau", not bad,
          "vach %.1f mm (%s)" % (GUIDE_BLIND_WALL, ", ".join(bad) if bad else "kin ca 2"))
     )
-    # trục không được thò ra khỏi bao ngoài của 2 gối theo phương X
+    # trục (tư thế chạy) không thò ra khỏi bao ngoài của 2 gối theo phương X
     gs = parts["Guide_Shaft"].BoundBox
     ok = (gs.XMin >= FACE_X0 + GUIDE_BLIND_WALL - 1e-6
           and gs.XMax <= END_X0 + END_T - GUIDE_BLIND_WALL + 1e-6)
@@ -1062,7 +1188,7 @@ def verify(parts: dict) -> list[tuple[str, bool, str]]:
     )
     # lỗ thông hơi phải thông suốt vách nhưng nhỏ hơn trục
     bad = 0
-    for nm, x0 in (("Motor_Bracket", FACE_X0 - 0.5), ("End_Block", GUIDE_X1 + 0.1)):
+    for nm, x0 in (("Housing", FACE_X0 - 0.5), ("Housing", GUIDE_X1 + 0.1)):
         vent = _cyl_x(GUIDE_VENT_D - 0.3, GUIDE_BLIND_WALL + 0.4, x0, GUIDE_Y, AXIS_Z)
         if _common_vol(parts[nm], vent) > 1e-6:
             bad += 1
@@ -1071,8 +1197,8 @@ def verify(parts: dict) -> list[tuple[str, bool, str]]:
          "O%.1f < O%.1f, %d lo bi bit" % (GUIDE_VENT_D, GUIDE_D, bad))
     )
     # vấu nối dài hốc không được đụng gì đang chuyển động
-    v = max(_common_vol(parts["Motor_Bracket"], make_slide_bar(x_min)),
-            _common_vol(parts["Motor_Bracket"], parts["Coupler"]))
+    v = max(_common_vol(parts["Housing"], make_slide_bar(x_min)),
+            _common_vol(parts["Housing"], parts["Coupler"]))
     checks.append(("Vau noi dai hoc khong dung thanh / khop noi", v < 1e-6,
                    "chong lan %.2f mm3" % v))
 
@@ -1092,6 +1218,28 @@ def verify(parts: dict) -> list[tuple[str, bool, str]]:
     checks.append(("Mat truoc hub khong vuot mat truoc bac truc tron",
                    HUB_FRONT <= BOSS_L / 2.0 + 1e-9,
                    "hub %.1f, bac %.1f" % (HUB_FRONT, BOSS_L / 2.0)))
+    checks.append(
+        ("Hoc End_Block cho hub/bac chui vao (>= 4 mm)", END_HUB_RECESS >= 4.0 - 1e-9,
+         "sau %.1f mm" % END_HUB_RECESS)
+    )
+    checks.append(
+        ("SW_PRESS du phong sau trip (0.3..1.0)", 0.3 - 1e-9 <= SW_PRESS <= 1.0 + 1e-9,
+         "%.1f mm / dau" % SW_PRESS)
+    )
+    # tai chan co MAX: hub nam trong hoc, khong chong End_Block
+    v = _common_vol(make_slide_bar(_X_MAX_MECH), parts["Housing"])
+    checks.append(
+        ("Hub/bac lot hoc End_Block o chan co MAX", v < 1e-6,
+         "chong lan %.2f mm3 (recess %.1f, clear %.1f)" % (v, END_HUB_RECESS, END_CLEAR))
+    )
+    # hub phai chui qua mat END_X0
+    tip = _box2(END_X0 + 0.2, END_X0 + min(2.0, END_HUB_RECESS - 0.2),
+                -HUB_Y + 0.5, HUB_Y - 0.5, AXIS_Z - 2.0, AXIS_Z + 2.0)
+    filled = _common_vol(make_slide_bar(_X_MAX_MECH), tip)
+    checks.append(
+        ("O chan co MAX hub that su nam trong hoc", filled > 0.5,
+         "thit hub trong hoc %.2f mm3" % filled)
+    )
 
     # khe phải THỰC SỰ ôm 2 mặt phẳng của đai ốc: có thịt ngay 2 bên thì mới chống xoay
     bad = 0
@@ -1150,15 +1298,17 @@ def verify(parts: dict) -> list[tuple[str, bool, str]]:
          "an %.1f mm (x %.1f -> %.1f), vach het o %.1f"
          % (eng, END_X0, ROD_X1, END_X0 + END_T))
     )
-    v = _common_vol(parts["Thread_Rod"], parts["End_Block"])
+    v = _common_vol(parts["Thread_Rod"], parts["Housing"])
     checks.append(("Lo do khong bop ty ren", v < 1e-6, "chong lan %.2f mm3" % v))
-    # phải có VÀNH ĐẶC bao quanh lỗ suốt đoạn đỡ, nếu không thì lỗ đỡ chỉ là hình vẽ
-    ring = _cyl_x(ROD_HOLE_D + 5.0, eng, END_X0, 0.0, AXIS_Z)
-    ring = _cut(ring, _cyl_x(ROD_HOLE_D + 0.6, eng + 2.0, END_X0 - 1.0, 0.0, AXIS_Z))
-    filled = _common_vol(parts["End_Block"], ring) / max(ring.Volume, 1e-9)
+    # Vành đặc quanh lỗ chỉ còn ở phần VÁCH SAU đáy hốc (hub recess).
+    ring_x0 = END_X0 + END_HUB_RECESS
+    ring_len = max(1.0, END_T - END_HUB_RECESS - 0.5)
+    ring = _cyl_x(ROD_HOLE_D + 5.0, ring_len, ring_x0, 0.0, AXIS_Z)
+    ring = _cut(ring, _cyl_x(ROD_HOLE_D + 0.6, ring_len + 2.0, ring_x0 - 1.0, 0.0, AXIS_Z))
+    filled = _common_vol(parts["Housing"], ring) / max(ring.Volume, 1e-9)
     checks.append(
-        ("Vach gia do co vanh dac quanh dau ty ren", filled > 0.99,
-         "dac %.0f%% suot %.1f mm" % (100.0 * filled, eng))
+        ("Vach sau hoc co vanh dac quanh lo ty ren", filled > 0.99,
+         "dac %.0f%% suot %.1f mm tu x=%.1f" % (100.0 * filled, ring_len, ring_x0))
     )
 
     # --- 2 công tắc hành trình ---
@@ -1198,27 +1348,31 @@ def verify(parts: dict) -> list[tuple[str, bool, str]]:
                           xc, SW_FIN_Y0 - SW_T - 2.0, z)
             if _common_vol(parts["Limit_Switch_Max" if is_max else "Limit_Switch_Min"], bolt) > 1e-6:
                 bad += 1
-            if _common_vol(parts["End_Block" if is_max else "Motor_Bracket"], bolt) > 1e-6:
+            if _common_vol(parts["Housing"], bolt) > 1e-6:
                 bad += 1
     checks.append(
         ("4 bu long M2 xuyen duoc ca cong tac lan vau", bad == 0, "%d lo bi bit" % bad)
     )
 
-    # công tắc không được đụng bất cứ chi tiết cố định nào
+    # công tắc không đụng động cơ; vấu CT đã nằm trong Housing nên không so Housing
     for nm in ("Limit_Switch_Min", "Limit_Switch_Max"):
-        v = max(_common_vol(parts[nm], parts[o])
-                for o in ("Motor_Bracket", "End_Block", "Housing", "N20_Motor"))
-        checks.append(("%s khong dung chi tiet khac" % nm, v < 1e-6, "chong lan %.2f mm3" % v))
+        v = _common_vol(parts[nm], parts["N20_Motor"])
+        checks.append(("%s khong dung dong co" % nm, v < 1e-6, "chong lan %.2f mm3" % v))
 
     # rơ dọc trục = khe giữa đai ốc và 2 vách hốc
     play = NUT_POCKET - NUT_H
     checks.append(("Ro doc truc cua dai oc <= 0.2 mm", play <= 0.2 + 1e-9, "%.2f mm" % play))
 
-    v = _common_vol(parts["Motor_Bracket"], parts["N20_Motor"])
+    v = _common_vol(parts["Housing"], parts["N20_Motor"])
     checks.append(("Dong co lot vao mang gia do", v < 1e-6, "chong lan %.2f mm3" % v))
 
     v = _common_vol(parts["Motor_Clamp"], parts["N20_Motor"])
     checks.append(("Nap kep khong an vao than dong co", v < 1e-6, "chong lan %.2f mm3" % v))
+    checks.append(
+        ("Motor_Clamp la MOT khoi lien (noc cau vuot)",
+         len(parts["Motor_Clamp"].Solids) == 1,
+         "%d khoi" % len(parts["Motor_Clamp"].Solids))
+    )
 
     # trục trơn và ty ren phải song song và cùng cao độ
     checks.append(
@@ -1229,13 +1383,13 @@ def verify(parts: dict) -> list[tuple[str, bool, str]]:
     bad = 0
     for dy, dz in motor_face_holes():
         probe = _cyl_x(MOT_HOLE_TAP, FACE_T + 4.0, FACE_X0 - 2.0, dy, AXIS_Z + dz)
-        if _common_vol(parts["Motor_Bracket"], probe) > 1e-6:
+        if _common_vol(parts["Housing"], probe) > 1e-6:
             bad += 1
     checks.append(("2 lo M1.6 tren bich thong va trung tam", bad == 0, "%d lo bi bit" % bad))
     # mũ vít M1.6 phải CHÌM hẳn trong bích, nếu lồi ra thì nó đội khớp nối
     bad = 0
     for dy, dz in motor_face_holes():
-        if _common_vol(parts["Motor_Bracket"], m16_head_cone(dy, dz)) > 1e-6:
+        if _common_vol(parts["Housing"], m16_head_cone(dy, dz)) > 1e-6:
             bad += 1
     checks.append(("Mu vit M1.6 chim han trong bich", bad == 0, "%d mu vit loi" % bad))
 
@@ -1246,153 +1400,115 @@ def verify(parts: dict) -> list[tuple[str, bool, str]]:
         if _common_vol(parts["Motor_Clamp"], probe) > 1e-6:
             bad += 1
         ring = _cyl_z(M3_TAP + 3.0, 4.0, x, y, AXIS_Z - 6.0)  # thịt quanh lỗ tarô
-        if _common_vol(parts["Motor_Bracket"], ring) < 20.0:
+        if _common_vol(parts["Housing"], ring) < 20.0:
             bad += 1
     checks.append(("4 vit M3 nap kep xuyen nap + co thit taro", bad == 0, "%d loi" % bad))
 
-    # lỗ bắt chân gá xuống đế phải trùng lỗ trên Base_Plate
-    bad = 0
-    for x, y in base_bolt_xy():
-        probe = _cyl_z(M3_CLEAR - 0.4, BASE_T + FOOT_T + 2.0, x, y, -1.0)
-        if _common_vol(parts["Housing"], probe) > 1e-6:
-            bad += 1
-        if _common_vol(parts["Motor_Bracket"], probe) > 1e-6:
-            bad += 1
-        if _common_vol(parts["End_Block"], probe) > 1e-6:
-            bad += 1
-    checks.append(("Lo M3 chan ga trung lo tren de", bad == 0, "%d lo lech" % bad))
-
-    # phải đủ chỗ cho mũ vít M3 (Ø6) ngay trên mặt chân đế
-    bad = 0
-    for x, y in base_bolt_xy():
-        head = _cyl_z(6.5, 4.0, x, y, BASE_T + FOOT_T)
-        if _common_vol(parts["Motor_Bracket"], head) > 1e-6:
-            bad += 1
-        if _common_vol(parts["End_Block"], head) > 1e-6:
-            bad += 1
-    checks.append(("Mu vit M3 khong vuong mang / gan", bad == 0, "%d vi tri ket" % bad))
-
-    # THANH quét qua đế: không được cạ vào mũ vít nào (thanh giờ thấp hơn bản cũ)
-    bad = 0
-    for x, y in base_bolt_xy():
-        head = _cyl_z(6.5, 4.0, x, y, BASE_T + FOOT_T)
-        for xb in (x_min, x_max):
-            if _common_vol(make_slide_bar(xb), head) > 1e-6:
-                bad += 1
-    checks.append(("Thanh khong ca vao mu vit tren de", bad == 0,
-                   "%d va cham (day thanh z = %.1f)" % (bad, BAR_Z0)))
-
-    # --- BỆ GÁ TẢI: 2 bộ lỗ trên 2 mặt vuông góc ---
+    # --- VÁCH GÁ TẢI trên nắp: 4 lỗ M3 xuyên X trên mặt ⊥ trục ---
     bar = parts["Slide_Bar"]
     xc = BAR_HOME_X
-    # 4 lỗ tarô mặt đầu: phải có vành thịt quanh suốt chiều sâu tarô
     bad = 0
-    for dx, z in load_tap_sites():
-        ring = _cyl_y(M3_TAP + 3.0, LOAD_TAP_DEPTH - 1.0, xc + dx, BAR_Y0 + 0.5, z)
-        ring = _cut(ring, _cyl_y(M3_TAP, LOAD_TAP_DEPTH + 2.0, xc + dx, BAR_Y0 - 1.0, z))
-        if _common_vol(bar, ring) < 0.95 * ring.Volume:
-            bad += 1
-    checks.append(
-        ("4 lo taro mat dau co du thit quanh lo", bad == 0,
-         "%d lo thieu thit, chu nhat %.0f x %.0f mm sau %.1f"
-         % (bad, 2 * LOAD_TAP_DX, 2 * LOAD_TAP_DZ, LOAD_TAP_DEPTH))
-    )
-    # 2 lỗ xuyên theo Z: phải THÔNG suốt và có vành thịt
-    bad = 0
-    for dx in load_bolt_sites():
-        probe = _cyl_z(M3_CLEAR - 0.4, BAR_Z1 - BAR_Z0 + 4.0, xc + dx, LOAD_BOLT_Y, BAR_Z0 - 2.0)
+    for y, z in load_hole_sites():
+        probe = _cyl_x(M3_CLEAR - 0.4, MOUNT_T + 4.0, xc - MOUNT_T / 2.0 - 2.0, y, z)
         if _common_vol(bar, probe) > 1e-6:
             bad += 1
-        ring = _cyl_z(M3_CLEAR + 3.0, BAR_Z1 - BAR_Z0 - 1.0, xc + dx, LOAD_BOLT_Y, BAR_Z0 + 0.5)
-        ring = _cut(ring, _cyl_z(M3_CLEAR, BAR_Z1 - BAR_Z0 + 4.0, xc + dx, LOAD_BOLT_Y, BAR_Z0 - 2.0))
+        ring = _cyl_x(M3_CLEAR + 3.0, MOUNT_T - 0.5, xc - MOUNT_T / 2.0 + 0.25, y, z)
+        ring = _cut(ring, _cyl_x(M3_CLEAR, MOUNT_T + 4.0, xc - MOUNT_T / 2.0 - 2.0, y, z))
         if _common_vol(bar, ring) < 0.95 * ring.Volume:
             bad += 1
     checks.append(
-        ("2 lo M3 xuyen suot be ga, co vanh thit", bad == 0,
-         "%d loi, cach nhau %.0f mm" % (bad, 2 * LOAD_BOLT_DX))
+        ("4 lo M3 xuyen vach ga (theo X) co vanh thit", bad == 0,
+         "%d loi, chu nhat YxZ %.0f x %.0f, day vach %.1f"
+         % (bad, 2 * LOAD_HOLE_DY, 2 * LOAD_HOLE_DZ, MOUNT_T))
     )
-    # hai bộ lỗ không được cắt vào nhau
-    gap = LOAD_BOLT_DX - LOAD_TAP_DX - M3_CLEAR / 2.0 - M3_TAP / 2.0
-    checks.append(
-        ("2 bo lo khong cat vao nhau", gap >= 1.5,
-         "con %.2f mm thit giua lo taro va lo xuyen" % gap)
-    )
-    # bu lông thò ra hai đầu lỗ xuyên (mũ + đai ốc) không được va gì khi thanh chạy
+    # mũ bulông phía +X / -X của vách không va nắp / vỏ
     bad = 0
-    for dx in load_bolt_sites():
-        for z0 in (BAR_Z1, BAR_Z0 - 10.0):
-            head = _cyl_z(7.0, 10.0, 0.0, LOAD_BOLT_Y, z0)
-            for xb in (x_min, x_max):
-                h = head.copy()
-                h.translate(App.Vector(xb + dx, 0.0, 0.0))
-                if _common_vol(h, static) > 1e-6:
+    for y, z in load_hole_sites():
+        for xb in (x_min, x_max):
+            for face_x0 in (xb + MOUNT_T / 2.0, xb - MOUNT_T / 2.0 - 3.0):
+                head = _cyl_x(7.0, 3.0, face_x0, y, z)
+                if _common_vol(head, static) > 1e-6:
+                    bad += 1
+                if _common_vol(head, parts["Housing_Lid"]) > 1e-6:
                     bad += 1
     checks.append(
-        ("Bu long tren/duoi be ga khong va gi", bad == 0, "%d va cham" % bad)
+        ("Bu long tren vach ga khong va gi", bad == 0, "%d va cham" % bad)
     )
-    # VÙNG GÁ TẢI phải trống hoàn toàn — lời hứa cho người thiết kế phần lắp lên bệ.
-    # Giới hạn dưới là z = BASE_T + 1: dưới đó là 4 TAI bắt bu lông chìa ra hai bên.
+    # Vùng trên đỉnh vách trống; vách nằm ngoài hộp
     everything = static.fuse(parts["Housing"]).fuse(parts["Housing_Lid"])
-    free = _box2(BOX_X0 - 60.0, BOX_X1 + 60.0, -140.0, BAR_PAD_Y1,
-                 BASE_T + 1.0, BOX_TOP + LID_T + 60.0)
+    free = _box2(BOX_X0 - 40.0, BOX_X1 + 40.0, BOX_Y0 - 40.0, BOX_Y1 + 40.0,
+                 WALL_Z1 + 0.5, WALL_Z1 + 80.0)
     v = _common_vol(free, everything)
     checks.append(
-        ("Vung ga tai (y <= %.0f, z >= %.0f) la trong" % (BAR_PAD_Y1, BASE_T + 1.0),
-         v < 1e-6, "chong lan %.2f mm3" % v)
+        ("Vung tren vach ga (z > %.1f) la trong" % WALL_Z1, v < 1e-6,
+         "chong lan %.2f mm3" % v)
+    )
+    checks.append(
+        ("Vach ga det theo X, dai theo Y hop",
+         MOUNT_T <= 5.0 + 1e-9
+         and (WALL_Y1 - WALL_Y0) >= (BOX_Y1 - BOX_Y0) - 3.0
+         and WALL_Z0 >= BOX_TOP + LID_T - 1e-9,
+         "mount_t=%.1f, wall_y=%.1f..%.1f (hop %.1f), z0=%.1f"
+         % (MOUNT_T, WALL_Y0, WALL_Y1, BOX_Y1 - BOX_Y0, WALL_Z0))
     )
 
     # --- VỎ HỘP ---
-    # thanh phải chui qua khe ở CẢ HAI CHẶN CƠ KHÍ (không phải chỉ ở điểm công tắc)
+    # thân + trụ không đụng Housing; trụ lọt khe nắp ở mọi chặn
     bad = 0
     for xb in (_X_MIN_MECH, _X_MAX_MECH, x_min, x_max):
         if _common_vol(make_slide_bar(xb), parts["Housing"]) > 1e-6:
             bad += 1
+        if _common_vol(make_slide_bar(xb), parts["Housing_Lid"]) > 1e-6:
+            bad += 1
     sx0, sx1 = slot_x()
+    sy0, sy1 = slot_y()
     checks.append(
-        ("Thanh chui qua khe o ca 2 chan co khi", bad == 0,
-         "%d va cham, khe x = %.1f..%.1f (%.1f mm)" % (bad, sx0, sx1, sx1 - sx0))
+        ("Tru be ga lot khe nap o ca 2 chan co khi", bad == 0,
+         "%d va cham, khe x=%.1f..%.1f y=%.1f..%.1f" % (bad, sx0, sx1, sy0, sy1))
     )
     # mọi chi tiết tĩnh phải nằm gọn trong khoang, không đụng vỏ
     bad = []
-    for nm in ("Motor_Bracket", "Motor_Clamp", "N20_Motor", "Coupler", "Thread_Rod",
-               "Guide_Shaft", "End_Block", "Limit_Switch_Min", "Limit_Switch_Max"):
+    for nm in ("Motor_Clamp", "N20_Motor", "Coupler", "Thread_Rod",
+               "Guide_Shaft", "Limit_Switch_Min", "Limit_Switch_Max"):
         if _common_vol(parts[nm], parts["Housing"]) > 1e-6:
             bad.append(nm)
     checks.append(("Chi tiet trong hop khong dung vo", not bad,
                    ", ".join(bad) if bad else "ca %d chi tiet deu lot" % 9))
-    # nắp không được đụng gì bên trong (thanh là thứ cao nhất)
+    # nắp không đụng motor clamp / CT (trụ thanh đi qua khe — đã check ở trên)
     bad = []
-    for nm in ("Motor_Bracket", "End_Block", "Motor_Clamp", "Limit_Switch_Min",
-               "Limit_Switch_Max"):
+    for nm in ("Motor_Clamp", "Limit_Switch_Min", "Limit_Switch_Max"):
         if _common_vol(parts[nm], parts["Housing_Lid"]) > 1e-6:
             bad.append(nm)
-    for xb in (_X_MIN_MECH, _X_MAX_MECH):
-        if _common_vol(make_slide_bar(xb), parts["Housing_Lid"]) > 1e-6:
-            bad.append("Slide_Bar")
     checks.append(
-        ("Nap khong dung gi ben trong", not bad,
-         "ho %.1f mm tren dinh thanh" % (BOX_TOP - BAR_Z1) if not bad else ", ".join(bad))
+        ("Nap khong dung CT / nap kep", not bad,
+         "OK" if not bad else ", ".join(bad))
     )
-    # 4 trụ góc bắt nắp không được đâm vào chi tiết nào
+    # 4 boss bắt nắp trên khung không được đâm công tắc / thanh
     bad = 0
-    for x, y in post_boxes():
-        post = _box2(x, x + POST_W, y, y + POST_W, POST_Z0, BOX_TOP)
-        if _common_vol(post, static) > 1e-6:
+    sw_only = make_sw_body_only(False).fuse(make_sw_body_only(True))
+    for x, y in lid_boss_boxes():
+        post = _box2(x, x + POST_W, y, y + POST_W, LID_BOSS_Z0, BOX_TOP)
+        if _common_vol(post, sw_only) > 1e-6:
             bad += 1
         for xb in (_X_MIN_MECH, _X_MAX_MECH):
             if _common_vol(post, make_slide_bar(xb)) > 1e-6:
                 bad += 1
-    checks.append(("4 tru goc bat nap khong dung gi", bad == 0, "%d tru bi vuong" % bad))
-    # 4 vít nắp phải xuyên nắp và vào đúng trụ
+    checks.append(("4 boss nap tren khung khong dung CT/thanh", bad == 0,
+                   "%d boss bi vuong" % bad))
+    # 4 vít nắp phải xuyên nắp và vào đúng boss (lỗ thông)
     bad = 0
-    for x, y in post_hole_xy():
+    for x, y in lid_tap_xy():
         probe = _cyl_z(M3_TAP - 0.2, LID_T + 8.0, x, y, BOX_TOP - 8.0)
         if _common_vol(parts["Housing"], probe) > 1e-6:
             bad += 1
         if _common_vol(parts["Housing_Lid"], probe) > 1e-6:
             bad += 1
-    checks.append(("4 vit M3 xuyen nap vao tru goc", bad == 0, "%d lo bi bit" % bad))
-    # 4 tai: lỗ M4 thông, và KHÔNG bị nắp che (còn siết được khi đã đậy nắp)
+    checks.append(("4 vit M3 xuyen nap vao boss khung", bad == 0, "%d lo bi bit" % bad))
+    checks.append(
+        ("Housing la 1 khoi lien (vo+khung)", len(parts["Housing"].Solids) == 1,
+         "%d khoi" % len(parts["Housing"].Solids))
+    )
+    # 4 tai: lỗ M4 thông, và KHÔNG bị nắp che
     bad = 0
     for x, y in ear_hole_xy():
         probe = _cyl_z(EAR_HOLE - 0.4, BASE_T + 4.0, x, y, -2.0)
@@ -1402,20 +1518,23 @@ def verify(parts: dict) -> list[tuple[str, bool, str]]:
         if _common_vol(parts["Housing_Lid"], above) > 1e-6:
             bad += 1
     checks.append(
-        ("4 tai M4 thong va khong bi nap che", bad == 0,
+        ("%d tai M4 thong va khong bi nap che" % len(ear_hole_xy()), bad == 0,
          "%d loi, tai %.0f x %.0f mm" % (bad, EAR_X, EAR_OUT))
     )
-    # lỗ luồn dây phải thông và không bị động cơ bịt
     probe = _cyl_x(CABLE_D - 1.0, WALL_T + 4.0, BOX_X0 - 2.0, 0.0, AXIS_Z)
     checks.append(
         ("Lo luon day thong qua vach -X", _common_vol(parts["Housing"], probe) < 1e-6,
          "O%.1f tai z = %.0f, cach duoi dong co %.1f mm"
          % (CABLE_D, AXIS_Z, -MOT_LEN - BASE_X0))
     )
-    # bệ gá tải phải nằm HẲN ngoài mặt ngoài vách -Y
+    # vách gá nằm HẲN trên mặt nắp
     checks.append(
-        ("Be ga tai nam han ngoai vo hop", BAR_PAD_Y1 <= BOX_Y0 - 0.5,
-         "be het o y = %.1f, mat ngoai vach y = %.1f" % (BAR_PAD_Y1, BOX_Y0))
+        ("Vach ga tai nam tren nap hop", WALL_Z0 >= BOX_TOP + LID_T - 1e-9,
+         "vach z=%.1f..%.1f, nap het o %.1f" % (WALL_Z0, WALL_Z1, BOX_TOP + LID_T))
+    )
+    checks.append(
+        ("Guide_Shaft dai giu nguyen (play)", abs(GUIDE_SHAFT_LEN - 53.5) < 1e-9,
+         "dai %.1f mm" % GUIDE_SHAFT_LEN)
     )
 
     # hành trình phải dương
@@ -1443,17 +1562,17 @@ def add_part(doc, name, shape, color, transparency=0):
 
 
 def build_parts() -> dict:
+    # Housing = vo + khung DC + goi do (1 khoi). Motor_Clamp van roi de lap DC.
     parts = {
         "Housing": make_housing(),
         "Housing_Lid": make_housing_lid(),
-        "Motor_Bracket": make_motor_bracket(),
         "Motor_Clamp": make_motor_clamp(),
         "N20_Motor": make_motor(),
         "Coupler": make_coupler(),
         "Coupler_Spacer": make_coupler_spacer(),
         "Thread_Rod": make_thread_rod(),
         "Guide_Shaft": make_guide_shaft(),
-        "End_Block": make_end_block(),
+        "Guide_Lock_Screw": make_guide_lock_screw(),
         "Limit_Switch_Min": make_limit_switch(False),
         "Limit_Switch_Max": make_limit_switch(True),
         "Slide_Bar": make_slide_bar(BAR_HOME_X),
@@ -1463,16 +1582,15 @@ def build_parts() -> dict:
 
 
 COLORS = {
-    "Housing": ((0.72, 0.74, 0.78), 0),
+    "Housing": ((0.55, 0.58, 0.65), 0),
     "Housing_Lid": ((0.62, 0.64, 0.68), 60),
-    "Motor_Bracket": ((0.20, 0.45, 0.75), 0),
     "Motor_Clamp": ((0.16, 0.36, 0.62), 0),
     "N20_Motor": ((0.35, 0.36, 0.38), 0),
     "Coupler": ((0.55, 0.58, 0.62), 0),
     "Coupler_Spacer": ((0.35, 0.70, 0.45), 0),
     "Thread_Rod": ((0.83, 0.68, 0.28), 0),
     "Guide_Shaft": ((0.80, 0.82, 0.86), 0),
-    "End_Block": ((0.20, 0.45, 0.75), 0),
+    "Guide_Lock_Screw": ((0.45, 0.45, 0.48), 0),
     "Limit_Switch_Min": ((0.12, 0.12, 0.14), 0),
     "Limit_Switch_Max": ((0.12, 0.12, 0.14), 0),
     "Slide_Bar": ((0.90, 0.48, 0.14), 0),
@@ -1496,8 +1614,13 @@ def main() -> None:
     grp.addObjects(objs)
 
     doc.recompute()
-    doc.saveAs(str(FCSTD))
-    print("Saved:", FCSTD)
+    # CHỈ save khi có GUI — freecadcmd save headless làm hỏng / thiếu GuiDocument
+    if App.GuiUp and Gui is not None:
+        doc.saveAs(str(FCSTD))
+        print("Saved:", FCSTD)
+    else:
+        print("!! Headless: khong ghi %s (tranh file corrupt). Chi in thong so + verify."
+              % FCSTD)
 
     x_min, x_max = travel_range()
     print("--- THONG SO ---")
@@ -1526,24 +1649,28 @@ def main() -> None:
           % ("khop noi",
              "hub dung vach" if _X_MAX_MECH == _X_MAX_HOLDER
              else ("bac dung vach" if _X_MAX_MECH == _X_MAX_BOSS else "het ren")))
-    print("  Truc tron   : O%.0f, dai %.1f mm, SONG SONG ty ren, lech y = %.0f mm"
-          % (GUIDE_D, GUIDE_X1 - GUIDE_X0, GUIDE_Y))
-    print("                2 dau cam HOC MU sau %.1f (bich) va %.1f (goi do); vach chan"
-          % (GUIDE_SOCKET_M, GUIDE_SOCKET_E))
-    print("                %.1f mm co lo thong hoi O%.1f de dong vao / choc ra"
-          % (GUIDE_BLIND_WALL, GUIDE_VENT_D))
+    print("  Truc tron   : O%.0f, dai %.1f mm (span %.1f, play %.1f), lech y = %.0f"
+          % (GUIDE_D, GUIDE_SHAFT_LEN, GUIDE_SPAN, GUIDE_AXIAL_PLAY, GUIDE_Y))
+    _gm = FACE_X0 + FACE_T + GUIDE_BOSS_L
+    _ge = END_X0
+    print("                chay: x=%.1f..%.1f (eng DC %.1f / goi %.1f); thao: day ve DC,"
+          % (GUIDE_SHAFT_X0, GUIDE_SHAFT_X0 + GUIDE_SHAFT_LEN,
+             _gm - GUIDE_SHAFT_X0,
+             (GUIDE_SHAFT_X0 + GUIDE_SHAFT_LEN) - _ge))
+    print("                tip clear mieng goi %.1f mm; 2 hoc mu %.1f / %.1f; vent O%.1f"
+          % (GUIDE_TIP_CLEAR, GUIDE_SOCKET_M, GUIDE_SOCKET_E, GUIDE_VENT_D))
+    print("                KHOA chay: vit ham M3 @ x=%.1f (vat sau %.1f) — noi truoc khi thao"
+          % (GUIDE_LOCK_X, GUIDE_LOCK_FLAT))
     print("  Thanh       : than day %.1f (X) x cao %.1f (Z), lo O%.1f cho khop noi chui qua"
           % (BAR_X, BAR_Z1 - BAR_Z0, COUP_CLEAR_D))
     print("                hub lien khoi x = %+.1f..%+.1f so voi tam: vach %.1f | khe %.1f | vach %.1f"
           % (-BAR_X / 2.0, HUB_FRONT, NUT_WALL, NUT_POCKET, NUT_WALL))
-    print("  Be ga tai   : mat dau -Y  : 4 lo TARO M3, chu nhat %.0f x %.0f mm, sau %.1f"
-          % (2 * LOAD_TAP_DX, 2 * LOAD_TAP_DZ, LOAD_TAP_DEPTH))
-    print("                mat tren/duoi: 2 lo M3 XUYEN, cach %.0f mm, tai y = %.1f"
-          % (2 * LOAD_BOLT_DX, LOAD_BOLT_Y))
-    print("                be %.0f (X) x %.0f (Y) x %.1f (Z), mat dau o y = %.1f"
-          % (BAR_PAD_X, BAR_PAD_Y1 - BAR_Y0, BAR_Z1 - BAR_Z0, BAR_Y0))
-    print("                VUNG TRONG cho tai: y <= %.1f va z >= %.1f — moi x"
-          % (BAR_PAD_Y1, BASE_T + 1.0))
+    print("  Vach ga tai : NGOAI NAP — day %.1f (X), y=%.1f..%.1f (ngang hop), z=%.1f..%.1f"
+          % (MOUNT_T, WALL_Y0, WALL_Y1, WALL_Z0, WALL_Z1))
+    print("                mat YZ vuong goc truc chay; 4 lo M3 XUYEN X chu nhat %.0f x %.0f"
+          % (2 * LOAD_HOLE_DY, 2 * LOAD_HOLE_DZ))
+    print("                tru khe nap y=%.1f..%.1f; VUNG TRONG z > %.1f"
+          % (STEM_Y0, STEM_Y1, WALL_Z1))
     print("  Hanh trinh  : x = %.1f .. %.1f  ->  %.1f mm" % (x_min, x_max, x_max - x_min))
     print("  Toc do      : 1 vong = %.1f mm  |  %.0f rpm -> %.1f mm/phut (het hanh trinh %.0f s)"
           % (ROD_PITCH, MOTOR_RPM, MOTOR_RPM * ROD_PITCH,
@@ -1555,20 +1682,20 @@ def main() -> None:
           % (ROD_LEN, (x_max - x_min) + (60.0 - ROD_LEN)))
     print("  Cao do truc : z = %.0f mm so voi mat day de" % AXIS_Z)
     sx0, sx1 = slot_x()
-    print("  VO HOP      : ngoai %.0f x %.0f x %.0f mm (ke ca nap), vach %.1f"
-          % (BOX_X1 - BOX_X0, BOX_Y1 - BOX_Y0, BOX_TOP + LID_T, WALL_T))
+    sy0, sy1 = slot_y()
+    print("  VO HOP      : ngoai %.0f x %.0f x %.0f mm (vo+nap), vach ga den z=%.0f, vach %.1f"
+          % (BOX_X1 - BOX_X0, BOX_Y1 - BOX_Y0, BOX_TOP + LID_T, WALL_Z1, WALL_T))
     print("                khoang trong %.0f x %.0f x %.0f mm"
           % (BASE_X1 - BASE_X0, BASE_Y1 - BASE_Y0, BOX_TOP - BASE_T))
-    print("                KHE vach -Y: x = %.1f..%.1f (%.1f mm) x z = %.1f..%.1f, ho noc"
-          % (sx0, sx1, sx1 - sx0, BAR_Z0 - SLOT_CLEAR, BOX_TOP))
-    print("                4 TAI M4 %.0fx%.0f, tam lo tai x = %s | y = %s"
-          % (EAR_X, EAR_OUT,
+    print("                KHE nap: x=%.1f..%.1f (%.1f) y=%.1f..%.1f"
+          % (sx0, sx1, sx1 - sx0, sy0, sy1))
+    print("                %d TAI M4 %.0fx%.0f, tam lo tai x = %s | y = %s"
+          % (len(ear_boxes()), EAR_X, EAR_OUT,
              ", ".join("%.1f" % v for v in sorted({x for x, _ in ear_hole_xy()})),
              ", ".join("%.1f" % v for v in sorted({y for _, y in ear_hole_xy()}))))
     print("                bao ngoai KE CA TAI: %.0f x %.0f mm"
           % (BOX_X1 - BOX_X0, (BOX_Y1 + EAR_OUT) - (BOX_Y0 - EAR_OUT)))
-    print("                nap: 4 vit M3 xuong 4 tru goc; lo luon day O%.1f o vach -X"
-          % CABLE_D)
+    print("                nap: 4 vit M3; lo luon day O%.1f o vach -X" % CABLE_D)
 
     print("--- NGAN SACH HANH TRINH ---")
     stack = 2.0 * NUT_WALL + NUT_POCKET
@@ -1578,12 +1705,13 @@ def main() -> None:
         ("- cam vao lo do End_Block", -ROD_END_SUPPORT),
         ("- chong om dai oc (%.1f+%.1f+%.1f)" % (NUT_WALL, NUT_POCKET, NUT_WALL), -stack),
         ("- khe an toan 2 x %.1f" % END_CLEAR, -2.0 * END_CLEAR),
+        ("+ hoc End_Block (hub/bac chui vao)", END_HUB_RECESS),
     ]
     for label, val in rows:
         print("  %-38s %+7.1f" % (label, val))
-    print("  %-38s %7.1f" % ("= chan co khi", _X_MAX_MECH - _X_MIN_MECH))
-    print("  %-38s %+7.1f" % ("- cong tac tac dong som 2 x %.1f" % SW_PRESS, -2.0 * SW_PRESS))
-    print("  %-38s %7.1f" % ("= HANH TRINH THUC", x_max - x_min))
+    print("  %-38s %7.1f" % ("= phong bi co (failsafe)", _X_MAX_MECH - _X_MIN_MECH))
+    print("  %-38s %+7.1f" % ("- SW_PRESS du phong 2 x %.1f" % SW_PRESS, -2.0 * SW_PRESS))
+    print("  %-38s %7.1f" % ("= HANH TRINH DUNG (trip)", x_max - x_min))
 
     print("--- KIEM TRA ---")
     checks = verify(parts)
@@ -1594,13 +1722,31 @@ def main() -> None:
         print("  [%s] %-52s %s" % ("OK" if ok else "FAIL", label, detail))
     print("  => %d FAIL / %d checks" % (n_fail, len(checks)))
 
+    metrics = {
+        "pass": n_fail == 0,
+        "checks_fail": n_fail,
+        "checks_total": len(checks),
+        "guide_shaft_len_mm": GUIDE_SHAFT_LEN,
+        "guide_y_mm": GUIDE_Y,
+        "box_outer_mm": [BOX_X1 - BOX_X0, BOX_Y1 - BOX_Y0, BOX_TOP + LID_T],
+        "mount_wall": True,
+        "mount_t_mm": MOUNT_T,
+        "wall_y_mm": [WALL_Y0, WALL_Y1],
+        "wall_z_mm": [WALL_Z0, WALL_Z1],
+        "load_holes_yz_mm": [2 * LOAD_HOLE_DY, 2 * LOAD_HOLE_DZ],
+        "lid_slot": True,
+        "travel_trip_mm": x_max - x_min,
+    }
+    mpath = OUT / "n20_leadscrew_stage_metrics.json"
+    mpath.write_text(json.dumps(metrics, indent=2) + "\n", encoding="utf-8")
+    print("Metrics:", mpath)
+
     if App.GuiUp and Gui is not None:
         Gui.ActiveDocument = Gui.getDocument(doc.Name)
         Gui.activeDocument().activeView().viewAxonometric()
         Gui.SendMsgToActiveView("ViewFit")
         Gui.updateGui()
     else:
-        print("!! Dang chay headless — model se bi an. Hay mo bang freecad.exe.")
         App.closeDocument(doc.Name)
 
 
