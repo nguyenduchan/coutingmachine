@@ -1,0 +1,84 @@
+    # --- 3x L298N (U5/U6/U7) + GA12-N20 jacks J5/J6/J7 ---
+    parts.append(text("BOTTOM: U5/U6/U7 L298N @12V | TOP: J5/J6/J7 GA12-N20", 20.32, 185.0, 1.27))
+    l298n_place = [
+        # (ref_u, ref_j, x_u, y_u, x_j, y_j, in1_esp_pin, in2_esp_pin, label)
+        ("U5", "J5", 95.25, 203.2, 165.1, 203.2, 11, 14, "M1 IO21/22"),
+        ("U6", "J6", 95.25, 241.3, 165.1, 241.3, 15, 18, "M2 IO23/13"),
+        ("U7", "J7", 95.25, 279.4, 165.1, 279.4, 19, 20, "M3 IO12/14"),
+    ]
+    for ref_u, ref_j, xu, yu, xj, yj, pin_in1, pin_in2, lab in l298n_place:
+        uu, ju = uid(), uid()
+        # U: Vs left, OUT right (from symbol)
+        vs = (xu - 15.24, yu - 7.62)
+        gndp = (xu - 15.24, yu - 2.54)
+        # 5V (xu-15.24, yu+2.54) NC — module regulator
+        in1 = (xu - 15.24, yu + 7.62)
+        in2 = (xu + 15.24, yu + 7.62)
+        out1 = (xu + 15.24, yu - 5.08)
+        out2 = (xu + 15.24, yu - 0.0)
+        ena = (xu + 15.24, yu + 5.08)
+        jmp = (xj, yj - 1.27)  # M+
+        jmm = (xj, yj + 1.27)  # M-
+        parts += [
+            f'\t(symbol (lib_id "ESP32_Carrier:L298N_Module") (at {xu} {yu} 0) (unit 1)',
+            f'\t\t(uuid "{uu}")',
+            f'\t\t(property "Reference" "{ref_u}" (at {xu} {yu - 13.97} 0)',
+            "\t\t\t(effects (font (size 1.27 1.27)))",
+            "\t\t)",
+            f'\t\t(property "Value" "L298N_Module" (at {xu} {yu + 13.97} 0)',
+            "\t\t\t(effects (font (size 1.27 1.27)))",
+            "\t\t)",
+            f'\t\t(property "Footprint" "ESP32_Carrier:L298N_Module" (at {xu} {yu} 0)',
+            "\t\t\t(effects (font (size 1.27 1.27)) (hide yes))",
+            "\t\t)",
+            f'\t\t(property "Datasheet" "~" (at {xu} {yu} 0)',
+            "\t\t\t(effects (font (size 1.27 1.27)) (hide yes))",
+            "\t\t)",
+        ]
+        for n in ["1", "2", "3", "4", "5", "6", "7", "8"]:
+            parts.append(f'\t\t(pin "{n}" (uuid "{uid()}"))')
+        parts += [
+            "\t\t(instances",
+            f'\t\t\t(project "esp32_baseboard" (path "/{sch_uuid}" (reference "{ref_u}") (unit 1)))',
+            "\t\t)",
+            "\t)",
+            f'\t(symbol (lib_id "ESP32_Carrier:Conn_1x02_MotorDC") (at {xj} {yj} 0) (unit 1)',
+            f'\t\t(uuid "{ju}")',
+            f'\t\t(property "Reference" "{ref_j}" (at {xj} {yj - 7.62} 0)',
+            "\t\t\t(effects (font (size 1.27 1.27)))",
+            "\t\t)",
+            f'\t\t(property "Value" "GA12_N20" (at {xj} {yj + 7.62} 0)',
+            "\t\t\t(effects (font (size 1.27 1.27)))",
+            "\t\t)",
+            f'\t\t(property "Footprint" "ESP32_Carrier:PinHeader_1x02_MotorDC" (at {xj} {yj} 0)',
+            "\t\t\t(effects (font (size 1.27 1.27)) (hide yes))",
+            "\t\t)",
+            f'\t\t(property "Datasheet" "~" (at {xj} {yj} 0)',
+            "\t\t\t(effects (font (size 1.27 1.27)) (hide yes))",
+            "\t\t)",
+            f'\t\t(pin "1" (uuid "{uid()}"))',
+            f'\t\t(pin "2" (uuid "{uid()}"))',
+            "\t\t(instances",
+            f'\t\t\t(project "esp32_baseboard" (path "/{sch_uuid}" (reference "{ref_j}") (unit 1)))',
+            "\t\t)",
+            "\t)",
+            text(lab, xu - 25.4, yu - 15.24, 1.0),
+        ]
+        # +12V / GND
+        parts += wire_path(vs, (vs[0], y12), (u3_vm[0], y12))
+        parts += wire_path(gndp, (gndp[0], ygnd), (u3_gnd[0], ygnd))
+        # Motor outs
+        parts += wire_path(out1, (out1[0] + 8, out1[1]), (jmp[0], out1[1]), jmp)
+        parts += wire_path(out2, (out2[0] + 10, out2[1]), (jmm[0], out2[1]), jmm)
+        # IN1 / IN2 from ESP32
+        e1 = u1_pin(pin_in1)
+        e2 = u1_pin(pin_in2)
+        xbus1 = 55.0 + (pin_in1 % 7) * 2.54
+        xbus2 = 57.0 + (pin_in2 % 7) * 2.54
+        parts += wire_path(e1, (xbus1, e1[1]), (xbus1, in1[1]), in1)
+        parts += wire_path(e2, (xbus2, e2[1]), (xbus2, in2[1]), in2)
+        parts.append(label(f"{ref_u}_IN1", xbus1, in1[1]))
+        parts.append(label(f"{ref_u}_IN2", xbus2, in2[1]))
+        # ENA + 5V NC (ENA jumpered on module)
+        parts.append(f'\t(no_connect (at {ena[0]} {ena[1]}) (uuid "{uid()}"))')
+        parts.append(f'\t(no_connect (at {xu - 15.24} {yu + 2.54}) (uuid "{uid()}"))')

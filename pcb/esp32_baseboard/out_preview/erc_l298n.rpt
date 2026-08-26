@@ -1,0 +1,265 @@
+ERC report (2026-08-26T15:00:05, Encoding UTF8)
+Report includes: Errors, Warnings
+
+***** Sheet /
+[lib_symbol_mismatch]: Symbol 'TerminalBlock_2P' doesn't match copy in library 'ESP32_Carrier'
+    ; warning
+    @(38.10 mm, 63.50 mm): Symbol J1 [TerminalBlock_2P]
+[lib_symbol_issues]: Symbol 'PWR_FLAG' not found in symbol library 'ESP32_Carrier'
+    ; warning
+    @(66.04 mm, 45.72 mm): Symbol #FLG1 [PWR_FLAG]
+[lib_symbol_mismatch]: Symbol 'Mini560_5V5A' doesn't match copy in library 'ESP32_Carrier'
+    ; warning
+    @(95.25 mm, 63.50 mm): Symbol U2 [Mini560_5V5A]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(110.49 mm, 198.12 mm): Horizontal Wire, length 8.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(118.49 mm, 198.12 mm): Horizontal Wire, length 46.61 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(110.49 mm, 236.22 mm): Horizontal Wire, length 8.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(118.49 mm, 236.22 mm): Horizontal Wire, length 46.61 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(118.49 mm, 274.32 mm): Horizontal Wire, length 46.61 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(110.49 mm, 274.32 mm): Horizontal Wire, length 8.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(110.49 mm, 134.62 mm): Horizontal Wire, length 10.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(120.49 mm, 134.62 mm): Horizontal Wire, length 44.61 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(120.49 mm, 203.20 mm): Horizontal Wire, length 44.61 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(110.49 mm, 203.20 mm): Horizontal Wire, length 10.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(120.49 mm, 241.30 mm): Horizontal Wire, length 44.61 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(110.49 mm, 241.30 mm): Horizontal Wire, length 10.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(120.49 mm, 279.40 mm): Horizontal Wire, length 44.61 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(110.49 mm, 279.40 mm): Horizontal Wire, length 10.00 mm
+[label_multiple_wires]: Label connects more than one wire at 1206500, 355600
+    ; warning
+    @(120.65 mm, 35.56 mm): Label '+3V3'
+    @(147.32 mm, 35.56 mm): Horizontal Wire, length 67.31 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(122.49 mm, 137.16 mm): Horizontal Wire, length 42.61 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(110.49 mm, 137.16 mm): Horizontal Wire, length 12.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(124.49 mm, 142.24 mm): Horizontal Wire, length 40.61 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(110.49 mm, 142.24 mm): Horizontal Wire, length 14.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(110.49 mm, 144.78 mm): Horizontal Wire, length 16.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(126.49 mm, 144.78 mm): Horizontal Wire, length 38.61 mm
+[label_multiple_wires]: Label connects more than one wire at 1400000, 1422400
+    ; warning
+    @(140.00 mm, 142.24 mm): Label 'EN'
+    @(145.00 mm, 142.24 mm): Horizontal Wire, length 64.99 mm
+[label_multiple_wires]: Label connects more than one wire at 1400000, 1447800
+    ; warning
+    @(140.00 mm, 144.78 mm): Label 'STEP'
+    @(150.00 mm, 144.78 mm): Horizontal Wire, length 69.99 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(182.88 mm, 83.82 mm): Horizontal Wire, length 37.88 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(145.00 mm, 83.82 mm): Vertical Wire, length 58.42 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(145.00 mm, 142.24 mm): Horizontal Wire, length 64.99 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(182.88 mm, 86.36 mm): Horizontal Wire, length 35.38 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(147.50 mm, 86.36 mm): Vertical Wire, length 60.96 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(147.50 mm, 147.32 mm): Horizontal Wire, length 67.49 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(150.00 mm, 88.90 mm): Vertical Wire, length 55.88 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(182.88 mm, 88.90 mm): Horizontal Wire, length 32.88 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(150.00 mm, 144.78 mm): Horizontal Wire, length 69.99 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(182.88 mm, 93.98 mm): Horizontal Wire, length 28.88 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(154.00 mm, 93.98 mm): Wire, length 76.206 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(156.00 mm, 91.44 mm): Wire, length 77.725 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(182.88 mm, 91.44 mm): Horizontal Wire, length 26.88 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(182.88 mm, 99.06 mm): Horizontal Wire, length 24.88 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(158.00 mm, 99.06 mm): Wire, length 72.995 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(182.88 mm, 96.52 mm): Horizontal Wire, length 22.88 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(160.00 mm, 96.52 mm): Wire, length 74.686 mm
+[lib_symbol_mismatch]: Symbol 'ESP32_DevKit_V1_30Pin' doesn't match copy in library 'ESP32_Carrier'
+    ; warning
+    @(165.10 mm, 88.90 mm): Symbol U1 [ESP32_DevKit_V1_30Pin]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(200.00 mm, 76.20 mm): Horizontal Wire, length 52.68 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(278.13 mm, 83.82 mm): Horizontal Wire, length 78.13 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(200.00 mm, 83.82 mm): Vertical Wire, length 7.62 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(202.54 mm, 78.74 mm): Horizontal Wire, length 55.22 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(278.13 mm, 86.36 mm): Horizontal Wire, length 75.59 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(202.54 mm, 86.36 mm): Vertical Wire, length 7.62 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(205.08 mm, 81.28 mm): Horizontal Wire, length 57.76 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(205.08 mm, 88.90 mm): Vertical Wire, length 7.62 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(278.13 mm, 88.90 mm): Horizontal Wire, length 73.05 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(207.62 mm, 83.82 mm): Horizontal Wire, length 60.30 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(278.13 mm, 91.44 mm): Horizontal Wire, length 70.51 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(207.62 mm, 91.44 mm): Vertical Wire, length 7.62 mm
+[label_multiple_wires]: Label connects more than one wire at 2076200, 914400
+    ; warning
+    @(207.62 mm, 91.44 mm): Label 'OPTO_OUT4'
+    @(156.00 mm, 91.44 mm): Wire, length 77.725 mm
+[multiple_net_names]: Both OPTO_OUT1 and OPTO_OUT4 are attached to the same items; OPTO_OUT1 will be used in the netlist
+    ; warning
+    @(200.00 mm, 83.82 mm): Label 'OPTO_OUT1'
+    @(207.62 mm, 91.44 mm): Label 'OPTO_OUT4'
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(210.16 mm, 86.36 mm): Horizontal Wire, length 62.84 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(210.16 mm, 93.98 mm): Vertical Wire, length 7.62 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(278.13 mm, 93.98 mm): Horizontal Wire, length 67.97 mm
+[label_multiple_wires]: Label connects more than one wire at 2101600, 939800
+    ; warning
+    @(210.16 mm, 93.98 mm): Label 'OPTO_OUT5'
+    @(154.00 mm, 93.98 mm): Wire, length 76.206 mm
+[multiple_net_names]: Both OPTO_OUT2 and OPTO_OUT5 are attached to the same items; OPTO_OUT2 will be used in the netlist
+    ; warning
+    @(202.54 mm, 86.36 mm): Label 'OPTO_OUT2'
+    @(210.16 mm, 93.98 mm): Label 'OPTO_OUT5'
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(212.70 mm, 88.90 mm): Horizontal Wire, length 65.38 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(212.70 mm, 96.52 mm): Vertical Wire, length 7.62 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(278.13 mm, 96.52 mm): Horizontal Wire, length 65.43 mm
+[label_multiple_wires]: Label connects more than one wire at 2127000, 965200
+    ; warning
+    @(212.70 mm, 96.52 mm): Label 'OPTO_OUT6'
+    @(154.00 mm, 93.98 mm): Wire, length 76.206 mm
+[multiple_net_names]: Both OPTO_OUT3 and OPTO_OUT6 are attached to the same items; OPTO_OUT3 will be used in the netlist
+    ; warning
+    @(205.08 mm, 88.90 mm): Label 'OPTO_OUT3'
+    @(212.70 mm, 96.52 mm): Label 'OPTO_OUT6'
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(215.24 mm, 91.44 mm): Horizontal Wire, length 67.92 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(215.24 mm, 99.06 mm): Vertical Wire, length 7.62 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(278.13 mm, 99.06 mm): Horizontal Wire, length 62.89 mm
+[label_multiple_wires]: Label connects more than one wire at 2152400, 990600
+    ; warning
+    @(215.24 mm, 99.06 mm): Label 'OPTO_OUT7'
+    @(154.00 mm, 93.98 mm): Wire, length 76.206 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(217.78 mm, 93.98 mm): Horizontal Wire, length 70.46 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(217.78 mm, 101.60 mm): Vertical Wire, length 7.62 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(278.13 mm, 101.60 mm): Horizontal Wire, length 60.35 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(288.13 mm, 35.56 mm): Horizontal Wire, length 140.81 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(288.13 mm, 81.28 mm): Vertical Wire, length 45.72 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(278.13 mm, 81.28 mm): Horizontal Wire, length 10.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(290.13 mm, 73.66 mm): Horizontal Wire, length 142.81 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(290.13 mm, 78.74 mm): Vertical Wire, length 5.08 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(278.13 mm, 78.74 mm): Horizontal Wire, length 12.00 mm
+
+ ** ERC messages: 81  Errors 0  Warnings 81
+
+ ** Ignored checks:
+    - Global label only appears once in the schematic
+    - Four connection points are joined together
+    - SPICE model issue
+    - Assigned footprint doesn't match footprint filters

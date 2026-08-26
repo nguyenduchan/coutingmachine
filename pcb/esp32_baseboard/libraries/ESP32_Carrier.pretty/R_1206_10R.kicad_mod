@@ -1,0 +1,12 @@
+(footprint "R_1206_10R"
+	(version 20260206)
+	(generator "gen_power_carrier.py")
+	(layer "F.Cu")
+	(descr "10 ohm 1206 SNS series filter")
+	(property "Reference" "R**" (at 0 -1.8 0) (layer "F.SilkS") (effects (font (size 0.7 0.7) (thickness 0.1))))
+	(property "Value" "10R" (at 0 1.8 0) (layer "F.Fab") (effects (font (size 0.7 0.7) (thickness 0.1))))
+	(attr smd)
+	(fp_rect (start -1.7 -0.9) (end 1.7 0.9) (stroke (width 0.1) (type solid)) (fill none) (layer "F.CrtYd"))
+	(pad "1" smd roundrect (at -1.4 0) (size 1.0 1.5) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))
+	(pad "2" smd roundrect (at 1.4 0) (size 1.0 1.5) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))
+)
