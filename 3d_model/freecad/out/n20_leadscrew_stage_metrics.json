@@ -1,28 +1,25 @@
 {
   "pass": true,
   "checks_fail": 0,
-  "checks_total": 75,
-  "guide_shaft_len_mm": 53.5,
+  "checks_total": 93,
+  "guide_shaft_len_mm": 83.0,
   "guide_y_mm": 13.5,
   "box_outer_mm": [
-    105.1,
-    42.9,
+    112.1,
+    51.3,
     30.400000000000002
   ],
   "mount_wall": true,
   "mount_t_mm": 4.0,
-  "wall_y_mm": [
-    -18.9,
-    22.0
+  "mount_stem_y_mm": [
+    -6.0,
+    6.0
   ],
   "wall_z_mm": [
     30.400000000000002,
     46.400000000000006
   ],
-  "load_holes_yz_mm": [
-    24.0,
-    8.0
-  ],
+  "load_holes": 2,
   "lid_slot": true,
   "travel_trip_mm": 26.1
 }
