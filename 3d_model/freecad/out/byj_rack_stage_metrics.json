@@ -1,0 +1,27 @@
+{
+  "pass": true,
+  "checks_fail": 0,
+  "checks_total": 27,
+  "travel_mm": 30.0,
+  "box_outer_mm": [
+    114.5,
+    49.0,
+    37.9
+  ],
+  "gear": {
+    "m": 1.0,
+    "z": 18,
+    "R": 9.0,
+    "mm_per_rev": 56.548667764616276
+  },
+  "rack_len_mm": 42.0,
+  "bar_len_mm": 45.0,
+  "rod_len_mm": 115.0,
+  "sec_full_travel": 2.6525823848649224,
+  "hold_force_N": 3.811111111111111,
+  "sw_max": false,
+  "n_switches": 1,
+  "hard_stop_x": 39.0,
+  "hard_stop_over_trip_mm": 1.5,
+  "soft_limit_mm": 29.0
+}
