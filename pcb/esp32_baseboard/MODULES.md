@@ -1,6 +1,6 @@
 # Counting machine — danh sách module (ghi nhớ)
 
-**Cập nhật:** 2026-08-28  
+**Cập nhật:** 2026-08-28 (bơm **370 12V**; **1× MP1584** 5V; thổi **3 s / 5 phút**)  
 **PCB:** `esp32_baseboard` (generator: `gen_power_carrier.py`)  
 **Mục tiêu:** văn phòng ~20 cm, **ổn định >3 năm**, **tổng giá kinh tế** (chỉ nâng cấp khi chênh ít).
 
@@ -15,8 +15,8 @@
 Nguồn 12V ngoài → J1 → F1 PTC → `+12V` (+ D1 TVS) → các rail / driver.
 
 ```
-PSU 12V ──J1── F1 ── +12V ──┬── U2 MP1584 ── +5V ── U1 / TFT / buzzer
-                            ├── U8 MP1584 ── +5V_BLW ── J16 AOD4184 ── bơm màng
+PSU 12V ──J1── F1 ── +12V ──┬── U2 MP1584 ── +5V ── U1 / TFT / buzzer  (buck duy nhat)
+                            ├── J16 AOD4184 ── bơm khí 370 12V
                             ├── U3 TMC2209 ── J2 NEMA17
                             ├── U5–U7 ULN2003 ── J5–J7 28BYJ-48 (bản 12V)
                             └── R10/C10/C11 ── +12V_SNS ── limit + BUP
@@ -32,8 +32,7 @@ PSU 12V ──J1── F1 ── +12V ──┬── U2 MP1584 ── +5V ─�
 | **F1** | PTC radial ~3A / 30V (RXE030 / MF-R300 class) | Ø~9–11 | 1 | Bảo vệ ngắn mạch | RAW → `+12V` |
 | **D1** | TVS P6KE15A (DO-41) | axial | 1 | Clamp surge 12V | `+12V`–GND |
 | **U1** | **ESP32-S3-DevKitC-1 N16R8** (bản `v1.1`, **không** hậu tố `V`) | ~63×25 | 1 | MCU | Socket 2×22 @2.54, row 25.4; cấp **5V** từ U2 |
-| **U2** | **MP1584EN** fixed **5V** | ~22×17 | 1 | Buck logic | `+12V` → `+5V` |
-| **U8** | **MP1584EN** fixed **5V** | ~22×17 | 1 | Buck riêng bơm | `+12V` → `+5V_BLW` |
+| **U2** | **MP1584EN** fixed **5V** | ~22×17 | 1 | Buck logic **duy nhất** | `+12V` → `+5V` (ESP32 / TFT / buzzer) |
 | **U3** | **TMC2209** stepstick **BTT** + heatsink | ~15×20 | 1 | Driver NEMA17 | VM=12V, VIO=3V3; STEP/DIR/EN |
 | **U4** | **PC817 4CH** | ~48×38 | 1 | Level-shift 4 ngõ vào field | IN1–3 = **limit HOME trục 1/2/3**, IN4 = **BUP** → IO1, 2, 4, 5 |
 | ~~**U9**~~ | ~~PC817 4CH~~ | ~48×38 | **DNP** | **KHÔNG HÀN** — sau khi bỏ 3 limit MAX chỉ còn 4 ngõ vào field, vừa đúng một con U4. Giữ footprint, giải phóng **IO6, 7, 8, 9** | — |
@@ -51,7 +50,7 @@ PSU 12V ──J1── F1 ── +12V ──┬── U2 MP1584 ── +5V ─�
 | **R1** | Điện trở axial **4k7** | pitch ~7.5 | 1 | Pull-up BUP NPN | `+12V_SNS` → OUT |
 | **R2** | Điện trở axial **10k** | pitch ~7.5 | 1 | Pull-up EN của TMC2209 | `/EN_TMC` → `+3V3` |
 | **R3** | Điện trở axial **10k** | pitch ~7.5 | 1 | Pull-down PWM bơm | `/BLOWER` → GND |
-| **D2** | **1N5819** (DO-41) | axial | 1 | Freewheel bơm màng | `+5V_BLW` ↔ `/BLW_RET` |
+| **D2** | **1N5819** (DO-41) | axial | 1 | Freewheel bơm 370 12V | `+12V` ↔ `/BLW_RET` |
 | **R10** | 10Ω 1206 | — | 1 | Lọc star SNS | `+12V` → `+12V_SNS` |
 | **C10** | 47µF radial 25V (105°C) | Ø~6 | 1 | Bulk SNS | `+12V_SNS`–GND |
 | **C11** | 100nF 0805 | — | 1 | HF SNS | `+12V_SNS`–GND |
@@ -73,7 +72,7 @@ PSU 12V ──J1── F1 ── +12V ──┬── U2 MP1584 ── +5V ─�
 | **J12** | 1×02 | 1 | Limit **HOME** trục 3 |
 | **J14** | 1×04 | 1 | BUP-30S (+12 / GND / OUT / CTRL) |
 | **J15** | 1×03 | 1 | Buzzer 5V (VCC / GND / SIG) |
-| **J16** | 1×04 | 1 | AOD4184 (PWM / GND / +5V_BLW / FAN−) |
+| **J16** | 1×04 | 1 | AOD4184 (PWM / GND / **+12V** / FAN−) |
 | **J17** | 1×11 | 1 | TFT SPI + touch I2C (+ RST / BL / T_INT) — **không có MISO** |
 
 **J3:** không dùng.
@@ -86,7 +85,7 @@ PSU 12V ──J1── F1 ── +12V ──┬── U2 MP1584 ── +5V ─�
 |---|------------------|----|-----|-----------|------------|
 | 1 | **Mean Well LRS-50-12** (+ nắp che TBC-09 tặng kèm) | 1 | 304.000 | → J1 | ✅ đúng |
 | 2 | **ESP32-S3-DevKitC N16R8** Type-C (Lập Trình Nhúng A-Z G182) | 1 | 210.000 | socket U1 | ✅ đúng — **kiểm tra rev v1.1** |
-| 3 | **MP1584EN** 3A, phân loại 5V | 2 | 42.000 | U2 / U8 | ⚠️ xem R-2 |
+| 3 | **MP1584EN** 3A, phân loại 5V | **1**/2 | 42.000 | **U2** (con thứ 2 = dự phòng) | ⚠️ xem R-2 |
 | 5 | **AOD4184** MOSFET cách ly | 1 | 25.000 | → J16 | ✅ đúng |
 | 6 | **MKS TMC2209 V2.0** (Makerbase, hàng đặt trước) | 1 | 160.313 | U3 | ⚠️ xem R-4 |
 | 7 | **NEMA 17** 42×34 mm | 1 | 225.000 | → J2 | ✅ đúng |
@@ -94,7 +93,7 @@ PSU 12V ──J1── F1 ── +12V ──┬── U2 MP1584 ── +5V ─�
 | 10 | **PC817 opto 4 kênh** | **1**/2 | 47.000 | U4 | ✅ đúng — đo footprint trước fab. Con thứ 2 không hàn (U9 = DNP) |
 | 11 | Autonics **BUP-30S** | 1 | 480.000 | → J14 | ✅ đúng |
 | 12 | **TFT 3.5" 320×480 SPI ILI9488** | 1 | 395.000 | → J17 | 🔴 **xem R-1 — chặn fab** |
-| 13 | Bơm khí mini, phân loại **"BƠM 280 3.7V"** | 1 | 44.000 | tải AOD4184 | 🔴 xem R-3 |
+| 13 | Bơm khí mini, phân loại **"BƠM 280 3.7V"** | 1 | 44.000 | — | ❌ **không lắp** — mua **370 khí 12V** (§G) |
 
 **Tổng phần điện CÒN DÙNG: 2.028.313₫** · cơ khí còn dùng ~617.000₫ *(665.000 trừ ~48.000 ty ren/đai ốc/khớp nối 4–3 đã bỏ)*
 
@@ -137,7 +136,8 @@ T8 — vẫn dùng.)*
 | Đầu nối | Socket cái 2×22 pitch 2.54 (cho U1) — **mạ vàng** | 1 bộ | |
 | Đầu nối | Socket DIP-16 cho U5–U7, U10, U11 | 5 | Cắm IC, thay được khi hỏng |
 | Đầu nối | Header đực 2.54: **1×2 ×6**, 1×3, 1×4 ×3, **1×5 ×3**, **1×6**, 1×11 | — | mạ vàng. *(J5–J7: 1×02 → 1×05. **XOÁ J9/J11/J13** — U9 không hàn nên không còn kênh opto phía sau. J4: 1×10 → 1×06)* |
-| Khí | Ống silicone Ø4 + tee + 2 vòi phun | 1 bộ | |
+| **Khí** | **Bơm khí 370 định mức 12V** | **1 + 1 dự phòng** | J16 từ `+12V`; xem §G |
+| Khí | Ống silicone **4×6 mm** + tee Y + 2 vòi Ø0,8–1,2 mm | 1 bộ | Cổ bơm typ. Ø4,3 mm |
 | PCB | Fab 2 lớp 175×175 mm | — | route xong R2/R3/D2 + DRC rồi hãy đặt |
 
 ---
@@ -186,18 +186,25 @@ Vẫn 11 chân, vẫn 28 GPIO, vẫn 0 dự phòng. Chỉ cần sửa `TFT_HEADE
   nhiễu. Nhiều module đã có trở nối tiếp sẵn; nếu không thì chèn **1k nối
   tiếp trên đường SDO của LCD**, hoặc dùng đệm 74HC125.
 
-### 🔴 R-3 — Bơm "280 3.7V" chạy trên rail 5 V
+### 🔴 R-3 — Bơm thổi BUP: **370 khí 12V** (đã chốt; bỏ buck U8)
 
-Phân loại đã chọn là **motor 280, định mức 3,7 V**, trong khi U8 cấp **5 V** →
-**quá áp ~35 %**. Chổi than và màng cao su mòn nhanh hơn hẳn.
+**Chốt (2026-08-28):** bơm **370 micro khí 12V** cấp trực tiếp từ rail `+12V` qua
+**AOD4184 (J16)**. Chỉ **1 buck MP1584 (U2)** → `+5V` cho ESP32 / TFT / buzzer.
 
-Vì đã có sẵn AOD4184 PWM, cách chữa rẻ nhất là **giới hạn duty ~70 %** ở tần số
-**≥ 20 kHz** (dưới 20 kHz bơm màng rít). Burst 100–300 ms nên nhiệt không phải
-vấn đề chính — mòn cơ khí mới là.
+| Tham số | Giá trị |
+|---------|---------|
+| Chu kỳ | **5 phút** |
+| Thời gian ON | **3 giây** |
+| Điều khiển | GPIO3 full ON (không PWM) |
+| D2 | **1N5819** song song bơm; cathode → **+12V** |
 
-Rủi ro thứ hai: **motor 280 yếu hơn 370**. Chia sang 2 vòi phun là mỗi vòi chỉ
-còn nửa lưu lượng — cần thử thực tế xem có đủ áp thổi sạch mặt kính BUP-30S
-không. Nếu không đủ: bỏ tee, dùng 1 vòi thổi thẳng mặt thu.
+**Mã mua (Shopee VN):** `bơm khí 370 12V` / `động cơ 370 12V máy bơm khí` /
+`370 air pump 12V`. Định mức **12V DC** (không 5V/3.7V). Cổ hơi Ø4–4,8 mm.
+
+**Lý do bỏ 5V + U8:** bơm 370 **12V** áp cao hơn, mạnh hơn trên cùng kích thước;
+gỡ **U8** giảm BOM, nhiệt và diện tích PCB. MP1584 thứ 2 đã mua → **giữ dự phòng**.
+
+**❌ Không lắp:** bơm 280 3.7V (đã mua); quạt 5015.
 
 ### ⚠️ R-2 — MP1584 "phân loại 5V" chưa chắc là bản cố định
 
@@ -385,7 +392,8 @@ Thang: **OK** = giữ | **CHỌN KỸ** = cùng giá nhưng đúng SKU | **DỰ 
 | Limit cơ khí | **CHỌN KỸ** | Omron-class nếu giá gần KW12 thường | +0–30k |
 | BUP-30S Autonics | **OK** | Cảm biến chính; thổi bụi giúp tuổi thọ quang | baseline |
 | ~~GA12-N20~~ → **28BYJ-48 12V** | **OK** | **Không chổi than**, datasheet >10.000 h vs 81 h thực dùng trong 3 năm. Điều kiện: firmware **cắt cả 4 pha khi dừng** (giữ dòng 24/7 mới là thứ giết nó) | −40k/trục so với N20 |
-| Bơm màng 5V | **DỰ PHÒNG** | Màng cao su — burst ngắn + 1 bơm dự phòng | +20–40k dự phòng |
+| Bơm **370 khí 12V** | **CHỌN KỸ** | Duty 3s/5min; +1 dự phòng; **không** buck U8 | +50–90k |
+| MP1584 ×1 | **OK** | Con thứ 2 đã mua = dự phòng | 0 |
 | TFT 2.8" IPS | **CHỌN KỸ** | Cùng phân khúc, tránh siêu rẻ | +0–30k |
 | AOD4184 module | **OK** | Burst dòng thấp | baseline |
 | Buck Recom / HMI công nghiệp / JST toàn bộ | **KHÔNG ĐỔI** | Giá nhảy nhiều, lợi ích biên với máy VP | — |
@@ -420,15 +428,114 @@ python gen_power_carrier.py
 
 ---
 
+## G) Yêu cầu độ bền >3 năm — từng module (chốt 2026-08-28)
+
+**Mục tiêu:** máy văn phòng ~20 cm, chạy ổn định **≥3 năm** với chu kỳ thổi BUP:
+
+| Tham số | Giá trị |
+|---------|---------|
+| Chu kỳ | **5 phút** (300 s) |
+| Thời gian thổi | **3 giây** / lần |
+| Chu kỳ / giờ | 12 |
+| Thời gian ON / giờ | 36 s (= 0,01 h) |
+| Giả định VP | 8 h/ngày × 250 ngày/năm × 3 năm |
+| Chu kỳ 3 năm (VP) | **72.000** |
+| Giờ ON tích lũy 3 năm (VP) | **~60 h** |
+| Worst-case 24/7 × 3 năm | **216.000 chu kỳ / ~180 h ON** |
+
+Thang đánh giá: **✅ đạt** | **⚠️ chọn đúng SKU** | **🔴 wear / thay định kỳ** | **❌ không dùng**
+
+### G.1 Bảng mã sản phẩm + yêu cầu
+
+| Ref | Mã / SKU chốt | Từ khóa Shopee (VN) | Yêu cầu kỹ thuật (>3 năm) | Kiểm tra khi nhận hàng | Verdict |
+|-----|---------------|---------------------|---------------------------|------------------------|---------|
+| **PSU** | **Mean Well LRS-50-12** | `Mean Well LRS-50-12` | 12 V / 4,2 A; MTBF typ. >500k h (MIL-HDBK); nhiệt độ 0–70 °C | Tem Mean Well, đo 12,0 V không tải | ✅ đã mua |
+| **F1** | **RXE030** hoặc MF-R300 | `PTC 3A 30V` | I_hold ~3 A; khôi phục sau ngắn mạch | — | ✅ |
+| **D1** | **P6KE15A** | `P6KE15A DO-41` | Clamp 12 V rail | Vạch cathode đúng chiều | ✅ |
+| **U1** | **ESP32-S3-DevKitC-1-N16R8** rev **v1.1** | `DevKitC-1 N16R8 Type-C` | Không hậu tố `V`; USB-C; đủ GPIO | WS2812 onboard ở IO38 (v1.1) | ✅ đã mua — ⚠️ kiểm rev |
+| **U2** | **MP1584EN** module **5 V cố định** | `MP1584 5V cố định` | **1 module**; derate ≤1,5 A; không ADJ | Không potentiometer; đo 5,00 V | ⚠️ đã mua ×2 — lắp **1**, 1 dự phòng |
+| **U3** | **TMC2209** Makerbase **V2.0** + heatsink | `MKS TMC2209 V2.0` | R_sense MKS; I_run vừa; có tản | Heatsink gắn; tra Vref V2.0 | ⚠️ đã mua |
+| **U4** | **PC817 4CH** module | `PC817 4 kênh` | LED field **2,2 k** (đổi từ 1k); CTR lâu dài | Đo footprint ~48×38 | ✅ |
+| **U5–U7** | **ULN2003AN** DIP-16 | `ULN2003AN DIP` | COM(9)→`+12V`; chỉ 4/7 kênh dùng | IC rời, không bo LED | ⚠️ chưa mua |
+| **U10/U11** | **74HC595** DIP-16 | `74HC595 DIP` | VCC=3V3; R4 pull-up `/OE`; `/SRCLR`→3V3 | DIP tiêu chuẩn | ⚠️ chưa mua |
+| **Motor 3 trục** | **28BYJ-48-12V** | `28BYJ-48 12V` (không ghi 5V12V chung) | R đỏ↔pha ~150–300 Ω; firmware **cắt 4 pha khi dừng** | Đo Ω: ~50 Ω = bản 5V → trả | ⚠️ chưa mua |
+| **NEMA17** | 42×34 mm + **TMC2209** | `NEMA17 42` | I_run hợp lý; không stall lâu | — | ✅ |
+| **Limit ×3** | **OMRON SS-5GL2** | `SS-5GL2` / `SS-5GL2T` | NC fail-safe; ≥10⁶ chu kỳ cơ | Chân NC vào opto | ✅ |
+| **BUP** | **Autonics BUP-30S** | `BUP-30S Autonics` | U-slot 30 mm; NPN; 12–24 V; IP66 | Tem Autonics; thổi TX+RX | ✅ đã mua |
+| **Bơm khí** | **370 micro khí 12V DC** | `bơm khí 370 12V` / `370 air pump 12V` | Định mức **12V**; I≤300 mA; cổ Ø4–4,8 mm; ≥500 h liên tục (brushed typ.) | Ghi 12V trên motor; thử áp trên kính BUP 3s | 🔴 **MUA** ×2 |
+| ~~Bơm cũ~~ | ~~280 3.7V~~ | — | Không lắp | — | ❌ |
+| **J16** | Module **AOD4184** | `AOD4184 MOSFET` | Full ON 3 s; tải ≤2 A @12V; **D2** freewheel | MOSFET AOD4184A; có opto | ✅ đã mua |
+| **D2** | **1N5819** DO-41 | `1N5819` | Freewheel song song bơm; cathode→**+12V** | Vạch→+12V | ⚠️ chưa hàn |
+| **R3** | **10k** axial | `điện trở 10k` | Pull-down `/BLOWER` (IO3 strapping) | — | ⚠️ chưa hàn |
+| **Ống khí** | Silicone **4×6 mm** + tee Y + 2 nozzle | `ống silicone 4mm` `tee Y 4mm` | Lỗ vòi **0,8–1,2 mm**; thổi TX/RX, không thổi vào máng viên | Thử áp trên kính BUP | ⚠️ chưa mua |
+| **Buzzer** | Active **5 V** | `buzzer 5V active` | Logic 3V3-compatible | — | ⚠️ chưa mua |
+| **TFT** | Xem R-1 (ILI9488 / XPT2046) | — | 3V3-native hoặc đổi pinout J17 | Xác nhận IC touch | 🔴 chặn fab |
+
+### G.2 Bơm khí — chốt mua
+
+**Mã chốt:** **370 micro diaphragm air pump, 12 V DC** (motor 370, đầu bơm màng).
+
+| Hạng mục | Thông số |
+|----------|----------|
+| Điện áp | **12 V DC** (cùng rail PSU / J16 pin 3) |
+| Loại | Brushed 370 phổ biến VN; BLDC 12V nếu listing rõ |
+| Dòng | ≤300 mA @ 12V (AOD4184 + LRS-50 dư) |
+| Áp / lưu lượng | ≥50 kPa khí; đủ thổi BUP TX+RX qua tee |
+| Cổ hơi | Ø **4,0–4,8 mm** (ống silicone 4×6) |
+| Tuổi thọ | ≥**500 h** liên tục (datasheet brushed) >> 60 h ON / 3 năm VP |
+| Số lượng | **1 lắp + 1 dự phòng** |
+| Giá tham khảo VN | ~50–90k/con |
+
+**Từ khóa Shopee:**
+
+1. `bơm khí 370 12V`
+2. `động cơ 370 12V máy bơm khí hút chân không`
+3. `370 air pump 12V diaphragm`
+
+**Đấu nối J16 + module AOD4184:**
+
+```
++12V (J16-3) → V+ module → MOSFET → bơm (+)
+GND (J16-2)  → module GND; bơm (−) → FAN− (J16-4) / BLW_RET + D2
+PWM (J16-1)  → IO3
+```
+
+**❌ Không dùng:** bơm 5V/3.7V; buck U8; quạt 5015.
+
+### G.3 Firmware thổi BUP (tham số lưu code)
+
+```c
+#define BLOW_INTERVAL_MS   (5 * 60 * 1000)   // 5 phút
+#define BLOW_DURATION_MS   3000              // 3 giây
+// Điều kiện: chute_empty && !motor_moving; mask BUP_IN trong BLOW_DURATION_MS
+// Điều khiển: digitalWrite(BLOWER, HIGH) — không PWM
+```
+
+Nếu sau thử tải áp yếu: giảm `BLOW_DURATION_MS` → **2000** trước khi đổi bơm.
+
+### G.4 Margin độ bền (tóm tắt)
+
+| Module | VP 8h×3y | 24/7×3y | Ghi chú |
+|--------|----------|---------|---------|
+| LRS-50-12 | ✅ dư | ✅ | Bơm 12V ~3 W thêm vào budget |
+| MP1584 ×1 (U2) | ✅ | ✅ | Bỏ U8 |
+| 370 khí 12V | ✅ >>500 h rating | ✅ | ~60 h ON / 3y VP |
+| BUP-30S + thổi | ✅ | ✅ | Autonics + khô, không nước |
+| 28BYJ-48 12V | ✅ >>10k h | ✅ | Cắt pha khi dừng |
+| SS-5GL2 | ✅ 30M ops | ✅ | — |
+| AOD4184 + D2 | ✅ | ✅ | ON/OFF 3s, MOSFET mát |
+
+---
+
 ## F) Lịch sử quyết định (tóm tắt)
 
 | Đã bỏ / không dùng | Đã chọn thay |
 |--------------------|--------------|
 | ESP32 DevKit V1 + MCP23017 | ESP32-S3 DevKitC |
-| Mini560 | MP1584EN ×2 (logic + BLW) |
-| L298N | DRV8871 ×3 |
-| PC817 8CH dài | PC817 4CH ×2 |
-| Quạt 5015 | Bơm màng 5V |
+| Mini560 | MP1584EN ×**1** (logic 5V) |
+| U8 buck +5V_BLW | Bơm **370 12V** từ rail +12V |
+| Quạt 5015 | Bơm **370 12V** (3 s / 5 phút) |
+| Bơm 5V / 280 3.7V | Bơm **370 12V** |
 | Limit quang hành trình | Limit **cơ khí** (chỉ jack trên board) |
 | **DRV8871 ×3 + GA12-N20 ×3** (chổi than) | **ULN2003 ×3 + 28BYJ-48 12V ×3** (2026-08-28) |
 | **6 limit (MIN+MAX × 3 trục)** | **3 limit HOME** — stepper đếm bước lo giới hạn, cữ cứng lo va chạm |

@@ -1078,7 +1078,7 @@
 			)
 		)
 	)
-	(symbol "Conn_1x11_TFT"
+	(symbol "Conn_1x10_TFT"
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
@@ -1087,24 +1087,24 @@
 			(at 0 10.16 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Value" "Conn_1x11_TFT"
+		(property "Value" "Conn_1x10_TFT"
 			(at 0 -10.16 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Footprint" "ESP32_Carrier:PinHeader_1x11_TFT"
+		(property "Footprint" "ESP32_Carrier:PinHeader_1x10_TFT"
 			(at 0 0 0)
 			(hide yes)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Description" "TFT SPI + capacitive touch I2C (J17)"
+		(property "Description" "TFT SPI + XPT2046 (J17; MISO=T_DO, poll T_CS)"
 			(at 0 0 0)
 			(hide yes)
 			(effects (font (size 1.27 1.27)))
 		)
-		(symbol "Conn_1x11_TFT_0_1"
+		(symbol "Conn_1x10_TFT_0_1"
 			(rectangle
-				(start -2.54 13.969999999999999)
-				(end 2.54 -13.969999999999999)
+				(start -2.54 12.7)
+				(end 2.54 -12.7)
 				(stroke (width 0.254) (type default))
 				(fill (type background))
 			)
@@ -1113,72 +1113,128 @@
 				(effects (font (size 1.016 1.016)))
 			)
 		)
-		(symbol "Conn_1x11_TFT_1_1"
+		(symbol "Conn_1x10_TFT_1_1"
 			(pin passive line
-				(at 0 12.7 90)
+				(at 0 11.43 90)
 				(length 2.54)
 				(name "GND" (effects (font (size 1.27 1.27))))
 				(number "1" (effects (font (size 1.27 1.27))))
 			)
 			(pin passive line
-				(at 0 10.16 90)
+				(at 0 8.89 90)
 				(length 2.54)
 				(name "3V3" (effects (font (size 1.27 1.27))))
 				(number "2" (effects (font (size 1.27 1.27))))
 			)
 			(pin passive line
-				(at 0 7.619999999999999 90)
+				(at 0 6.35 90)
 				(length 2.54)
 				(name "SCK" (effects (font (size 1.27 1.27))))
 				(number "3" (effects (font (size 1.27 1.27))))
 			)
 			(pin passive line
-				(at 0 5.079999999999999 90)
+				(at 0 3.8099999999999996 90)
 				(length 2.54)
 				(name "MOSI" (effects (font (size 1.27 1.27))))
 				(number "4" (effects (font (size 1.27 1.27))))
 			)
 			(pin passive line
-				(at 0 2.539999999999999 90)
+				(at 0 1.2699999999999996 90)
 				(length 2.54)
-				(name "CS" (effects (font (size 1.27 1.27))))
+				(name "MISO" (effects (font (size 1.27 1.27))))
 				(number "5" (effects (font (size 1.27 1.27))))
 			)
 			(pin passive line
-				(at 0 0.0 90)
+				(at 0 -1.2699999999999996 90)
 				(length 2.54)
-				(name "DC" (effects (font (size 1.27 1.27))))
+				(name "CS" (effects (font (size 1.27 1.27))))
 				(number "6" (effects (font (size 1.27 1.27))))
 			)
 			(pin passive line
-				(at 0 -2.540000000000001 90)
+				(at 0 -3.8100000000000005 90)
 				(length 2.54)
-				(name "RST" (effects (font (size 1.27 1.27))))
+				(name "DC" (effects (font (size 1.27 1.27))))
 				(number "7" (effects (font (size 1.27 1.27))))
 			)
 			(pin passive line
-				(at 0 -5.080000000000002 90)
+				(at 0 -6.350000000000001 90)
 				(length 2.54)
-				(name "BL" (effects (font (size 1.27 1.27))))
+				(name "RST" (effects (font (size 1.27 1.27))))
 				(number "8" (effects (font (size 1.27 1.27))))
 			)
 			(pin passive line
-				(at 0 -7.620000000000001 90)
+				(at 0 -8.89 90)
 				(length 2.54)
-				(name "SDA" (effects (font (size 1.27 1.27))))
+				(name "BL" (effects (font (size 1.27 1.27))))
 				(number "9" (effects (font (size 1.27 1.27))))
 			)
 			(pin passive line
-				(at 0 -10.16 90)
+				(at 0 -11.43 90)
 				(length 2.54)
-				(name "SCL" (effects (font (size 1.27 1.27))))
+				(name "T_CS" (effects (font (size 1.27 1.27))))
 				(number "10" (effects (font (size 1.27 1.27))))
 			)
+		)
+	)
+	(symbol "Conn_1x04_ENC"
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(property "Reference" "J"
+			(at 0 7.62 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "Conn_1x04_ENC"
+			(at 0 -7.62 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "ESP32_Carrier:PinHeader_1x04_ENC"
+			(at 0 0 0)
+			(hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" "Wall-mount EC11/KY-040 jack: GND 3V3 ENC_A ENC_B (no SW)"
+			(at 0 0 0)
+			(hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(symbol "Conn_1x04_ENC_0_1"
+			(rectangle
+				(start -2.54 5.08)
+				(end 2.54 -5.08)
+				(stroke (width 0.254) (type default))
+				(fill (type background))
+			)
+			(text "ENC"
+				(at 0 0 0)
+				(effects (font (size 1.016 1.016)))
+			)
+		)
+		(symbol "Conn_1x04_ENC_1_1"
 			(pin passive line
-				(at 0 -12.7 90)
+				(at 0 3.81 90)
 				(length 2.54)
-				(name "T_INT" (effects (font (size 1.27 1.27))))
-				(number "11" (effects (font (size 1.27 1.27))))
+				(name "GND" (effects (font (size 1.27 1.27))))
+				(number "1" (effects (font (size 1.27 1.27))))
+			)
+			(pin passive line
+				(at 0 1.27 90)
+				(length 2.54)
+				(name "3V3" (effects (font (size 1.27 1.27))))
+				(number "2" (effects (font (size 1.27 1.27))))
+			)
+			(pin passive line
+				(at 0 -1.27 90)
+				(length 2.54)
+				(name "ENC_A" (effects (font (size 1.27 1.27))))
+				(number "3" (effects (font (size 1.27 1.27))))
+			)
+			(pin passive line
+				(at 0 -3.81 90)
+				(length 2.54)
+				(name "ENC_B" (effects (font (size 1.27 1.27))))
+				(number "4" (effects (font (size 1.27 1.27))))
 			)
 		)
 	)

@@ -1,4 +1,4 @@
-(footprint "PinHeader_1x04_MOSFET"
+(footprint "PinHeader_1x04_ENC"
 	(version 20260206)
 	(generator "gen_power_carrier.py")
 	(generator_version "1.0")
@@ -10,7 +10,7 @@
 		(layer "F.SilkS")
 		(effects (font (size 1 1) (thickness 0.15)))
 	)
-	(property "Value" "PinHeader_1x04_MOSFET"
+	(property "Value" "PinHeader_1x04_ENC"
 		(at 0 11.42 0)
 		(layer "F.Fab")
 		(effects (font (size 1 1) (thickness 0.15)))
@@ -43,7 +43,7 @@
 		(fill none)
 		(layer "F.SilkS")
 	)
-	(fp_text user "PWM"
+	(fp_text user "GND"
 		(at 3.8 0.0 0)
 		(layer "F.SilkS")
 		(effects (font (size 0.8 0.8) (thickness 0.12)) (justify left))
@@ -55,7 +55,7 @@
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
 	)
-	(fp_text user "GND"
+	(fp_text user "3V3"
 		(at 3.8 2.54 0)
 		(layer "F.SilkS")
 		(effects (font (size 0.8 0.8) (thickness 0.12)) (justify left))
@@ -67,7 +67,7 @@
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
 	)
-	(fp_text user "+12V"
+	(fp_text user "ENC_A"
 		(at 3.8 5.08 0)
 		(layer "F.SilkS")
 		(effects (font (size 0.8 0.8) (thickness 0.12)) (justify left))
@@ -79,7 +79,7 @@
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
 	)
-	(fp_text user "FAN-"
+	(fp_text user "ENC_B"
 		(at 3.8 7.62 0)
 		(layer "F.SilkS")
 		(effects (font (size 0.8 0.8) (thickness 0.12)) (justify left))

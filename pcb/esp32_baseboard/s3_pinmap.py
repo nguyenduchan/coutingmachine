@@ -8,12 +8,12 @@ actually stocked in VN. Octal PSRAM claims GPIO33-37, so **GPIO35/36/37 are
 unusable** here and only 33 of the 36 header GPIOs are left.
 
 That budget is exact: 28 for the design + 5 that must stay free (USB IO19/20,
-UART0 IO43/44, BOOT IO0) = 33. To make it fit, TFT MISO is dropped - the SPI
-link is write-only, which ILI9341 / ST7796 + LVGL are happy with - and the
-freed GPIO41 carries the touch IRQ instead.
+UART0 IO43/44, BOOT IO0) = 33.
 
-If you ever need one more GPIO, TP_INT (IO41) is the one to sacrifice: poll the
-touch controller over I2C at 50-100 Hz and J17.11 becomes a spare pin.
+HMI: TFT ILI9488 SPI + XPT2046 resistive touch (shared SCK/MOSI; dedicated
+MISO=T_DO + T_CS; no T_IRQ — poll). LCD SDO is NOT wired. GPIO41 and the
+former opto OUT8 spare (GPIO9) carry the EC11 rotary encoder (ENC_A/B).
+On-screen Enter replaces ENC_SW so no third GPIO is required.
 
 GPIO0 carries the BOOT button, so it is input-only in practice.
 
@@ -23,7 +23,7 @@ firmware takes over. That is exactly the safe state for a backlight and for an
 active-low reset, which is why the TFT uses them.
 
 Never buy a "V" suffix part (N16R8V / N32R16V): those run VDD_SPI at 1.8 V,
-which drags GPIO47/48 down to 1.8 V logic and breaks the touch I2C bus.
+which drags GPIO47/48 down to 1.8 V logic and breaks TFT MISO / T_CS.
 """
 
 from __future__ import annotations
@@ -80,7 +80,8 @@ RIGHT_PINS = [
 ]
 
 # --- Functional assignment (commercial SKU) ---
-# Opto OUT1..6 = limits, OUT7 = BUP, OUT8 spare
+# Opto OUT1..6 = limits, OUT7 = BUP. OUT8 field channel exists on U9/J4 but
+# is NOT wired to the MCU (GPIO9 is ENC_A).
 OPTO_GPIO = [
     (1, "IO1"),
     (2, "IO2"),
@@ -89,7 +90,6 @@ OPTO_GPIO = [
     (6, "IO6"),
     (7, "IO7"),
     (8, "IO8"),
-    (9, "IO9"),  # spare OUT8 / or unused
 ]
 
 # DRV8871 ×3 (IN1/IN2)
@@ -108,23 +108,26 @@ DRV_MOTORS = [
 TMC_GPIO = {"STEP": 16, "DIR": 17, "EN": 18}
 TMC_UART_GPIO = None  # unavailable on N16R8 (GPIO36 = octal PSRAM)
 
-# TFT SPI + capacitive touch I2C.
+# TFT SPI + XPT2046 touch (polled — no IRQ pin).
 # RST and BL sit on the two strapping pins on purpose: both are pulled low
 # through reset, so the panel comes up held in reset with the backlight off
 # and no external resistor. Firmware releases RST, then ramps BL on LEDC.
-# No MISO: GPIO41 carries the touch IRQ instead. The display is driven
-# write-only, so set TFT_MISO = -1 in TFT_eSPI / the LVGL panel driver.
+# MISO = T_DO only (do NOT connect LCD SDO). ENC stays on IO9/IO41.
 TFT_GPIO = {
-    "SCK": 39,
-    "MOSI": 40,
-    "CS": 42,
+    "SCK": 39,  # + T_CLK on cable
+    "MOSI": 40,  # + T_DIN on cable
+    "MISO": 47,  # T_DO only
+    "CS": 42,  # LCD_CS
     "DC": 21,
-    "RST": 46,  # shared LCD_RST + TP_RST, active low
-    "BL": 45,  # LEDC PWM backlight
-    "SDA": 47,
-    "SCL": 48,
-    "INT": 41,  # touch IRQ - was TFT MISO
+    "RST": 46,
+    "BL": 45,
+    "T_CS": 48,
 }
+
+# EC11 on housing wall → cable → J18 (GND/3V3/A/B). SW unused — Enter on TFT.
+# Pull-ups: KY-040 module has them, or use INPUT_PULLUP / 10k to 3V3.
+ENC_GPIO = {"A": 9, "B": 41}  # J18.3 CLK→IO9, J18.4 DT→IO41
+ENC_JACK = "J18"  # PinHeader 1x04 on carrier; encoder is off-board
 
 # GPIO38 also drives the on-board WS2812 on DevKitC-1 **v1.1**. Pin the BOM
 # to v1.1: the LED then just flickers with the buzzer, which is harmless.

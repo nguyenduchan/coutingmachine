@@ -1,0 +1,47 @@
+---
+description: Always reopen KiCad PCB after baseboard PCB updates
+alwaysApply: true
+---
+
+# KiCad: always reopen PCB after updates
+
+**Mandatory last step of the turn** — do not wait for the user to ask.
+
+Whenever this turn **changes or regenerates** the ESP32 baseboard PCB / schematic
+(`pcb/esp32_baseboard/esp32_baseboard.kicad_pcb`, `.kicad_sch`, `gen_power_carrier.py`
+output, footprints under `pcb/esp32_baseboard/libraries/`), **before finishing the
+user-facing answer**:
+
+1. Finish generator / file edits first.
+2. **Kill** existing KiCad / pcbnew processes for a clean reload.
+3. **Start-Process** KiCad (or pcbnew) with the PCB file so the user sees the new board.
+
+Do this at the **end of every such answer** so the user never stares at a stale PCB window.
+
+## Paths
+
+- PCB: `d:\Project\coutingmachine\pcb\esp32_baseboard\esp32_baseboard.kicad_pcb`
+- Prefer opening the `.kicad_pcb` with **pcbnew.exe** (layout editor).
+- Exe on this machine:  
+  `%LOCALAPPDATA%\Programs\KiCad\10.0\bin\pcbnew.exe`  
+  (also `kicad.exe` in the same folder; version folder may be `9.0` / `10.0`)
+
+## PowerShell
+
+```powershell
+$pcb = "d:\Project\coutingmachine\pcb\esp32_baseboard\esp32_baseboard.kicad_pcb"
+Get-Process -Name kicad,pcbnew,KiCad -ErrorAction SilentlyContinue | Stop-Process -Force
+$kicad = @(
+  "$env:LOCALAPPDATA\Programs\KiCad\10.0\bin\pcbnew.exe",
+  "$env:LOCALAPPDATA\Programs\KiCad\10.0\bin\kicad.exe",
+  "$env:LOCALAPPDATA\Programs\KiCad\9.0\bin\pcbnew.exe",
+  "${env:ProgramFiles}\KiCad\9.0\bin\pcbnew.exe"
+) | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $kicad) { throw "KiCad exe not found" }
+Start-Process -FilePath $kicad -ArgumentList "`"$pcb`""
+```
+
+## When it does NOT apply
+
+- Pure docs / git / non-PCB work with no `esp32_baseboard` layout change
+- User explicitly says not to reopen KiCad
