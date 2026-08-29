@@ -26,7 +26,7 @@ May van phong ~20 cm. PSU ngoai **Mean Well 12V/3A**. Limit = **co khi** (ngoai 
 | J15 | Header 1x03 | Buzzer 5V | Chi jack |
 | J16 | Header 1x04 | AOD4184 PWM/GND/+12V/FAN− | Chi jack (+ module AOD4184) |
 | J17 | Header 1x10 | TFT SPI + touch I2C (+ RST / BL, poll — no T_INT) | Chi jack |
-| **J18** | Header 1x04 | **EC11 wall-mount** GND/3V3/ENC_A/ENC_B → IO9/IO41 | Chi jack (cap panel) |
+| **J18** | Header 1x04 | **EC11 wall-mount** GND/3V3/ENC_A/ENC_B → IO38/IO41 | Chi jack (cap panel) |
 
 J3: **khong dung**.
 
@@ -52,14 +52,14 @@ J3: **khong dung**.
 |-----------|------|
 | Limit OUT1..6 (qua opto) | IO1,2,4,5,6,7 |
 | BUP OUT7 | IO8 |
-| Spare OUT8 | (khong vao MCU — IO9 = ENC) |
-| **ENC_A / ENC_B (J18 EC11)** | **IO9 / IO41** |
+| Spare OUT8 | (khong vao MCU — IO9 = buzzer) |
+| **ENC_A / ENC_B (J18 EC11)** | **IO38 / IO41** |
 | Motor1..3 IN1/IN2 | IO10/11, 12/13, 14/15 |
 | TMC STEP/DIR/EN | IO16/17/18 |
 | TFT SCK/MOSI/CS/DC (khong MISO) | IO39/40/42/21 |
 | TFT RST (chung LCD+touch) / BL PWM | IO46 / IO45 |
 | Touch SDA/SCL (poll, khong INT) | IO47/48 |
-| Buzzer | IO38 |
+| Buzzer | IO9 |
 | AOD4184 / bom | IO3 |
 | IO35 / IO36 / IO37 | **KHONG dung** - octal PSRAM (N16R8) |
 
@@ -78,12 +78,13 @@ bo giu suot reset -> BL tat va man giu trong reset ngay tu luc cap nguon.
 
 ### Canh bao mua module
 
-- **Chot DevKitC-1 v1.1**: v1.1 dat WS2812 onboard tren GPIO38 (trung buzzer,
-  vo hai - LED nhap nhay theo coi). v1.0 dat no tren GPIO48 = **trung I2C SCL**.
+- **Chot DevKitC-1 v1.1**: v1.1 dat WS2812 onboard tren GPIO38 (trung ENC_A,
+  vo hai - WS2812 chi la tai DIN, LED co the nhap nhay khi xoay num).
+  v1.0 dat no tren GPIO48 = **trung T_CS touch**.
 - **KHONG mua ban hau to V** (N16R8V / N32R16V): VDD_SPI = 1.8V keo GPIO47/48
   xuong muc logic 1.8V -> hong bus touch.
 - IO35/36/37 cam tren N16R8 (octal PSRAM). Touch poll I2C (khong T_INT);
-  IO9/IO41 = EC11 ENC tren J18 (thiet bi gan thanh hop, day ve jack).
+  IO38/IO41 = EC11 ENC tren J18 (thiet bi gan thanh hop, day ve jack).
 
 ## 4) Da doi theo goi y do ben (OK)
 

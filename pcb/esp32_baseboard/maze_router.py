@@ -10,9 +10,12 @@ from __future__ import annotations
 
 import heapq
 import math
+import random
 import re
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
+
+from pcb_parse import NetTable, pad_net, seg_net
 from typing import Iterable
 
 
@@ -25,7 +28,37 @@ BLOCKED = -1  # module keepout zones (not net copper)
 HOLE_EXTRA_MM = 0.25
 TRACE_CLEARANCE_MM = 0.20
 DEFAULT_HALF_TRACK = 0.15
-MAZE_CLEARANCE_MM = 0.14
+# A7 keepout is track-width dependent: a thin signal fits between two 2.54 mm
+# pins, a fat power track does not. Grid keepouts are baked for both.
+# Widest signal track two of which still fit on neighbouring grid columns
+# without breaking A6: grid pitch - TRACE_CLEARANCE_MM, minus a hair.
+# Bus lanes must be at least a grid pitch apart or the occupancy grid cannot
+# distinguish them; 0.7 also clears the widest A6 separation (0.65).
+EDGE_CLEARANCE_MM = 0.5  # KiCad board-setup copper-to-edge
+LANE_MIN_SEP = 0.7
+# A hair of margin so a track that lands exactly on the A7 limit reads as
+# outside it rather than as a violation by a rounding error.
+KEEPOUT_EPS_MM = 0.02
+VIA_DRILL = 0.4
+VIA_SIZE = 0.8
+# A via is the escape hatch, not a routing tool: priced at ~70 grid steps so
+# the search only buys one when there is no same-layer way round at all.
+VIA_COST = 70.0
+MAX_SIGNAL_WIDTH = 0.34
+BOOST_SCALE = 0.35  # how far a failed net moves up the order on the next pass
+QUICK_EXPAND = 20000  # first-fit A* budget; phase 2 searches the whole grid
+STUB_PROBE_EXTRA_MM = 0.02  # extra probe radius on the off-grid pad stubs
+THIN_HALF_TRACK = 0.15
+WIDE_HALF_TRACK = 0.35
+# Set so a track's marked radius reaches the neighbouring grid column exactly
+# when its width demands more than one pitch of separation: a 0.7 mm power
+# track claims its neighbours (it needs 0.74-0.95 mm), while a 0.28 mm signal
+# does not (0.48 mm fits inside one 0.55 mm pitch). Marking every track at
+# 0.14 let a 0.7 mm rail sit one pitch from a signal and overlap its copper.
+MAZE_CLEARANCE_MM = 0.29
+ROUTE_ATTEMPTS = 8  # full routing passes, each promoting the previous losers
+RIPUP_ROUNDS = 4  # neighbourhood rip-up rounds after each pass
+RIPUP_MARGIN_MM = 4.0  # grows per round: how far around a failed edge to clear
 
 POWER_NET_NAMES = frozenset(
     {
@@ -94,8 +127,23 @@ def keepout_radius(drill: float) -> float:
     return drill * 0.5 + HOLE_EXTRA_MM + TRACE_CLEARANCE_MM + DEFAULT_HALF_TRACK
 
 
+def _pad_chunks(block: str) -> list[str]:
+    """Split a footprint into one string per pad.
+
+    A pad's `(net N "…")` line sits *after* its `(drill …)`, so a single regex
+    anchored on the drill never sees the net and every pad reads as net 0 —
+    i.e. as foreign to everything, including its own net.
+    """
+    starts = [m.start() for m in re.finditer(r"\(pad\s+\"", block)]
+    return [
+        block[s: (starts[i + 1] if i + 1 < len(starts) else len(block))]
+        for i, s in enumerate(starts)
+    ]
+
+
 def parse_hole_sites(pcb_text: str) -> list[tuple[float, float, float, int]]:
     """Drill centers (x, y, drill_mm, net) for foreign-hole checks (A7)."""
+    table = NetTable(pcb_text)
     sites: list[tuple[float, float, float, int]] = []
     for block in re.split(r"(?=\t\(footprint )", pcb_text):
         if "(footprint " not in block[:40] and "\t(footprint " not in block:
@@ -106,22 +154,25 @@ def parse_hole_sites(pcb_text: str) -> list[tuple[float, float, float, int]]:
         fx, fy = float(at.group(1)), float(at.group(2))
         rot = math.radians(float(at.group(3) or 0))
         c, s = math.cos(rot), math.sin(rot)
-        for pm in re.finditer(
-            r'\(pad\s+"[^"]*"\s+(?:thru_hole|np_thru_hole)\s+\w+'
-            r"[\s\S]*?\(at\s+([\d.-]+)\s+([\d.-]+)(?:\s+[\d.-]+)?\)"
-            r"[\s\S]*?\(size\s+([\d.-]+)\s+([\d.-]+)\)"
-            r"[\s\S]*?\(drill\s+([\d.-]+)\)",
-            block,
-        ):
-            lx, ly = float(pm.group(1)), float(pm.group(2))
-            sx, sy = float(pm.group(3)), float(pm.group(4))
-            drill = float(pm.group(5))
-            chunk = pm.group(0)
-            nm = re.search(r'\(net\s+(\d+)\s+"', chunk)
-            net = int(nm.group(1)) if nm else 0
+        for chunk in _pad_chunks(block):
+            if not re.match(r'\(pad\s+"[^"]*"\s+(?:thru_hole|np_thru_hole)\s+\w+', chunk):
+                continue
+            am = re.search(r"\(at\s+([\d.-]+)\s+([\d.-]+)(?:\s+[\d.-]+)?\)", chunk)
+            zm = re.search(r"\(size\s+([\d.-]+)\s+([\d.-]+)\)", chunk)
+            dm = re.search(r"\(drill\s+([\d.-]+)\)", chunk)
+            if not (am and zm and dm):
+                continue
+            lx, ly = float(am.group(1)), float(am.group(2))
+            sx, sy = float(zm.group(1)), float(zm.group(2))
+            drill = float(dm.group(1))
+            net, _nname = pad_net(chunk, table)
             wx = fx + lx * c - ly * s
             wy = fy + lx * s + ly * c
-            d = drill if drill > 0.05 else max(sx, sy) * 0.55
+            # A7 is measured from the pad's copper, not the drill: a 1.7 mm
+            # annulus around a 1.0 mm hole is 0.35 mm wider on every side.
+            # _check_signal_routing.py uses max(size, drill), so match it or the
+            # router happily lays copper the gate then rejects.
+            d = max(sx, sy, drill if drill > 0.05 else 0.0)
             sites.append((wx, wy, d, net))
     return sites
 
@@ -132,6 +183,7 @@ def parse_keepout_holes(pcb_text: str) -> list[tuple[float, float, float]]:
 
 
 def parse_pads(pcb_text: str) -> list[Pad]:
+    table = NetTable(pcb_text)
     pads: list[Pad] = []
     chunks = re.split(r"(?=\n\t\(footprint )", pcb_text)
     for part in chunks:
@@ -148,21 +200,27 @@ def parse_pads(pcb_text: str) -> list[Pad]:
         frot = float(am.group(3) or 0.0)
         rm = re.search(r'\(property\s+"Reference"\s+"([^"]+)"', part)
         ref = rm.group(1) if rm else ""
-        for pm in re.finditer(
-            r"\(pad\s+\"[^\"]*\"\s+\w+\s+\w+\s*"
-            r"\(at\s+([\d.-]+)\s+([\d.-]+)(?:\s+([\d.-]+))?\)\s*"
-            r"\(size\s+([\d.-]+)\s+([\d.-]+)\)"
-            r"[\s\S]*?"
-            r"\(net\s+(\d+)\s+\"([^\"]*)\"\)",
-            part,
-        ):
-            lx, ly = float(pm.group(1)), float(pm.group(2))
-            sx, sy = float(pm.group(4)), float(pm.group(5))
-            net = int(pm.group(6))
-            nname = pm.group(7)
+        # One chunk per pad. The old single regex ran `[\s\S]*?(net ...)` from
+        # the size line, so a pad with no net of its own (IO0, TX0/RX0, the
+        # TMC's unused MS pins) silently borrowed the NEXT pad's net — putting
+        # that net's Pad at the wrong coordinates and sending the router to a
+        # walled-in unconnected hole instead of the real pin.
+        for chunk in _pad_chunks(part):
+            am2 = re.match(
+                r"\(pad\s+\"[^\"]*\"\s+\w+\s+\w+\s*"
+                r"\(at\s+([\d.-]+)\s+([\d.-]+)(?:\s+([\d.-]+))?\)\s*"
+                r"\(size\s+([\d.-]+)\s+([\d.-]+)\)",
+                chunk,
+            )
+            if not am2:
+                continue
+            net, nname = pad_net(chunk, table)
+            if not nname and not net:
+                continue
+            lx, ly = float(am2.group(1)), float(am2.group(2))
+            sx, sy = float(am2.group(4)), float(am2.group(5))
             if net <= 0:
                 continue
-            chunk = pm.group(0)
             dm = re.search(r"\(drill\s+([\d.-]+)\)", chunk)
             drill = float(dm.group(1)) if dm else max(sx, sy) * 0.55
             wx, wy = _rot_xy(lx, ly, frot)
@@ -179,7 +237,19 @@ def strip_routes(pcb_text: str) -> str:
 
 
 def parse_kept_vias(pcb_text: str) -> list[tuple[float, float, int, float]]:
-    return []
+    """Vias already in the board (x, y, net, size)."""
+    out: list[tuple[float, float, int, float]] = []
+    table = NetTable(pcb_text)
+    for m in re.finditer(
+        r"\(via\s*\(at\s+([\d.-]+)\s+([\d.-]+)\)\s*\(size\s+([\d.-]+)\)"
+        r"([\s\S]*?)\(uuid",
+        pcb_text,
+    ):
+        nid, _ = pad_net(m.group(4), table)
+        if not nid:
+            nid, _ = seg_net(m.group(4), table)
+        out.append((float(m.group(1)), float(m.group(2)), nid, float(m.group(3))))
+    return out
 
 
 class MazeRouter:
@@ -200,6 +270,9 @@ class MazeRouter:
         self.ny = max(2, int(math.ceil(height / grid)) + 1)
         self.occ: list[dict[int, int]] = [{}, {}]
         self.hole_sites: list[tuple[float, float, float, int]] = []
+        self.hole_keepout: list[dict[int, int]] = [{}, {}]
+        self.pad_cells: dict[int, set[int]] = {}
+        self.copper = CopperIndex()
 
     def _key(self, ix: int, iy: int) -> int:
         return ix * self.ny + iy
@@ -218,6 +291,17 @@ class MazeRouter:
     def _set(self, layer: int, ix: int, iy: int, net: int) -> None:
         self.occ[layer][self._key(ix, iy)] = net
 
+    def _claim(self, layer: int, ix: int, iy: int, net: int) -> None:
+        """Claim an endpoint cell without evicting another net's copper.
+
+        The endpoint claim exists so a pad can start/end a search on its own
+        cell; overwriting a foreign net there would hand this net a cell that
+        already carries someone else's track, and the pad stub would then be
+        drawn straight over it."""
+        cur = self._get(layer, ix, iy)
+        if cur == 0 or cur == net:
+            self._set(layer, ix, iy, net)
+
     def _mark_disk(
         self, layer: int, x: float, y: float, radius: float, net: int, extra: float = 0.12
     ) -> None:
@@ -234,6 +318,16 @@ class MazeRouter:
                 if cur == 0 or cur == net:
                     self._set(layer, ix, iy, net)
 
+    def add_edge_keepout(self, margin: float) -> None:
+        """Block the ring along Edge.Cuts (KiCad's copper-to-edge constraint)."""
+        n = max(1, int(math.ceil(margin / self.grid)))
+        for li in (0, 1):
+            for ix in range(self.nx):
+                for iy in range(self.ny):
+                    if ix < n or iy < n or ix >= self.nx - n or iy >= self.ny - n:
+                        if self._get(li, ix, iy) == 0:
+                            self._set(li, ix, iy, BLOCKED)
+
     def add_rect_keepout(self, x_min: float, y_min: float, x_max: float, y_max: float) -> None:
         ix0, iy0 = self._cell(x_min, y_min)
         ix1, iy1 = self._cell(x_max, y_max)
@@ -245,6 +339,49 @@ class MazeRouter:
 
     def add_hole_sites(self, sites: list[tuple[float, float, float, int]]) -> None:
         self.hole_sites.extend(sites)
+        self._build_hole_keepouts()
+
+    def _build_hole_keepouts(self) -> None:
+        """Bake the A7 drill keepout into the grid.
+
+        The A* only ever consulted pad copper (≈0.77 mm around a 1.7 mm pad),
+        which is smaller than the A7 rule's drill/2 + 0.25 + clearance + half
+        track, so it happily threaded tracks past header and M3 holes. Two maps
+        are kept because the allowed approach depends on the track: a 0.28 mm
+        signal fits between two 2.54 mm-pitch pins, a 0.7 mm power track does
+        not. A cell claimed by two different holes belongs to neither.
+        """
+        self.hole_keepout = [{}, {}]  # [thin, wide]
+        for hx, hy, drill, hnet in self.hole_sites:
+            self._add_hole_keepout(hx, hy, drill, hnet)
+
+    def _add_hole_keepout(self, hx: float, hy: float, drill: float, hnet: int) -> None:
+        owner = hnet if hnet else BLOCKED
+        base = drill * 0.5 + HOLE_EXTRA_MM + TRACE_CLEARANCE_MM + KEEPOUT_EPS_MM
+        for mi, half_w in enumerate((THIN_HALF_TRACK, WIDE_HALF_TRACK)):
+            r = base + half_w
+            m = self.hole_keepout[mi]
+            ix0, iy0 = self._cell(hx - r, hy - r)
+            ix1, iy1 = self._cell(hx + r, hy + r)
+            r2 = r * r
+            for ix in range(ix0, ix1 + 1):
+                for iy in range(iy0, iy1 + 1):
+                    cx, cy = self._xy(ix, iy)
+                    if (cx - hx) ** 2 + (cy - hy) ** 2 > r2:
+                        continue
+                    k = self._key(ix, iy)
+                    cur = m.get(k)
+                    if cur is None:
+                        m[k] = owner
+                    elif cur != owner:
+                        m[k] = BLOCKED
+
+    def _hole_blocks_cell(self, ix: int, iy: int, net: int, half_w: float) -> bool:
+        if not self.hole_keepout[0]:
+            return False
+        m = self.hole_keepout[1 if half_w > THIN_HALF_TRACK else 0]
+        owner = m.get(self._key(ix, iy))
+        return owner is not None and owner != net
 
     def _foreign_hole_blocks(self, cx: float, cy: float, net: int, half_w: float = 0.0) -> bool:
         for hx, hy, drill, hnet in self.hole_sites:
@@ -259,6 +396,7 @@ class MazeRouter:
         # Thru-hole: both layers owned by net (natural layer bridge at pin)
         for li in (0, 1):
             self._mark_disk(li, pad.x, pad.y, pad.radius, pad.net, extra=0.02)
+        self.pad_cells.setdefault(self._key(*self._cell(pad.x, pad.y)), set()).add(pad.net)
 
     def add_existing_via(self, x: float, y: float, net: int, size: float = 0.9) -> None:
         return  # unused — no vias
@@ -282,7 +420,33 @@ class MazeRouter:
         cur = self._get(layer, ix, iy)
         if cur == BLOCKED:
             return False
-        return cur == 0 or cur == net
+        if cur != 0 and cur != net:
+            return False
+        return not self._hole_blocks_cell(ix, iy, net, half_w)
+
+    def _stub_clear(
+        self, xa: float, ya: float, xb: float, yb: float,
+        layer: int, net: int, half: float,
+    ) -> bool:
+        """Is the pad-to-grid stub clear on this layer?
+
+        The stubs are the one part of a path the A* never sees: the search
+        works cell to cell, then the geometry pass joins the true pad centre to
+        the first/last cell. The end stub is worse — the goal test matches a
+        cell on *either* layer, so it can be drawn on a layer the escape walk
+        never checked. Unchecked, those 3-4 mm legs drive straight across other
+        nets: a short, not a DRC nit.
+
+        Probed with an inflated half-width because the grid models clearance at
+        MAZE_CLEARANCE_MM, under the TRACE_CLEARANCE_MM the A6 gate wants; the
+        on-grid part of a path is saved from that gap by the 0.55 mm cell
+        pitch, but a stub runs off-grid through the pad centre.
+        """
+        probe = half + STUB_PROBE_EXTRA_MM
+        return all(
+            _ortho_clear(self, layer, lx1, ly1, lx2, ly2, net, probe)
+            for lx1, ly1, lx2, ly2 in _stub_legs(xa, ya, xb, yb)
+        )
 
     def _escape_points(
         self, x: float, y: float, net: int, layer: int, span: int = 8
@@ -303,9 +467,63 @@ class MazeRouter:
     def restore(self, snap: list[dict[int, int]]) -> None:
         self.occ = [dict(d) for d in snap]
 
+    def snap(self, x: float, y: float) -> tuple[float, float]:
+        """Nearest grid point.
+
+        Anything that lays long copper at an arbitrary coordinate (bus lanes,
+        detour waypoints) has to land on the grid, or its distance to a normal
+        on-grid track is no longer a multiple of the cell pitch — two runs end
+        up 0.30 mm apart where the occupancy grid can only reason in 0.55 mm
+        steps, and A6 catches what the router could not see.
+        """
+        return self._xy(*self._cell(x, y))
+
     def _can_pin_hop(self, ix: int, iy: int, net: int) -> bool:
-        """Layer change only where both faces already belong to this net (thru-hole pad)."""
-        return self._get(0, ix, iy) == net and self._get(1, ix, iy) == net
+        """Layer change only on a real thru-hole pad (or via) of this net.
+
+        Testing grid ownership alone was not enough: as soon as a net had
+        copper on both faces anywhere near a cell, the search read that as a
+        pin and swapped layers in mid-air. The board then carried a track that
+        simply stopped on one layer and resumed on the other with nothing
+        joining them — KiCad reports those as dangling and unconnected.
+        """
+        return net in self.pad_cells.get(self._key(ix, iy), ())
+
+    def _can_drop_via(self, ix: int, iy: int, net: int) -> bool:
+        """Is there room for a new via here, on both faces?
+
+        A via is a drilled hole, so it needs the same A7 clearance a pad does,
+        on both layers, plus its own annulus footprint clear of other copper.
+        """
+        # Probe the via's *A7 keepout*, not just its annulus: registering the
+        # keepout after placing the via only holds off later copper, while a
+        # track routed earlier would already be sitting inside it.
+        #
+        # Scanned directly rather than through _ortho_clear, which takes a
+        # zero-length segment as trivially clear and would wave every site
+        # through.
+        cx, cy = self._xy(ix, iy)
+        r = VIA_SIZE * 0.5 + HOLE_EXTRA_MM + TRACE_CLEARANCE_MM + WIDE_HALF_TRACK
+        ix0, iy0 = self._cell(cx - r, cy - r)
+        ix1, iy1 = self._cell(cx + r, cy + r)
+        r2 = r * r
+        for layer in (0, 1):
+            for jx in range(ix0, ix1 + 1):
+                for jy in range(iy0, iy1 + 1):
+                    px, py = self._xy(jx, jy)
+                    if (px - cx) ** 2 + (py - cy) ** 2 > r2:
+                        continue
+                    if not self._passable(layer, jx, jy, net, VIA_SIZE * 0.5):
+                        return False
+        return not self._foreign_hole_blocks(cx, cy, net, VIA_SIZE * 0.5)
+
+    def mark_via(self, x: float, y: float, net: int) -> None:
+        """Claim a via's copper on both faces and register its drill for A7."""
+        for layer in (0, 1):
+            self._mark_disk(layer, x, y, VIA_SIZE * 0.5, net)
+        self.pad_cells.setdefault(self._key(*self._cell(x, y)), set()).add(net)
+        self.hole_sites.append((x, y, VIA_SIZE, net))
+        self._add_hole_keepout(x, y, VIA_SIZE, net)
 
     def flood_component(
         self, seeds: list[tuple[float, float]], net: int
@@ -351,17 +569,25 @@ class MazeRouter:
         prefer_layer: int = LAYER_B,
         both_layers: bool = True,
         end_xy: tuple[float, float] | None = None,
+        max_expand: int | None = None,
+        allow_via: bool = False,
     ) -> tuple[list[Seg], list[Via]] | None:
         """A* from a point until any goal cell (existing net copper)."""
         if not goals:
             return None
         layers = (prefer_layer,) if not both_layers else (LAYER_F, LAYER_B)
         for ly in layers:
-            self._set(ly, *self._cell(x1, y1), net)
+            self._claim(ly, *self._cell(x1, y1), net)
 
+        half_w = width * 0.5
         starts: list[tuple[int, int, int]] = []
         for ly in layers:
-            starts.extend(self._escape_points(x1, y1, net, ly))
+            for sx, sy, sl in self._escape_points(x1, y1, net, ly):
+                gx0, gy0 = self._xy(sx, sy)
+                if self._stub_clear(x1, y1, gx0, gy0, sl, net, half_w):
+                    starts.append((sx, sy, sl))
+        if not starts:
+            return None
         goal_xy = {(gx, gy) for gx, gy, _ in goals}
         # Precompute a small set of goal anchors for the heuristic
         anchors: list[tuple[int, int]] = []
@@ -391,19 +617,32 @@ class MazeRouter:
 
         dirs = ((1, 0), (-1, 0), (0, 1), (0, -1))
         found = None
-        max_expand = min(self.nx * self.ny * (4 if both_layers else 3), 18000)
+        # The old cap was a flat 18000 cells — under 9% of one layer on this
+        # board — so any net that had to detour around the ESP32 socket (a
+        # 56 mm wall of pads) was abandoned before the search ever reached the
+        # way round. Default to the whole grid; callers pass a smaller budget
+        # only for the cheap first-fit attempts.
+        budget = self.nx * self.ny * (2 if both_layers else 1)
+        max_expand = budget if max_expand is None else min(max_expand, budget)
         expands = 0
         while open_h and expands < max_expand:
             expands += 1
             _, _, cur = heapq.heappop(open_h)
             if cur in goals or (cur[0], cur[1]) in goal_xy:
-                found = cur
-                break
+                # Only stop here if the stub from this cell to the pad is
+                # actually clear on this cell's layer. Vetoing the whole path
+                # afterwards instead threw away good routes: the search had no
+                # way to try a different final cell.
+                ex0, ey0 = self._xy(cur[0], cur[1])
+                tx0, ty0 = end_xy if end_xy is not None else (ex0, ey0)
+                if self._stub_clear(ex0, ey0, tx0, ty0, cur[2], net, half_w):
+                    found = cur
+                    break
             ix, iy, ly = cur
             prev = came[cur]
             for dx, dy in dirs:
                 nx_, ny_ = ix + dx, iy + dy
-                if not self._passable(ly, nx_, ny_, net):
+                if not self._passable(ly, nx_, ny_, net, width * 0.5):
                     continue
                 turn = 0.0
                 if prev is not None and prev[2] == ly:
@@ -417,15 +656,21 @@ class MazeRouter:
                     came[nxt] = cur
                     seq += 1
                     heapq.heappush(open_h, (ng + heur(nx_, ny_, ly), seq, nxt))
-            if both_layers and self._can_pin_hop(ix, iy, net):
+            if both_layers:
                 other = 1 - ly
                 nxt = (ix, iy, other)
-                ng = gscore[cur] + 0.35
-                if ng < gscore.get(nxt, 1e18):
-                    gscore[nxt] = ng
-                    came[nxt] = cur
-                    seq += 1
-                    heapq.heappush(open_h, (ng + heur(ix, iy, other), seq, nxt))
+                hop = None
+                if self._can_pin_hop(ix, iy, net):
+                    hop = 0.35  # free layer change at this net's own thru-hole pad
+                elif allow_via and self._can_drop_via(ix, iy, net):
+                    hop = VIA_COST
+                if hop is not None:
+                    ng = gscore[cur] + hop
+                    if ng < gscore.get(nxt, 1e18):
+                        gscore[nxt] = ng
+                        came[nxt] = cur
+                        seq += 1
+                        heapq.heappush(open_h, (ng + heur(ix, iy, other), seq, nxt))
 
         if found is None:
             return None
@@ -440,7 +685,7 @@ class MazeRouter:
             x2, y2 = end_xy
         else:
             x2, y2 = self._xy(found[0], found[1])
-        return self._path_to_geometry(path, x1, y1, x2, y2, net, width)
+        return self._path_to_geometry(path, x1, y1, x2, y2, net, width, allow_via)
 
     def find_path(
         self,
@@ -451,14 +696,15 @@ class MazeRouter:
         net: int,
         width: float,
         prefer_layer: int = LAYER_B,
-        allow_via: bool = False,  # ignored — never emit vias
+        allow_via: bool = False,  # last resort only — see VIA_COST
         both_layers: bool = True,
+        max_expand: int | None = None,
     ) -> tuple[list[Seg], list[Via]] | None:
         """A* on F/B. Layer hops only at existing thru-hole pads (no new drills)."""
         layers = (prefer_layer,) if not both_layers else (LAYER_F, LAYER_B)
         for ly in layers:
-            self._set(ly, *self._cell(x1, y1), net)
-            self._set(ly, *self._cell(x2, y2), net)
+            self._claim(ly, *self._cell(x1, y1), net)
+            self._claim(ly, *self._cell(x2, y2), net)
 
         goals: set[tuple[int, int, int]] = set()
         for ly in layers:
@@ -472,6 +718,8 @@ class MazeRouter:
             prefer_layer=prefer_layer,
             both_layers=both_layers,
             end_xy=(x2, y2),
+            max_expand=max_expand,
+            allow_via=allow_via,
         )
 
     def _path_to_geometry(
@@ -483,21 +731,16 @@ class MazeRouter:
         y2: float,
         net: int,
         width: float,
-    ) -> tuple[list[Seg], list[Via]]:
+        allow_via: bool = False,
+    ) -> tuple[list[Seg], list[Via]] | None:
         half = width * 0.5
         segs: list[Seg] = []
+        vias: list[Via] = []
 
         def add_ortho(xa, ya, xb, yb, layer: int) -> None:
-            if abs(xa - xb) < 1e-9 and abs(ya - yb) < 1e-9:
-                return
-            if abs(ya - yb) < 1e-9 or abs(xa - xb) < 1e-9:
-                segs.append(Seg(xa, ya, xb, yb, LAYERS[layer], net, width))
-                self._mark_seg(layer, xa, ya, xb, yb, half, net)
-                return
-            segs.append(Seg(xa, ya, xb, ya, LAYERS[layer], net, width))
-            self._mark_seg(layer, xa, ya, xb, ya, half, net)
-            segs.append(Seg(xb, ya, xb, yb, LAYERS[layer], net, width))
-            self._mark_seg(layer, xb, ya, xb, yb, half, net)
+            for lx1, ly1, lx2, ly2 in _stub_legs(xa, ya, xb, yb):
+                segs.append(Seg(lx1, ly1, lx2, ly2, LAYERS[layer], net, width))
+                self._mark_seg(layer, lx1, ly1, lx2, ly2, half, net)
 
         pts: list[tuple[tuple[float, float], int]] = [
             (self._xy(ix, iy), layer) for ix, iy, layer in path
@@ -505,8 +748,12 @@ class MazeRouter:
         if not pts:
             return [], []
         (gx, gy), layer0 = pts[0]
-        add_ortho(x1, y1, gx, gy, layer0)
         (ex, ey), layer1 = pts[-1]
+        if not self._stub_clear(x1, y1, gx, gy, layer0, net, half):
+            return None
+        if not self._stub_clear(ex, ey, x2, y2, layer1, net, half):
+            return None
+        add_ortho(x1, y1, gx, gy, layer0)
         i = 0
         while i < len(pts) - 1:
             (px, py), layer = pts[i]
@@ -527,7 +774,128 @@ class MazeRouter:
             add_ortho(px, py, qx, qy, layer)
             i = j
         add_ortho(ex, ey, x2, y2, layer1)
-        return segs, []  # never vias
+        # Layer changes that are not on one of this net's own thru-hole pads
+        # need a drilled via; the A* only chose them where nothing else worked.
+        for step_a, step_b in zip(path, path[1:]):
+            if step_a[2] == step_b[2]:
+                continue
+            ix, iy = step_a[0], step_a[1]
+            if self._can_pin_hop(ix, iy, net):
+                continue
+            vx, vy = self._xy(ix, iy)
+            vias.append(Via(vx, vy, net, VIA_DRILL, VIA_SIZE))
+            self.mark_via(vx, vy, net)
+        return segs, vias
+
+
+# --- exact geometric clearance -------------------------------------------
+# The occupancy grid stores one net id per cell, so it cannot express "this
+# cell is 0.30 mm from a 0.70 mm track". Every clearance and shorting error
+# KiCad found came from that one limitation. The grid stays as the *search*
+# heuristic; this index is the gate that decides whether an emitted path is
+# actually legal, measured on real geometry with real widths.
+
+POWER_CLEARANCE_NETS = frozenset(
+    {"+12V", "+12V_RAW", "+12V_SNS", "+5V", "+3V3", "GND",
+     "/MotA1", "/MotA2", "/MotB1", "/MotB2",
+     "/MotDC1_A", "/MotDC1_B", "/MotDC2_A", "/MotDC2_B",
+     "/MotDC3_A", "/MotDC3_B"}
+)
+DEFAULT_CLEARANCE_MM = 0.20
+POWER_NETCLASS_CLEARANCE_MM = 0.25
+
+
+def pair_clearance(name_a: str, name_b: str) -> float:
+    """Clearance KiCad will demand between two nets (widest netclass wins)."""
+    if name_a in POWER_CLEARANCE_NETS or name_b in POWER_CLEARANCE_NETS:
+        return POWER_NETCLASS_CLEARANCE_MM
+    return DEFAULT_CLEARANCE_MM
+
+
+def _seg_seg_dist(a1, a2, b1, b2) -> float:
+    """Shortest distance between two line segments."""
+    def pt_seg(px, py, x1, y1, x2, y2):
+        dx, dy = x2 - x1, y2 - y1
+        ln2 = dx * dx + dy * dy
+        if ln2 < 1e-15:
+            return math.hypot(px - x1, py - y1)
+        t = max(0.0, min(1.0, ((px - x1) * dx + (py - y1) * dy) / ln2))
+        return math.hypot(px - (x1 + t * dx), py - (y1 + t * dy))
+
+    d1 = (a2[0] - a1[0], a2[1] - a1[1])
+    d2 = (b2[0] - b1[0], b2[1] - b1[1])
+    denom = d1[0] * d2[1] - d1[1] * d2[0]
+    if abs(denom) > 1e-12:
+        r = (b1[0] - a1[0], b1[1] - a1[1])
+        t = (r[0] * d2[1] - r[1] * d2[0]) / denom
+        u = (r[0] * d1[1] - r[1] * d1[0]) / denom
+        if 0.0 <= t <= 1.0 and 0.0 <= u <= 1.0:
+            return 0.0  # they intersect
+    return min(
+        pt_seg(a1[0], a1[1], b1[0], b1[1], b2[0], b2[1]),
+        pt_seg(a2[0], a2[1], b1[0], b1[1], b2[0], b2[1]),
+        pt_seg(b1[0], b1[1], a1[0], a1[1], a2[0], a2[1]),
+        pt_seg(b2[0], b2[1], a1[0], a1[1], a2[0], a2[1]),
+    )
+
+
+class CopperIndex:
+    """Spatial hash of placed copper, for exact pairwise clearance tests."""
+
+    CELL = 4.0
+
+    def __init__(self) -> None:
+        self.by_cell: dict[tuple[int, int, int], list] = defaultdict(list)
+
+    def _cells(self, x1, y1, x2, y2, pad):
+        ix0 = int(math.floor((min(x1, x2) - pad) / self.CELL))
+        ix1 = int(math.floor((max(x1, x2) + pad) / self.CELL))
+        iy0 = int(math.floor((min(y1, y2) - pad) / self.CELL))
+        iy1 = int(math.floor((max(y1, y2) + pad) / self.CELL))
+        for ix in range(ix0, ix1 + 1):
+            for iy in range(iy0, iy1 + 1):
+                yield ix, iy
+
+    def add(self, seg: Seg, name: str) -> None:
+        li = 0 if seg.layer == "F.Cu" else 1
+        rec = ((seg.x1, seg.y1), (seg.x2, seg.y2), seg.width * 0.5, seg.net, name)
+        for ix, iy in self._cells(seg.x1, seg.y1, seg.x2, seg.y2, seg.width):
+            self.by_cell[(li, ix, iy)].append(rec)
+
+    def clear_net(self, nets: set[int]) -> None:
+        for k, lst in list(self.by_cell.items()):
+            keep = [r for r in lst if r[3] not in nets]
+            if keep:
+                self.by_cell[k] = keep
+            else:
+                del self.by_cell[k]
+
+    def conflicts(self, seg: Seg, name: str) -> bool:
+        li = 0 if seg.layer == "F.Cu" else 1
+        half = seg.width * 0.5
+        seen: set[int] = set()
+        for ix, iy in self._cells(seg.x1, seg.y1, seg.x2, seg.y2, half + 1.0):
+            for rec in self.by_cell.get((li, ix, iy), ()):
+                if rec[3] == seg.net or id(rec) in seen:
+                    continue
+                seen.add(id(rec))
+                need = half + rec[2] + pair_clearance(name, rec[4])
+                if _seg_seg_dist((seg.x1, seg.y1), (seg.x2, seg.y2), rec[0], rec[1]) < need:
+                    return True
+        return False
+
+    def path_ok(self, segs: list, name: str) -> bool:
+        """Would this whole path clear everything already placed?"""
+        return not any(self.conflicts(sg, name) for sg in segs)
+
+
+def _stub_legs(xa, ya, xb, yb) -> list[tuple[float, float, float, float]]:
+    """Ortho legs joining a pad centre to a grid cell (L-shaped when needed)."""
+    if abs(xa - xb) < 1e-9 and abs(ya - yb) < 1e-9:
+        return []
+    if abs(ya - yb) < 1e-9 or abs(xa - xb) < 1e-9:
+        return [(xa, ya, xb, yb)]
+    return [(xa, ya, xb, ya), (xb, ya, xb, yb)]
 
 
 def _mst_edges(pads: list[Pad]) -> list[tuple[Pad, Pad]]:
@@ -571,15 +939,26 @@ def net_width(net: int, name: str) -> float:
     ):
         return 0.45
     if "MotDC" in name or name.startswith("/Mot"):
-        return 0.4
+        # A6 wants wa/2 + wb/2 + TRACE_CLEARANCE between two signal tracks, and
+        # the maze can only place them a grid pitch apart. At 0.4 mm two motor
+        # tracks on neighbouring columns need 0.60 mm and only get 0.55 — every
+        # parallel run was a violation. 0.34 keeps the pair legal (0.54 < 0.55)
+        # and still carries the stepper phase current on 1 oz copper.
+        return MAX_SIGNAL_WIDTH
     return 0.28
 
 
 def route_priority(net: int, name: str) -> tuple:
-    """Signals first (thin), then motors, then fat power last."""
+    """Signals first (thin), then motors, then fat power last.
+
+    Class and width only — no net id. With the id in here the tuple was a
+    total order over every net all by itself, so the edge length that the
+    callers sort on next never had any say and every ordering strategy
+    collapsed onto the same sequence.
+    """
     w = net_width(net, name)
     if name in ("+12V", "+12V_RAW", "GND") or net in (1, 2, 57):
-        return (3, -w, net)
+        return (3, -w)
     if name in ("+5V", "+3V3", "+12V", "+12V_SNS", "/BLW_RET") or net in (
         3,
         4,
@@ -587,10 +966,42 @@ def route_priority(net: int, name: str) -> tuple:
         56,
         61,
     ):
-        return (2, -w, net)
+        return (2, -w)
     if "MotDC" in name or name.startswith("/MotA") or name.startswith("/MotB"):
-        return (1, -w, net)
-    return (0, -w, net)
+        return (1, -w)
+    return (0, -w)
+
+
+_ORDER_NAMES = ("short-first", "losers-first", "long-first", "losers+short", "shuffled")
+
+
+def _order_jobs(jobs: list, boost: set[int], attempt: int) -> list:
+    """Order one routing pass.
+
+    A single greedy order has one fixed point: re-running it reproduces the
+    same losers. Each attempt therefore uses a different strategy, and the
+    caller keeps whichever pass came out best. Shortest-first stays the
+    default — it is what stops an 11 mm connection from being detoured across
+    the board by a 120 mm one that grabbed the corridor first.
+    """
+    mode = _ORDER_NAMES[attempt % len(_ORDER_NAMES)]
+    if mode == "short-first":
+        key = lambda t: (t[0], t[1], t[2])
+    elif mode == "losers-first":
+        key = lambda t: (t[0], 0 if t[2] in boost else 1, t[1], t[2])
+    elif mode == "long-first":
+        key = lambda t: (t[0], -t[1], t[2])
+    elif mode == "losers+short":
+        key = lambda t: (t[0], t[1] * (BOOST_SCALE if t[2] in boost else 1.0), t[2])
+    else:  # deterministic shuffle, biased towards the losers
+        rnd = random.Random(1000 + attempt)
+        jitter = {j[2]: rnd.random() for j in jobs}
+        key = lambda t: (
+            t[0],
+            t[1] * (BOOST_SCALE if t[2] in boost else 1.0) * (0.5 + jitter[t[2]]),
+            t[2],
+        )
+    return sorted(jobs, key=key)
 
 
 def _dedupe_pads(pads: list[Pad]) -> list[Pad]:
@@ -603,6 +1014,7 @@ def _dedupe_pads(pads: list[Pad]) -> list[Pad]:
 
 
 def parse_segments(pcb_text: str) -> list[Seg]:
+    table = NetTable(pcb_text)
     segs: list[Seg] = []
     for m in re.finditer(
         r"\(segment\s+"
@@ -610,10 +1022,11 @@ def parse_segments(pcb_text: str) -> list[Seg]:
         r"\(end\s+([\d.-]+)\s+([\d.-]+)\)\s+"
         r"\(width\s+([\d.-]+)\)\s+"
         r'\(layer\s+"([^"]+)"\)\s+'
-        r"\(net\s+(\d+)\)",
+        r"(\(net\s+(?:\d+|\"[^\"]*\")\s*\))",
         pcb_text,
         re.S,
     ):
+        nid, _ = seg_net(m.group(7), table)
         segs.append(
             Seg(
                 float(m.group(1)),
@@ -621,7 +1034,7 @@ def parse_segments(pcb_text: str) -> list[Seg]:
                 float(m.group(3)),
                 float(m.group(4)),
                 m.group(6),
-                int(m.group(7)),
+                nid,
                 float(m.group(5)),
             )
         )
@@ -638,13 +1051,22 @@ def build_router_from_pcb(
     grid: float = 0.55,
     clearance: float = MAZE_CLEARANCE_MM,
     hole_sites: list[tuple[float, float, float, int]] | None = None,
+    vias: list[tuple[float, float, int, float]] | None = None,
 ) -> MazeRouter:
     router = MazeRouter(x0, y0, board_w, board_h, grid=grid, clearance=clearance)
     if hole_sites:
         router.add_hole_sites(hole_sites)
     for p in pads:
         router.add_pad(p)
+    router.add_edge_keepout(EDGE_CLEARANCE_MM + WIDE_HALF_TRACK)
+    # Vias placed by the maze are drilled holes like any other: later bus and
+    # repair lanes have to respect their copper and their A7 keepout.
+    for vx, vy, vnet, _vsize in vias or []:
+        router.mark_via(vx, vy, vnet)
     _apply_segments(router, segs)
+    names = {p.net: p.name for p in pads}
+    for sg in segs:
+        router.copper.add(sg, names.get(sg.net, ""))
     return router
 
 
@@ -708,8 +1130,14 @@ def _try_bus_route(
     x0, y0 = router.x0, router.y0
     bw = (router.nx - 1) * router.grid
     bh = (router.ny - 1) * router.grid
-    xbuses = (x0 + 2.0, x0 + bw * 0.25, x0 + bw * 0.5, x0 + bw * 0.75, x0 + bw - 2.0)
-    ybuses = (y0 + 2.0, y0 + bh * 0.25, y0 + bh * 0.5, y0 + bh * 0.75, y0 + bh - 2.0)
+    xbuses = tuple(
+        router.snap(x, y0)[0]
+        for x in (x0 + 2.0, x0 + bw * 0.25, x0 + bw * 0.5, x0 + bw * 0.75, x0 + bw - 2.0)
+    )
+    ybuses = tuple(
+        router.snap(x0, y)[1]
+        for y in (y0 + 2.0, y0 + bh * 0.25, y0 + bh * 0.5, y0 + bh * 0.75, y0 + bh - 2.0)
+    )
 
     def try_path(segs: list[Seg]) -> tuple[list[Seg], list[Via]] | None:
         for layer in (LAYER_B, LAYER_F):
@@ -1057,6 +1485,36 @@ def _try_lane_route(
     return None
 
 
+def _join_hops(router, p1, p2, net: int, net_name: str):
+    """Concatenate two half-routes, bridging a layer change with a via.
+
+    A waypoint route is two separate A* results. Nothing makes them end and
+    start on the same face, and a bare concatenation across faces leaves the
+    board with a track that stops on one layer and resumes on the other with
+    no copper joining them.
+    """
+    segs = p1[0] + p2[0]
+    vias = list(p1[1]) + list(p2[1])
+    if p1[0] and p2[0]:
+        end, start = p1[0][-1], p2[0][0]
+        if end.layer != start.layer:
+            jx, jy = end.x2, end.y2
+            if abs(jx - start.x1) > 1e-6 or abs(jy - start.y1) > 1e-6:
+                return None
+            ix, iy = router._cell(jx, jy)
+            if router._can_pin_hop(ix, iy, net):
+                pass  # a real pad already bridges the faces here
+            elif router._can_drop_via(ix, iy, net):
+                vx, vy = router._xy(ix, iy)
+                vias.append(Via(vx, vy, net, VIA_DRILL, VIA_SIZE))
+                router.mark_via(vx, vy, net)
+            else:
+                return None
+    if not router.copper.path_ok(segs, net_name):
+        return None
+    return (segs, vias)
+
+
 def _try_route(
     router: MazeRouter,
     a: Pad,
@@ -1079,47 +1537,75 @@ def _try_route(
         or net_name.startswith("/ENC")
     )
     widths = (w, 0.28, 0.22, 0.2) if w > 0.28 else (w, 0.22, 0.2)
-    for tw in widths:
+
+    def accept(path, snap):
+        """Take a candidate only if real geometry says it clears everything.
+
+        The grid search reasons in whole cells, so it happily places a 0.7 mm
+        rail one 0.55 mm pitch from a signal whose copper it then overlaps.
+        This is the gate that actually decides.
+        """
+        if path is None:
+            router.restore(snap)
+            return None
+        if not router.copper.path_ok(path[0], net_name):
+            router.restore(snap)
+            return None
+        return path
+
+    def astar(tw: float, layer: int, both: bool, budget: int | None, via: bool = False):
         snap = router.snapshot()
         path = router.find_path(
-            a.x, a.y, b.x, b.y, net, tw, prefer_layer=prefer, both_layers=False
+            a.x, a.y, b.x, b.y, net, tw,
+            prefer_layer=layer, both_layers=both, max_expand=budget,
+            allow_via=via,
         )
+        return accept(path, snap)
+
+    # Phase 1 — cheap first fit. A short budget keeps the common case fast.
+    for tw in widths:
+        path = astar(tw, prefer, False, QUICK_EXPAND)
         if path is not None:
             return path
-        router.restore(snap)
     if not (dc or tft_enc):
         for tw in widths:
-            snap = router.snapshot()
-            path = router.find_path(
-                a.x, a.y, b.x, b.y, net, tw, prefer_layer=alt, both_layers=False
-            )
+            path = astar(tw, alt, False, QUICK_EXPAND)
             if path is not None:
                 return path
-            router.restore(snap)
     if not dc:
         for tw in widths:
-            snap = router.snapshot()
-            path = router.find_path(
-                a.x, a.y, b.x, b.y, net, tw, prefer_layer=prefer, both_layers=True
-            )
+            path = astar(tw, prefer, True, QUICK_EXPAND)
             if path is not None:
                 return path
-            router.restore(snap)
+
+    # Phase 2 — full search before falling back to fixed bus shapes. Detours
+    # round the socket cost far more than the quick budget allows, and giving
+    # up here is what left those nets for the crude fallbacks below.
+    for layer, both in ((prefer, True), (alt, True), (prefer, False), (alt, False)):
+        for tw in widths:
+            path = astar(tw, layer, both, None)
+            if path is not None:
+                return path
+
     for tw in (0.22, 0.18):
-        path = _try_bus_route(router, a, b, net, tw)
+        snap = router.snapshot()
+        path = accept(_try_bus_route(router, a, b, net, tw), snap)
         if path is not None:
             return path
     # edge + corner waypoints
-    for mx, my in (
-        (x0 + board_w - 2.5, 0.5 * (a.y + b.y)),
-        (x0 + 2.5, 0.5 * (a.y + b.y)),
-        (0.5 * (a.x + b.x), y0 + 2.5),
-        (0.5 * (a.x + b.x), y0 + board_h - 2.5),
-        (x0 + board_w - 2.5, y0 + 2.5),
-        (x0 + 2.5, y0 + board_h - 2.5),
-        (x0 + board_w - 2.5, y0 + board_h - 2.5),
-        (x0 + 2.5, y0 + 2.5),
-    ):
+    for mx, my in [
+        router.snap(wx, wy)
+        for wx, wy in (
+            (x0 + board_w - 2.5, 0.5 * (a.y + b.y)),
+            (x0 + 2.5, 0.5 * (a.y + b.y)),
+            (0.5 * (a.x + b.x), y0 + 2.5),
+            (0.5 * (a.x + b.x), y0 + board_h - 2.5),
+            (x0 + board_w - 2.5, y0 + 2.5),
+            (x0 + 2.5, y0 + board_h - 2.5),
+            (x0 + board_w - 2.5, y0 + board_h - 2.5),
+            (x0 + 2.5, y0 + 2.5),
+        )
+    ]:
         snap = router.snapshot()
         p1 = router.find_path(
             a.x, a.y, mx, my, net, 0.22, prefer_layer=prefer, both_layers=True
@@ -1133,7 +1619,14 @@ def _try_route(
         if p2 is None:
             router.restore(snap)
             continue
-        return (p1[0] + p2[0], [])
+        # The two halves are independent searches: if one ends on F.Cu and the
+        # next starts on B.Cu, joining them is a layer change with nothing
+        # bridging it — KiCad reports exactly that as dangling + unconnected.
+        joined = _join_hops(router, p1, p2, net, net_name)
+        if joined is None:
+            router.restore(snap)
+            continue
+        return joined
     if bridges:
         others = sorted(
             bridges,
@@ -1160,7 +1653,20 @@ def _try_route(
             if p2 is None:
                 router.restore(snap)
                 continue
-            return (p1[0] + p2[0], [])
+            joined = _join_hops(router, p1, p2, net, net_name)
+            if joined is None:
+                router.restore(snap)
+                continue
+            return joined
+
+    # Phase 3 — last resort: let the search buy a via. Priced at VIA_COST so it
+    # is only taken where no same-layer way round exists at all, which holds
+    # the count down to the few nets that genuinely need one.
+    for layer in (prefer, alt):
+        for tw in widths:
+            path = astar(tw, layer, True, None, via=True)
+            if path is not None:
+                return path
     return None
 
 
@@ -1181,17 +1687,22 @@ def autoroute_pads(
 
     if hole_sites is None and keepouts is not None:
         hole_sites = []
-    def rebuild(keep_segs: list[Seg]) -> MazeRouter:
+    def rebuild(keep_segs: list[Seg], keep_vias: list[Via] | None = None) -> MazeRouter:
         r = MazeRouter(x0, y0, board_w, board_h, grid=grid, clearance=MAZE_CLEARANCE_MM)
         if hole_sites:
             r.add_hole_sites(hole_sites)
         for p in pads:
             r.add_pad(p)
+        r.add_edge_keepout(EDGE_CLEARANCE_MM + WIDE_HALF_TRACK)
+        for v in keep_vias or []:
+            r.mark_via(v.x, v.y, v.net)
         for s in keep_segs:
             li = LAYER_F if s.layer == "F.Cu" else LAYER_B
             r._mark_seg(li, s.x1, s.y1, s.x2, s.y2, s.width * 0.5, s.net)
+            r.copper.add(s, net_name_of.get(s.net, ""))
         return r
 
+    net_name_of = {p.net: p.name for p in pads}
     jobs: list[tuple[tuple, float, int, str, Pad, Pad, list[Pad]]] = []
     for net, plist in by_net.items():
         uniq = _dedupe_pads(plist)
@@ -1204,51 +1715,137 @@ def autoroute_pads(
             jobs.append((pri, dist, net, name, a, b, uniq))
     jobs.sort(key=lambda t: (t[0], t[1], t[2]))
 
-    router = rebuild([])
-    result = RouteResult()
-    ok_segs: list[Seg] = []
-    n_ok = 0
-    for i, (_pri, _dist, net, name, a, b, uniq) in enumerate(jobs, 1):
-        if i % 25 == 0:
-            print(f"  … routed {n_ok}/{i} edges, failed {len(result.failed)}")
-        w = net_width(net, name)
-        path = _try_route(router, a, b, net, w, x0, y0, board_w, board_h, bridges=uniq, net_name=name)
-        if path is None:
-            result.failed.append((net, name, (a.x, a.y), (b.x, b.y)))
-            continue
-        segs, _ = path
-        ok_segs.extend(segs)
-        result.segments.extend(segs)
-        n_ok += 1
-
-    if result.failed:
-        bad = {n for n, _, _, _ in result.failed}
-        print(f"  Rip-up retry for {len(bad)} nets ({len(result.failed)} failed edges)…")
-        keep = [s for s in ok_segs if s.net not in bad]
-        retry_jobs = [j for j in jobs if j[2] in bad]
-        router = rebuild(keep)
-        result.segments = list(keep)
-        result.failed = []
-        n_ok = sum(1 for j in jobs if j[2] not in bad)
-        for i, (_pri, _dist, net, name, a, b, uniq) in enumerate(retry_jobs, 1):
-            if i % 10 == 0:
-                print(f"  … rip-up {i}/{len(retry_jobs)}, failed {len(result.failed)}")
+    def _route_pass(
+        boost: set[int], attempt: int
+    ) -> tuple[list[Seg], list[Via], list, int]:
+        """One full routing pass; nets in `boost` get first pick of the board."""
+        r = rebuild([])
+        segs_out: list[Seg] = []
+        vias_out: list[Via] = []
+        failed_out: list = []
+        n = 0
+        ordered = _order_jobs(jobs, boost, attempt)
+        for i, (_pri, _dist, net, name, a, b, uniq) in enumerate(ordered, 1):
+            if i % 40 == 0:
+                print(f"  … routed {n}/{i} edges, failed {len(failed_out)}")
             w = net_width(net, name)
-            if name in ("+12V", "+12V_RAW", "GND") or net in (1, 2, 57):
-                w = min(w, 0.45)  # thinner on rip-up — less blockage
             path = _try_route(
-                router, a, b, net, w, x0, y0, board_w, board_h, bridges=uniq, net_name=name
+                r, a, b, net, w, x0, y0, board_w, board_h, bridges=uniq, net_name=name
             )
             if path is None:
-                result.failed.append((net, name, (a.x, a.y), (b.x, b.y)))
+                failed_out.append((net, name, (a.x, a.y), (b.x, b.y)))
                 continue
-            segs, _ = path
-            result.segments.extend(segs)
-            n_ok += 1
+            segs, vias = path
+            for sg in segs:
+                r.copper.add(sg, name)
+            segs_out.extend(segs)
+            vias_out.extend(vias)
+            n += 1
+        return segs_out, vias_out, failed_out, n
+
+    def _ripup_improve(
+        segs_in: list[Seg], vias_in: list[Via], failed_in: list, n_in: int
+    ) -> tuple[list[Seg], list[Via], list, int]:
+        """Clear the neighbourhood of each failed edge and re-route it first."""
+        cur = (list(segs_in), list(vias_in), list(failed_in), n_in)
+        local_best = cur
+        for rnd in range(RIPUP_ROUNDS):
+            segs_cur, vias_cur, failed_cur, _ = cur
+            if not failed_cur:
+                break
+            bad = {n for n, _, _, _ in failed_cur}
+            margin = RIPUP_MARGIN_MM * (rnd + 1)
+            boxes = [
+                (min(ax, bx) - margin, min(ay, by) - margin,
+                 max(ax, bx) + margin, max(ay, by) + margin)
+                for _n, _nm, (ax, ay), (bx, by) in failed_cur
+            ]
+            victims = set(bad)
+            for s in segs_cur:
+                if s.net in victims:
+                    continue
+                sx0, sx1 = min(s.x1, s.x2), max(s.x1, s.x2)
+                sy0, sy1 = min(s.y1, s.y2), max(s.y1, s.y2)
+                if any(
+                    sx1 >= bx0 and sx0 <= bx1 and sy1 >= by0 and sy0 <= by1
+                    for bx0, by0, bx1, by1 in boxes
+                ):
+                    victims.add(s.net)
+            keep = [s for s in segs_cur if s.net not in victims]
+            keep_vias = [v for v in vias_cur if v.net not in victims]
+            retry_jobs = sorted(
+                (j for j in jobs if j[2] in victims),
+                key=lambda j: (0 if j[2] in bad else 1, j[0], j[1], j[2]),
+            )
+            print(
+                f"    rip-up {rnd + 1}: {len(bad)} failed nets, "
+                f"{len(victims)} nets ripped up"
+            )
+            r = rebuild(keep, keep_vias)
+            segs_new = list(keep)
+            vias_new = list(keep_vias)
+            failed_new: list = []
+            n_new = sum(1 for j in jobs if j[2] not in victims)
+            for _pri, _dist, net, name, a, b, uniq in retry_jobs:
+                w = net_width(net, name)
+                if name in ("+12V", "+12V_RAW", "GND") or net in (1, 2, 57):
+                    w = min(w, 0.45)  # thinner on rip-up — less blockage
+                path = _try_route(
+                    r, a, b, net, w, x0, y0, board_w, board_h,
+                    bridges=uniq, net_name=name,
+                )
+                if path is None:
+                    failed_new.append((net, name, (a.x, a.y), (b.x, b.y)))
+                    continue
+                segs, vias = path
+                for sg in segs:
+                    r.copper.add(sg, name)
+                segs_new.extend(segs)
+                vias_new.extend(vias)
+                n_new += 1
+            cur = (segs_new, vias_new, failed_new, n_new)
+            if len(failed_new) < len(local_best[2]):
+                local_best = cur
+        return local_best
+
+    # A single greedy pass leaves whichever nets lost the race for a corridor
+    # unrouted, and re-trying just those against the same copper reproduces the
+    # same failure. So do both: re-run the whole pass with the losers promoted
+    # to the head of the order (accumulating across attempts), and after each
+    # pass clear the neighbourhood of whatever still fails and re-route it
+    # first. Keep the best board any attempt produced — a rip-up round can
+    # trade one failure for two, and the caller only wants the winner.
+    result = RouteResult()
+    boost: set[int] = set()
+    best: tuple[list[Seg], list[Via], list, int] | None = None
+    for attempt in range(ROUTE_ATTEMPTS):
+        segs_out, vias_out, failed_out, n_ok = _route_pass(boost, attempt)
+        print(
+            f"  Pass {attempt + 1} ({_ORDER_NAMES[attempt % len(_ORDER_NAMES)]}): "
+            f"{len(failed_out)} failed edges after first fit"
+        )
+        segs_out, vias_out, failed_out, n_ok = _ripup_improve(
+            segs_out, vias_out, failed_out, n_ok
+        )
+        if best is None or len(failed_out) < len(best[2]):
+            best = (segs_out, vias_out, failed_out, n_ok)
+        if not failed_out:
+            break
+        newly = {n for n, _, _, _ in failed_out} - boost
+        print(
+            f"  Pass {attempt + 1}: {len(failed_out)} failed edges "
+            f"(best {len(best[1])}), promoting {len(newly)} more net(s)"
+        )
+        boost |= newly
+    result.segments = list(best[0])
+    result.vias = list(best[1])
+    result.failed = list(best[2])
+    n_ok = best[3]
 
     print(
-        f"Maze policy: no extra vias (pin bridges OK); free F/B; "
-        f"{n_ok} edges routed, {len(result.failed)} failed"
+        f"Maze policy: vias only where no same-layer route exists; free F/B; "
+        f"{n_ok} edges routed, {len(result.vias)} via(s), "
+        f"{len(result.failed)} failed"
     )
     return result
 
@@ -1279,17 +1876,20 @@ class BusLaneAllocator:
         self.reserved_x.add(round(x, 2))
 
     def _free_x(self, x: float) -> float:
+        # Step by a whole grid pitch, not 0.35. The occupancy grid cannot tell
+        # two lanes 0.35 mm apart from each other — both fall inside one cell —
+        # so it waved through pairs that A6 then flagged as too close.
         xr = round(x, 2)
-        while xr in self.reserved_x:
-            x += 0.35
+        while any(abs(xr - r) < LANE_MIN_SEP for r in self.reserved_x):
+            x += LANE_MIN_SEP
             xr = round(x, 2)
         self.reserved_x.add(xr)
         return x
 
     def _free_y(self, y: float) -> float:
         yr = round(y, 2)
-        while yr in self.reserved_y:
-            y += 0.35
+        while any(abs(yr - r) < LANE_MIN_SEP for r in self.reserved_y):
+            y += LANE_MIN_SEP
             yr = round(y, 2)
         self.reserved_y.add(yr)
         return y
@@ -1453,6 +2053,7 @@ def _bus_via_x(
     """Three-segment route through a vertical bus channel on one layer."""
     lname = LAYERS[layer]
     half = w * 0.5
+    bus_x = router.snap(bus_x, ay)[0]
     legs = ((ax, ay, bus_x, ay), (bus_x, ay, bus_x, by), (bus_x, by, bx, by))
     for x1, y1, x2, y2 in legs:
         if abs(x1 - x2) < 1e-9 and abs(y1 - y2) < 1e-9:
@@ -1484,7 +2085,7 @@ def emit_service_buses(
     hole_sites = parse_hole_sites(pcb_text)
     router = build_router_from_pcb(
         pads, segs, x0, y0, board_w, board_h, grid=0.55, clearance=MAZE_CLEARANCE_MM,
-        hole_sites=hole_sites,
+        hole_sites=hole_sites, vias=parse_kept_vias(pcb_text),
     )
     result = RouteResult()
     by_net: dict[int, list[Pad]] = defaultdict(list)
@@ -1678,7 +2279,7 @@ def repair_open_pcb(
 
     router = build_router_from_pcb(
         pads, segs, x0, y0, board_w, board_h, grid=grid, clearance=MAZE_CLEARANCE_MM,
-        hole_sites=parse_hole_sites(pcb_text),
+        hole_sites=parse_hole_sites(pcb_text), vias=parse_kept_vias(pcb_text),
     )
     result = RouteResult()
     n = _repair_open_nets(
@@ -1706,7 +2307,17 @@ def format_routes(result: RouteResult, uid_fn) -> list[str]:
             f'\t\t(uuid "{uid_fn()}")',
             "\t)",
         ]
-    # deliberately omit vias
+    for v in result.vias:
+        lines += [
+            "\t(via",
+            f"\t\t(at {v.x:.4f} {v.y:.4f})",
+            f"\t\t(size {v.size})",
+            f"\t\t(drill {v.drill})",
+            '\t\t(layers "F.Cu" "B.Cu")',
+            f"\t\t(net {v.net})",
+            f'\t\t(uuid "{uid_fn()}")',
+            "\t)",
+        ]
     return lines
 
 

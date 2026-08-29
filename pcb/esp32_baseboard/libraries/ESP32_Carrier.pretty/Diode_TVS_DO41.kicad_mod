@@ -1,24 +1,63 @@
 (footprint "Diode_TVS_DO41"
-	(version 20240108)
-	(generator "gen_power_carrier.py")
-	(layer "F.Cu")
-	(descr "Axial TVS DO-41 ~7.5mm pitch. Use P6KE15A or SMB equiv for 12V bus.")
-	(tags "TVS diode surge")
-	(property "Reference" "D"
+	(version 20241229)
+	(generator "sync_footprint_lib.py")
+	(generator_version "1.0")
+(layer "F.Cu")
+	(property "Reference" "REF**"
 		(at 0 -2.8 0)
 		(layer "F.SilkS")
-		(effects (font (size 1 1) (thickness 0.15)))
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.12)
+			)
+		)
 	)
-	(property "Value" "P6KE15A"
+	(property "Value" "1N5819"
 		(at 0 2.8 0)
 		(layer "F.Fab")
-		(effects (font (size 0.8 0.8) (thickness 0.1)))
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.12)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
 	)
 	(attr through_hole)
-	(fp_line (start -3.0 0) (end 3.0 0) (stroke (width 0.12) (type solid)) (layer "F.SilkS"))
-	(fp_line (start 2.2 -1.2) (end 2.2 1.2) (stroke (width 0.12) (type solid)) (layer "F.SilkS"))
-	(pad "1" thru_hole rect (at -3.75 0) (size 1.7 1.7) (drill 0.9)
-		(layers "*.Cu" "*.Mask"))
-	(pad "2" thru_hole circle (at 3.75 0) (size 1.7 1.7) (drill 0.9)
-		(layers "*.Cu" "*.Mask"))
+	(duplicate_pad_numbers_are_jumpers no)
+	(pad "1" thru_hole rect
+		(at -3.75 0)
+		(size 1.7 1.7)
+		(drill 0.9)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+	)
+	(pad "2" thru_hole circle
+		(at 3.75 0)
+		(size 1.7 1.7)
+		(drill 0.9)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+	)
+	(embedded_fonts no)
 )

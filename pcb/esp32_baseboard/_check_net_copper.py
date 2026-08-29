@@ -6,38 +6,35 @@ import re
 from collections import defaultdict, deque
 from pathlib import Path
 
-from maze_router import parse_pads
+from maze_router import parse_pads, parse_segments, parse_kept_vias
 
 text = Path(__file__).with_name("esp32_baseboard.kicad_pcb").read_text(encoding="utf-8")
 pads = parse_pads(text)
-segs = []
-for m in re.finditer(
-    r'\(segment\s+'
-    r'\(start\s+([\d.-]+)\s+([\d.-]+)\)\s+'
-    r'\(end\s+([\d.-]+)\s+([\d.-]+)\)\s+'
-    r'\(width\s+([\d.-]+)\)\s+'
-    r'\(layer\s+"([^"]+)"\)\s+'
-    r'\(net\s+(\d+)\)',
-    text,
-    re.S,
-):
-    x1, y1, x2, y2, w, layer, net = m.groups()
-    segs.append((float(x1), float(y1), float(x2), float(y2), float(w), layer, int(net)))
+segs = [(g.x1, g.y1, g.x2, g.y2, g.width, g.layer, g.net) for g in parse_segments(text)]
 print(f"parsed segments: {len(segs)}")
-vias = []
-for m in re.finditer(
-    r"\(via\s+[\s\S]*?\(at\s+([\d.-]+)\s+([\d.-]+)\)[\s\S]*?"
-    r"\(size\s+([\d.-]+)\)[\s\S]*?\(net\s+(\d+)\)",
-    text,
-):
-    vias.append((float(m.group(1)), float(m.group(2)), float(m.group(3)), int(m.group(4))))
+vias = [(vx, vy, vsz, vnet) for vx, vy, vnet, vsz in parse_kept_vias(text)]
 print(f"parsed vias: {len(vias)}")
 
-TOL = 0.85  # pad/track endpoint snap (grid 0.55)
+# Copper only counts as joined where it physically touches. A 0.85 mm snap was
+# wider than the routing grid itself, so it declared connected any two track
+# ends that merely landed in neighbouring cells -- reporting 0 open nets on a
+# board KiCad flagged with 29 unconnected items and 44 dangling track ends.
+TOL = 0.05
 
 
 def near(ax, ay, bx, by, t=TOL):
     return abs(ax - bx) <= t and abs(ay - by) <= t
+
+
+def point_on_seg(px, py, x1, y1, x2, y2, half_w):
+    """Does a point sit on a track's copper (T-junction, not just an end)?"""
+    dx, dy = x2 - x1, y2 - y1
+    ln2 = dx * dx + dy * dy
+    if ln2 < 1e-12:
+        return near(px, py, x1, y1)
+    t = max(0.0, min(1.0, ((px - x1) * dx + (py - y1) * dy) / ln2))
+    qx, qy = x1 + t * dx, y1 + t * dy
+    return math.hypot(px - qx, py - qy) <= half_w + TOL
 
 
 by_net_pads = defaultdict(list)
@@ -48,21 +45,32 @@ open_nets = []
 for net, idxs in sorted(by_net_pads.items()):
     if len(idxs) < 2:
         continue
-    # graph nodes = pads + via points + segment endpoints of this net
-    nodes = []  # (x,y)
-    for i in idxs:
-        nodes.append((pads[i].x, pads[i].y))
-    n_pad = len(nodes)
-    for x, y, _sz, n in vias:
-        if n == net:
-            nodes.append((x, y))
-    for x1, y1, x2, y2, _w, _ly, n in segs:
-        if n != net:
-            continue
-        nodes.append((x1, y1))
-        nodes.append((x2, y2))
+    # Nodes are (x, y, layer). Layer matters: two track ends at the same XY on
+    # opposite faces are NOT joined unless a thru-hole pad or a via bridges
+    # them. Ignoring the layer is what let a board with 29 unconnected items
+    # and 44 dangling ends read as fully routed here.
+    net_segs = [sg for sg in segs if sg[6] == net]
+    net_vias = [(x, y) for x, y, _sz, n in vias if n == net]
+    pad_xy = [(pads[i].x, pads[i].y, pads[i].radius) for i in idxs]
 
-    # union-find by proximity + segment links
+    nodes: list[tuple[float, float, str]] = []
+    pad_nodes: list[list[int]] = []
+    for px, py, _r in pad_xy:  # a thru-hole pad exists on both faces
+        pad_nodes.append([len(nodes), len(nodes) + 1])
+        nodes.append((px, py, "F.Cu"))
+        nodes.append((px, py, "B.Cu"))
+    n_pad_nodes = len(nodes)
+    seg_ends: list[tuple[int, int]] = []
+    for x1, y1, x2, y2, _w, ly, _n in net_segs:
+        seg_ends.append((len(nodes), len(nodes) + 1))
+        nodes.append((x1, y1, ly))
+        nodes.append((x2, y2, ly))
+    via_nodes: list[list[int]] = []
+    for vx, vy in net_vias:
+        via_nodes.append([len(nodes), len(nodes) + 1])
+        nodes.append((vx, vy, "F.Cu"))
+        nodes.append((vx, vy, "B.Cu"))
+
     parent = list(range(len(nodes)))
 
     def find(a):
@@ -76,27 +84,41 @@ for net, idxs in sorted(by_net_pads.items()):
         if ra != rb:
             parent[rb] = ra
 
-    for i in range(len(nodes)):
-        for j in range(i + 1, len(nodes)):
-            if near(*nodes[i], *nodes[j]):
-                union(i, j)
-    # also union along each segment's two ends
-    for x1, y1, x2, y2, _w, _ly, n in segs:
-        if n != net:
-            continue
-        ia = ib = None
-        for i, (x, y) in enumerate(nodes):
-            if near(x, y, x1, y1):
-                ia = i
-            if near(x, y, x2, y2):
-                ib = i
-        if ia is not None and ib is not None:
-            union(ia, ib)
+    for a, b in seg_ends:      # copper along each track
+        union(a, b)
+    for pair in pad_nodes:     # the barrel of a thru-hole pad
+        union(*pair)
+    for pair in via_nodes:     # the barrel of a via
+        union(*pair)
 
-    roots = {find(i) for i in range(n_pad)}
+    # Coincident copper on the SAME face.
+    for i in range(len(nodes)):
+        xi, yi, li = nodes[i]
+        for j in range(i + 1, len(nodes)):
+            xj, yj, lj = nodes[j]
+            if li == lj and near(xi, yi, xj, yj):
+                union(i, j)
+
+    # A track end landing part-way along another same-net track on the same
+    # face is a real T-junction.
+    for i, (px, py, li) in enumerate(nodes):
+        for (a, b), (x1, y1, x2, y2, w, ly, _n) in zip(seg_ends, net_segs):
+            if ly == li and point_on_seg(px, py, x1, y1, x2, y2, w * 0.5):
+                union(i, a)
+
+    # A pad's or via's copper joins any track end inside its annulus.
+    for pair, (px, py, rad) in zip(pad_nodes, pad_xy):
+        for j, (qx, qy, lj) in enumerate(nodes):
+            if math.hypot(px - qx, py - qy) <= rad + TOL:
+                union(pair[0] if lj == "F.Cu" else pair[1], j)
+    for pair, (vx, vy) in zip(via_nodes, net_vias):
+        for j, (qx, qy, lj) in enumerate(nodes):
+            if math.hypot(vx - qx, vy - qy) <= 0.4 + TOL:
+                union(pair[0] if lj == "F.Cu" else pair[1], j)
+
+    roots = {find(pair[0]) for pair in pad_nodes}
     if len(roots) > 1:
         name = pads[idxs[0]].name
-        # classify module pads disconnected
         open_nets.append((net, name, len(idxs), len(roots)))
 
 print(f"nets with >=2 pads: {sum(1 for v in by_net_pads.values() if len(v)>=2)}")

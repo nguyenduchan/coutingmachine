@@ -16,6 +16,8 @@ MCU: ESP32-S3-DevKitC-1 (44-pin, 2x22 @ 2.54, row 25.4). Prefer N8R2/N16R8;
 from __future__ import annotations
 
 import json
+import os
+import re
 import uuid
 from pathlib import Path
 
@@ -50,7 +52,13 @@ LIB = ROOT / "libraries"
 PRETTY = LIB / "ESP32_Carrier.pretty"
 
 # Final copper: 2-layer A* maze (same-layer bends OK). Manual track_* become no-ops.
+# Keep the legacy hand-routing helpers disabled: their track()/via() calls are
+# no-ops whenever this is True, and the copper comes from a router instead.
 USE_MAZE_AUTOROUTE = True
+# The in-house maze router is now the fallback: FreeRouting does the routing
+# (see route_freerouting.py). PCB_SKIP_MAZE=1 emits placement + nets only and
+# hands the board straight to FreeRouting -- seconds instead of ~25 minutes.
+RUN_MAZE = os.environ.get("PCB_SKIP_MAZE", "") != "1"
 
 PITCH = 2.54
 ROW_SPACING = 25.4
@@ -85,7 +93,7 @@ MOTOR_HEADER = [
 ]
 
 # J3 removed (unused). TFT/touch on J17 (10 pins — XPT2046; no T_IRQ).
-# EC11 encoder on J18: GPIO9=ENC_A, GPIO41=ENC_B (SW unused — Enter on TFT).
+# EC11 encoder on J18: GPIO38=ENC_A, GPIO41=ENC_B (SW unused — Enter on TFT).
 # Shared SPI: SCK+T_CLK, MOSI+T_DIN; MISO=T_DO only (LCD SDO NC).
 TFT_HEADER = [
     ("1", "GND"),
@@ -119,6 +127,7 @@ VIA12_DIA = 1.1
 BOARD_W = 235.0
 BOARD_H = 132.0
 BOARD_W_EXTRA = BOARD_W - 185.0  # shift right-side blocks when widening
+SILK_TEXT_MIN_MM = 0.8  # KiCad board-setup silk text minimum
 MOUNT_INSET = 3.5  # M3 hole centers from Edge.Cuts
 MOUNT_DRILL = 3.2
 MOUNT_PAD = 6.5  # silk / keepout diameter
@@ -341,7 +350,7 @@ def write_tmc2209_footprint() -> Path:
         a(f'\t(fp_text user "{name}"')
         a(f"\t\t(at {-hx - 2.8} {y} 0)")
         a('\t\t(layer "F.SilkS")')
-        a('\t\t(effects (font (size 0.7 0.7) (thickness 0.1)) (justify right))')
+        a('\t\t(effects (font (size 0.8 0.8) (thickness 0.1)) (justify right))')
         a("\t)")
         shape = "rect" if i == 0 else "circle"
         a(f'\t(pad "{num}" thru_hole {shape}')
@@ -355,7 +364,7 @@ def write_tmc2209_footprint() -> Path:
         a(f'\t(fp_text user "{name}"')
         a(f"\t\t(at {hx + 2.8} {y} 0)")
         a('\t\t(layer "F.SilkS")')
-        a('\t\t(effects (font (size 0.7 0.7) (thickness 0.1)) (justify left))')
+        a('\t\t(effects (font (size 0.8 0.8) (thickness 0.1)) (justify left))')
         a("\t)")
         a(f'\t(pad "{num}" thru_hole circle')
         a(f"\t\t(at {hx} {y})")
@@ -414,12 +423,12 @@ def write_pc817_4ch_footprint() -> Path:
     a('\t(fp_text user "IN FIELD"')
     a(f"\t\t(at 0 {-hx - 3.2} 0)")
     a('\t\t(layer "F.SilkS")')
-    a('\t\t(effects (font (size 0.75 0.75) (thickness 0.1)))')
+    a('\t\t(effects (font (size 0.8 0.8) (thickness 0.1)))')
     a("\t)")
     a('\t(fp_text user "OUT MCU"')
     a(f"\t\t(at 0 {hx + 3.2} 0)")
     a('\t\t(layer "F.SilkS")')
-    a('\t\t(effects (font (size 0.75 0.75) (thickness 0.1)))')
+    a('\t\t(effects (font (size 0.8 0.8) (thickness 0.1)))')
     a("\t)")
     for i, name in enumerate(in_names):
         num = str(i + 1)
@@ -427,7 +436,7 @@ def write_pc817_4ch_footprint() -> Path:
         a(f'\t(fp_text user "{name}"')
         a(f"\t\t(at {x} {-hx - 2.2} 0)")
         a('\t\t(layer "F.SilkS")')
-        a('\t\t(effects (font (size 0.55 0.55) (thickness 0.08)))')
+        a('\t\t(effects (font (size 0.8 0.8) (thickness 0.08)))')
         a("\t)")
         shape = "rect" if i == 0 else "circle"
         a(f'\t(pad "{num}" thru_hole {shape}')
@@ -442,7 +451,7 @@ def write_pc817_4ch_footprint() -> Path:
         a(f'\t(fp_text user "{name}"')
         a(f"\t\t(at {x} {hx + 2.2} 0)")
         a('\t\t(layer "F.SilkS")')
-        a('\t\t(effects (font (size 0.55 0.55) (thickness 0.08)))')
+        a('\t\t(effects (font (size 0.8 0.8) (thickness 0.08)))')
         a("\t)")
         a(f'\t(pad "{num}" thru_hole circle')
         a(f"\t\t(at {x} {hx})")
@@ -531,9 +540,9 @@ def write_star_power_passives() -> list:
         '\t(layer "F.Cu")\n'
         '\t(descr "100nF 0805")\n'
         '\t(property "Reference" "C**" (at 0 -1.8 0) (layer "F.SilkS") '
-        "(effects (font (size 0.7 0.7) (thickness 0.1))))\n"
+        "(effects (font (size 0.8 0.8) (thickness 0.1))))\n"
         '\t(property "Value" "100n" (at 0 1.8 0) (layer "F.Fab") '
-        "(effects (font (size 0.7 0.7) (thickness 0.1))))\n"
+        "(effects (font (size 0.8 0.8) (thickness 0.1))))\n"
         "\t(attr smd)\n"
         '\t(fp_rect (start -1.1 -0.7) (end 1.1 0.7) (stroke (width 0.1) (type solid)) '
         '(fill none) (layer "F.CrtYd"))\n'
@@ -554,9 +563,9 @@ def write_star_power_passives() -> list:
         '\t(layer "F.Cu")\n'
         '\t(descr "10 ohm 1206 SNS series filter")\n'
         '\t(property "Reference" "R**" (at 0 -1.8 0) (layer "F.SilkS") '
-        "(effects (font (size 0.7 0.7) (thickness 0.1))))\n"
+        "(effects (font (size 0.8 0.8) (thickness 0.1))))\n"
         '\t(property "Value" "10R" (at 0 1.8 0) (layer "F.Fab") '
-        "(effects (font (size 0.7 0.7) (thickness 0.1))))\n"
+        "(effects (font (size 0.8 0.8) (thickness 0.1))))\n"
         "\t(attr smd)\n"
         '\t(fp_rect (start -1.7 -0.9) (end 1.7 0.9) (stroke (width 0.1) (type solid)) '
         '(fill none) (layer "F.CrtYd"))\n'
@@ -619,7 +628,7 @@ def write_l298n_footprint() -> Path:
         a(f'\t(fp_text user "{name}"')
         a(f"\t\t(at {x} {y - 2.0} 0)")
         a('\t\t(layer "F.SilkS")')
-        a('\t\t(effects (font (size 0.65 0.65) (thickness 0.1)))')
+        a('\t\t(effects (font (size 0.8 0.8) (thickness 0.1)))')
         a("\t)")
         shape = "rect" if i == 0 else "circle"
         a(f'\t(pad "{num}" thru_hole {shape}')
@@ -697,12 +706,12 @@ def write_mini560_footprint() -> Path:
     a('\t(fp_text user "IN"')
     a(f"\t\t(at {-hx - 2.8} 0 0)")
     a('\t\t(layer "F.SilkS")')
-    a('\t\t(effects (font (size 0.7 0.7) (thickness 0.1)) (justify right))')
+    a('\t\t(effects (font (size 0.8 0.8) (thickness 0.1)) (justify right))')
     a("\t)")
     a('\t(fp_text user "OUT5V"')
     a(f"\t\t(at {hx + 2.8} 0 0)")
     a('\t\t(layer "F.SilkS")')
-    a('\t\t(effects (font (size 0.7 0.7) (thickness 0.1)) (justify left))')
+    a('\t\t(effects (font (size 0.8 0.8) (thickness 0.1)) (justify left))')
     a("\t)")
     a('\t(fp_text user "MP1584"')
     a("\t\t(at 0 0 0)")
@@ -714,7 +723,7 @@ def write_mini560_footprint() -> Path:
         a(f'\t(fp_text user "{name}"')
         a(f"\t\t(at {x} {y - 2.2} 0)")
         a('\t\t(layer "F.SilkS")')
-        a('\t\t(effects (font (size 0.65 0.65) (thickness 0.1)))')
+        a('\t\t(effects (font (size 0.8 0.8) (thickness 0.1)))')
         a("\t)")
         shape = "rect" if num == "1" else "circle"
         a(f'\t(pad "{num}" thru_hole {shape}')
@@ -1276,6 +1285,14 @@ def write_symbol_lib() -> Path:
         ("10", "GND", "passive", -15.24, 5.08, 0),
         ("15", "VIO", "power_in", -15.24, 2.54, 0),
         ("1", "EN", "input", -15.24, -2.54, 0),
+        # MS1/MS2/PDN/PDN2/CLK exist on the module and on the footprint. They
+        # are left unconnected here, but the symbol still has to declare them:
+        # a pad with no matching pin is a schematic-parity error.
+        ("2", "MS1", "input", -15.24, -10.16, 0),
+        ("3", "MS2", "input", -15.24, -12.7, 0),
+        ("4", "PDN", "input", -15.24, -15.24, 0),
+        ("5", "PDN2", "input", -15.24, -17.78, 0),
+        ("6", "CLK", "input", -15.24, -20.32, 0),
         ("7", "STEP", "input", -15.24, -5.08, 0),
         ("8", "DIR", "input", -15.24, -7.62, 0),
         ("11", "A2", "passive", 15.24, 5.08, 180),
@@ -2040,10 +2057,23 @@ def write_schematic_v2() -> Path:
         return [wire(pts[i], pts[i + 1]) for i in range(len(pts) - 1)]
 
     def label(name: str, x: float, y: float) -> str:
+        """Global label, not a local one.
+
+        KiCad names a local label on the root sheet "/GND" while the PCB
+        carries "GND" — that mismatch alone accounted for 32 of the
+        net_conflict errors schematic parity reports. Global labels keep both
+        sides on exactly the same net names.
+        """
+        # Match the PCB net table exactly: power rails are bare (GND, +12V),
+        # every signal net carries a leading slash (/STEP). Parity compares the
+        # strings, so "STEP" here and "/STEP" on the board is a conflict.
+        if not name.startswith(("+", "/")) and name not in ("GND",):
+            name = "/" + name
         return (
-            f'\t(label "{name}"\n'
+            f'\t(global_label "{name}"\n'
+            "\t\t(shape input)\n"
             f"\t\t(at {x} {y} 0)\n"
-            "\t\t(effects (font (size 1.27 1.27)) (justify left bottom))\n"
+            "\t\t(effects (font (size 1.27 1.27)) (justify left))\n"
             f'\t\t(uuid "{uid()}")\n'
             "\t)"
         )
@@ -2388,7 +2418,7 @@ def write_schematic_v2() -> Path:
         parts += wire_path(u_out, (xbus, u_out[1]), (xbus, e_pt[1]), e_pt)
         parts.append(label(f"OPTO_OUT{i + 1}", xbus, u_out[1]))
 
-    # EC11: IO9=ENC_A, IO41=ENC_B (J18). SW unused.
+    # EC11: IO38=ENC_A, IO41=ENC_B (J18). SW unused.
     def j18_pin(n: int) -> tuple[float, float]:
         # pin local y matches Conn_1x04_ENC (same spacing as TFT-style header)
         ly = (ENC_PINS - 1) * 1.27 - (n - 1) * 2.54
@@ -2396,13 +2426,13 @@ def write_schematic_v2() -> Path:
 
     parts.append(
         text(
-            "J18 ENC: wall-mount EC11 cable → GND/3V3/A/B; CLK=IO9 DT=IO41; no SW",
+            "J18 ENC: wall-mount EC11 cable → GND/3V3/A/B; CLK=IO38 DT=IO41; no SW",
             250.0,
             118.0,
             1.0,
         )
     )
-    parts += wire_path(u1_pin(PIN_BY_NAME["IO9"]), (j18_pin(3)[0] - 8, u1_pin(PIN_BY_NAME["IO9"])[1]), j18_pin(3))
+    parts += wire_path(u1_pin(PIN_BY_NAME["IO38"]), (j18_pin(3)[0] - 8, u1_pin(PIN_BY_NAME["IO38"])[1]), j18_pin(3))
     parts.append(label("ENC_A", j18_pin(3)[0] - 6, j18_pin(3)[1]))
     parts += wire_path(u1_pin(PIN_BY_NAME["IO41"]), (j18_pin(4)[0] - 6, u1_pin(PIN_BY_NAME["IO41"])[1]), j18_pin(4))
     parts.append(label("ENC_B", j18_pin(4)[0] - 6, j18_pin(4)[1]))
@@ -2718,7 +2748,7 @@ def write_pcb() -> Path:
         20: "/OPTO_OUT5",
         21: "/OPTO_OUT6",
         22: "/OPTO_OUT7",
-        23: "/OPTO_OUT8",  # U9 ch4 only — not wired to MCU (IO9 = ENC_A)
+        23: "/OPTO_OUT8",  # U9 ch4 only — not wired to MCU (IO9 = BUZZER)
         24: "/OPTO_VCC_I",
         25: "/OPTO_IN1",
         26: "/OPTO_IN2",
@@ -2827,15 +2857,41 @@ def write_pcb() -> Path:
             via(x1, y2, net, drill, dia)
             track_h(x1, x2, y2, net, w)
 
+    # Long build notes go on Cmts.User, not the silkscreen: at 0.8 mm on a
+    # 235x132 board they collide with the group boxes and the pads they sit
+    # beside, and they are documentation rather than assembly markings.
     def gr_text(txt, x, y, layer, size=1.0, rot=0):
+        # Descriptive text goes on the documentation layer, not the
+        # silkscreen. Every part already prints its own reference and value
+        # from its footprint; these extra notes only added 68 silk_overlap and
+        # silk_over_copper warnings on a board this dense, and at 0.8 mm
+        # crammed between the zone boxes they were not readable anyway.
+        # Zone outlines (gr_box) stay on silk.
+        if layer in ("F.SilkS", "B.SilkS"):
+            layer = "Cmts.User"
+        # Clamp to the fab's legibility floor: KiCad's board-setup silk minimum
+        # is 0.8 mm, and anything under it is both a DRC warning and unreadable
+        # on a real board. Back-layer text also has to be mirrored, or it reads
+        # backwards once the board is flipped over.
+        size = max(SILK_TEXT_MIN_MM, size)
+        mirror = " (justify mirror)" if layer.startswith("B.") else ""
         a(f'\t(gr_text "{txt}"')
         a(f"\t\t(at {x} {y} {rot})")
         a(f'\t\t(layer "{layer}")')
-        a(f"\t\t(effects (font (size {size} {size}) (thickness {max(0.12, size * 0.15)})))")
+        a(
+            f"\t\t(effects (font (size {size} {size}) "
+            f"(thickness {max(0.15, size * 0.15)})){mirror})"
+        )
         a(f'\t\t(uuid "{uid()}")')
         a("\t)")
 
     def gr_box(x0, y0, x1, y1, layer):
+        # Zone outlines follow the zone labels onto the documentation layer: on
+        # a board this dense they crossed the footprints' own silk 22 times, and
+        # they mark logical grouping rather than anything the assembler needs
+        # printed on the board.
+        if layer in ("F.SilkS", "B.SilkS"):
+            layer = "Cmts.User"
         a("\t(gr_rect")
         a(f"\t\t(start {x0} {y0})")
         a(f"\t\t(end {x1} {y1})")
@@ -2978,7 +3034,9 @@ def write_pcb() -> Path:
         a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)))")
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
-        a("\t\t(attr through_hole exclude_from_pos_files exclude_from_bom)")
+        # board_only: a mounting hole has no schematic symbol, so without this
+        # schematic parity reports each one as an extra footprint.
+        a("\t\t(attr through_hole board_only exclude_from_pos_files exclude_from_bom)")
         a('\t\t(fp_circle')
         a("\t\t\t(center 0 0)")
         a(f"\t\t\t(end {MOUNT_PAD / 2} 0)")
@@ -3003,53 +3061,80 @@ def write_pcb() -> Path:
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
         a("\t)")
-    gr_text("M3x4 corner mount", ox + bw / 2 - 12, oy + 2.2, "F.SilkS", 0.6)
+    gr_text("M3x4 corner mount", ox + bw / 2 - 12, oy + 2.2, "Cmts.User", 0.8)
 
-    # TOP silk — functional groups (185×125)
-    gr_text("TOP 235x132 — giac theo nhom | BOTTOM module", ox + 28, oy + 4.5, "F.SilkS", 0.85)
-    gr_box(ox + 6, oy + 6, ox + 22, oy + 36, "F.SilkS")
-    gr_text("B STEP", ox + 7, oy + 7.5, "F.SilkS", 0.65)
-    gr_box(ox + 24, oy + 6, ox + 100, oy + 36, "F.SilkS")
-    gr_text("C HMI  J17/J18/J15", ox + 26, oy + 7.5, "F.SilkS", 0.65)
-    gr_box(ox + 102, oy + 6, ox + 128, oy + 36, "F.SilkS")
-    gr_text("G BLW", ox + 103, oy + 7.5, "F.SilkS", 0.65)
-    gr_box(ox + sx(130), oy + 6, ox + sx(178), oy + 36, "F.SilkS")
-    gr_text("D SENSE", ox + sx(131), oy + 7.5, "F.SilkS", 0.65)
-    gr_box(ox + 6, oy + 38, ox + sx(178), oy + 54, "F.SilkS")
-    gr_text("E+F  DC MOT + LIMIT (cap truc)", ox + 8, oy + 39.5, "F.SilkS", 0.7)
+    # TOP silk — functional groups (235×132, proximity layout)
+    gr_text("TOP 235x132 — giac canh module dieu khien no", ox + 28, oy + 4.5, "Cmts.User", 0.85)
+    gr_box(ox + 36, oy + 6, ox + 64, oy + 36, "F.SilkS")
+    gr_text("C HMI J17/J18/J15", ox + 37, oy + 7.5, "F.SilkS", 0.6)
+    gr_box(ox + 76, oy + 98, ox + 88, oy + 128, "F.SilkS")
+    gr_text("D FIELD J4", ox + 74, oy + 97.0, "F.SilkS", 0.6)
+    gr_box(ox + 122, oy + 6, ox + 132, oy + 22, "F.SilkS")
+    gr_text("G BLW J16", ox + 121, oy + 5.0, "F.SilkS", 0.6)
+    gr_box(ox + 22, oy + 38, ox + 56, oy + 50, "F.SilkS")
+    gr_text("F LIMIT truc 1-2 (-> U4)", ox + 23, oy + 39.2, "F.SilkS", 0.6)
+    gr_box(ox + 109, oy + 38, ox + 127, oy + 50, "F.SilkS")
+    gr_text("F LIMIT truc 3 (-> U9)", ox + 108, oy + 37.0, "F.SilkS", 0.6)
+    gr_box(ox + 160, oy + 40, ox + 200, oy + 56, "F.SilkS")
+    gr_text("B STEP J2 -> U3", ox + 161, oy + 41.2, "F.SilkS", 0.6)
+    gr_box(ox + 226, oy + 58, ox + 233, oy + 124, "F.SilkS")
+    gr_text("E DC MOT J5-J7", ox + 206, oy + 56.5, "F.SilkS", 0.6)
 
     # BOTTOM silk zones
-    gr_text("BOTTOM — 1 POWER | 2 MCU | 3 TMC | 4 OPTO | 5 DRV", ox + 10, oy + bh - 2.5, "B.SilkS", 0.7)
-    gr_box(ox + 4, oy + 56, ox + 66, oy + 100, "B.SilkS")
-    gr_text("1 POWER J1/U2", ox + 5, oy + 57.5, "B.SilkS", 0.65)
-    gr_box(ox + 4, oy + 56, ox + 28, oy + bh - 4, "B.SilkS")
-    gr_text("B.Cu bus", ox + 5, oy + 58, "B.SilkS", 0.55)
-    gr_box(ox + 68, oy + 56, ox + 128, oy + 118, "B.SilkS")
-    gr_text("2 MCU U1", ox + 70, oy + 57.5, "B.SilkS", 0.65)
-    gr_box(ox + sx(130), oy + 56, ox + sx(158), oy + 100, "B.SilkS")
-    gr_text("3 TMC", ox + sx(132), oy + 57.5, "B.SilkS", 0.65)
+    gr_text("BOTTOM — 1 POWER | 2 MCU | 3 TMC | 4 OPTO | 5 DRV", ox + 10, oy + bh - 2.5, "Cmts.User", 0.8)
+    gr_box(ox + 5, oy + 38, ox + 34, oy + 82, "B.SilkS")
+    gr_text("1 POWER J1/F1/D1/U2", ox + 5, oy + 39.5, "B.SilkS", 0.6)
+    gr_box(ox + 68, oy + 32, ox + 102, oy + 99, "B.SilkS")
+    gr_text("2 MCU U1", ox + 70, oy + 33.5, "B.SilkS", 0.65)
+    gr_box(ox + 170, oy + 34, ox + 196, oy + 58, "B.SilkS")
+    gr_text("3 TMC U3", ox + 171, oy + 35.5, "B.SilkS", 0.65)
+    gr_box(ox + 196, oy + 52, ox + 228, oy + 128, "B.SilkS")
+    gr_text("5 DRV U5-U7", ox + 197, oy + 53.5, "B.SilkS", 0.65)
 
     rot = BOTTOM_ROT
     hx = MINI560_PAD_SPAN_X / 2
     hy = MINI560_PAD_SPAN_Y / 2
 
-    # --- Placement map (local mm from ox,oy) — expanded clearance layout ---
-    # TOP jack row y≈10; motor/limit row y≈42; BOTTOM modules y≥58 (clear of TOP pads)
-    jx, jy = ox + 14.0, oy + 62.0  # J1 power
-    f1x, f1y = ox + 30.0, oy + 62.0
-    d1x, d1y = ox + 30.0, oy + 78.0
-    mx, my = ox + 52.0, oy + 64.0  # U2
-    fx, fy = ox + 98.0, oy + 90.0  # U1 DevKit center (≈64 mm tall)
-    tx, ty = ox + sx(142.0), oy + 72.0  # U3 TMC
-    j2x, j2y = ox + 12.0, oy + 10.0  # B STEP
-    j3x, j3y = ox + 30.0, oy + 10.0  # C HMI — J17 TFT
-    j18x, j18y = ox + 60.0, oy + 10.0  # C ENC
-    j15x, j15y = ox + 78.0, oy + 10.0  # C buzzer
-    j16x, j16y = ox + sx(108.0), oy + 10.0  # G blower
-    j4x, j4y = ox + sx(138.0), oy + 8.0  # D field
-    j14x, j14y = ox + sx(168.0), oy + 42.0  # D BUP (TOP, clear of DRV)
-    u4_at = (ox + 32.0, oy + 108.0)
-    u9_at = (ox + 92.0, oy + 108.0)
+    # --- Placement map (local mm from ox,oy) — proximity layout ---
+    # Rule: every jack sits next to the module that drives it, so no signal net
+    # has to cross the board.  Left half = power + HMI + U1, right half = motion
+    # (U3 stepper, U5-U7 DC drivers) with their jacks on the right edge.
+    #   * J5-J7 (GA12-N20) moved from the far-left row to the DRV OUT pads.
+    #   * J2 (NEMA17) moved next to U3 so MotA/MotB are 10 mm straight tracks.
+    #   * U2/F1 moved out of the J17->U1 corridor (x 88..107 now empty).
+    #   * U9 moved right so it no longer sits under the U1 socket.
+    # Power chain stacked in one column on the left edge so J1 -> F1 -> D1 -> U2
+    # is a straight run: J1.+12V_RAW sits exactly above F1 pin 1.
+    jx, jy = ox + 11.0, oy + 44.0  # J1 power  (46, 74)
+    f1x, f1y = ox + 11.0, oy + 56.0  # F1 PTC   (46, 86)
+    d1x, d1y = ox + 11.0, oy + 68.0  # D1 TVS   (46, 98)
+    mx, my = ox + 23.0, oy + 82.0  # U2 buck    (58, 112)
+    fx, fy = ox + 98.0, oy + 90.0  # U1 DevKit center (≈64 mm tall) (133, 120)
+    # U3 sits in the same column as the DRVs, above U5: its VM pad then feeds
+    # off the same x=255 +12V spine instead of reaching across the six DC_IN
+    # tracks that funnel into the DRV IN pads at x=237.
+    tx, ty = ox + 212.0, oy + 32.0  # U3 TMC    (247, 62)
+    # J2 pad1 (/MotA2) is level with the U3 /MotA2 pad -> 4 parallel tracks.
+    j2x, j2y = ox + 193.0, ty + 3.81  # J2 NEMA17 (228, 65.81), rot 180
+    # HMI order = fan-out size: J17 (8 nets) nearest U1's west pad column, then
+    # J18, then J15. /TFT_RST and /ENC_A live on the east column, so they take
+    # the thin lane between the J4 pad field and the top of the U1 socket.
+    j3x, j3y = ox + 47.0, oy + 14.0  # C HMI — J17 TFT (82, 44)
+    # J18 sits east of U1's west pad column: both ENC nets drop straight down
+    # the (pad-free) socket interior instead of fighting the TFT fan-out.
+    j18x, j18y = ox + 77.0, oy + 10.0  # C ENC  (112, 40)
+    # Buzzer is one net on the east pad column (IO9), so its jack sits east of
+    # the socket rather than making that net cross it — but level with U1's own
+    # 5V/GND pins, not up in the top row: its two power pins then have a 15 mm
+    # run instead of one across the whole board.
+    j15x, j15y = ox + 110.0, oy + 28.0  # C buzzer (145, 58)
+    j16x, j16y = ox + 125.0, oy + 10.0  # G blower (160, 40)
+    # J4 field header dropped out of the crowded top band into the gap between
+    # the two optos, right beside the IN pads it parallels (115, 132).
+    j4x, j4y = ox + 80.0, oy + 102.0
+    j14x, j14y = ox + 165.0, oy + 28.0  # D BUP  (200, 58)
+    u4_at = (ox + 32.0, oy + 111.0)  # opto 1-4 (67, 141)
+    u9_at = (ox + 128.0, oy + 111.0)  # opto 5-8 (163, 141) — clear of U1
 
     # Skip old J1 placement header — continue with J1 at jx,jy below
     # (coordinates already set; original jx,jy assignment removed from following block)
@@ -3063,13 +3148,13 @@ def write_pcb() -> Path:
     a('\t\t(property "Reference" "J1"')
     a(f"\t\t\t(at 0 -5.5 {rot})")
     a('\t\t\t(layer "B.SilkS")')
-    a("\t\t\t(effects (font (size 1 1) (thickness 0.15)))")
+    a("\t\t\t(effects (font (size 1 1) (thickness 0.15)) (justify mirror))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a('\t\t(property "Value" "Screw_12V_IN"')
     a(f"\t\t\t(at 0 6.2 {rot})")
     a('\t\t\t(layer "B.Fab")')
-    a("\t\t\t(effects (font (size 1 1) (thickness 0.15)))")
+    a("\t\t\t(effects (font (size 1 1) (thickness 0.15)) (justify mirror))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a("\t\t(attr through_hole)")
@@ -3110,13 +3195,13 @@ def write_pcb() -> Path:
     a('\t\t(property "Reference" "F1"')
     a(f"\t\t\t(at 0 -5.2 {rot})")
     a('\t\t\t(layer "B.SilkS")')
-    a("\t\t\t(effects (font (size 0.9 0.9) (thickness 0.12)))")
+    a("\t\t\t(effects (font (size 0.9 0.9) (thickness 0.12)) (justify mirror))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a('\t\t(property "Value" "PTC_3A_30V"')
     a(f"\t\t\t(at 0 5.2 {rot})")
     a('\t\t\t(layer "B.Fab")')
-    a("\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)))")
+    a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)) (justify mirror))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a("\t\t(attr through_hole)")
@@ -3145,13 +3230,13 @@ def write_pcb() -> Path:
     a('\t\t(property "Reference" "D1"')
     a(f"\t\t\t(at 0 -3.2 {rot})")
     a('\t\t\t(layer "B.SilkS")')
-    a("\t\t\t(effects (font (size 0.9 0.9) (thickness 0.12)))")
+    a("\t\t\t(effects (font (size 0.9 0.9) (thickness 0.12)) (justify mirror))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a('\t\t(property "Value" "P6KE15A"')
     a(f"\t\t\t(at 0 3.2 {rot})")
     a('\t\t\t(layer "B.Fab")')
-    a("\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)))")
+    a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)) (justify mirror))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a("\t\t(attr through_hole)")
@@ -3182,15 +3267,16 @@ def write_pcb() -> Path:
     a(f'\t\t(uuid "{uid()}")')
     a(f"\t\t(at {mx} {my} {rot})")
     a('\t\t(property "Reference" "U2"')
-    a(f'\t\t\t(at 0 {-MINI560_H / 2 - 1.8} {rot})')
+    # Inside the body: below it, U2's designator landed on U4's silk outline.
+    a(f'\t\t\t(at 0 {-MINI560_H / 2 + 3.0} {rot})')
     a('\t\t\t(layer "B.SilkS")')
-    a("\t\t\t(effects (font (size 1 1) (thickness 0.15)))")
+    a("\t\t\t(effects (font (size 1 1) (thickness 0.15)) (justify mirror))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a('\t\t(property "Value" "MP1584_5V3A"')
     a(f'\t\t\t(at 0 {MINI560_H / 2 + 1.8} {rot})')
     a('\t\t\t(layer "B.Fab")')
-    a("\t\t\t(effects (font (size 1 1) (thickness 0.15)))")
+    a("\t\t\t(effects (font (size 1 1) (thickness 0.15)) (justify mirror))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a("\t\t(attr through_hole)")
@@ -3230,13 +3316,13 @@ def write_pcb() -> Path:
     a('\t\t(property "Reference" "U3"')
     a(f'\t\t\t(at 0 {-TMC_H / 2 - 1.8} {rot})')
     a('\t\t\t(layer "B.SilkS")')
-    a("\t\t\t(effects (font (size 1 1) (thickness 0.15)))")
+    a("\t\t\t(effects (font (size 1 1) (thickness 0.15)) (justify mirror))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a('\t\t(property "Value" "TMC2209"')
     a(f'\t\t\t(at 0 {TMC_H / 2 + 1.8} {rot})')
     a('\t\t\t(layer "B.Fab")')
-    a("\t\t\t(effects (font (size 1 1) (thickness 0.15)))")
+    a("\t\t\t(effects (font (size 1 1) (thickness 0.15)) (justify mirror))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a("\t\t(attr through_hole)")
@@ -3314,7 +3400,7 @@ def write_pcb() -> Path:
             "IO6": (20, "/OPTO_OUT5"),
             "IO7": (21, "/OPTO_OUT6"),
             "IO8": (22, "/OPTO_OUT7"),
-            "IO9": (62, "/ENC_A"),
+            "IO9": (54, "/BUZZER"),
             "IO10": (40, "/DC1_IN1"),
             "IO11": (41, "/DC1_IN2"),
             "IO12": (42, "/DC2_IN1"),
@@ -3327,7 +3413,7 @@ def write_pcb() -> Path:
             "IO21": (51, "/TFT_DC"),
             "IO47": (52, "/TFT_MISO"),
             "IO48": (53, "/T_CS"),
-            "IO38": (54, "/BUZZER"),
+            "IO38": (62, "/ENC_A"),
             "IO3": (55, "/BLOWER"),
             "IO46": (58, "/TFT_RST"),
             "IO45": (59, "/TFT_BL"),
@@ -3342,13 +3428,13 @@ def write_pcb() -> Path:
     a('\t\t(property "Reference" "U1"')
     a(f"\t\t\t(at 12.7 -10.5 {rot})")
     a('\t\t\t(layer "B.SilkS")')
-    a("\t\t\t(effects (font (size 1 1) (thickness 0.15)))")
+    a("\t\t\t(effects (font (size 1 1) (thickness 0.15)) (justify mirror))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a('\t\t(property "Value" "ESP32_S3_DevKitC_1"')
     a(f"\t\t\t(at 12.7 {y_last + 5.0} {rot})")
     a('\t\t\t(layer "B.Fab")')
-    a("\t\t\t(effects (font (size 1 1) (thickness 0.15)))")
+    a("\t\t\t(effects (font (size 1 1) (thickness 0.15)) (justify mirror))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a("\t\t(attr through_hole)")
@@ -3395,15 +3481,15 @@ def write_pcb() -> Path:
     a('\t(footprint "ESP32_Carrier:PinHeader_1x04_Motor"')
     a('\t\t(layer "F.Cu")')
     a(f'\t\t(uuid "{uid()}")')
-    a(f"\t\t(at {j2x} {j2y})")
+    a(f"\t\t(at {j2x} {j2y} 180)")
     a('\t\t(property "Reference" "J2"')
-    a("\t\t\t(at 0 -3.8 0)")
+    a("\t\t\t(at 0 -3.8 180)")
     a('\t\t\t(layer "F.SilkS")')
     a("\t\t\t(effects (font (size 1 1) (thickness 0.15)))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a('\t\t(property "Value" "NEMA17_OUT"')
-    a(f"\t\t\t(at 0 {3 * PITCH + 3.8} 0)")
+    a(f"\t\t\t(at 0 {3 * PITCH + 3.8} 180)")
     a('\t\t\t(layer "F.Fab")')
     a("\t\t\t(effects (font (size 1 1) (thickness 0.15)))")
     a(f'\t\t\t(uuid "{uid()}")')
@@ -3540,8 +3626,8 @@ def write_pcb() -> Path:
         y = i * PITCH
         a(f'\t\t(fp_text user "{lab}"')
         a(f"\t\t\t(at 3.8 {y} 0)")
-        a('\t\t\t(layer "F.SilkS")')
-        a("\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)) (justify left))")
+        a('\t\t\t(layer "Cmts.User")')
+        a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)) (justify left))")
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
         shape = "rect" if i == 0 else "circle"
@@ -3555,7 +3641,7 @@ def write_pcb() -> Path:
         a("\t\t)")
     a("\t)")
     gr_text("J18 ENC wall-mount EC11", j18x - 8, j18y - 5.5, "F.SilkS", 0.7)
-    gr_text("GND 3V3 A=IO9 B=IO41", j18x - 6, j18y - 3.8, "F.SilkS", 0.55)
+    gr_text("GND 3V3 A=IO38 B=IO41", j18x - 6, j18y - 3.8, "F.SilkS", 0.55)
 
     # --- J15 Buzzer TOP ---
     # --- J15 Buzzer TOP — j15 from placement map ---
@@ -3591,8 +3677,8 @@ def write_pcb() -> Path:
         y = i * PITCH
         a(f'\t\t(fp_text user "{lab}"')
         a(f"\t\t\t(at 3.8 {y} 0)")
-        a('\t\t\t(layer "F.SilkS")')
-        a("\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)) (justify left))")
+        a('\t\t\t(layer "Cmts.User")')
+        a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)) (justify left))")
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
         shape = "rect" if i == 0 else "circle"
@@ -3646,8 +3732,8 @@ def write_pcb() -> Path:
         y = i * PITCH
         a(f'\t\t(fp_text user "{lab}"')
         a(f"\t\t\t(at 3.8 {y} 0)")
-        a('\t\t\t(layer "F.SilkS")')
-        a("\t\t\t(effects (font (size 0.65 0.65) (thickness 0.1)) (justify left))")
+        a('\t\t\t(layer "Cmts.User")')
+        a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)) (justify left))")
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
         shape = "rect" if i == 0 else "circle"
@@ -3730,7 +3816,7 @@ def write_pcb() -> Path:
     farm_cx = j1_12[0] - 4.0
     farm_cy = j1_12[1]
     gr_text("+12V VIA 3A", farm_cx - 4, farm_cy - 5, "F.SilkS", 0.7)
-    gr_text("+12V VIA 3A", farm_cx - 4, farm_cy - 5, "B.SilkS", 0.7)
+    gr_text("+12V VIA 3A", farm_cx - 4, farm_cy - 5, "Cmts.User", 0.8)
     for ix in range(VIA12_COUNT_X):
         for iy in range(VIA12_COUNT_Y):
             vx = farm_cx + (ix - 1) * VIA12_PITCH
@@ -3918,11 +4004,11 @@ def write_pcb() -> Path:
         src = pad_world(fx, fy, rot, *pad_local(PIN_BY_NAME[gname]))
         dst = (j3x, j3y + pin_i * PITCH)
         route_mcu_to_top(ni, src, dst, ox + sx(178.0) + i * 1.2, side=-3.0, esc_i=i)
-    bz = pad_world(fx, fy, rot, *pad_local(PIN_BY_NAME["IO38"]))
+    bz = pad_world(fx, fy, rot, *pad_local(PIN_BY_NAME["IO9"]))
     route_mcu_to_top(54, bz, (j15x, j15y + 2 * PITCH), ox + sx(178.0) + 8 * 1.2, side=-3.0, esc_i=8)
     bl = pad_world(fx, fy, rot, *pad_local(PIN_BY_NAME["IO3"]))
     route_mcu_to_top(55, bl, (j16x, j16y), ox + sx(178.0) + 9 * 1.2, side=-3.0, esc_i=9)
-    for i, (ni, gname, pin_i) in enumerate([(62, "IO9", 2), (60, "IO41", 3)]):
+    for i, (ni, gname, pin_i) in enumerate([(62, "IO38", 2), (60, "IO41", 3)]):
         src = pad_world(fx, fy, rot, *pad_local(PIN_BY_NAME[gname]))
         dst = (j18x, j18y + pin_i * PITCH)
         route_mcu_to_top(ni, src, dst, ox + sx(178.0) + (10 + i) * 1.2, side=-3.0, esc_i=10 + i)
@@ -3952,15 +4038,17 @@ def write_pcb() -> Path:
         a(f'\t\t(uuid "{uid()}")')
         a(f"\t\t(at {ax} {ay} {rot4})")
         a(f'\t\t(property "Reference" "{ref}"')
-        a(f'\t\t\t(at 0 {-PC817_4CH_H / 2 - 1.8} {rot4})')
+        # Inside the body: hung below it, U4/U9's designator fell past the
+        # board outline (y = 161.8 on a board that ends at 162).
+        a(f'\t\t\t(at 0 {-PC817_4CH_H / 2 + 3.0} {rot4})')
         a('\t\t\t(layer "B.SilkS")')
-        a("\t\t\t(effects (font (size 1 1) (thickness 0.15)))")
+        a("\t\t\t(effects (font (size 1 1) (thickness 0.15)) (justify mirror))")
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
         a('\t\t(property "Value" "PC817_4CH"')
         a(f'\t\t\t(at 0 {PC817_4CH_H / 2 + 1.8} {rot4})')
         a('\t\t\t(layer "B.Fab")')
-        a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)))")
+        a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)) (justify mirror))")
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
         a("\t\t(attr through_hole)")
@@ -4039,12 +4127,12 @@ def write_pcb() -> Path:
             (23, "/OPTO_OUT8"),
         ],
     )
-    gr_text("2x PC817 4CH | OUT=MCU  IN=J4 field", ox + 20, oy + bh - 8.0, "B.SilkS", 0.65)
+    gr_text("2x PC817 4CH | OUT=MCU  IN=J4 field", ox + 20, oy + bh - 8.0, "Cmts.User", 0.8)
 
     # j4 from placement map
     gr_box(j4x - 3, j4y - 3, j4x + 6, j4y + 9 * PITCH + 3, "F.SilkS")
     gr_text("J4 OPTO FIELD IN", j4x + 8, j4y - 1.5, "F.SilkS", 0.85)
-    gr_text("IN1-6=lim; IN7=BUP30S; IN8 free", j4x + 8, j4y + 1.2, "F.SilkS", 0.65)
+    gr_text("IN1-6=lim; IN7=BUP30S; IN8 free", j4x + 8, j4y + 1.2, "Cmts.User", 0.8)
     a('\t(footprint "ESP32_Carrier:PinHeader_1x10_OptoField"')
     a('\t\t(layer "F.Cu")')
     a(f'\t\t(uuid "{uid()}")')
@@ -4076,8 +4164,8 @@ def write_pcb() -> Path:
         lab = OPTO_FIELD_HEADER[i][1]
         a(f'\t\t(fp_text user "{lab}"')
         a(f"\t\t\t(at 3.8 {y} 0)")
-        a('\t\t\t(layer "F.SilkS")')
-        a("\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)) (justify left))")
+        a('\t\t\t(layer "Cmts.User")')
+        a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)) (justify left))")
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
         shape = "rect" if i == 0 else "circle"
@@ -4205,11 +4293,16 @@ def write_pcb() -> Path:
 
     # --- 3x DRV8871 BOTTOM + 3x GA12-N20 TOP ---
     # Pad locals: Vs(-8,-16) GND(0,-16) 5V(8,-16) ENA(-18,-6) IN1(-18,0) IN2(-18,6) OUT1(18,-4) OUT2(18,4)
+    # (uref, jref, jmin, jmax, ux, uy, ljmin_x, ljmax_x, ni1, ni2, nma, nmb,
+    #  g1, g2, nmin, nmax) — motor jack sits at (DRV_JACK_X, uy + 4) so the two
+    # OUT pads reach it with two short straight tracks; limit jacks sit above
+    # the opto they feed, in the x order that keeps their tracks from crossing.
+    DRV_JACK_X = ox + 230.0  # 265 — right edge, clear of the DRV bodies
+    LIMIT_Y = oy + 42.0  # 72 — TOP limit-switch row
     l298n_pcb = [
-        # DRV column on far right (zone 5); jacks TOP row y=42 (E+F)
-        ("U5", "J5", "J8", "J9", ox + sx(168.0), oy + 62.0, ox + 18.0, oy + 42.0, 40, 41, 34, 35, "IO10", "IO11", 25, 26),
-        ("U6", "J6", "J10", "J11", ox + sx(168.0), oy + 86.0, ox + 72.0, oy + 42.0, 42, 43, 36, 37, "IO12", "IO13", 27, 28),
-        ("U7", "J7", "J12", "J13", ox + sx(168.0), oy + 110.0, ox + 126.0, oy + 42.0, 44, 45, 38, 39, "IO14", "IO15", 29, 30),
+        ("U5", "J5", "J8", "J9", ox + 212.0, oy + 64.0, ox + 50.0, ox + 42.0, 40, 41, 34, 35, "IO10", "IO11", 25, 26),
+        ("U6", "J6", "J10", "J11", ox + 212.0, oy + 90.0, ox + 34.0, ox + 26.0, 42, 43, 36, 37, "IO12", "IO13", 27, 28),
+        ("U7", "J7", "J12", "J13", ox + 212.0, oy + 116.0, ox + 121.0, ox + 113.0, 44, 45, 38, 39, "IO14", "IO15", 29, 30),
     ]
     esp_gpio_local = {
         "IO10": (0.0, 38.1),
@@ -4220,19 +4313,19 @@ def write_pcb() -> Path:
         "IO15": (0.0, 17.78),
     }
 
-    def _hdr_1x2(fp, ref, val, atx, aty, pads):
+    def _hdr_1x2(fp, ref, val, atx, aty, pads, hrot=0):
         a(f'\t(footprint "ESP32_Carrier:{fp}"')
         a('\t\t(layer "F.Cu")')
         a(f'\t\t(uuid "{uid()}")')
-        a(f"\t\t(at {atx} {aty})")
+        a(f"\t\t(at {atx} {aty} {hrot})")
         a(f'\t\t(property "Reference" "{ref}"')
-        a("\t\t\t(at 0 -3.8 0)")
+        a(f"\t\t\t(at 0 -3.8 {hrot})")
         a('\t\t\t(layer "F.SilkS")')
         a("\t\t\t(effects (font (size 0.9 0.9) (thickness 0.12)))")
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
         a(f'\t\t(property "Value" "{val}"')
-        a(f"\t\t\t(at 0 {PITCH + 3.8} 0)")
+        a(f"\t\t\t(at 0 {PITCH + 3.8} {hrot})")
         a('\t\t\t(layer "F.Fab")')
         a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)))")
         a(f'\t\t\t(uuid "{uid()}")')
@@ -4251,8 +4344,8 @@ def write_pcb() -> Path:
             y = pi * PITCH
             a(f'\t\t(fp_text user "{lab}"')
             a(f"\t\t\t(at 3.2 {y} 0)")
-            a('\t\t\t(layer "F.SilkS")')
-            a("\t\t\t(effects (font (size 0.65 0.65) (thickness 0.1)) (justify left))")
+            a('\t\t\t(layer "Cmts.User")')
+            a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)) (justify left))")
             a(f'\t\t\t(uuid "{uid()}")')
             a("\t\t)")
             shape = "rect" if pi == 0 else "circle"
@@ -4266,10 +4359,9 @@ def write_pcb() -> Path:
             a("\t\t)")
         a("\t)")
 
-    for mi, (uref, jref, jmin, jmax, ux, uy, jx, jy, ni1, ni2, nma, nmb, g1, g2, nmin, nmax) in enumerate(l298n_pcb):
-        gr_box(ux - 22, uy - 22, ux + 22, uy + 22, "B.SilkS")
-        gr_text(f"{uref} DRV8871 GA12", ux - 20, uy + 24, "B.SilkS", 0.85)
-        gr_text("VM=12V", ux - 14, uy + 14, "B.SilkS", 0.7)
+    for mi, (uref, jref, jmin, jmax, ux, uy, ljmin_x, ljmax_x, ni1, ni2, nma, nmb, g1, g2, nmin, nmax) in enumerate(l298n_pcb):
+        gr_box(ux - 15, uy - 11, ux + 15, uy + 11, "B.SilkS")
+        gr_text(f"{uref} DRV8871 GA12 VM=12V", ux - 14, uy + 12.6, "B.SilkS", 0.7)
         a('\t(footprint "ESP32_Carrier:DRV8871_Module"')
         a('\t\t(layer "B.Cu")')
         a(f'\t\t(uuid "{uid()}")')
@@ -4277,13 +4369,13 @@ def write_pcb() -> Path:
         a(f'\t\t(property "Reference" "{uref}"')
         a(f"\t\t\t(at 0 {-L298N_H / 2 - 1.8} {rot})")
         a('\t\t\t(layer "B.SilkS")')
-        a("\t\t\t(effects (font (size 1 1) (thickness 0.15)))")
+        a("\t\t\t(effects (font (size 1 1) (thickness 0.15)) (justify mirror))")
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
         a('\t\t(property "Value" "DRV8871_Module"')
         a(f"\t\t\t(at 0 {L298N_H / 2 + 1.8} {rot})")
         a('\t\t\t(layer "B.Fab")')
-        a("\t\t\t(effects (font (size 1 1) (thickness 0.15)))")
+        a("\t\t\t(effects (font (size 1 1) (thickness 0.15)) (justify mirror))")
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
         a("\t\t(attr through_hole)")
@@ -4296,13 +4388,17 @@ def write_pcb() -> Path:
             a(f'\t\t\t(layer "{layer}")')
             a(f'\t\t\t(uuid "{uid()}")')
             a("\t\t)")
+        # Pad sides are mirrored vs. the old layout: IN1/IN2 now face WEST
+        # (world x = ux - 10, towards U1) and OUT A/B face EAST (ux + 10,
+        # towards the motor jack on the board edge). Logic in from the MCU,
+        # motor out to the edge — no net has to run round the module.
         l298_pads = [
             ("1", -8.0, -8.0, 1, "+12V"),
             ("2", 0.0, -8.0, 2, "GND"),
-            ("3", -10.0, 0.0, ni1, f"/DC{mi + 1}_IN1"),
-            ("4", -10.0, 6.0, ni2, f"/DC{mi + 1}_IN2"),
-            ("5", 10.0, -4.0, nma, f"/MotDC{mi + 1}_A"),
-            ("6", 10.0, 4.0, nmb, f"/MotDC{mi + 1}_B"),
+            ("3", 10.0, 0.0, ni1, f"/DC{mi + 1}_IN1"),
+            ("4", 10.0, 6.0, ni2, f"/DC{mi + 1}_IN2"),
+            ("5", -10.0, -4.0, nma, f"/MotDC{mi + 1}_A"),
+            ("6", -10.0, 4.0, nmb, f"/MotDC{mi + 1}_B"),
         ]
         for i, (num, lx, ly, neti, netn) in enumerate(l298_pads):
             shape = "rect" if i == 0 else "circle"
@@ -4317,11 +4413,11 @@ def write_pcb() -> Path:
             a("\t\t)")
         a("\t)")
 
-        # TOP group: MOT + LIM_MIN + LIM_MAX (NC @12V -> opto)
-        jx_min, jx_max = jx + 8.0, jx + 16.0
-        gr_box(jx - 4, jy - 5, jx_max + 6, jy + PITCH + 5, "F.SilkS")
-        gr_text(f"TRUC{mi + 1} MOT+LIM NC", jx - 3, jy - 6.5, "F.SilkS", 0.85)
-        gr_text(f"{jref} MOT  {jmin} MIN  {jmax} MAX", jx - 3, jy + PITCH + 6.5, "F.SilkS", 0.7)
+        # Motor jack: TOP, on the board edge beside this DRV's OUT pads.
+        # rot 180 puts pad1 (M+) level with OUT_A and pad2 (M-) above it, which
+        # is the order that keeps the two tracks from crossing each other.
+        jx, jy = DRV_JACK_X, uy + 4.0
+        gr_text(f"{jref} GA12-N20 TRUC{mi + 1}", jx - 22, uy - 12.5, "F.SilkS", 0.7)
         _hdr_1x2(
             "PinHeader_1x02_MotorDC",
             jref,
@@ -4329,30 +4425,37 @@ def write_pcb() -> Path:
             jx,
             jy,
             [(nma, f"/MotDC{mi + 1}_A", "M+"), (nmb, f"/MotDC{mi + 1}_B", "M-")],
+            hrot=180,
         )
+        # Limit jacks: TOP row above the opto that reads them.
+        # Below the jacks, not above: above them is where the TFT header's pad
+        # column now runs, and silk printed over an exposed pad gets clipped by
+        # the solder mask -- unreadable, and a DRC warning.
+        gr_text(f"T{mi + 1} {jmin} MIN", ljmin_x - 3, LIMIT_Y + 8.0, "F.SilkS", 0.8)
+        gr_text(f"T{mi + 1} {jmax} MAX", ljmax_x - 3, LIMIT_Y + 10.4, "F.SilkS", 0.8)
         _hdr_1x2(
             "PinHeader_1x02_LimitSW",
             jmin,
             "LIM_MIN_NC",
-            jx_min,
-            jy,
+            ljmin_x,
+            LIMIT_Y,
             [(46, "+12V_SNS", "+12S"), (nmin, f"/OPTO_IN{2 * mi + 1}", "SW")],
         )
         _hdr_1x2(
             "PinHeader_1x02_LimitSW",
             jmax,
             "LIM_MAX_NC",
-            jx_max,
-            jy,
+            ljmax_x,
+            LIMIT_Y,
             [(46, "+12V_SNS", "+12S"), (nmax, f"/OPTO_IN{2 * mi + 2}", "SW")],
         )
 
         p_vs = pad_world(ux, uy, rot, -8.0, -8.0)
         p_gnd = pad_world(ux, uy, rot, 0.0, -8.0)
-        p_in1 = pad_world(ux, uy, rot, -10.0, 0.0)
-        p_in2 = pad_world(ux, uy, rot, -10.0, 6.0)
-        p_o1 = pad_world(ux, uy, rot, 10.0, -4.0)
-        p_o2 = pad_world(ux, uy, rot, 10.0, 4.0)
+        p_in1 = pad_world(ux, uy, rot, 10.0, 0.0)
+        p_in2 = pad_world(ux, uy, rot, 10.0, 6.0)
+        p_o1 = pad_world(ux, uy, rot, -10.0, -4.0)
+        p_o2 = pad_world(ux, uy, rot, -10.0, 4.0)
         # Stub to pre-built vertical power buses on far right
         x12_drv = ox + bw - 5.0
         xg_drv = ox + bw - 11.0
@@ -4429,8 +4532,8 @@ def write_pcb() -> Path:
         track_v(xb, p_o2[1], yb, nmb, 0.6)
         via(xb, yb, nmb, 0.4, 0.8)
         side_enter_pin(nmb, xb, yb, jmm, w=0.6, side=+3.5)
-        for atx, neti, ch in [(jx_min, nmin, 2 * mi), (jx_max, nmax, 2 * mi + 1)]:
-            psw = (atx, jy + PITCH)
+        for atx, neti, ch in [(ljmin_x, nmin, 2 * mi), (ljmax_x, nmax, 2 * mi + 1)]:
+            psw = (atx, LIMIT_Y + PITCH)
             if ch < 4:
                 upt = _opto_in_pad(u4_at, ch + 2)
             else:
@@ -4452,8 +4555,10 @@ def write_pcb() -> Path:
 
 
     # --- J14 BUP-30S + R1 4k7 pull-up (TOP) — j14 from placement map ---
+    # R1 pulls /OPTO_IN7 up to +12V_SNS; keep it beside J14, not on its pin
+    # column, and clear of the J4 field header to its west.
     r1x, r1y = j14x - 10.0, j14y + 3.2 * PITCH
-    gr_box(j14x - 14, j14y - 5, j14x + 6, j14y + 4 * PITCH + 3, "F.SilkS")
+    gr_box(j14x - 8, j14y - 5, j14x + 6, j14y + 4 * PITCH + 3, "F.SilkS")
     gr_text("J14 BUP-30S NPN", j14x - 3, j14y - 6.5, "F.SilkS", 0.85)
     gr_text("Brn +12 Blu GND Blk OUT Wht CTRL", j14x - 3, j14y + 3 * PITCH + 6.5, "F.SilkS", 0.65)
     gr_text("R1 4k7 pullup NPN", r1x - 2, r1y - 4, "F.SilkS", 0.7)
@@ -4493,8 +4598,8 @@ def write_pcb() -> Path:
         y = i * PITCH
         a(f'\t\t(fp_text user "{lab}"')
         a(f"\t\t\t(at 3.5 {y} 0)")
-        a('\t\t\t(layer "F.SilkS")')
-        a("\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)) (justify left))")
+        a('\t\t\t(layer "Cmts.User")')
+        a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)) (justify left))")
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
         shape = "rect" if i == 0 else "circle"
@@ -4581,10 +4686,12 @@ def write_pcb() -> Path:
     _axial2("R_Axial_4k7_BUP", "R2", "10k", ox + 108.0, oy + 78.0,
             (11, "/EN_TMC"), (4, "+3V3"), 0.8, 1.6, "R2 EN_TMC pull-up 10k")
     # GPIO3 is a strapping pin with NO internal pull -> pump could run at boot.
-    _axial2("R_Axial_4k7_BUP", "R3", "10k", ox + 108.0, oy + 28.0,
+    _axial2("R_Axial_4k7_BUP", "R3", "10k", ox + 110.0, oy + 59.52,
             (55, "/BLOWER"), (2, "GND"), 0.8, 1.6, "R3 BLOWER pull-down 10k")
     # Freewheel diode across the 12V pump (inductive load). Band/cathode = +12V.
-    _axial2("Diode_TVS_DO41", "D2", "1N5819", ox + 112.0, oy + 22.0,
+    # Kept off the J16 pin column: a part colinear with the header pins leaves
+    # no lane for its own two nets to reach it.
+    _axial2("Diode_TVS_DO41", "D2", "1N5819", ox + 137.0, oy + 16.0,
             (1, "+12V"), (61, "/BLW_RET"), 0.9, 1.7, "D2 K(band)->+12V")
 
     # Routes: +12V/GND from power; OUT to U4 IN7
@@ -4635,8 +4742,8 @@ def write_pcb() -> Path:
     # J1 = star hub. Branch MOT 2.5mm / Branch SNS 0.5mm + RC. GND star separately.
     W_MOT = 2.5
     W_SNS = 0.5
-    gr_text("STAR +12V: MOT 2.5mm | SNS 0.5mm+RC", ox + 4, oy + 44, "B.SilkS", 0.75)
-    gr_text("GND star gap chi gap tai J1-", ox + 4, oy + 46.5, "B.SilkS", 0.7)
+    gr_text("STAR +12V: MOT 2.5mm | SNS 0.5mm+RC", ox + 4, oy + 44, "Cmts.User", 0.8)
+    gr_text("GND star gap chi gap tai J1-", ox + 4, oy + 46.5, "Cmts.User", 0.8)
 
     # --- RC filter near J1 (F.Cu): R10 10R -> +12V_SNS, C10 47u + C11 100n to GND ---
     r10x, r10y = j1_12[0] + 10.0, j1_12[1] + 8.0
@@ -4651,13 +4758,13 @@ def write_pcb() -> Path:
     a('\t\t(property "Reference" "R10"')
     a("\t\t\t(at 0 -2 0)")
     a('\t\t\t(layer "F.SilkS")')
-    a("\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)))")
+    a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a('\t\t(property "Value" "10R"')
     a("\t\t\t(at 0 2 0)")
     a('\t\t\t(layer "F.Fab")')
-    a("\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)))")
+    a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a("\t\t(attr smd)")
@@ -4683,13 +4790,13 @@ def write_pcb() -> Path:
     a('\t\t(property "Reference" "C10"')
     a("\t\t\t(at 0 -4.5 0)")
     a('\t\t\t(layer "F.SilkS")')
-    a("\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)))")
+    a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a('\t\t(property "Value" "47u/25V"')
     a("\t\t\t(at 0 4.5 0)")
     a('\t\t\t(layer "F.Fab")')
-    a("\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)))")
+    a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a("\t\t(attr through_hole)")
@@ -4717,13 +4824,13 @@ def write_pcb() -> Path:
     a('\t\t(property "Reference" "C11"')
     a("\t\t\t(at 0 -1.8 0)")
     a('\t\t\t(layer "F.SilkS")')
-    a("\t\t\t(effects (font (size 0.6 0.6) (thickness 0.1)))")
+    a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a('\t\t(property "Value" "100n"')
     a("\t\t\t(at 0 1.8 0)")
     a('\t\t\t(layer "F.Fab")')
-    a("\t\t\t(effects (font (size 0.6 0.6) (thickness 0.1)))")
+    a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a("\t\t(attr smd)")
@@ -4766,9 +4873,9 @@ def write_pcb() -> Path:
     track_v(j1_gnd[0], j1_gnd[1] + 6, j1_gnd[1], 2, W_SNS)
     track_h(c11x + 0.95, c10x + 1.25, c11y, 2, W_SNS)
 
-    for mi, (_, _, _, _, _, _, jx_g, jy_g, *_) in enumerate(l298n_pcb):
-        for di, dx in enumerate((8.0, 16.0)):
-            px = jx_g + dx
+    for mi, (_, _, _, _, _, _, ljmin_g, ljmax_g, *_) in enumerate(l298n_pcb):
+        jy_g = LIMIT_Y
+        for di, px in enumerate((ljmin_g, ljmax_g)):
             # SNS: side-enter limit +12S pin (1x2 — no V through SW pin)
             xs = px - 3.0 - di * 0.8 - mi * 0.4
             via(xs, y_sns, 46, 0.4, 0.8)
@@ -4782,11 +4889,13 @@ def write_pcb() -> Path:
     track_h(xs14, j14x, j14y, 46, W_SNS)
 
     # --- Bulk 470u near TMC + each L298N (B.Cu) ---
+    # Each DRV bulk cap sits in the gap just below its own module (≈9 mm from
+    # the VM pad) instead of 30 mm away on the far side.
     bulk_places = [
-        ("C20", t_vm[0] + 8, t_vm[1], "TMC"),
-        ("C21", ox + sx(168.0) - 22, oy + 62.0, "U5"),
-        ("C22", ox + sx(168.0) - 22, oy + 86.0, "U6"),
-        ("C23", ox + sx(168.0) - 22, oy + 110.0, "U7"),
+        ("C20", tx, ty + 16.0, "TMC"),
+        ("C21", ox + 218.0, oy + 77.0, "U5"),
+        ("C22", ox + 218.0, oy + 103.0, "U6"),
+        ("C23", ox + 218.0, oy + 129.0, "U7"),
     ]
     for ref, bx, by, tag in bulk_places:
         gr_text(f"{ref} 470u {tag}", bx - 4, by - 6, "B.SilkS", 0.65)
@@ -4797,13 +4906,13 @@ def write_pcb() -> Path:
         a(f'\t\t(property "Reference" "{ref}"')
         a(f"\t\t\t(at 0 -5.5 {rot})")
         a('\t\t\t(layer "B.SilkS")')
-        a("\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)))")
+        a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)) (justify mirror))")
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
         a('\t\t(property "Value" "470u/25V"')
         a(f"\t\t\t(at 0 5.5 {rot})")
         a('\t\t\t(layer "B.Fab")')
-        a("\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)))")
+        a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)) (justify mirror))")
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
         a("\t\t(attr through_hole)")
@@ -4840,7 +4949,7 @@ def write_pcb() -> Path:
 
     a(")")
     text = "\n".join(lines) + "\n"
-    if USE_MAZE_AUTOROUTE:
+    if RUN_MAZE:
         text = strip_routes(text)
         pads = parse_pads(text)
         kept = parse_kept_vias(text)
@@ -4874,6 +4983,13 @@ def write_pcb() -> Path:
                 break
         if not text.endswith("\n"):
             text += "\n"
+    # Net names must not carry a leading slash. KiCad treats "/" as the
+    # hierarchy separator, so a global label written "/STEP" comes back as the
+    # net "{slash}STEP" — which never matches a pad called "/STEP", and every
+    # signal net then shows up as a schematic-parity conflict. Bare names are
+    # what a KiCad-native flow produces anyway.
+    text = re.sub(r'\(net (\d+) "/', r'(net \1 "', text)
+    text = re.sub(r'\(net "/', '(net "', text)
     out = ROOT / "esp32_baseboard.kicad_pcb"
     out.write_text(text, encoding="utf-8")
     return out
@@ -4908,7 +5024,7 @@ May van phong ~20 cm. PSU ngoai **Mean Well 12V/3A**. Limit = **co khi** (ngoai 
 | J15 | Header 1x03 | Buzzer 5V | Chi jack |
 | J16 | Header 1x04 | AOD4184 PWM/GND/+12V/FAN− | Chi jack (+ module AOD4184) |
 | J17 | Header 1x10 | TFT SPI + touch I2C (+ RST / BL, poll — no T_INT) | Chi jack |
-| **J18** | Header 1x04 | **EC11 wall-mount** GND/3V3/ENC_A/ENC_B → IO9/IO41 | Chi jack (cap panel) |
+| **J18** | Header 1x04 | **EC11 wall-mount** GND/3V3/ENC_A/ENC_B → IO38/IO41 | Chi jack (cap panel) |
 
 J3: **khong dung**.
 
@@ -4934,14 +5050,14 @@ J3: **khong dung**.
 |-----------|------|
 | Limit OUT1..6 (qua opto) | IO1,2,4,5,6,7 |
 | BUP OUT7 | IO8 |
-| Spare OUT8 | (khong vao MCU — IO9 = ENC) |
-| **ENC_A / ENC_B (J18 EC11)** | **IO9 / IO41** |
+| Spare OUT8 | (khong vao MCU — IO9 = buzzer) |
+| **ENC_A / ENC_B (J18 EC11)** | **IO38 / IO41** |
 | Motor1..3 IN1/IN2 | IO10/11, 12/13, 14/15 |
 | TMC STEP/DIR/EN | IO16/17/18 |
 | TFT SCK/MOSI/CS/DC (khong MISO) | IO39/40/42/21 |
 | TFT RST (chung LCD+touch) / BL PWM | IO46 / IO45 |
 | Touch SDA/SCL (poll, khong INT) | IO47/48 |
-| Buzzer | IO38 |
+| Buzzer | IO9 |
 | AOD4184 / bom | IO3 |
 | IO35 / IO36 / IO37 | **KHONG dung** - octal PSRAM (N16R8) |
 
@@ -4960,12 +5076,13 @@ bo giu suot reset -> BL tat va man giu trong reset ngay tu luc cap nguon.
 
 ### Canh bao mua module
 
-- **Chot DevKitC-1 v1.1**: v1.1 dat WS2812 onboard tren GPIO38 (trung buzzer,
-  vo hai - LED nhap nhay theo coi). v1.0 dat no tren GPIO48 = **trung I2C SCL**.
+- **Chot DevKitC-1 v1.1**: v1.1 dat WS2812 onboard tren GPIO38 (trung ENC_A,
+  vo hai - WS2812 chi la tai DIN, LED co the nhap nhay khi xoay num).
+  v1.0 dat no tren GPIO48 = **trung T_CS touch**.
 - **KHONG mua ban hau to V** (N16R8V / N32R16V): VDD_SPI = 1.8V keo GPIO47/48
   xuong muc logic 1.8V -> hong bus touch.
 - IO35/36/37 cam tren N16R8 (octal PSRAM). Touch poll I2C (khong T_INT);
-  IO9/IO41 = EC11 ENC tren J18 (thiet bi gan thanh hop, day ve jack).
+  IO38/IO41 = EC11 ENC tren J18 (thiet bi gan thanh hop, day ve jack).
 
 ## 4) Da doi theo goi y do ben (OK)
 

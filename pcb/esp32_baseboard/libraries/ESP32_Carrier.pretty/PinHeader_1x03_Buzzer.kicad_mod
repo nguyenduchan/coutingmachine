@@ -1,82 +1,133 @@
 (footprint "PinHeader_1x03_Buzzer"
-	(version 20260206)
-	(generator "gen_power_carrier.py")
+	(version 20241229)
+	(generator "sync_footprint_lib.py")
 	(generator_version "1.0")
-	(layer "F.Cu")
-	(descr "1x3 pin header 2.54mm TOP side external wiring")
-	(tags "PinHeader 2.54mm male top")
-	(property "Reference" "J**"
+(layer "F.Cu")
+	(property "Reference" "REF**"
 		(at 0 -3.8 0)
 		(layer "F.SilkS")
-		(effects (font (size 1 1) (thickness 0.15)))
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
 	)
-	(property "Value" "PinHeader_1x03_Buzzer"
-		(at 0 8.879999999999999 0)
+	(property "Value" "BUZZER_5V"
+		(at 0 8.88 0)
 		(layer "F.Fab")
-		(effects (font (size 1 1) (thickness 0.15)))
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.1)
+			)
+		)
 	)
-	(property "Datasheet" "~"
+	(property "Datasheet" ""
 		(at 0 0 0)
 		(layer "F.Fab")
 		(hide yes)
-		(effects (font (size 1 1) (thickness 0.15)))
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
 	)
 	(attr through_hole)
+	(duplicate_pad_numbers_are_jumpers no)
 	(fp_rect
 		(start -1.8 -1.8)
 		(end 1.8 6.88)
-		(stroke (width 0.05) (type solid))
-		(fill none)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.SilkS")
+	)
+	(fp_rect
+		(start -1.8 -1.8)
+		(end 1.8 6.88)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(fill no)
 		(layer "F.CrtYd")
 	)
 	(fp_rect
 		(start -1.8 -1.8)
 		(end 1.8 6.88)
-		(stroke (width 0.1) (type solid))
-		(fill none)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(fill no)
 		(layer "F.Fab")
 	)
-	(fp_rect
-		(start -1.8 -1.8)
-		(end 1.8 6.88)
-		(stroke (width 0.12) (type solid))
-		(fill none)
-		(layer "F.SilkS")
-	)
 	(fp_text user "VCC5"
-		(at 3.8 0.0 0)
-		(layer "F.SilkS")
-		(effects (font (size 0.8 0.8) (thickness 0.12)) (justify left))
-	)
-	(pad "1" thru_hole rect
-		(at 0 0.0)
-		(size 1.7 1.7)
-		(drill 1.0)
-		(layers "*.Cu" "*.Mask")
-		(remove_unused_layers no)
+		(at 3.8 0 0)
+		(layer "Cmts.User")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.1)
+			)
+			(justify left)
+		)
 	)
 	(fp_text user "GND"
 		(at 3.8 2.54 0)
-		(layer "F.SilkS")
-		(effects (font (size 0.8 0.8) (thickness 0.12)) (justify left))
+		(layer "Cmts.User")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.1)
+			)
+			(justify left)
+		)
+	)
+	(fp_text user "SIG"
+		(at 3.8 5.08 0)
+		(layer "Cmts.User")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.1)
+			)
+			(justify left)
+		)
+	)
+	(pad "1" thru_hole rect
+		(at 0 0)
+		(size 1.7 1.7)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
 	)
 	(pad "2" thru_hole circle
 		(at 0 2.54)
 		(size 1.7 1.7)
-		(drill 1.0)
+		(drill 1)
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
-	)
-	(fp_text user "SIG"
-		(at 3.8 5.08 0)
-		(layer "F.SilkS")
-		(effects (font (size 0.8 0.8) (thickness 0.12)) (justify left))
 	)
 	(pad "3" thru_hole circle
 		(at 0 5.08)
 		(size 1.7 1.7)
-		(drill 1.0)
+		(drill 1)
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
 	)
+	(embedded_fonts no)
 )

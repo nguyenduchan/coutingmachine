@@ -17,7 +17,10 @@ PCB = ROOT / "esp32_baseboard.kicad_pcb"
 # Keep in sync with gen_power_carrier.py
 BOARD_W_MM = 235.0
 BOARD_H_MM = 132.0
-MAX_ROUTING_VIAS = 0
+# Vias are allowed as a last resort where no same-layer route exists, but they
+# stay a budget, not a routing tool: the router prices one at ~70 grid steps so
+# it only buys one when the net has no way round on either face.
+MAX_ROUTING_VIAS = 12
 
 
 def _banner(title: str) -> None:
@@ -66,10 +69,10 @@ def _check_board_outline() -> bool:
     vias = len(re.findall(r"\(via\s", text))
     print(f"routing vias: {vias} (max allowed {MAX_ROUTING_VIAS})")
     if vias > MAX_ROUTING_VIAS:
-        print("FAIL: extra routing vias — policy is pin-bridge only")
+        print("FAIL: too many routing vias — must stay a last resort")
         return False
 
-    print("PASS outline + no-via policy")
+    print("PASS outline + via budget")
     return True
 
 
@@ -86,6 +89,10 @@ def main() -> int:
     results.append(
         ("Signal routing (A5-A7)", _run_script("Signal geometry", "_check_signal_routing.py"))
     )
+    # KiCad's own DRC is the authority. The Python checks above only model the
+    # board, and a run once passed every one of them while KiCad found 380
+    # violations, so the real DRC is part of the gate, not a manual tick.
+    results.append(("KiCad DRC", _run_script("KiCad DRC", "verify_drc.py")))
 
     _banner("Track clearance (advisory)")
     r = subprocess.run([sys.executable, str(ROOT / "_check_overlaps.py")], cwd=ROOT)

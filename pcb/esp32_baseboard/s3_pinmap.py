@@ -11,9 +11,14 @@ That budget is exact: 28 for the design + 5 that must stay free (USB IO19/20,
 UART0 IO43/44, BOOT IO0) = 33.
 
 HMI: TFT ILI9488 SPI + XPT2046 resistive touch (shared SCK/MOSI; dedicated
-MISO=T_DO + T_CS; no T_IRQ — poll). LCD SDO is NOT wired. GPIO41 and the
-former opto OUT8 spare (GPIO9) carry the EC11 rotary encoder (ENC_A/B).
+MISO=T_DO + T_CS; no T_IRQ — poll). LCD SDO is NOT wired. GPIO41 and GPIO38
+carry the EC11 rotary encoder (ENC_A/B).
 On-screen Enter replaces ENC_SW so no third GPIO is required.
+
+ENC_A and the buzzer swapped GPIOs (IO9 <-> IO38) for layout: both header
+rows of the socket are fixed, and IO38/IO41 are the pair that comes out on
+the same side as J18, so the encoder no longer needs a net crossing the
+socket. The buzzer is a single output and its jack moved instead.
 
 GPIO0 carries the BOOT button, so it is input-only in practice.
 
@@ -81,7 +86,7 @@ RIGHT_PINS = [
 
 # --- Functional assignment (commercial SKU) ---
 # Opto OUT1..6 = limits, OUT7 = BUP. OUT8 field channel exists on U9/J4 but
-# is NOT wired to the MCU (GPIO9 is ENC_A).
+# is NOT wired to the MCU (GPIO9 is the buzzer).
 OPTO_GPIO = [
     (1, "IO1"),
     (2, "IO2"),
@@ -112,7 +117,7 @@ TMC_UART_GPIO = None  # unavailable on N16R8 (GPIO36 = octal PSRAM)
 # RST and BL sit on the two strapping pins on purpose: both are pulled low
 # through reset, so the panel comes up held in reset with the backlight off
 # and no external resistor. Firmware releases RST, then ramps BL on LEDC.
-# MISO = T_DO only (do NOT connect LCD SDO). ENC stays on IO9/IO41.
+# MISO = T_DO only (do NOT connect LCD SDO). ENC is on IO38/IO41.
 TFT_GPIO = {
     "SCK": 39,  # + T_CLK on cable
     "MOSI": 40,  # + T_DIN on cable
@@ -124,15 +129,16 @@ TFT_GPIO = {
     "T_CS": 48,
 }
 
+# GPIO38 also drives the on-board WS2812 on DevKitC-1 **v1.1**, so ENC_A
+# shares it. The WS2812 only presents its DIN input, so driving IO38 as an
+# encoder input is fine; the LED may flicker as the knob turns. Pin the BOM to
+# v1.1 — on v1.0 the WS2812 is on GPIO48 instead, i.e. on touch T_CS.
 # EC11 on housing wall → cable → J18 (GND/3V3/A/B). SW unused — Enter on TFT.
 # Pull-ups: KY-040 module has them, or use INPUT_PULLUP / 10k to 3V3.
-ENC_GPIO = {"A": 9, "B": 41}  # J18.3 CLK→IO9, J18.4 DT→IO41
+ENC_GPIO = {"A": 38, "B": 41}  # J18.3 CLK→IO38, J18.4 DT→IO41
 ENC_JACK = "J18"  # PinHeader 1x04 on carrier; encoder is off-board
 
-# GPIO38 also drives the on-board WS2812 on DevKitC-1 **v1.1**. Pin the BOM
-# to v1.1: the LED then just flickers with the buzzer, which is harmless.
-# On v1.0 the WS2812 is on GPIO48 instead, i.e. sitting on touch I2C SCL.
-BUZZER_GPIO = 38
+BUZZER_GPIO = 9
 
 # GPIO3 is a strapping pin (JTAG source select) with NO internal pull at
 # reset, so it floats. A 10k pull-down to GND is required, otherwise the

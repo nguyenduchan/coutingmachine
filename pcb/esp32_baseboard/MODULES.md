@@ -281,7 +281,8 @@ trở giữa dây đỏ và một dây bất kỳ**: ~50 Ω là bản 5V (trả 
 | TFT BL (PWM, LEDC) | IO45 |
 | Touch SDA / SCL | IO47 / 48 |
 | Touch INT | IO41 *(chỗ của MISO cũ)* |
-| Buzzer | IO38 |
+| Buzzer | IO9 |
+| EC11 ENC_A / ENC_B | IO38 / IO41 |
 | Bơm (AOD4184) | IO3 |
 | USB | IO19/20 (để trống) |
 | UART0 console | IO43/44 (để trống) |
@@ -341,12 +342,13 @@ phải có mức an toàn xác định bằng phần cứng:
 | `/TFT_RST` | IO46 | LOW = giữ trong reset | ✅ pull-down nội bộ của strapping pin |
 | `/OE_595` | IO13 | HIGH = ngõ 595 Hi-Z ⇒ ULN2003 tắt ⇒ **cả 3 stepper mất điện** | ✅ **R4** 10k pull-up → 3V3. **Bắt buộc** — nội dung thanh ghi 595 lúc boot là ngẫu nhiên, xem R-7 |
 | `SER/SRCLK/RCLK` | IO10–12 | bất kỳ (bị `/OE` chặn) | ✅ `/OE` lo |
-| `/BUZZER` | IO38 | LOW = im | ✅ module buzzer active có trở kéo base |
+| `/BUZZER` | IO9 | LOW = im | ✅ module buzzer active có trở kéo base |
 
 ### Cảnh báo mua module
 
-- **Chốt DevKitC-1 v1.1.** v1.1 để WS2812 onboard ở GPIO38 → trùng buzzer, vô
-  hại (LED nháy theo còi). v1.0 để ở GPIO48 → **trùng I2C SCL của touch**.
+- **Chốt DevKitC-1 v1.1.** v1.1 để WS2812 onboard ở GPIO38 → trùng **ENC_A**,
+  vô hại (WS2812 chỉ là tải DIN; LED có thể nháy khi xoay núm). v1.0 để ở
+  GPIO48 → **trùng T_CS của touch**.
 - **Tuyệt đối không route IO35 / IO36 / IO37.** Octal PSRAM của N16R8 dùng
   chúng làm SPIIO4–7 + SPIDQS; chạm vào là chip không boot.
 - **Không mua bản hậu tố `V`** (N16R8V / N32R16V): VDD_SPI = 1.8 V kéo
@@ -452,7 +454,7 @@ Thang đánh giá: **✅ đạt** | **⚠️ chọn đúng SKU** | **🔴 wear /
 | **PSU** | **Mean Well LRS-50-12** | `Mean Well LRS-50-12` | 12 V / 4,2 A; MTBF typ. >500k h (MIL-HDBK); nhiệt độ 0–70 °C | Tem Mean Well, đo 12,0 V không tải | ✅ đã mua |
 | **F1** | **RXE030** hoặc MF-R300 | `PTC 3A 30V` | I_hold ~3 A; khôi phục sau ngắn mạch | — | ✅ |
 | **D1** | **P6KE15A** | `P6KE15A DO-41` | Clamp 12 V rail | Vạch cathode đúng chiều | ✅ |
-| **U1** | **ESP32-S3-DevKitC-1-N16R8** rev **v1.1** | `DevKitC-1 N16R8 Type-C` | Không hậu tố `V`; USB-C; đủ GPIO | WS2812 onboard ở IO38 (v1.1) | ✅ đã mua — ⚠️ kiểm rev |
+| **U1** | **ESP32-S3-DevKitC-1-N16R8** rev **v1.1** | `DevKitC-1 N16R8 Type-C` | Không hậu tố `V`; USB-C; đủ GPIO | WS2812 onboard ở IO38 = ENC_A (v1.1) | ✅ đã mua — ⚠️ kiểm rev |
 | **U2** | **MP1584EN** module **5 V cố định** | `MP1584 5V cố định` | **1 module**; derate ≤1,5 A; không ADJ | Không potentiometer; đo 5,00 V | ⚠️ đã mua ×2 — lắp **1**, 1 dự phòng |
 | **U3** | **TMC2209** Makerbase **V2.0** + heatsink | `MKS TMC2209 V2.0` | R_sense MKS; I_run vừa; có tản | Heatsink gắn; tra Vref V2.0 | ⚠️ đã mua |
 | **U4** | **PC817 4CH** module | `PC817 4 kênh` | LED field **2,2 k** (đổi từ 1k); CTR lâu dài | Đo footprint ~48×38 | ✅ |

@@ -1,0 +1,42 @@
+Maze autoroute: 176 pads, 191 drill sites, no extra vias, grid board 235x132 mm @ origin (35.0,30.0)
+  … routed 39/40 edges, failed 0
+  … routed 79/80 edges, failed 0
+  … routed 119/120 edges, failed 0
+  Pass 1 (short-first): 0 failed edges after first fit
+Maze policy: vias only where no same-layer route exists; free F/B; 121 edges routed, 29 via(s), 0 failed
+Maze result: 952 segments, 29 vias, 0 failed edges
+Service buses (clearance-aware B.Cu lanes)…
+Service buses: 0 B.Cu segments
+  buses: +0 segments
+Repair open copper islands (clearance-aware)…
+Repair: 0 new connections, 0 segments, 0 failed
+  round 1: +0 segments, 0 failed
+Wrote:
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\MountingHole_M3.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\ESP32_S3_DevKitC_44Pin_Socket.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\MP1584_5V3A.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\TerminalBlock_2P_5.0mm.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\Fuse_PTC_Radial_5.1mm.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\Diode_TVS_DO41.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\TMC2209_StepStick.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\PC817_4CH_Opto.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\DRV8871_Module.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\PinHeader_1x04_Motor.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\PinHeader_1x10_TFT.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\PinHeader_1x03_Buzzer.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\PinHeader_1x04_MOSFET.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\PinHeader_1x04_ENC.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\PinHeader_1x10_OptoField.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\PinHeader_1x02_MotorDC.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\PinHeader_1x02_LimitSW.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\PinHeader_1x04_BUP30S.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\R_Axial_4k7_BUP.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\CP_Radial_D8_470u_25V.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\CP_Radial_D6_47u_25V.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\C_0805_100n.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.pretty\R_1206_10R.kicad_mod
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\libraries\ESP32_Carrier.kicad_sym
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\esp32_baseboard.kicad_sch
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\esp32_baseboard.kicad_pcb
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\esp32_baseboard.kicad_pro
+  C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\README.md

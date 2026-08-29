@@ -550,6 +550,36 @@
 				(number "1" (effects (font (size 1.27 1.27))))
 			)
 			(pin input line
+				(at -15.24 -10.16 0)
+				(length 5.08)
+				(name "MS1" (effects (font (size 1.27 1.27))))
+				(number "2" (effects (font (size 1.27 1.27))))
+			)
+			(pin input line
+				(at -15.24 -12.7 0)
+				(length 5.08)
+				(name "MS2" (effects (font (size 1.27 1.27))))
+				(number "3" (effects (font (size 1.27 1.27))))
+			)
+			(pin input line
+				(at -15.24 -15.24 0)
+				(length 5.08)
+				(name "PDN" (effects (font (size 1.27 1.27))))
+				(number "4" (effects (font (size 1.27 1.27))))
+			)
+			(pin input line
+				(at -15.24 -17.78 0)
+				(length 5.08)
+				(name "PDN2" (effects (font (size 1.27 1.27))))
+				(number "5" (effects (font (size 1.27 1.27))))
+			)
+			(pin input line
+				(at -15.24 -20.32 0)
+				(length 5.08)
+				(name "CLK" (effects (font (size 1.27 1.27))))
+				(number "6" (effects (font (size 1.27 1.27))))
+			)
+			(pin input line
 				(at -15.24 -5.08 0)
 				(length 5.08)
 				(name "STEP" (effects (font (size 1.27 1.27))))

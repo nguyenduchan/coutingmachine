@@ -14,6 +14,8 @@ from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
+from pcb_parse import NetTable, pad_net, seg_net
+
 PCB = Path(__file__).with_name("esp32_baseboard.kicad_pcb")
 
 # Keep in sync with gen_power_carrier.py / KiCad rules
@@ -58,20 +60,22 @@ def is_power_net(name: str) -> bool:
 
 
 def parse_pcb(text: str) -> tuple[dict[int, str], list[Seg], list[Hole]]:
-    net_names = {int(a): b for a, b in re.findall(r'\(net\s+(\d+)\s+"([^"]*)"\)', text)}
+    table = NetTable(text)
     segs: list[Seg] = []
     for m in re.finditer(
         r'\(segment\s+\(start\s+([\d.-]+)\s+([\d.-]+)\)\s+\(end\s+([\d.-]+)\s+([\d.-]+)\)'
-        r'\s+\(width\s+([\d.-]+)\)\s+\(layer\s+"([^"]+)"\)\s+\(net\s+(\d+)\)',
+        r'\s+\(width\s+([\d.-]+)\)\s+\(layer\s+"([^"]+)"\)\s+'
+        r'(\(net\s+(?:\d+|"[^"]*")\s*\))',
         text,
     ):
+        nid, _ = seg_net(m.group(7), table)
         segs.append(
             Seg(
                 (float(m.group(1)), float(m.group(2))),
                 (float(m.group(3)), float(m.group(4))),
                 float(m.group(5)),
                 m.group(6),
-                int(m.group(7)),
+                nid,
             )
         )
 
@@ -88,25 +92,43 @@ def parse_pcb(text: str) -> tuple[dict[int, str], list[Seg], list[Hole]]:
         c, s = math.cos(rot), math.sin(rot)
         ref_m = re.search(r'\(property\s+"Reference"\s+"([^"]+)"', block)
         ref = ref_m.group(1) if ref_m else "?"
-        for pm in re.finditer(
-            r'\(pad\s+"([^"]*)"\s+(?:thru_hole|np_thru_hole)\s+\w+'
-            r"[\s\S]*?\(at\s+([\d.-]+)\s+([\d.-]+)(?:\s+[\d.-]+)?\)"
-            r"[\s\S]*?\(size\s+([\d.-]+)\s+([\d.-]+)\)"
-            r"[\s\S]*?\(drill\s+([\d.-]+)\)",
-            block,
-        ):
-            pname = pm.group(1)
-            lx, ly = float(pm.group(2)), float(pm.group(3))
-            sx, sy = float(pm.group(4)), float(pm.group(5))
-            drill = float(pm.group(6))
-            chunk = pm.group(0)
-            nm = re.search(r'\(net\s+(\d+)\s+"', chunk)
-            net = int(nm.group(1)) if nm else 0
+        # One chunk per pad: a pad's (net ...) line comes after its (drill ...),
+        # so a single regex anchored on the drill never captures the net and
+        # every pad reads as net 0 -- foreign even to its own net.
+        pad_starts = [m.start() for m in re.finditer(r'\(pad\s+"', block)]
+        for pi, ps in enumerate(pad_starts):
+            chunk = block[ps: (pad_starts[pi + 1] if pi + 1 < len(pad_starts) else len(block))]
+            hm = re.match(r'\(pad\s+"([^"]*)"\s+(?:thru_hole|np_thru_hole)\s+\w+', chunk)
+            if not hm:
+                continue
+            am = re.search(r"\(at\s+([\d.-]+)\s+([\d.-]+)(?:\s+[\d.-]+)?\)", chunk)
+            zm = re.search(r"\(size\s+([\d.-]+)\s+([\d.-]+)\)", chunk)
+            dm = re.search(r"\(drill\s+([\d.-]+)\)", chunk)
+            if not (am and zm and dm):
+                continue
+            pname = hm.group(1)
+            lx, ly = float(am.group(1)), float(am.group(2))
+            sx, sy = float(zm.group(1)), float(zm.group(2))
+            drill = float(dm.group(1))
+            net, _pn = pad_net(chunk, table)
             wx = fx + lx * c - ly * s
             wy = fy + lx * s + ly * c
             r = max(sx, sy, drill) * 0.5 + HOLE_EXTRA_MM
             holes.append(Hole(wx, wy, r, net, ref, pname))
-    return net_names, segs, holes
+    # A routing via is a drilled hole too: every other net's copper has to keep
+    # the same A7 distance from it as from a pad.
+    for vm in re.finditer(
+        r"\(via\s*\(at\s+([\d.-]+)\s+([\d.-]+)\)\s*\(size\s+([\d.-]+)\)"
+        r"\s*\(drill\s+([\d.-]+)\)([\s\S]*?)\(uuid",
+        text,
+    ):
+        vx, vy = float(vm.group(1)), float(vm.group(2))
+        vr = max(float(vm.group(3)), float(vm.group(4))) * 0.5 + HOLE_EXTRA_MM
+        vnet, _ = pad_net(vm.group(5), table)
+        if not vnet:
+            vnet, _ = seg_net(vm.group(5), table)
+        holes.append(Hole(vx, vy, vr, vnet, "via", ""))
+    return dict(table.by_id), segs, holes
 
 
 def orient(a, b, c) -> float:
@@ -165,7 +187,14 @@ def dist_point_seg(px, py, a, b) -> tuple[float, float]:
 
 
 def is_signal(net: int, net_names: dict[int, str]) -> bool:
-    return not is_power_net(net_names.get(net, ""))
+    """A5/A6 apply to every net, not just the thin ones.
+
+    Power nets used to be exempt, on the idea that they may be routed loosely.
+    But two *different* power nets crossing on one layer is a short like any
+    other, and the exemption was hiding 25 of them (GND x +12V, GND x +3V3,
+    +5V x GND) that KiCad's DRC reported straight away.
+    """
+    return True
 
 
 def main() -> int:

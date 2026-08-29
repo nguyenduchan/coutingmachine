@@ -1,0 +1,697 @@
+(pcb C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\out_freerouting\esp32_baseboard.dsn
+  (parser
+    (string_quote ")
+    (space_in_quoted_tokens on)
+    (host_cad "KiCad's Pcbnew")
+    (host_version "10.0.5")
+  )
+  (resolution um 10)
+  (unit um)
+  (structure
+    (layer F.Cu
+      (type signal)
+      (property
+        (index 0)
+      )
+    )
+    (layer B.Cu
+      (type signal)
+      (property
+        (index 1)
+      )
+    )
+    (boundary
+      (path pcb 0  270000 -162000  35000 -162000  35000 -30000  270000 -30000
+            270000 -162000)
+    )
+    (via "Via[0-1]_600:300_um" "Via[0-1]_1100:600_um")
+    (rule
+      (width 250)
+      (clearance 450)
+      (clearance 50 (type smd_smd))
+      (clearance 450 (type wire_pin))
+      (clearance 450 (type via_pin))
+      (clearance 450 (type wire_via))
+      (clearance 450 (type via_via))
+      (clearance 450 (type pin_pin))
+    )
+  )
+  (placement
+    (component ESP32_Carrier:R_Axial_4k7_BUP
+      (place R2 143000 -108000 front 0 (PN 10k))
+      (place R3 145000 -89520 front 0 (PN 10k))
+    )
+    (component ESP32_Carrier:PinHeader_1x04_ENC
+      (place J18 112000 -40000 front 0 (PN EC11_ENC))
+      (place J16 160000 -40000 front 0 (PN AOD4184))
+      (place J14 200000 -58000 front 0 (PN BUP_30S))
+    )
+    (component ESP32_Carrier:PinHeader_1x03_Buzzer
+      (place J15 145000 -58000 front 0 (PN BUZZER_5V))
+    )
+    (component ESP32_Carrier:PinHeader_1x02_LimitSW
+      (place J11 61000 -72000 front 0 (PN LIM_MAX_NC))
+      (place J13 148000 -72000 front 0 (PN LIM_MAX_NC))
+      (place J10 69000 -72000 front 0 (PN LIM_MIN_NC))
+      (place J12 156000 -72000 front 0 (PN LIM_MIN_NC))
+      (place J9 77000 -72000 front 0 (PN LIM_MAX_NC))
+      (place J8 85000 -72000 front 0 (PN LIM_MIN_NC))
+    )
+    (component ESP32_Carrier:PinHeader_1x02_MotorDC
+      (place J7 265000 -150000 front 180 (PN GA12_N20))
+      (place J6 265000 -124000 front 180 (PN GA12_N20))
+      (place J5 265000 -98000 front 180 (PN GA12_N20))
+    )
+    (component ESP32_Carrier:MountingHole_M3
+      (place H4 266500 -158500 front 0 (PN M3))
+      (place H2 266500 -33500 front 0 (PN M3))
+      (place H3 38500 -158500 front 0 (PN M3))
+      (place H1 38500 -33500 front 0 (PN M3))
+    )
+    (component ESP32_Carrier:CP_Radial_D6_47u_25V
+      (place C10 61450 -94000 front 0 (PN 47u/25V))
+    )
+    (component ESP32_Carrier:R_Axial_4k7_BUP::1
+      (place R1 190000 -66128 front 0 (PN 4k7))
+    )
+    (component ESP32_Carrier:PinHeader_1x10_OptoField
+      (place J4 115000 -132000 front 0 (PN OPTO_FIELD_IN))
+      (place J17 82000 -44000 front 0 (PN TFT_TOUCH))
+    )
+    (component ESP32_Carrier:PinHeader_1x04_Motor
+      (place J2 228000 -65810 front 180 (PN NEMA17_OUT))
+    )
+    (component ESP32_Carrier:R_1206_10R
+      (place R10 53450 -94000 front 0 (PN 10R))
+    )
+    (component ESP32_Carrier:C_0805_100n
+      (place C11 61450 -98000 front 0 (PN 100n))
+    )
+    (component ESP32_Carrier:Diode_TVS_DO41
+      (place D2 172000 -46000 front 0 (PN 1N5819))
+    )
+    (component ESP32_Carrier:DRV8871_Module
+      (place U5 247000 -94000 back 0 (PN DRV8871_Module))
+      (place U6 247000 -120000 back 0 (PN DRV8871_Module))
+      (place U7 247000 -146000 back 0 (PN DRV8871_Module))
+    )
+    (component ESP32_Carrier:TMC2209_StepStick
+      (place U3 247000 -62000 back 0 (PN TMC2209))
+    )
+    (component ESP32_Carrier:MP1584_5V3A
+      (place U2 58000 -112000 back 0 (PN MP1584_5V3A))
+    )
+    (component ESP32_Carrier:ESP32_S3_DevKitC_44Pin_Socket
+      (place U1 133000 -120000 back 0 (PN ESP32_S3_DevKitC_1))
+    )
+    (component ESP32_Carrier:PC817_4CH_Opto
+      (place U4 67000 -141000 back 0 (PN PC817_4CH))
+      (place U9 163000 -141000 back 0 (PN PC817_4CH))
+    )
+    (component ESP32_Carrier:CP_Radial_D8_470u_25V
+      (place C22 253000 -133000 back 0 (PN 470u/25V))
+      (place C23 253000 -159000 back 0 (PN 470u/25V))
+      (place C20 247000 -78000 back 0 (PN 470u/25V))
+      (place C21 253000 -107000 back 0 (PN 470u/25V))
+    )
+    (component ESP32_Carrier:Diode_TVS_DO41::1
+      (place D1 46000 -98000 back 0 (PN P6KE15A))
+    )
+    (component ESP32_Carrier:Fuse_PTC_Radial_5.1mm
+      (place F1 46000 -86000 back 0 (PN PTC_3A_30V))
+    )
+    (component ESP32_Carrier:TerminalBlock_2P_5.0mm
+      (place J1 46000 -74000 back 0 (PN Screw_12V_IN))
+    )
+  )
+  (library
+    (image ESP32_Carrier:R_Axial_4k7_BUP
+      (pin Rect[A]Pad_1600.000000x1600.000000_um 1 -3750 0)
+      (pin Round[A]Pad_1600.000000_um 2 3750 0)
+    )
+    (image ESP32_Carrier:PinHeader_1x04_ENC
+      (outline (polygon signal 0  1795 -9415  -1795 -9415  -1795 1795  1795 1795))
+      (outline (path signal 120  -1800 1800  1800 1800  1800 -9420  -1800 -9420  -1800 1800))
+      (outline (path signal 100  -1800 1800  1800 1800  1800 -9420  -1800 -9420  -1800 1800))
+      (pin Rect[A]Pad_1700.000000x1700.000000_um 1 0 0)
+      (pin Round[A]Pad_1700.000000_um 2 0 -2540)
+      (pin Round[A]Pad_1700.000000_um 3 0 -5080)
+      (pin Round[A]Pad_1700.000000_um 4 0 -7620)
+    )
+    (image ESP32_Carrier:PinHeader_1x03_Buzzer
+      (outline (polygon signal 0  1795 -6875  -1795 -6875  -1795 1795  1795 1795))
+      (outline (path signal 120  -1800 1800  1800 1800  1800 -6880  -1800 -6880  -1800 1800))
+      (outline (path signal 100  -1800 1800  1800 1800  1800 -6880  -1800 -6880  -1800 1800))
+      (pin Rect[A]Pad_1700.000000x1700.000000_um 1 0 0)
+      (pin Round[A]Pad_1700.000000_um 2 0 -2540)
+      (pin Round[A]Pad_1700.000000_um 3 0 -5080)
+    )
+    (image ESP32_Carrier:PinHeader_1x02_LimitSW
+      (outline (polygon signal 0  1795 -4335  -1795 -4335  -1795 1795  1795 1795))
+      (outline (path signal 120  -1800 1800  1800 1800  1800 -4340  -1800 -4340  -1800 1800))
+      (outline (path signal 100  -1800 1800  1800 1800  1800 -4340  -1800 -4340  -1800 1800))
+      (pin Rect[A]Pad_1700.000000x1700.000000_um 1 0 0)
+      (pin Round[A]Pad_1700.000000_um 2 0 -2540)
+    )
+    (image ESP32_Carrier:PinHeader_1x02_MotorDC
+      (outline (polygon signal 0  -1795 1795  1795 1795  1795 -4335  -1795 -4335))
+      (outline (path signal 120  -1800 1800  1800 1800  1800 -4340  -1800 -4340  -1800 1800))
+      (outline (path signal 100  -1800 1800  1800 1800  1800 -4340  -1800 -4340  -1800 1800))
+      (pin Rect[A]Pad_1700.000000x1700.000000_um (rotate 180) 1 0 0)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 2 0 -2540)
+    )
+    (image ESP32_Carrier:MountingHole_M3
+      (outline (polygon signal 0  464.208 3466.53  830.042 3397.55  1186.47 3290.08  1529.47 3145.32
+            1855.13 2964.93  2159.78 2750.95  2439.95 2505.79  2692.47 2232.24
+            2914.5 1933.4  3103.49 1612.66  3257.33 1273.64  3374.25 920.197
+            3452.95 556.324  3492.52 186.113  3495 0  3492.52 -186.112  3452.95 -556.323
+            3374.25 -920.196  3257.33 -1273.64  3103.49 -1612.66  2914.5 -1933.4
+            2692.47 -2232.24  2439.95 -2505.79  2159.78 -2750.95  1855.13 -2964.93
+            1529.47 -3145.32  1186.47 -3290.08  830.042 -3397.55  464.208 -3466.53
+            93.103 -3496.24  -279.046 -3486.33  -648.047 -3436.91  -1009.69 -3348.56
+            -1359.9 -3222.27  -1694.71 -3059.46  -2010.31 -2861.99  -2303.13 -2632.09
+            -2569.86 -2372.38  -2807.46 -2085.78  -3013.27 -1775.55  -3184.92 -1445.2
+            -3320.5 -1098.47  -3418.45 -739.299  -3477.66 -371.763  -3497.48 0
+            -3477.66 371.764  -3418.45 739.3  -3320.5 1098.48  -3184.92 1445.2
+            -3013.27 1775.55  -2807.46 2085.79  -2569.86 2372.38  -2303.13 2632.09
+            -2010.31 2862  -1694.71 3059.46  -1359.9 3222.27  -1009.69 3348.56
+            -648.047 3436.91  -279.046 3486.33  93.103 3496.24))
+      (outline (path signal 120  3250 0  3230.95 -351.387  3174.02 -698.654  3079.87 -1037.73
+            2949.62 -1364.64  2784.79 -1675.55  2587.3 -1966.82  2359.49 -2235.02
+            2104.01 -2477.03  1823.86 -2689.99  1522.33 -2871.41  1202.95 -3019.17
+            869.467 -3131.54  525.791 -3207.19  175.951 -3245.23  -175.951 -3245.23
+            -525.791 -3207.19  -869.467 -3131.54  -1202.95 -3019.17  -1522.33 -2871.41
+            -1823.86 -2689.99  -2104.01 -2477.03  -2359.49 -2235.02  -2587.3 -1966.82
+            -2784.79 -1675.55  -2949.62 -1364.64  -3079.87 -1037.73  -3174.02 -698.654
+            -3230.95 -351.387  -3250 0  -3230.95 351.387  -3174.02 698.654
+            -3079.87 1037.73  -2949.62 1364.64  -2784.79 1675.55  -2587.3 1966.82
+            -2359.49 2235.02  -2104.01 2477.03  -1823.86 2689.99  -1522.33 2871.41
+            -1202.95 3019.17  -869.467 3131.54  -525.791 3207.19  -175.951 3245.23
+            175.951 3245.23  525.791 3207.19  869.467 3131.54  1202.95 3019.17
+            1522.33 2871.41  1823.86 2689.99  2104.01 2477.03  2359.49 2235.02
+            2587.3 1966.82  2784.79 1675.55  2949.62 1364.64  3079.87 1037.73
+            3174.02 698.654  3230.95 351.387  3250 0))
+      (keepout "" (circle F.Cu 3700))
+      (keepout "" (circle B.Cu 3700))
+    )
+    (image ESP32_Carrier:CP_Radial_D6_47u_25V
+      (pin Rect[A]Pad_1800.000000x1800.000000_um 1 -1250 0)
+      (pin Round[A]Pad_1800.000000_um 2 1250 0)
+    )
+    (image ESP32_Carrier:R_Axial_4k7_BUP::1
+      (pin Round[A]Pad_1600.000000_um 1 -3750 0)
+      (pin Round[A]Pad_1600.000000_um 2 3750 0)
+    )
+    (image ESP32_Carrier:PinHeader_1x10_OptoField
+      (outline (polygon signal 0  1795 -24655  -1795 -24655  -1795 1795  1795 1795))
+      (outline (path signal 120  -1800 1800  1800 1800  1800 -24660  -1800 -24660  -1800 1800))
+      (outline (path signal 100  -1800 1800  1800 1800  1800 -24660  -1800 -24660  -1800 1800))
+      (pin Rect[A]Pad_1700.000000x1700.000000_um 1 0 0)
+      (pin Round[A]Pad_1700.000000_um 2 0 -2540)
+      (pin Round[A]Pad_1700.000000_um 3 0 -5080)
+      (pin Round[A]Pad_1700.000000_um 4 0 -7620)
+      (pin Round[A]Pad_1700.000000_um 5 0 -10160)
+      (pin Round[A]Pad_1700.000000_um 6 0 -12700)
+      (pin Round[A]Pad_1700.000000_um 7 0 -15240)
+      (pin Round[A]Pad_1700.000000_um 8 0 -17780)
+      (pin Round[A]Pad_1700.000000_um 9 0 -20320)
+      (pin Round[A]Pad_1700.000000_um 10 0 -22860)
+    )
+    (image ESP32_Carrier:PinHeader_1x04_Motor
+      (outline (polygon signal 0  -1795 1795  1795 1795  1795 -9415  -1795 -9415))
+      (outline (path signal 120  -1800 1800  1800 1800  1800 -9420  -1800 -9420  -1800 1800))
+      (outline (path signal 100  -1800 1800  1800 1800  1800 -9420  -1800 -9420  -1800 1800))
+      (pin Rect[A]Pad_1700.000000x1700.000000_um (rotate 180) 1 0 0)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 2 0 -2540)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 3 0 -5080)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 4 0 -7620)
+    )
+    (image ESP32_Carrier:R_1206_10R
+      (pin RoundRect[T]Pad_1000.000000x1500.000000_250.951000_um_0.000000_0 1 -1400 0)
+      (pin RoundRect[T]Pad_1000.000000x1500.000000_250.951000_um_0.000000_0 2 1400 0)
+    )
+    (image ESP32_Carrier:C_0805_100n
+      (pin RoundRect[T]Pad_800.000000x1200.000000_200.761000_um_0.000000_0 1 -950 0)
+      (pin RoundRect[T]Pad_800.000000x1200.000000_200.761000_um_0.000000_0 2 950 0)
+    )
+    (image ESP32_Carrier:Diode_TVS_DO41
+      (pin Rect[A]Pad_1700.000000x1700.000000_um 1 -3750 0)
+      (pin Round[A]Pad_1700.000000_um 2 3750 0)
+    )
+    (image ESP32_Carrier:DRV8871_Module
+      (outline (polygon signal 0  -13995 9995  13995 9995  13995 -9995  -13995 -9995))
+      (outline (path signal 120  -14000 -10000  14000 -10000  14000 10000  -14000 10000
+            -14000 -10000))
+      (outline (path signal 100  -14000 -10000  14000 -10000  14000 10000  -14000 10000
+            -14000 -10000))
+      (pin Rect[A]Pad_2000.000000x2000.000000_um (rotate 180) 1 -8000 -8000)
+      (pin Round[A]Pad_2000.000000_um (rotate 180) 2 0 -8000)
+      (pin Round[A]Pad_2000.000000_um (rotate 180) 3 10000 0)
+      (pin Round[A]Pad_2000.000000_um (rotate 180) 4 10000 6000)
+      (pin Round[A]Pad_2000.000000_um (rotate 180) 5 -10000 -4000)
+      (pin Round[A]Pad_2000.000000_um (rotate 180) 6 -10000 4000)
+    )
+    (image ESP32_Carrier:TMC2209_StepStick
+      (outline (polygon signal 0  -10195 10195  10195 10195  10195 -10195  -10195 -10195))
+      (outline (path signal 120  -10200 -10200  10200 -10200  10200 10200  -10200 10200
+            -10200 -10200))
+      (outline (path signal 100  -10200 -10200  10200 -10200  10200 10200  -10200 10200
+            -10200 -10200))
+      (pin Rect[A]Pad_1700.000000x1700.000000_um (rotate 180) 1 -7620 -8890)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 2 -7620 -6350)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 3 -7620 -3810)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 4 -7620 -1270)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 5 -7620 1270)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 6 -7620 3810)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 7 -7620 6350)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 8 -7620 8890)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 9 7620 -8890)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 10 7620 -6350)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 11 7620 -3810)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 12 7620 -1270)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 13 7620 1270)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 14 7620 3810)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 15 7620 6350)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 16 7620 8890)
+    )
+    (image ESP32_Carrier:MP1584_5V3A
+      (outline (polygon signal 0  -10995 8495  10995 8495  10995 -8495  -10995 -8495))
+      (outline (path signal 120  -11000 -8500  11000 -8500  11000 8500  -11000 8500  -11000 -8500))
+      (outline (path signal 100  -11000 -8500  11000 -8500  11000 8500  -11000 8500  -11000 -8500))
+      (pin Rect[A]Pad_2000.000000x2000.000000_um (rotate 180) 1 -8000 -3000)
+      (pin Round[A]Pad_2000.000000_um (rotate 180) 2 -8000 3000)
+      (pin Round[A]Pad_2000.000000_um (rotate 180) 3 8000 -3000)
+      (pin Round[A]Pad_2000.000000_um (rotate 180) 4 8000 3000)
+    )
+    (image ESP32_Carrier:ESP32_S3_DevKitC_44Pin_Socket
+      (outline (polygon signal 0  -1795 56335  27195 56335  27195 -7995  -1795 -7995))
+      (outline (path signal 120  -1800 -8000  27200 -8000  27200 56340  -1800 56340  -1800 -8000))
+      (outline (path signal 100  -1800 -8000  27200 -8000  27200 56340  -1800 56340  -1800 -8000))
+      (pin Rect[A]Pad_1700.000000x1700.000000_um (rotate 180) 1 0 0)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 2 0 2540)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 3 0 5080)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 4 0 7620)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 5 0 10160)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 6 0 12700)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 7 0 15240)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 8 0 17780)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 9 0 20320)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 10 0 22860)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 11 0 25400)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 12 0 27940)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 13 0 30480)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 14 0 33020)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 15 0 35560)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 16 0 38100)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 17 0 40640)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 18 0 43180)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 19 0 45720)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 20 0 48260)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 21 0 50800)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 22 0 53340)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 23 25400 0)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 24 25400 2540)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 25 25400 5080)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 26 25400 7620)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 27 25400 10160)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 28 25400 12700)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 29 25400 15240)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 30 25400 17780)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 31 25400 20320)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 32 25400 22860)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 33 25400 25400)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 34 25400 27940)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 35 25400 30480)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 36 25400 33020)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 37 25400 35560)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 38 25400 38100)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 39 25400 40640)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 40 25400 43180)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 41 25400 45720)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 42 25400 48260)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 43 25400 50800)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 44 25400 53340)
+    )
+    (image ESP32_Carrier:PC817_4CH_Opto
+      (outline (polygon signal 0  -23995 18995  23995 18995  23995 -18995  -23995 -18995))
+      (outline (path signal 120  -24000 -19000  24000 -19000  24000 19000  -24000 19000
+            -24000 -19000))
+      (outline (path signal 100  -24000 -19000  24000 -19000  24000 19000  -24000 19000
+            -24000 -19000))
+      (pin Rect[A]Pad_1700.000000x1700.000000_um (rotate 180) 1 -6350 -12700)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 2 -3810 -12700)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 3 -1270 -12700)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 4 1270 -12700)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 5 3810 -12700)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 6 6350 -12700)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 7 -6350 12700)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 8 -3810 12700)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 9 -1270 12700)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 10 1270 12700)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 11 3810 12700)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 12 6350 12700)
+    )
+    (image ESP32_Carrier:CP_Radial_D8_470u_25V
+      (pin Rect[A]Pad_1800.000000x1800.000000_um (rotate 180) 1 -1750 0)
+      (pin Round[A]Pad_1800.000000_um (rotate 180) 2 1750 0)
+    )
+    (image ESP32_Carrier:Diode_TVS_DO41::1
+      (pin Rect[A]Pad_1700.000000x1700.000000_um (rotate 180) 1 -3750 0)
+      (pin Round[A]Pad_1700.000000_um (rotate 180) 2 3750 0)
+    )
+    (image ESP32_Carrier:Fuse_PTC_Radial_5.1mm
+      (pin Rect[A]Pad_1800.000000x1800.000000_um (rotate 180) 1 -2550 0)
+      (pin Round[A]Pad_1800.000000_um (rotate 180) 2 2550 0)
+    )
+    (image ESP32_Carrier:TerminalBlock_2P_5.0mm
+      (outline (polygon signal 0  -5095 3995  5095 3995  5095 -3995  -5095 -3995))
+      (outline (path signal 120  -5100 -4000  5100 -4000  5100 4000  -5100 4000  -5100 -4000))
+      (outline (path signal 100  -5100 -4000  5100 -4000  5100 4000  -5100 4000  -5100 -4000))
+      (pin Rect[A]Pad_2800.000000x2800.000000_um (rotate 180) 1 -2500 0)
+      (pin Round[A]Pad_2800.000000_um (rotate 180) 2 2500 0)
+    )
+    (padstack Round[A]Pad_1600.000000_um
+      (shape (circle F.Cu 1600))
+      (shape (circle B.Cu 1600))
+      (attach off)
+    )
+    (padstack Round[A]Pad_1700.000000_um
+      (shape (circle F.Cu 1700))
+      (shape (circle B.Cu 1700))
+      (attach off)
+    )
+    (padstack Round[A]Pad_1800.000000_um
+      (shape (circle F.Cu 1800))
+      (shape (circle B.Cu 1800))
+      (attach off)
+    )
+    (padstack Round[A]Pad_2000.000000_um
+      (shape (circle F.Cu 2000))
+      (shape (circle B.Cu 2000))
+      (attach off)
+    )
+    (padstack Round[A]Pad_2800.000000_um
+      (shape (circle F.Cu 2800))
+      (shape (circle B.Cu 2800))
+      (attach off)
+    )
+    (padstack RoundRect[T]Pad_800.000000x1200.000000_200.761000_um_0.000000_0
+      (shape (polygon F.Cu 0  -400.761 400  -385.479 476.828  -341.959 541.959  -276.828 585.479
+            -199.999 600.76  200 600.761  276.828 585.479  341.959 541.959
+            385.479 476.828  400.76 399.999  400.761 -400  385.479 -476.828
+            341.959 -541.959  276.828 -585.479  199.999 -600.76  -200 -600.761
+            -276.828 -585.479  -341.959 -541.959  -385.479 -476.828  -400.76 -399.999
+            -400.761 400))
+      (attach off)
+    )
+    (padstack RoundRect[T]Pad_1000.000000x1500.000000_250.951000_um_0.000000_0
+      (shape (polygon F.Cu 0  -500.951 500  -481.848 596.035  -427.449 677.449  -346.035 731.848
+            -249.999 750.95  250 750.951  346.035 731.848  427.449 677.449
+            481.848 596.035  500.95 499.999  500.951 -500  481.848 -596.035
+            427.449 -677.449  346.035 -731.848  249.999 -750.95  -250 -750.951
+            -346.035 -731.848  -427.449 -677.449  -481.848 -596.035  -500.95 -499.999
+            -500.951 500))
+      (attach off)
+    )
+    (padstack Rect[A]Pad_2000.000000x2000.000000_um
+      (shape (rect F.Cu -1000 -1000 1000 1000))
+      (shape (rect B.Cu -1000 -1000 1000 1000))
+      (attach off)
+    )
+    (padstack Rect[A]Pad_2800.000000x2800.000000_um
+      (shape (rect F.Cu -1400 -1400 1400 1400))
+      (shape (rect B.Cu -1400 -1400 1400 1400))
+      (attach off)
+    )
+    (padstack Rect[A]Pad_1600.000000x1600.000000_um
+      (shape (rect F.Cu -800 -800 800 800))
+      (shape (rect B.Cu -800 -800 800 800))
+      (attach off)
+    )
+    (padstack Rect[A]Pad_1700.000000x1700.000000_um
+      (shape (rect F.Cu -850 -850 850 850))
+      (shape (rect B.Cu -850 -850 850 850))
+      (attach off)
+    )
+    (padstack Rect[A]Pad_1800.000000x1800.000000_um
+      (shape (rect F.Cu -900 -900 900 900))
+      (shape (rect B.Cu -900 -900 900 900))
+      (attach off)
+    )
+    (padstack "Via[0-1]_600:300_um"
+      (shape (circle F.Cu 600))
+      (shape (circle B.Cu 600))
+      (attach off)
+    )
+    (padstack "Via[0-1]_1100:600_um"
+      (shape (circle F.Cu 1100))
+      (shape (circle B.Cu 1100))
+      (attach off)
+    )
+  )
+  (network
+    (net EN_TMC
+      (pins R2-1 U3-1 U1-11)
+    )
+    (net +3V3
+      (pins R2-2 J18-2 J17-2 U3-15 U1-1 U1-2 U4-8 U9-8)
+    )
+    (net GND
+      (pins J18-1 J15-2 C10-2 R3-2 J4-1 J17-1 J16-2 C11-2 J14-2 U5-2 U3-10 U3-16 U2-2
+        U2-4 U6-2 U1-22 U1-23 U1-43 U1-44 U4-1 U4-7 C22-2 C23-2 C20-2 D1-1 C21-2 J1-2
+        U9-1 U9-7 U7-2)
+    )
+    (net ENC_A
+      (pins J18-3 U1-32)
+    )
+    (net ENC_B
+      (pins J18-4 U1-29)
+    )
+    (net +5V
+      (pins J15-1 U2-3 U1-21)
+    )
+    (net BUZZER
+      (pins J15-3 U1-15)
+    )
+    (net +12V_SNS
+      (pins J11-1 J13-1 C10-1 J10-1 R1-1 J12-1 J9-1 R10-2 J8-1 C11-1 J14-1)
+    )
+    (net OPTO_IN4
+      (pins J11-2 J4-6 U4-6)
+    )
+    (net MotDC3_A
+      (pins J7-1 U7-5)
+    )
+    (net MotDC3_B
+      (pins J7-2 U7-6)
+    )
+    (net OPTO_IN6
+      (pins J13-2 J4-8 U9-4)
+    )
+    (net OPTO_IN3
+      (pins J10-2 J4-5 U4-5)
+    )
+    (net BLOWER
+      (pins R3-1 J16-1 U1-13)
+    )
+    (net MotDC2_A
+      (pins J6-1 U6-5)
+    )
+    (net MotDC2_B
+      (pins J6-2 U6-6)
+    )
+    (net MotDC1_A
+      (pins J5-1 U5-5)
+    )
+    (net MotDC1_B
+      (pins J5-2 U5-6)
+    )
+    (net OPTO_IN7
+      (pins R1-2 J4-9 J14-3 U9-5)
+    )
+    (net OPTO_VCC_I
+      (pins J4-2 U4-2 U9-2)
+    )
+    (net OPTO_IN1
+      (pins J4-3 J8-2 U4-3)
+    )
+    (net OPTO_IN2
+      (pins J4-4 J9-2 U4-4)
+    )
+    (net OPTO_IN5
+      (pins J4-7 J12-2 U9-3)
+    )
+    (net OPTO_IN8
+      (pins J4-10 U9-6)
+    )
+    (net MotA2
+      (pins J2-1 U3-11)
+    )
+    (net MotA1
+      (pins J2-2 U3-12)
+    )
+    (net MotB1
+      (pins J2-3 U3-13)
+    )
+    (net MotB2
+      (pins J2-4 U3-14)
+    )
+    (net +12V
+      (pins R10-1 J16-3 D2-1 U5-1 U3-9 U2-1 U6-1 C22-1 C23-1 C20-1 D1-2 F1-2 C21-1
+        U7-1)
+    )
+    (net TFT_SCK
+      (pins J17-3 U1-31)
+    )
+    (net TFT_MOSI
+      (pins J17-4 U1-30)
+    )
+    (net TFT_MISO
+      (pins J17-5 U1-39)
+    )
+    (net TFT_CS
+      (pins J17-6 U1-28)
+    )
+    (net TFT_DC
+      (pins J17-7 U1-40)
+    )
+    (net TFT_RST
+      (pins J17-8 U1-14)
+    )
+    (net TFT_BL
+      (pins J17-9 U1-37)
+    )
+    (net T_CS
+      (pins J17-10 U1-38)
+    )
+    (net BLW_RET
+      (pins J16-4 D2-2)
+    )
+    (net "unconnected-(J14-CTRL-Pad4)"
+      (pins J14-4)
+    )
+    (net DC1_IN1
+      (pins U5-3 U1-16)
+    )
+    (net DC1_IN2
+      (pins U5-4 U1-17)
+    )
+    (net "unconnected-(U3-MS1-Pad2)"
+      (pins U3-2)
+    )
+    (net "unconnected-(U3-MS2-Pad3)"
+      (pins U3-3)
+    )
+    (net "unconnected-(U3-PDN-Pad4)"
+      (pins U3-4)
+    )
+    (net "unconnected-(U3-PDN2-Pad5)"
+      (pins U3-5)
+    )
+    (net "unconnected-(U3-CLK-Pad6)"
+      (pins U3-6)
+    )
+    (net STEP
+      (pins U3-7 U1-9)
+    )
+    (net DIR
+      (pins U3-8 U1-10)
+    )
+    (net DC2_IN1
+      (pins U6-3 U1-18)
+    )
+    (net DC2_IN2
+      (pins U6-4 U1-19)
+    )
+    (net "unconnected-(U1-RST-Pad3)"
+      (pins U1-3)
+    )
+    (net OPTO_OUT3
+      (pins U1-4 U4-11)
+    )
+    (net OPTO_OUT4
+      (pins U1-5 U4-12)
+    )
+    (net OPTO_OUT5
+      (pins U1-6 U9-9)
+    )
+    (net OPTO_OUT6
+      (pins U1-7 U9-10)
+    )
+    (net DC3_IN2
+      (pins U1-8 U7-4)
+    )
+    (net OPTO_OUT7
+      (pins U1-12 U9-11)
+    )
+    (net DC3_IN1
+      (pins U1-20 U7-3)
+    )
+    (net "unconnected-(U1-TX0-Pad24)"
+      (pins U1-24)
+    )
+    (net "unconnected-(U1-RX0-Pad25)"
+      (pins U1-25)
+    )
+    (net OPTO_OUT1
+      (pins U1-26 U4-9)
+    )
+    (net OPTO_OUT2
+      (pins U1-27 U4-10)
+    )
+    (net "unconnected-(U1-IO37-Pad33)"
+      (pins U1-33)
+    )
+    (net "unconnected-(U1-IO36-Pad34)"
+      (pins U1-34)
+    )
+    (net "unconnected-(U1-IO35-Pad35)"
+      (pins U1-35)
+    )
+    (net "unconnected-(U1-IO0-Pad36)"
+      (pins U1-36)
+    )
+    (net "unconnected-(U1-IO20-Pad41)"
+      (pins U1-41)
+    )
+    (net "unconnected-(U1-IO19-Pad42)"
+      (pins U1-42)
+    )
+    (net +12V_RAW
+      (pins F1-1 J1-1)
+    )
+    (net OPTO_OUT8
+      (pins U9-12)
+    )
+    (class kicad_default BLOWER BLW_RET BUZZER DC1_IN1 DC1_IN2 DC2_IN1 DC2_IN2
+      DC3_IN1 DC3_IN2 DIR ENC_A ENC_B EN_TMC MotA1 MotA2 MotB1 MotB2 MotDC1_A
+      MotDC1_B MotDC2_A MotDC2_B MotDC3_A MotDC3_B OPTO_IN1 OPTO_IN2 OPTO_IN3
+      OPTO_IN4 OPTO_IN5 OPTO_IN6 OPTO_IN7 OPTO_IN8 OPTO_OUT1 OPTO_OUT2 OPTO_OUT3
+      OPTO_OUT4 OPTO_OUT5 OPTO_OUT6 OPTO_OUT7 OPTO_OUT8 OPTO_VCC_I STEP TFT_BL
+      TFT_CS TFT_DC TFT_MISO TFT_MOSI TFT_RST TFT_SCK T_CS "unconnected-(J14-CTRL-Pad4)"
+      "unconnected-(U1-IO0-Pad36)" "unconnected-(U1-IO19-Pad42)" "unconnected-(U1-IO20-Pad41)"
+      "unconnected-(U1-IO35-Pad35)" "unconnected-(U1-IO36-Pad34)" "unconnected-(U1-IO37-Pad33)"
+      "unconnected-(U1-RST-Pad3)" "unconnected-(U1-RX0-Pad25)" "unconnected-(U1-TX0-Pad24)"
+      "unconnected-(U3-CLK-Pad6)" "unconnected-(U3-MS1-Pad2)" "unconnected-(U3-MS2-Pad3)"
+      "unconnected-(U3-PDN-Pad4)" "unconnected-(U3-PDN2-Pad5)"
+      (circuit
+        (use_via "Via[0-1]_600:300_um")
+      )
+      (rule
+        (width 250)
+        (clearance 450)
+      )
+    )
+    (class Power +12V +12V_RAW +12V_SNS +3V3 +5V GND
+      (circuit
+        (use_via "Via[0-1]_1100:600_um")
+      )
+      (rule
+        (width 1500)
+        (clearance 450)
+      )
+    )
+  )
+  (wiring
+  )
+)

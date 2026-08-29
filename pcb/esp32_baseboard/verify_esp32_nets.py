@@ -7,6 +7,8 @@ import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
+from pcb_parse import NetTable
+
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
@@ -31,31 +33,31 @@ RESERVED_GPIO = {0, 19, 20, 43, 44}  # BOOT / USB / UART0
 # gpio_num -> expected net name on PCB
 EXPECTED_NET: dict[int, str] = {}
 for gpio, _name in OPTO_GPIO:
-    EXPECTED_NET[gpio] = f"/OPTO_OUT{OPTO_GPIO.index((gpio, _name)) + 1}"
+    EXPECTED_NET[gpio] = f"OPTO_OUT{OPTO_GPIO.index((gpio, _name)) + 1}"
 # Fix OUT numbering from list order
 EXPECTED_NET = {}
 for i, (gpio, _name) in enumerate(OPTO_GPIO, 1):
-    EXPECTED_NET[gpio] = f"/OPTO_OUT{i}"
+    EXPECTED_NET[gpio] = f"OPTO_OUT{i}"
 
-EXPECTED_NET[ENC_GPIO["A"]] = "/ENC_A"
-EXPECTED_NET[ENC_GPIO["B"]] = "/ENC_B"
+EXPECTED_NET[ENC_GPIO["A"]] = "ENC_A"
+EXPECTED_NET[ENC_GPIO["B"]] = "ENC_B"
 for uref, in1, in2, _nma, _nmb in DRV_MOTORS:
     axis = {"5": 1, "6": 2, "7": 3}[uref]
-    EXPECTED_NET[in1] = f"/DC{axis}_IN1"
-    EXPECTED_NET[in2] = f"/DC{axis}_IN2"
-EXPECTED_NET[TMC_GPIO["STEP"]] = "/STEP"
-EXPECTED_NET[TMC_GPIO["DIR"]] = "/DIR"
-EXPECTED_NET[TMC_GPIO["EN"]] = "/EN_TMC"
-EXPECTED_NET[TFT_GPIO["SCK"]] = "/TFT_SCK"
-EXPECTED_NET[TFT_GPIO["MOSI"]] = "/TFT_MOSI"
-EXPECTED_NET[TFT_GPIO["MISO"]] = "/TFT_MISO"
-EXPECTED_NET[TFT_GPIO["CS"]] = "/TFT_CS"
-EXPECTED_NET[TFT_GPIO["DC"]] = "/TFT_DC"
-EXPECTED_NET[TFT_GPIO["RST"]] = "/TFT_RST"
-EXPECTED_NET[TFT_GPIO["BL"]] = "/TFT_BL"
-EXPECTED_NET[TFT_GPIO["T_CS"]] = "/T_CS"
-EXPECTED_NET[BUZZER_GPIO] = "/BUZZER"
-EXPECTED_NET[MOSFET_GPIO] = "/BLOWER"
+    EXPECTED_NET[in1] = f"DC{axis}_IN1"
+    EXPECTED_NET[in2] = f"DC{axis}_IN2"
+EXPECTED_NET[TMC_GPIO["STEP"]] = "STEP"
+EXPECTED_NET[TMC_GPIO["DIR"]] = "DIR"
+EXPECTED_NET[TMC_GPIO["EN"]] = "EN_TMC"
+EXPECTED_NET[TFT_GPIO["SCK"]] = "TFT_SCK"
+EXPECTED_NET[TFT_GPIO["MOSI"]] = "TFT_MOSI"
+EXPECTED_NET[TFT_GPIO["MISO"]] = "TFT_MISO"
+EXPECTED_NET[TFT_GPIO["CS"]] = "TFT_CS"
+EXPECTED_NET[TFT_GPIO["DC"]] = "TFT_DC"
+EXPECTED_NET[TFT_GPIO["RST"]] = "TFT_RST"
+EXPECTED_NET[TFT_GPIO["BL"]] = "TFT_BL"
+EXPECTED_NET[TFT_GPIO["T_CS"]] = "T_CS"
+EXPECTED_NET[BUZZER_GPIO] = "BUZZER"
+EXPECTED_NET[MOSFET_GPIO] = "BLOWER"
 
 STRAP_NOTES = {
     3: "no internal pull — need R3 10k PD (BLOWER)",
@@ -64,7 +66,15 @@ STRAP_NOTES = {
 }
 
 
-def parse_all_pads(text: str) -> dict[str, list[tuple[str, int, str]]]:
+def _norm_net(n):
+    """Compare net names without the legacy leading slash.
+
+    The board now carries KiCad-native bare names (STEP), while these tables
+    were written against the old "STEP" form."""
+    return n[1:] if isinstance(n, str) and n.startswith("/") else n
+
+
+def parse_all_pads(text: str, table=None) -> dict[str, list[tuple[str, int, str]]]:
     blocks = re.split(r"\n\t\(footprint ", text)[1:]
     by_ref: dict[str, list] = {}
     for b in blocks:
@@ -73,21 +83,22 @@ def parse_all_pads(text: str) -> dict[str, list[tuple[str, int, str]]]:
             continue
         ref = rm.group(1)
         pads = []
-        for pad_block in re.finditer(r'\(pad "([^"]*)"(.*?)\n\t\t\)', b, re.S):
+        for pad_block in re.finditer(r'\(pad "([^"]*)"((?:(?!\(pad ")[\s\S])*)', b):
             pname = pad_block.group(1)
             body = pad_block.group(2)
-            nm = re.search(r'\(net\s+(\d+)\s+"([^"]*)"\)', body)
+            nm = re.search(r'\(net\s+(?:\d+\s+)?"([^"]*)"\)', body)
             if not nm:
                 continue
-            pads.append((pname, int(nm.group(1)), nm.group(2)))
+            pads.append((pname, table.id_of(nm.group(1)), nm.group(1)))
         by_ref[ref] = pads
     return by_ref
 
 
 def main() -> int:
     text = PCB.read_text(encoding="utf-8")
-    pads_by_ref = parse_all_pads(text)
-    nets = dict(re.findall(r'\(net\s+(\d+)\s+"([^"]*)"\)', text))
+    table = NetTable(text)
+    pads_by_ref = parse_all_pads(text, table)
+    nets = dict(table.by_id)
     nets = {int(k): v for k, v in nets.items()}
 
     print("=== 1) Pinmap conflicts (s3_pinmap) ===")
@@ -198,13 +209,13 @@ def main() -> int:
         ref = rm.group(1)
         ax, ay = float(am.group(1)), float(am.group(2))
         rot = float(am.group(3) or 0)
-        for pad_block in re.finditer(r'\(pad "([^"]*)"(.*?)\n\t\t\)', b, re.S):
+        for pad_block in re.finditer(r'\(pad "([^"]*)"((?:(?!\(pad ")[\s\S])*)', b):
             pname = pad_block.group(1)
             body = pad_block.group(2)
             if "np_thru_hole" in body:
                 continue
             atm = re.search(r"\(at ([0-9.\-]+) ([0-9.\-]+)", body)
-            nm = re.search(r'\(net\s+(\d+)\s+"([^"]*)"\)', body)
+            nm = re.search(r'\(net\s+(?:\d+\s+)?"([^"]*)"\)', body)
             if not atm or not nm:
                 continue
             lx, ly = float(atm.group(1)), float(atm.group(2))
@@ -216,7 +227,7 @@ def main() -> int:
                 # ignore odd rotations for this heuristic
                 continue
             key = (round(wx, 2), round(wy, 2))
-            pad_pos[key].append((ref, pname, nm.group(2)))
+            pad_pos[key].append((ref, pname, nm.group(1)))
 
     shorts = []
     for pos, items in pad_pos.items():
@@ -250,7 +261,7 @@ def main() -> int:
     print("TFT INT nets:", tint or "none (good)")
     out8 = [v for v in nets.values() if "OUT8" in v]
     print("OPTO_OUT8 net present:", out8, "(field only — must NOT be on U1)")
-    if any(nn == "/OPTO_OUT8" for _, nn in u1.values()):
+    if any(nn == "OPTO_OUT8" for _, nn in u1.values()):
         print("FAIL OPTO_OUT8 connected to U1")
     else:
         print("PASS OPTO_OUT8 not on U1 (ENC uses IO9)")
