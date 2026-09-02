@@ -1,0 +1,28 @@
+﻿python.exe : Adding duplicate image handler for 'PNG file'
+At C:\Users\Admin\AppData\Local\Temp\ps-script-0003ab7b-2250-46a8-87ec-cab983446a74.ps1:87 char:125
++ ... s\KiCad\10.0\bin\python.exe"; & $ki route_freerouting.py 2>&1 | Out-F ...
++                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Adding duplicat... for 'PNG file':String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Adding duplicate image handler for 'JPEG file'
+Adding duplicate image handler for 'TIFF file'
+Adding duplicate image handler for 'GIF file'
+Adding duplicate image handler for 'PNM file'
+Adding duplicate image handler for 'PCX file'
+Adding duplicate image handler for 'IFF file'
+Adding duplicate image handler for 'Windows icon file'
+Adding duplicate image handler for 'Windows cursor file'
+Adding duplicate image handler for 'Windows animated cursor file'
+Adding duplicate image handler for 'TGA file'
+Adding duplicate image handler for 'XPM file'
+Adding duplicate image handler for 'WebP file'
+DSN -> C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\out_freerouting\esp32_baseboard.dsn (tracks stripped, A7 clearances injected)
+headless settings written to C:\Users\Admin\AppData\Local\Temp\freerouting\freerouting.json
+  timed out after 180s
+  attempt 1: no .ses produced
+headless settings written to C:\Users\Admin\AppData\Local\Temp\freerouting\freerouting.json
+  timed out after 180s
+  attempt 2: no .ses produced
+  best attempt still leaves None unconnected
+promoted -> esp32_baseboard.kicad_pcb

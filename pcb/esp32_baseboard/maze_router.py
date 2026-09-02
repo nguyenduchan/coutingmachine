@@ -798,8 +798,10 @@ class MazeRouter:
 POWER_CLEARANCE_NETS = frozenset(
     {"+12V", "+12V_RAW", "+12V_SNS", "+5V", "+3V3", "GND",
      "/MotA1", "/MotA2", "/MotB1", "/MotB2",
-     "/MotDC1_A", "/MotDC1_B", "/MotDC2_A", "/MotDC2_B",
-     "/MotDC3_A", "/MotDC3_B"}
+     "MotA1", "MotA2", "MotB1", "MotB2",
+     "BYJ1_A", "BYJ1_B", "BYJ1_C", "BYJ1_D",
+     "BYJ2_A", "BYJ2_B", "BYJ2_C", "BYJ2_D",
+     "BYJ3_A", "BYJ3_B", "BYJ3_C", "BYJ3_D"}
 )
 DEFAULT_CLEARANCE_MM = 0.20
 POWER_NETCLASS_CLEARANCE_MM = 0.25
@@ -938,13 +940,9 @@ def net_width(net: int, name: str) -> float:
         61,
     ):
         return 0.45
-    if "MotDC" in name or name.startswith("/Mot"):
-        # A6 wants wa/2 + wb/2 + TRACE_CLEARANCE between two signal tracks, and
-        # the maze can only place them a grid pitch apart. At 0.4 mm two motor
-        # tracks on neighbouring columns need 0.60 mm and only get 0.55 — every
-        # parallel run was a violation. 0.34 keeps the pair legal (0.54 < 0.55)
-        # and still carries the stepper phase current on 1 oz copper.
-        return MAX_SIGNAL_WIDTH
+    if name.startswith("BYJ") or name.startswith("/Mot") or name.startswith("Mot"):
+        # 28BYJ phases ~40 mA — signal-ish; NEMA Mot* still MAX_SIGNAL_WIDTH
+        return MAX_SIGNAL_WIDTH if "Mot" in name else 0.30
     return 0.28
 
 
@@ -967,7 +965,7 @@ def route_priority(net: int, name: str) -> tuple:
         61,
     ):
         return (2, -w)
-    if "MotDC" in name or name.startswith("/MotA") or name.startswith("/MotB"):
+    if name.startswith("BYJ") or name.startswith("/MotA") or name.startswith("/MotB") or name.startswith("MotA") or name.startswith("MotB"):
         return (1, -w)
     return (0, -w)
 
@@ -1436,13 +1434,9 @@ def _prefer_signal_layer(net: int, name: str) -> int:
         return LAYER_F
     if name.startswith("/OPTO"):
         return LAYER_B
-    if name.startswith("/DC") and name.endswith("IN2"):
+    if name.startswith("/MotA") or name.startswith("/MotB") or name.startswith("MotA") or name.startswith("MotB"):
         return LAYER_B
-    if name.startswith("/DC") and name.endswith("IN1"):
-        return LAYER_F
-    if name.startswith("/MotA") or name.startswith("/MotB"):
-        return LAYER_B
-    if "MotDC" in name:
+    if name.startswith("BYJ") or name.startswith("SR_Q") or name in ("SER", "SRCLK", "RCLK", "OE_595", "QH_U10"):
         return LAYER_B
     return LAYER_F if (net % 2 == 0) else LAYER_B
 
@@ -2130,6 +2124,11 @@ def emit_service_buses(
         (58, "U1", "J17", 0.28),
         (59, "U1", "J17", 0.28),
         (53, "U1", "J17", 0.28),
+        (20, "U1", "J17", 0.28),
+        (21, "U1", "U45", 0.28),
+        (22, "U1", "U46", 0.28),
+        (23, "U1", "U47", 0.28),
+        (24, "U1", "U48", 0.28),
         (60, "U1", "J18", 0.28),
         (62, "U1", "J18", 0.28),
         (54, "U1", "J15", 0.28),
@@ -2164,10 +2163,6 @@ def emit_service_buses(
         (43, "U1", "U6", 0.28),
         (44, "U1", "U7", 0.28),
         (45, "U1", "U7", 0.28),
-        (12, "U3", "J2", 0.28),
-        (13, "U3", "J2", 0.28),
-        (14, "U3", "J2", 0.28),
-        (15, "U3", "J2", 0.28),
         (34, "U5", "J5", 0.3),
         (35, "U5", "J5", 0.3),
         (36, "U6", "J6", 0.3),

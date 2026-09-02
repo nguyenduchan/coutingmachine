@@ -83,6 +83,7 @@ def main() -> int:
         ("Schematic/PCB nets", run("Schematic/PCB nets", [py, "verify_connectivity.py"])),
         ("ESP32 GPIO pinmap", run("ESP32 GPIO pinmap", [py, "verify_esp32_nets.py"])),
         ("Signal geometry A5-A7", run("Signal geometry", [py, "_check_signal_routing.py"])),
+        ("Track width vs fab + current", run("Track width", [py, "verify_track_width.py"])),
     ]
     ok_drc, counts = drc(pcb)
     results.append(("KiCad DRC (incl. schematic parity)", ok_drc))

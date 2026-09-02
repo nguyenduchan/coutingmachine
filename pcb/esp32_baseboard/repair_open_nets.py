@@ -9,7 +9,7 @@ from maze_router import repair_open_pcb
 ROOT = Path(__file__).resolve().parent
 PCB = ROOT / "esp32_baseboard.kicad_pcb"
 OX, OY = 35.0, 30.0
-BW, BH = 185.0, 132.0
+BW, BH = 190.0, 160.0
 
 
 def main() -> None:

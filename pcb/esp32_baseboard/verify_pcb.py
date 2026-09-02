@@ -15,8 +15,8 @@ ROOT = Path(__file__).resolve().parent
 PCB = ROOT / "esp32_baseboard.kicad_pcb"
 
 # Keep in sync with gen_power_carrier.py
-BOARD_W_MM = 235.0
-BOARD_H_MM = 132.0
+BOARD_W_MM = 220.0
+BOARD_H_MM = 160.0
 # Vias are allowed as a last resort where no same-layer route exists, but they
 # stay a budget, not a routing tool: the router prices one at ~70 grid steps so
 # it only buys one when the net has no way round on either face.

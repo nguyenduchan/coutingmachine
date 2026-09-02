@@ -1,72 +1,2418 @@
 ** Drc report for esp32_baseboard.kicad_pcb **
-** Created on 2026-08-29T14:20:38 **
+** Created on 2026-09-03T01:23:02 **
 ** Report includes: Errors, Warnings **
 
-** Found 20 DRC violations **
-[lib_footprint_mismatch]: Footprint 'PinHeader_1x02_MotorDC' does not match copy in library 'ESP32_Carrier'
-    Local override; warning
-    @(265.0000 mm, 150.0000 mm): Footprint J7
-[lib_footprint_mismatch]: Footprint 'PinHeader_1x02_MotorDC' does not match copy in library 'ESP32_Carrier'
-    Local override; warning
-    @(265.0000 mm, 124.0000 mm): Footprint J6
-[lib_footprint_mismatch]: Footprint 'PinHeader_1x02_MotorDC' does not match copy in library 'ESP32_Carrier'
-    Local override; warning
-    @(265.0000 mm, 98.0000 mm): Footprint J5
-[lib_footprint_mismatch]: Footprint 'R_Axial_4k7_BUP' does not match copy in library 'ESP32_Carrier'
-    Local override; warning
-    @(190.0000 mm, 66.1280 mm): Footprint R1
-[lib_footprint_mismatch]: Footprint 'PinHeader_1x04_Motor' does not match copy in library 'ESP32_Carrier'
-    Local override; warning
-    @(228.0000 mm, 65.8100 mm): Footprint J2
-[lib_footprint_mismatch]: Footprint 'DRV8871_Module' does not match copy in library 'ESP32_Carrier'
-    Local override; warning
-    @(247.0000 mm, 94.0000 mm): Footprint U5
-[lib_footprint_mismatch]: Footprint 'TMC2209_StepStick' does not match copy in library 'ESP32_Carrier'
-    Local override; warning
-    @(247.0000 mm, 62.0000 mm): Footprint U3
-[lib_footprint_mismatch]: Footprint 'MP1584_5V3A' does not match copy in library 'ESP32_Carrier'
-    Local override; warning
-    @(58.0000 mm, 112.0000 mm): Footprint U2
-[lib_footprint_mismatch]: Footprint 'DRV8871_Module' does not match copy in library 'ESP32_Carrier'
-    Local override; warning
-    @(247.0000 mm, 120.0000 mm): Footprint U6
-[lib_footprint_mismatch]: Footprint 'ESP32_S3_DevKitC_44Pin_Socket' does not match copy in library 'ESP32_Carrier'
-    Local override; warning
-    @(133.0000 mm, 120.0000 mm): Footprint U1
-[lib_footprint_mismatch]: Footprint 'PC817_4CH_Opto' does not match copy in library 'ESP32_Carrier'
-    Local override; warning
-    @(67.0000 mm, 141.0000 mm): Footprint U4
-[lib_footprint_mismatch]: Footprint 'CP_Radial_D8_470u_25V' does not match copy in library 'ESP32_Carrier'
-    Local override; warning
-    @(253.0000 mm, 133.0000 mm): Footprint C22
-[lib_footprint_mismatch]: Footprint 'CP_Radial_D8_470u_25V' does not match copy in library 'ESP32_Carrier'
-    Local override; warning
-    @(253.0000 mm, 159.0000 mm): Footprint C23
-[lib_footprint_mismatch]: Footprint 'CP_Radial_D8_470u_25V' does not match copy in library 'ESP32_Carrier'
-    Local override; warning
-    @(247.0000 mm, 78.0000 mm): Footprint C20
-[lib_footprint_mismatch]: Footprint 'Diode_TVS_DO41' does not match copy in library 'ESP32_Carrier'
-    Local override; warning
-    @(46.0000 mm, 98.0000 mm): Footprint D1
-[lib_footprint_mismatch]: Footprint 'Fuse_PTC_Radial_5.1mm' does not match copy in library 'ESP32_Carrier'
-    Local override; warning
-    @(46.0000 mm, 86.0000 mm): Footprint F1
-[lib_footprint_mismatch]: Footprint 'CP_Radial_D8_470u_25V' does not match copy in library 'ESP32_Carrier'
-    Local override; warning
-    @(253.0000 mm, 107.0000 mm): Footprint C21
+** Found 358 DRC violations **
+[shorting_items]: Items shorting two nets (nets RCLK and +12V)
+    Local override; error
+    @(143.1900 mm, 157.7300 mm): PTH pad 12 [RCLK] of U10
+    @(143.7500 mm, 158.0000 mm): PTH pad 1 [+12V] of C21
+[shorting_items]: Items shorting two nets (nets RCLK and +12V)
+    Local override; error
+    @(143.1900 mm, 157.7300 mm): PTH pad 12 [RCLK] of U10
+    @(143.7500 mm, 158.0000 mm): PTH pad 1 [+12V] of C21
+[pth_inside_courtyard]: PTH inside courtyard
+    Local override; error
+    @(143.7500 mm, 158.0000 mm): PTH pad 1 [+12V] of C21
+    @(147.0000 mm, 159.0000 mm): Footprint U10
+[pth_inside_courtyard]: PTH inside courtyard
+    Local override; error
+    @(146.2500 mm, 158.0000 mm): PTH pad 2 [GND] of C21
+    @(147.0000 mm, 159.0000 mm): Footprint U10
+[pth_inside_courtyard]: PTH inside courtyard
+    Local override; error
+    @(196.2500 mm, 167.0000 mm): PTH pad 1 [OE_595] of R4
+    @(195.0000 mm, 159.0000 mm): Footprint U7
+[solder_mask_bridge]: Rear solder mask aperture bridges items with different nets
+    Rule: board setup solder mask min width; error
+    @(143.7500 mm, 158.0000 mm): PTH pad 1 [+12V] of C21
+    @(143.1900 mm, 157.7300 mm): PTH pad 12 [RCLK] of U10
+[solder_mask_bridge]: Front solder mask aperture bridges items with different nets
+    Rule: board setup solder mask min width; error
+    @(143.1900 mm, 157.7300 mm): PTH pad 12 [RCLK] of U10
+    @(143.7500 mm, 158.0000 mm): PTH pad 1 [+12V] of C21
+[hole_to_hole]: Drilled hole too close to other hole (board setup constraints min 0.2495 mm; actual 0.0000 mm)
+    Rule: board setup constraints; warning
+    @(143.1900 mm, 157.7300 mm): PTH pad 12 [RCLK] of U10
+    @(143.7500 mm, 158.0000 mm): PTH pad 1 [+12V] of C21
 [lib_footprint_mismatch]: Footprint 'TerminalBlock_2P_5.0mm' does not match copy in library 'ESP32_Carrier'
     Local override; warning
-    @(46.0000 mm, 74.0000 mm): Footprint J1
-[lib_footprint_mismatch]: Footprint 'PC817_4CH_Opto' does not match copy in library 'ESP32_Carrier'
+    @(62.0000 mm, 145.0000 mm): Footprint J1
+[lib_footprint_mismatch]: Footprint 'Fuse_PTC_Radial_5.1mm' does not match copy in library 'ESP32_Carrier'
     Local override; warning
-    @(163.0000 mm, 141.0000 mm): Footprint U9
-[lib_footprint_mismatch]: Footprint 'DRV8871_Module' does not match copy in library 'ESP32_Carrier'
+    @(69.0000 mm, 115.0000 mm): Footprint F1
+[lib_footprint_mismatch]: Footprint 'MP1584_5V3A' does not match copy in library 'ESP32_Carrier'
     Local override; warning
-    @(247.0000 mm, 146.0000 mm): Footprint U7
+    @(73.0000 mm, 128.0000 mm): Footprint U2
+[lib_footprint_mismatch]: Footprint 'TMC2209_StepStick' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(186.0000 mm, 115.0000 mm): Footprint U3
+[lib_footprint_mismatch]: Footprint 'PinHeader_1x09_TFT_LCD' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(195.0000 mm, 56.0000 mm): Footprint J17
+[lib_footprint_mismatch]: Footprint 'PinHeader_1x05_TFT_TP' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(195.0000 mm, 78.8600 mm): Footprint J23
+[lib_footprint_mismatch]: Footprint 'PinHeader_1x04_ENC' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(175.0000 mm, 60.0000 mm): Footprint J18
+[lib_footprint_mismatch]: Footprint 'R_Axial_4k7_BUP' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(94.5000 mm, 99.5000 mm): Footprint R41
+[lib_footprint_mismatch]: Footprint 'R_Axial_4k7_BUP' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(101.5000 mm, 116.5000 mm): Footprint R45
+[lib_footprint_mismatch]: Footprint 'R_Axial_4k7_BUP' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(106.0000 mm, 99.5000 mm): Footprint R42
+[lib_footprint_mismatch]: Footprint 'R_Axial_4k7_BUP' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(113.0000 mm, 116.5000 mm): Footprint R46
+[lib_footprint_mismatch]: Footprint 'R_Axial_4k7_BUP' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(117.5000 mm, 99.5000 mm): Footprint R43
+[lib_footprint_mismatch]: Footprint 'R_Axial_4k7_BUP' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(124.5000 mm, 116.5000 mm): Footprint R47
+[lib_footprint_mismatch]: Footprint 'R_Axial_4k7_BUP' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(129.0000 mm, 99.5000 mm): Footprint R44
+[lib_footprint_mismatch]: Footprint 'R_Axial_4k7_BUP' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(136.0000 mm, 116.5000 mm): Footprint R48
+[lib_footprint_mismatch]: Footprint 'R_Axial_4k7_BUP' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(94.5000 mm, 125.5000 mm): Footprint R49
+[lib_footprint_mismatch]: Footprint 'R_Axial_4k7_BUP' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(101.5000 mm, 142.5000 mm): Footprint R53
+[lib_footprint_mismatch]: Footprint 'R_Axial_4k7_BUP' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(106.0000 mm, 125.5000 mm): Footprint R50
+[lib_footprint_mismatch]: Footprint 'R_Axial_4k7_BUP' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(113.0000 mm, 142.5000 mm): Footprint R54
+[lib_footprint_mismatch]: Footprint 'R_Axial_4k7_BUP' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(117.5000 mm, 125.5000 mm): Footprint R51
+[lib_footprint_mismatch]: Footprint 'R_Axial_4k7_BUP' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(124.5000 mm, 142.5000 mm): Footprint R55
+[lib_footprint_mismatch]: Footprint 'R_Axial_4k7_BUP' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(129.0000 mm, 125.5000 mm): Footprint R52
+[lib_footprint_mismatch]: Footprint 'R_Axial_4k7_BUP' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(136.0000 mm, 142.5000 mm): Footprint R56
+[lib_footprint_mismatch]: Footprint '74HC595' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(147.0000 mm, 159.0000 mm): Footprint U10
+[lib_footprint_mismatch]: Footprint '74HC595' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(159.0000 mm, 159.0000 mm): Footprint U11
+[lib_footprint_mismatch]: Footprint 'ULN2003AN' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(171.0000 mm, 159.0000 mm): Footprint U5
+[lib_footprint_mismatch]: Footprint 'ULN2003AN' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(183.0000 mm, 159.0000 mm): Footprint U6
+[lib_footprint_mismatch]: Footprint 'ULN2003AN' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(195.0000 mm, 159.0000 mm): Footprint U7
+[lib_footprint_mismatch]: Footprint 'PinHeader_1x05_BYJ' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(115.0000 mm, 163.0000 mm): Footprint J5
+[lib_footprint_mismatch]: Footprint 'PinHeader_1x05_BYJ' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(125.0000 mm, 163.0000 mm): Footprint J6
+[lib_footprint_mismatch]: Footprint 'PinHeader_1x05_BYJ' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(135.0000 mm, 163.0000 mm): Footprint J7
+[lib_footprint_mismatch]: Footprint 'R_Axial_4k7_BUP' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(200.0000 mm, 167.0000 mm): Footprint R4
+[lib_footprint_mismatch]: Footprint 'R_Axial_4k7_BUP' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(77.0000 mm, 67.2080 mm): Footprint R1
+[lib_footprint_mismatch]: Footprint 'R_Axial_4k7_BUP' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(176.0000 mm, 127.0000 mm): Footprint R2
+[lib_footprint_mismatch]: Footprint 'R_Axial_4k7_BUP' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(127.0000 mm, 64.0000 mm): Footprint R3
+[lib_footprint_mismatch]: Footprint 'R_1206_10R' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(77.0000 mm, 158.0000 mm): Footprint R10
+[lib_footprint_mismatch]: Footprint 'CP_Radial_D6_47u_25V' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(77.0000 mm, 164.0000 mm): Footprint C10
+[lib_footprint_mismatch]: Footprint 'C_0805_100n' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(85.0000 mm, 164.0000 mm): Footprint C11
+[lib_footprint_mismatch]: Footprint 'CP_Radial_D8_470u_25V' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(196.0000 mm, 129.0000 mm): Footprint C20
+[lib_footprint_mismatch]: Footprint 'CP_Radial_D6_100u_25V' does not match copy in library 'ESP32_Carrier'
+    Local override; warning
+    @(145.0000 mm, 158.0000 mm): Footprint C21
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(70.7500 mm, 159.8000 mm): Footprint text of D1 (K)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(63.2500 mm, 159.8000 mm): Footprint text of D1 (A)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(198.8000 mm, 56.0000 mm): Footprint text of J17 (VCC)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(192.4000 mm, 56.0000 mm): Footprint text of J17 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(198.8000 mm, 58.5400 mm): Footprint text of J17 (GND)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(198.8000 mm, 61.0800 mm): Footprint text of J17 (CS)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(198.8000 mm, 63.6200 mm): Footprint text of J17 (RESET)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(198.8000 mm, 66.1600 mm): Footprint text of J17 (DC)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(198.8000 mm, 68.7000 mm): Footprint text of J17 (SDI)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(198.8000 mm, 71.2400 mm): Footprint text of J17 (SCK)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(198.8000 mm, 73.7800 mm): Footprint text of J17 (LED)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(198.8000 mm, 76.3200 mm): Footprint text of J17 (SDO)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(198.8000 mm, 78.8600 mm): Footprint text of J23 (T_CLK)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(192.4000 mm, 78.8600 mm): Footprint text of J23 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(198.8000 mm, 81.4000 mm): Footprint text of J23 (T_CS)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(198.8000 mm, 83.9400 mm): Footprint text of J23 (T_DIN)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(198.8000 mm, 86.4800 mm): Footprint text of J23 (T_DO)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(198.8000 mm, 89.0200 mm): Footprint text of J23 (T_IRQ)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(177.6000 mm, 60.0000 mm): Footprint text of J18 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(92.3900 mm, 106.7300 mm): Footprint text of U41 (A)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(92.3900 mm, 109.2700 mm): Footprint text of U41 (K)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(103.6100 mm, 109.2700 mm): Footprint text of U41 (E)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(103.6100 mm, 106.7300 mm): Footprint text of U41 (C)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(94.5000 mm, 96.9000 mm): Reference field of R41
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(94.5000 mm, 102.1000 mm): Value field of R41 (2k2)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(90.7500 mm, 97.5000 mm): Footprint text of R41 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(101.5000 mm, 113.9000 mm): Reference field of R45
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(101.5000 mm, 119.1000 mm): Value field of R45 (10k)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(97.7500 mm, 114.5000 mm): Footprint text of R45 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(103.8900 mm, 106.7300 mm): Footprint text of U42 (A)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(103.8900 mm, 109.2700 mm): Footprint text of U42 (K)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(115.1100 mm, 109.2700 mm): Footprint text of U42 (E)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(115.1100 mm, 106.7300 mm): Footprint text of U42 (C)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(106.0000 mm, 96.9000 mm): Reference field of R42
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(106.0000 mm, 102.1000 mm): Value field of R42 (2k2)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(102.2500 mm, 97.5000 mm): Footprint text of R42 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(113.0000 mm, 113.9000 mm): Reference field of R46
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(113.0000 mm, 119.1000 mm): Value field of R46 (10k)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(109.2500 mm, 114.5000 mm): Footprint text of R46 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(115.3900 mm, 106.7300 mm): Footprint text of U43 (A)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(115.3900 mm, 109.2700 mm): Footprint text of U43 (K)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(126.6100 mm, 109.2700 mm): Footprint text of U43 (E)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(126.6100 mm, 106.7300 mm): Footprint text of U43 (C)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(117.5000 mm, 96.9000 mm): Reference field of R43
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(117.5000 mm, 102.1000 mm): Value field of R43 (2k2)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(113.7500 mm, 97.5000 mm): Footprint text of R43 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(124.5000 mm, 113.9000 mm): Reference field of R47
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(124.5000 mm, 119.1000 mm): Value field of R47 (10k)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(120.7500 mm, 114.5000 mm): Footprint text of R47 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(126.8900 mm, 106.7300 mm): Footprint text of U44 (A)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(126.8900 mm, 109.2700 mm): Footprint text of U44 (K)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(138.1100 mm, 109.2700 mm): Footprint text of U44 (E)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(138.1100 mm, 106.7300 mm): Footprint text of U44 (C)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(129.0000 mm, 96.9000 mm): Reference field of R44
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(129.0000 mm, 102.1000 mm): Value field of R44 (2k2)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(125.2500 mm, 97.5000 mm): Footprint text of R44 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(136.0000 mm, 113.9000 mm): Reference field of R48
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(136.0000 mm, 119.1000 mm): Value field of R48 (10k)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(132.2500 mm, 114.5000 mm): Footprint text of R48 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(92.3900 mm, 132.7300 mm): Footprint text of U45 (A)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(92.3900 mm, 135.2700 mm): Footprint text of U45 (K)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(103.6100 mm, 135.2700 mm): Footprint text of U45 (E)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(103.6100 mm, 132.7300 mm): Footprint text of U45 (C)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(94.5000 mm, 122.9000 mm): Reference field of R49
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(94.5000 mm, 128.1000 mm): Value field of R49 (2k2)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(90.7500 mm, 123.5000 mm): Footprint text of R49 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(101.5000 mm, 139.9000 mm): Reference field of R53
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(101.5000 mm, 145.1000 mm): Value field of R53 (10k)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(97.7500 mm, 140.5000 mm): Footprint text of R53 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(103.8900 mm, 132.7300 mm): Footprint text of U46 (A)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(103.8900 mm, 135.2700 mm): Footprint text of U46 (K)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(115.1100 mm, 135.2700 mm): Footprint text of U46 (E)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(115.1100 mm, 132.7300 mm): Footprint text of U46 (C)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(106.0000 mm, 122.9000 mm): Reference field of R50
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(106.0000 mm, 128.1000 mm): Value field of R50 (2k2)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(102.2500 mm, 123.5000 mm): Footprint text of R50 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(113.0000 mm, 139.9000 mm): Reference field of R54
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(113.0000 mm, 145.1000 mm): Value field of R54 (10k)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(109.2500 mm, 140.5000 mm): Footprint text of R54 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(115.3900 mm, 132.7300 mm): Footprint text of U47 (A)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(115.3900 mm, 135.2700 mm): Footprint text of U47 (K)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(126.6100 mm, 135.2700 mm): Footprint text of U47 (E)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(126.6100 mm, 132.7300 mm): Footprint text of U47 (C)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(117.5000 mm, 122.9000 mm): Reference field of R51
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(117.5000 mm, 128.1000 mm): Value field of R51 (2k2)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(113.7500 mm, 123.5000 mm): Footprint text of R51 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(124.5000 mm, 139.9000 mm): Reference field of R55
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(124.5000 mm, 145.1000 mm): Value field of R55 (10k)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(120.7500 mm, 140.5000 mm): Footprint text of R55 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(126.8900 mm, 132.7300 mm): Footprint text of U48 (A)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(126.8900 mm, 135.2700 mm): Footprint text of U48 (K)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(138.1100 mm, 135.2700 mm): Footprint text of U48 (E)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(138.1100 mm, 132.7300 mm): Footprint text of U48 (C)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(129.0000 mm, 122.9000 mm): Reference field of R52
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(129.0000 mm, 128.1000 mm): Value field of R52 (2k2)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(125.2500 mm, 123.5000 mm): Footprint text of R52 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(136.0000 mm, 139.9000 mm): Reference field of R56
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(136.0000 mm, 145.1000 mm): Value field of R56 (10k)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(132.2500 mm, 140.5000 mm): Footprint text of R56 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(153.0100 mm, 167.8900 mm): Footprint text of U10 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(147.0000 mm, 159.0000 mm): Footprint text of U10 (74HC595)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(165.0100 mm, 167.8900 mm): Footprint text of U11 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(159.0000 mm, 159.0000 mm): Footprint text of U11 (74HC595)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(177.0100 mm, 167.8900 mm): Footprint text of U5 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(171.0000 mm, 159.0000 mm): Footprint text of U5 (ULN2003)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(189.0100 mm, 167.8900 mm): Footprint text of U6 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(183.0000 mm, 159.0000 mm): Footprint text of U6 (ULN2003)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(201.0100 mm, 167.8900 mm): Footprint text of U7 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(195.0000 mm, 159.0000 mm): Footprint text of U7 (ULN2003)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(111.8000 mm, 163.0000 mm): Footprint text of J5 (A)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(117.6000 mm, 163.0000 mm): Footprint text of J5 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(111.8000 mm, 160.4600 mm): Footprint text of J5 (B)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(111.8000 mm, 157.9200 mm): Footprint text of J5 (C)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(111.8000 mm, 155.3800 mm): Footprint text of J5 (D)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(111.8000 mm, 152.8400 mm): Footprint text of J5 (+12V)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(121.8000 mm, 163.0000 mm): Footprint text of J6 (A)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(127.6000 mm, 163.0000 mm): Footprint text of J6 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(121.8000 mm, 160.4600 mm): Footprint text of J6 (B)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(121.8000 mm, 157.9200 mm): Footprint text of J6 (C)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(121.8000 mm, 155.3800 mm): Footprint text of J6 (D)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(121.8000 mm, 152.8400 mm): Footprint text of J6 (+12V)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(131.8000 mm, 163.0000 mm): Footprint text of J7 (A)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(137.6000 mm, 163.0000 mm): Footprint text of J7 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(131.8000 mm, 160.4600 mm): Footprint text of J7 (B)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(131.8000 mm, 157.9200 mm): Footprint text of J7 (C)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(131.8000 mm, 155.3800 mm): Footprint text of J7 (D)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(131.8000 mm, 152.8400 mm): Footprint text of J7 (+12V)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(63.2000 mm, 54.0000 mm): Footprint text of J8 (+12S)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(57.4000 mm, 54.0000 mm): Footprint text of J8 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(63.2000 mm, 56.5400 mm): Footprint text of J8 (SW)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(69.7000 mm, 54.0000 mm): Footprint text of J10 (+12S)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(63.9000 mm, 54.0000 mm): Footprint text of J10 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(69.7000 mm, 56.5400 mm): Footprint text of J10 (SW)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(76.2000 mm, 54.0000 mm): Footprint text of J12 (+12S)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(70.4000 mm, 54.0000 mm): Footprint text of J12 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(76.2000 mm, 56.5400 mm): Footprint text of J12 (SW)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(92.2000 mm, 54.0000 mm): Footprint text of J19 (+12S)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(86.4000 mm, 54.0000 mm): Footprint text of J19 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(92.2000 mm, 56.5400 mm): Footprint text of J19 (SW)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(98.7000 mm, 54.0000 mm): Footprint text of J20 (+12S)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(92.9000 mm, 54.0000 mm): Footprint text of J20 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(98.7000 mm, 56.5400 mm): Footprint text of J20 (SW)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(105.2000 mm, 54.0000 mm): Footprint text of J21 (+12S)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(99.4000 mm, 54.0000 mm): Footprint text of J21 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(105.2000 mm, 56.5400 mm): Footprint text of J21 (SW)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(111.7000 mm, 54.0000 mm): Footprint text of J22 (+12S)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(105.9000 mm, 54.0000 mm): Footprint text of J22 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(111.7000 mm, 56.5400 mm): Footprint text of J22 (SW)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(200.0000 mm, 169.6000 mm): Value field of R4 (10k)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(77.0000 mm, 69.8080 mm): Value field of R1 (4k7)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(176.0000 mm, 129.6000 mm): Value field of R2 (10k)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(172.2500 mm, 125.0000 mm): Footprint text of R2 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(127.0000 mm, 66.6000 mm): Value field of R3 (10k)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.6000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(123.2500 mm, 62.0000 mm): Footprint text of R3 (1)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7500 mm)
+    Rule: board setup constraints silk text height; warning
+    @(143.0000 mm, 66.6000 mm): Value field of D2 (1N5819)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(146.7500 mm, 61.8000 mm): Footprint text of D2 (K)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(139.2500 mm, 61.8000 mm): Footprint text of D2 (A)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(77.0000 mm, 159.9000 mm): Value field of R10 (10R)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(77.0000 mm, 168.2000 mm): Value field of C10 (47u/25V)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(85.0000 mm, 165.8000 mm): Value field of C11 (100n)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(196.0000 mm, 134.6000 mm): Value field of C20 (470u/25V)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(197.7500 mm, 124.4000 mm): Footprint text of C20 (-)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(145.0000 mm, 162.7500 mm): Value field of C21 (100u/25V)
+[text_height]: Text height out of range (board setup constraints silk text height min height 0.8000 mm; actual 0.7000 mm)
+    Rule: board setup constraints silk text height; warning
+    @(146.2500 mm, 154.2500 mm): Footprint text of C21 (-)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(63.9000 mm, 54.0000 mm): Footprint text of J10 (1)
+    @(63.2000 mm, 54.0000 mm): Footprint text of J8 (+12S)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(63.2000 mm, 54.0000 mm): Footprint text of J8 (+12S)
+    @(64.7000 mm, 52.2000 mm): Rectangle of J10 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(64.7000 mm, 52.2000 mm): Rectangle of J10 on F.Silkscreen
+    @(63.2000 mm, 56.5400 mm): Footprint text of J8 (SW)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(69.7000 mm, 54.0000 mm): Footprint text of J10 (+12S)
+    @(70.4000 mm, 54.0000 mm): Footprint text of J12 (1)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(71.2000 mm, 52.2000 mm): Rectangle of J12 on F.Silkscreen
+    @(69.7000 mm, 56.5400 mm): Footprint text of J10 (SW)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(71.2000 mm, 52.2000 mm): Rectangle of J12 on F.Silkscreen
+    @(69.7000 mm, 54.0000 mm): Footprint text of J10 (+12S)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(76.2000 mm, 54.0000 mm): Footprint text of J12 (+12S)
+    @(75.2000 mm, 52.2000 mm): Rectangle of J14 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(92.9000 mm, 54.0000 mm): Footprint text of J20 (1)
+    @(92.2000 mm, 54.0000 mm): Footprint text of J19 (+12S)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(92.2000 mm, 54.0000 mm): Footprint text of J19 (+12S)
+    @(93.7000 mm, 52.2000 mm): Rectangle of J20 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(92.2000 mm, 56.5400 mm): Footprint text of J19 (SW)
+    @(93.7000 mm, 52.2000 mm): Rectangle of J20 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(99.4000 mm, 54.0000 mm): Footprint text of J21 (1)
+    @(98.7000 mm, 54.0000 mm): Footprint text of J20 (+12S)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(98.7000 mm, 54.0000 mm): Footprint text of J20 (+12S)
+    @(100.2000 mm, 52.2000 mm): Rectangle of J21 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(98.7000 mm, 56.5400 mm): Footprint text of J20 (SW)
+    @(100.2000 mm, 52.2000 mm): Rectangle of J21 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(105.9000 mm, 54.0000 mm): Footprint text of J22 (1)
+    @(105.2000 mm, 54.0000 mm): Footprint text of J21 (+12S)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(105.2000 mm, 54.0000 mm): Footprint text of J21 (+12S)
+    @(106.7000 mm, 52.2000 mm): Rectangle of J22 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(176.8000 mm, 61.8000 mm): Rectangle of J18 on F.Silkscreen
+    @(175.0000 mm, 62.4000 mm): Reference field of J18
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(171.2000 mm, 60.0000 mm): Footprint text of J18 (GND)
+    @(176.8000 mm, 61.8000 mm): Rectangle of J18 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(171.2000 mm, 57.4600 mm): Footprint text of J18 (3V3)
+    @(176.8000 mm, 61.8000 mm): Rectangle of J18 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(176.8000 mm, 61.8000 mm): Rectangle of J18 on F.Silkscreen
+    @(171.2000 mm, 54.9200 mm): Footprint text of J18 (ENC_A)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(171.2000 mm, 52.3800 mm): Footprint text of J18 (ENC_B)
+    @(176.8000 mm, 61.8000 mm): Rectangle of J18 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(196.0000 mm, 123.4000 mm): Reference field of C20
+    @(196.2000 mm, 104.8000 mm): Rectangle of U3 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(176.0000 mm, 124.4000 mm): Reference field of R2
+    @(196.2000 mm, 104.8000 mm): Rectangle of U3 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(191.6000 mm, 124.6000 mm): Rectangle of C20 on F.Silkscreen
+    @(196.2000 mm, 104.8000 mm): Rectangle of U3 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(191.6000 mm, 124.6000 mm): Rectangle of C20 on F.Silkscreen
+    @(194.2500 mm, 124.4000 mm): Footprint text of C20 (+)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(115.3900 mm, 109.2700 mm): Footprint text of U43 (K)
+    @(115.1100 mm, 109.2700 mm): Footprint text of U42 (E)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(115.3900 mm, 106.7300 mm): Footprint text of U43 (A)
+    @(115.1100 mm, 106.7300 mm): Footprint text of U42 (C)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(126.6100 mm, 106.7300 mm): Footprint text of U43 (C)
+    @(126.8900 mm, 106.7300 mm): Footprint text of U44 (A)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(103.6100 mm, 106.7300 mm): Footprint text of U41 (C)
+    @(103.8900 mm, 106.7300 mm): Footprint text of U42 (A)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(103.8900 mm, 109.2700 mm): Footprint text of U42 (K)
+    @(103.6100 mm, 109.2700 mm): Footprint text of U41 (E)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(126.6100 mm, 109.2700 mm): Footprint text of U43 (E)
+    @(126.8900 mm, 109.2700 mm): Footprint text of U44 (K)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(115.1100 mm, 135.2700 mm): Footprint text of U46 (E)
+    @(115.3900 mm, 135.2700 mm): Footprint text of U47 (K)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(115.3900 mm, 132.7300 mm): Footprint text of U47 (A)
+    @(115.1100 mm, 132.7300 mm): Footprint text of U46 (C)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(126.8900 mm, 135.2700 mm): Footprint text of U48 (K)
+    @(126.6100 mm, 135.2700 mm): Footprint text of U47 (E)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(126.6100 mm, 132.7300 mm): Footprint text of U47 (C)
+    @(126.8900 mm, 132.7300 mm): Footprint text of U48 (A)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(77.0000 mm, 159.9000 mm): Value field of R10 (10R)
+    @(77.0000 mm, 159.4000 mm): Reference field of C10
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(103.8900 mm, 135.2700 mm): Footprint text of U46 (K)
+    @(103.6100 mm, 135.2700 mm): Footprint text of U45 (E)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(103.6100 mm, 132.7300 mm): Footprint text of U45 (C)
+    @(103.8900 mm, 132.7300 mm): Footprint text of U46 (A)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(111.8000 mm, 152.8400 mm): Footprint text of J5 (+12V)
+    @(116.8000 mm, 164.8000 mm): Rectangle of J5 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(126.8000 mm, 164.8000 mm): Rectangle of J6 on F.Silkscreen
+    @(121.8000 mm, 152.8400 mm): Footprint text of J6 (+12V)
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(75.3000 mm, 157.1000 mm): Rectangle of R10 on F.Silkscreen
+    @(77.0000 mm, 159.4000 mm): Reference field of C10
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(105.2000 mm, 56.5400 mm): Footprint text of J21 (SW)
+    @(106.7000 mm, 52.2000 mm): Rectangle of J22 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(147.0000 mm, 159.0000 mm): Footprint text of U10 (74HC595)
+    @(141.4500 mm, 154.4500 mm): Rectangle of C21 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(141.4500 mm, 154.4500 mm): Rectangle of C21 on F.Silkscreen
+    @(151.9100 mm, 169.0500 mm): Rectangle of U10 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(200.0000 mm, 164.2000 mm): Reference field of R4
+    @(199.9100 mm, 169.0500 mm): Rectangle of U7 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(196.8000 mm, 165.5000 mm): Rectangle of R4 on F.Silkscreen
+    @(199.9100 mm, 169.0500 mm): Rectangle of U7 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(196.8000 mm, 165.5000 mm): Rectangle of R4 on F.Silkscreen
+    @(195.0000 mm, 163.3858 mm): Arc of U7 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(131.8000 mm, 152.8400 mm): Footprint text of J7 (+12V)
+    @(136.8000 mm, 164.8000 mm): Rectangle of J7 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(141.4500 mm, 154.4500 mm): Rectangle of C21 on F.Silkscreen
+    @(143.7500 mm, 154.2500 mm): Footprint text of C21 (+)
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(63.2000 mm, 54.0000 mm): Footprint text of J8 (+12S)
+    @(66.5000 mm, 54.0000 mm): PTH pad 1 [+12V_SNS] of J10
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(69.7000 mm, 54.0000 mm): Footprint text of J10 (+12S)
+    @(73.0000 mm, 54.0000 mm): PTH pad 1 [+12V_SNS] of J12
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(76.2000 mm, 54.0000 mm): Footprint text of J12 (+12S)
+    @(77.0000 mm, 54.0000 mm): PTH pad 1 [+12V_SNS] of J14
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(76.2000 mm, 56.5400 mm): Footprint text of J12 (SW)
+    @(77.0000 mm, 56.5400 mm): PTH pad 2 [GND] of J14
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(92.2000 mm, 54.0000 mm): Footprint text of J19 (+12S)
+    @(95.5000 mm, 54.0000 mm): PTH pad 1 [+12V_SNS] of J20
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(98.7000 mm, 54.0000 mm): Footprint text of J20 (+12S)
+    @(102.0000 mm, 54.0000 mm): PTH pad 1 [+12V_SNS] of J21
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(195.0000 mm, 75.0600 mm): Reference field of J23
+    @(195.0000 mm, 73.7800 mm): PTH pad 8 [TFT_BL] of J17
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(195.0000 mm, 75.0600 mm): Reference field of J23
+    @(195.0000 mm, 76.3200 mm): PTH pad 9 [<no net>] of J17
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(171.2000 mm, 54.9200 mm): Footprint text of J18 (ENC_A)
+    @(175.0000 mm, 54.9200 mm): PTH pad 3 [ENC_A] of J18
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(171.2000 mm, 52.3800 mm): Footprint text of J18 (ENC_B)
+    @(175.0000 mm, 52.3800 mm): PTH pad 4 [ENC_B] of J18
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(193.2000 mm, 54.2000 mm): Rectangle of J17 on F.Silkscreen
+    @(195.0000 mm, 76.3200 mm): PTH pad 9 [<no net>] of J17
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(193.2000 mm, 78.3600 mm): Rectangle of J23 on F.Silkscreen
+    @(195.0000 mm, 78.8600 mm): PTH pad 1 [TFT_SCK] of J23
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(196.0000 mm, 123.4000 mm): Reference field of C20
+    @(194.8900 mm, 122.6200 mm): PTH pad 9 [+12V] of U3
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(139.8000 mm, 62.5000 mm): Rectangle of D2 on F.Silkscreen
+    @(146.7500 mm, 64.0000 mm): PTH pad 2 [BLW_RET] of D2
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(172.8000 mm, 125.5000 mm): Rectangle of R2 on F.Silkscreen
+    @(172.2500 mm, 127.0000 mm): PTH pad 1 [EN_TMC] of R2
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(109.8000 mm, 115.0000 mm): Rectangle of R46 on F.Silkscreen
+    @(116.7500 mm, 116.5000 mm): PTH pad 2 [OPTO_OUT2] of R46
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(121.0000 mm, 111.5113 mm): Arc of U43 on F.Silkscreen
+    @(117.1900 mm, 106.7300 mm): PTH pad 1 [OPTO_A3] of U43
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(121.0000 mm, 111.5113 mm): Arc of U43 on F.Silkscreen
+    @(124.8100 mm, 106.7300 mm): PTH pad 4 [OPTO_OUT3] of U43
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(125.8000 mm, 98.0000 mm): Rectangle of R44 on F.Silkscreen
+    @(125.2500 mm, 99.5000 mm): PTH pad 1 [OPTO_IN4] of R44
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(109.5000 mm, 111.5113 mm): Arc of U42 on F.Silkscreen
+    @(113.3100 mm, 106.7300 mm): PTH pad 4 [OPTO_OUT2] of U42
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(109.5000 mm, 111.5113 mm): Arc of U42 on F.Silkscreen
+    @(105.6900 mm, 106.7300 mm): PTH pad 1 [OPTO_A2] of U42
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(121.3000 mm, 115.0000 mm): Rectangle of R47 on F.Silkscreen
+    @(120.7500 mm, 116.5000 mm): PTH pad 1 [+3V3] of R47
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(121.3000 mm, 115.0000 mm): Rectangle of R47 on F.Silkscreen
+    @(128.2500 mm, 116.5000 mm): PTH pad 2 [OPTO_OUT3] of R47
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(125.8000 mm, 98.0000 mm): Rectangle of R44 on F.Silkscreen
+    @(132.7500 mm, 99.5000 mm): PTH pad 2 [OPTO_A4] of R44
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(132.5000 mm, 111.5113 mm): Arc of U44 on F.Silkscreen
+    @(128.6900 mm, 106.7300 mm): PTH pad 1 [OPTO_A4] of U44
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(132.5000 mm, 111.5113 mm): Arc of U44 on F.Silkscreen
+    @(136.3100 mm, 106.7300 mm): PTH pad 4 [OPTO_OUT4] of U44
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(132.8000 mm, 115.0000 mm): Rectangle of R48 on F.Silkscreen
+    @(132.2500 mm, 116.5000 mm): PTH pad 1 [+3V3] of R48
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(109.8000 mm, 141.0000 mm): Rectangle of R54 on F.Silkscreen
+    @(116.7500 mm, 142.5000 mm): PTH pad 2 [OPTO_OUT6] of R54
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(121.0000 mm, 137.5112 mm): Arc of U47 on F.Silkscreen
+    @(117.1900 mm, 132.7300 mm): PTH pad 1 [OPTO_A7] of U47
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(121.0000 mm, 137.5112 mm): Arc of U47 on F.Silkscreen
+    @(124.8100 mm, 132.7300 mm): PTH pad 4 [OPTO_OUT7] of U47
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(121.3000 mm, 141.0000 mm): Rectangle of R55 on F.Silkscreen
+    @(128.2500 mm, 142.5000 mm): PTH pad 2 [OPTO_OUT7] of R55
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(121.3000 mm, 141.0000 mm): Rectangle of R55 on F.Silkscreen
+    @(120.7500 mm, 142.5000 mm): PTH pad 1 [+3V3] of R55
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(132.8000 mm, 141.0000 mm): Rectangle of R56 on F.Silkscreen
+    @(139.7500 mm, 142.5000 mm): PTH pad 2 [OPTO_OUT8] of R56
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(132.8000 mm, 141.0000 mm): Rectangle of R56 on F.Silkscreen
+    @(132.2500 mm, 142.5000 mm): PTH pad 1 [+3V3] of R56
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(114.3000 mm, 98.0000 mm): Rectangle of R43 on F.Silkscreen
+    @(121.2500 mm, 99.5000 mm): PTH pad 2 [OPTO_A3] of R43
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(114.3000 mm, 124.0000 mm): Rectangle of R51 on F.Silkscreen
+    @(121.2500 mm, 125.5000 mm): PTH pad 2 [OPTO_A7] of R51
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(132.8000 mm, 115.0000 mm): Rectangle of R48 on F.Silkscreen
+    @(139.7500 mm, 116.5000 mm): PTH pad 2 [OPTO_OUT4] of R48
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(132.5000 mm, 137.5112 mm): Arc of U48 on F.Silkscreen
+    @(136.3100 mm, 132.7300 mm): PTH pad 4 [OPTO_OUT8] of U48
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(132.5000 mm, 137.5112 mm): Arc of U48 on F.Silkscreen
+    @(128.6900 mm, 132.7300 mm): PTH pad 1 [OPTO_A8] of U48
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(125.8000 mm, 124.0000 mm): Rectangle of R52 on F.Silkscreen
+    @(132.7500 mm, 125.5000 mm): PTH pad 2 [OPTO_A8] of R52
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(125.8000 mm, 124.0000 mm): Rectangle of R52 on F.Silkscreen
+    @(125.2500 mm, 125.5000 mm): PTH pad 1 [OPTO_IN8] of R52
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(123.8000 mm, 62.5000 mm): Rectangle of R3 on F.Silkscreen
+    @(130.7500 mm, 64.0000 mm): PTH pad 2 [GND] of R3
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(123.8000 mm, 62.5000 mm): Rectangle of R3 on F.Silkscreen
+    @(123.2500 mm, 64.0000 mm): PTH pad 1 [BLOWER] of R3
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(139.8000 mm, 62.5000 mm): Rectangle of D2 on F.Silkscreen
+    @(139.2500 mm, 64.0000 mm): PTH pad 1 [+12V] of D2
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(63.8000 mm, 160.5000 mm): Rectangle of D1 on F.Silkscreen
+    @(63.2500 mm, 162.0000 mm): PTH pad 1 [GND] of D1
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(63.8000 mm, 160.5000 mm): Rectangle of D1 on F.Silkscreen
+    @(70.7500 mm, 162.0000 mm): PTH pad 2 [+12V] of D1
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(98.0000 mm, 137.5112 mm): Arc of U45 on F.Silkscreen
+    @(94.1900 mm, 132.7300 mm): PTH pad 1 [OPTO_A5] of U45
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(98.0000 mm, 137.5112 mm): Arc of U45 on F.Silkscreen
+    @(101.8100 mm, 132.7300 mm): PTH pad 4 [OPTO_OUT5] of U45
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(91.3000 mm, 124.0000 mm): Rectangle of R49 on F.Silkscreen
+    @(98.2500 mm, 125.5000 mm): PTH pad 2 [OPTO_A5] of R49
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(102.8000 mm, 124.0000 mm): Rectangle of R50 on F.Silkscreen
+    @(109.7500 mm, 125.5000 mm): PTH pad 2 [OPTO_A6] of R50
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(102.8000 mm, 124.0000 mm): Rectangle of R50 on F.Silkscreen
+    @(102.2500 mm, 125.5000 mm): PTH pad 1 [OPTO_IN6] of R50
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(98.3000 mm, 141.0000 mm): Rectangle of R53 on F.Silkscreen
+    @(105.2500 mm, 142.5000 mm): PTH pad 2 [OPTO_OUT5] of R53
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(98.3000 mm, 141.0000 mm): Rectangle of R53 on F.Silkscreen
+    @(97.7500 mm, 142.5000 mm): PTH pad 1 [+3V3] of R53
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(109.5000 mm, 137.5112 mm): Arc of U46 on F.Silkscreen
+    @(105.6900 mm, 132.7300 mm): PTH pad 1 [OPTO_A6] of U46
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(109.5000 mm, 137.5112 mm): Arc of U46 on F.Silkscreen
+    @(113.3100 mm, 132.7300 mm): PTH pad 4 [OPTO_OUT6] of U46
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(109.8000 mm, 141.0000 mm): Rectangle of R54 on F.Silkscreen
+    @(109.2500 mm, 142.5000 mm): PTH pad 1 [+3V3] of R54
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(111.8000 mm, 152.8400 mm): Footprint text of J5 (+12V)
+    @(115.0000 mm, 152.8400 mm): PTH pad 5 [+12V] of J5
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(121.8000 mm, 152.8400 mm): Footprint text of J6 (+12V)
+    @(125.0000 mm, 152.8400 mm): PTH pad 5 [+12V] of J6
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(75.3000 mm, 157.1000 mm): Rectangle of R10 on F.Silkscreen
+    @(78.4000 mm, 158.0000 mm): Pad 2 [+12V_SNS] of R10 on F.Cu
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(75.3000 mm, 157.1000 mm): Rectangle of R10 on F.Silkscreen
+    @(75.6000 mm, 158.0000 mm): Pad 1 [+12V] of R10 on F.Cu
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(83.9000 mm, 163.3000 mm): Rectangle of C11 on F.Silkscreen
+    @(85.9500 mm, 164.0000 mm): Pad 2 [GND] of C11 on F.Cu
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(83.9000 mm, 163.3000 mm): Rectangle of C11 on F.Silkscreen
+    @(84.0500 mm, 164.0000 mm): Pad 1 [+12V_SNS] of C11 on F.Cu
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(98.0000 mm, 111.5113 mm): Arc of U41 on F.Silkscreen
+    @(94.1900 mm, 106.7300 mm): PTH pad 1 [OPTO_A1] of U41
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(98.0000 mm, 111.5113 mm): Arc of U41 on F.Silkscreen
+    @(101.8100 mm, 106.7300 mm): PTH pad 4 [OPTO_OUT1] of U41
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(91.3000 mm, 98.0000 mm): Rectangle of R41 on F.Silkscreen
+    @(98.2500 mm, 99.5000 mm): PTH pad 2 [OPTO_A1] of R41
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(102.8000 mm, 98.0000 mm): Rectangle of R42 on F.Silkscreen
+    @(102.2500 mm, 99.5000 mm): PTH pad 1 [OPTO_IN2] of R42
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(114.3000 mm, 98.0000 mm): Rectangle of R43 on F.Silkscreen
+    @(113.7500 mm, 99.5000 mm): PTH pad 1 [OPTO_IN3] of R43
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(102.8000 mm, 98.0000 mm): Rectangle of R42 on F.Silkscreen
+    @(109.7500 mm, 99.5000 mm): PTH pad 2 [OPTO_A2] of R42
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(98.3000 mm, 115.0000 mm): Rectangle of R45 on F.Silkscreen
+    @(105.2500 mm, 116.5000 mm): PTH pad 2 [OPTO_OUT1] of R45
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(98.3000 mm, 115.0000 mm): Rectangle of R45 on F.Silkscreen
+    @(97.7500 mm, 116.5000 mm): PTH pad 1 [+3V3] of R45
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(109.8000 mm, 115.0000 mm): Rectangle of R46 on F.Silkscreen
+    @(109.2500 mm, 116.5000 mm): PTH pad 1 [+3V3] of R46
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(114.3000 mm, 124.0000 mm): Rectangle of R51 on F.Silkscreen
+    @(113.7500 mm, 125.5000 mm): PTH pad 1 [OPTO_IN7] of R51
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(91.3000 mm, 124.0000 mm): Rectangle of R49 on F.Silkscreen
+    @(90.7500 mm, 125.5000 mm): PTH pad 1 [OPTO_IN5] of R49
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(91.3000 mm, 98.0000 mm): Rectangle of R41 on F.Silkscreen
+    @(90.7500 mm, 99.5000 mm): PTH pad 1 [OPTO_IN1] of R41
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(105.2000 mm, 54.0000 mm): Footprint text of J21 (+12S)
+    @(108.5000 mm, 54.0000 mm): PTH pad 1 [+12V_SNS] of J22
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(73.8000 mm, 65.7080 mm): Rectangle of R1 on F.Silkscreen
+    @(80.7500 mm, 67.2080 mm): PTH pad 2 [OPTO_IN4] of R1
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(73.8000 mm, 65.7080 mm): Rectangle of R1 on F.Silkscreen
+    @(73.2500 mm, 67.2080 mm): PTH pad 1 [+12V_SNS] of R1
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(147.0000 mm, 163.3858 mm): Arc of U10 on F.Silkscreen
+    @(150.8100 mm, 167.8900 mm): PTH pad 1 [SR_Q1] of U10
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(147.0000 mm, 163.3858 mm): Arc of U10 on F.Silkscreen
+    @(143.1900 mm, 167.8900 mm): PTH pad 16 [+3V3] of U10
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(147.0000 mm, 159.0000 mm): Footprint text of U10 (74HC595)
+    @(146.2500 mm, 158.0000 mm): PTH pad 2 [GND] of C21
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(159.0000 mm, 163.3858 mm): Arc of U11 on F.Silkscreen
+    @(162.8100 mm, 167.8900 mm): PTH pad 1 [SR_Q9] of U11
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(159.0000 mm, 163.3858 mm): Arc of U11 on F.Silkscreen
+    @(155.1900 mm, 167.8900 mm): PTH pad 16 [+3V3] of U11
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(171.0000 mm, 163.3858 mm): Arc of U5 on F.Silkscreen
+    @(167.1900 mm, 167.8900 mm): PTH pad 16 [BYJ1_A] of U5
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(171.0000 mm, 163.3858 mm): Arc of U5 on F.Silkscreen
+    @(174.8100 mm, 167.8900 mm): PTH pad 1 [SR_Q0] of U5
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(183.0000 mm, 163.3858 mm): Arc of U6 on F.Silkscreen
+    @(186.8100 mm, 167.8900 mm): PTH pad 1 [SR_Q4] of U6
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(183.0000 mm, 163.3858 mm): Arc of U6 on F.Silkscreen
+    @(179.1900 mm, 167.8900 mm): PTH pad 16 [BYJ2_A] of U6
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(195.0000 mm, 163.3858 mm): Arc of U7 on F.Silkscreen
+    @(198.8100 mm, 167.8900 mm): PTH pad 1 [SR_Q8] of U7
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(195.0000 mm, 163.3858 mm): Arc of U7 on F.Silkscreen
+    @(191.1900 mm, 167.8900 mm): PTH pad 16 [BYJ3_A] of U7
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(196.8000 mm, 165.5000 mm): Rectangle of R4 on F.Silkscreen
+    @(203.7500 mm, 167.0000 mm): PTH pad 2 [+3V3] of R4
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(196.8000 mm, 165.5000 mm): Rectangle of R4 on F.Silkscreen
+    @(198.8100 mm, 165.3500 mm): PTH pad 2 [SR_Q9] of U7
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(196.8000 mm, 165.5000 mm): Rectangle of R4 on F.Silkscreen
+    @(198.8100 mm, 167.8900 mm): PTH pad 1 [SR_Q8] of U7
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(196.8000 mm, 165.5000 mm): Rectangle of R4 on F.Silkscreen
+    @(196.2500 mm, 167.0000 mm): PTH pad 1 [OE_595] of R4
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(172.8000 mm, 125.5000 mm): Rectangle of R2 on F.Silkscreen
+    @(179.7500 mm, 127.0000 mm): PTH pad 2 [+3V3] of R2
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(131.8000 mm, 152.8400 mm): Footprint text of J7 (+12V)
+    @(135.0000 mm, 152.8400 mm): PTH pad 5 [+12V] of J7
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(143.7500 mm, 154.2500 mm): Footprint text of C21 (+)
+    @(143.1900 mm, 155.1900 mm): PTH pad 11 [SRCLK] of U10
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(141.4500 mm, 154.4500 mm): Rectangle of C21 on F.Silkscreen
+    @(143.1900 mm, 155.1900 mm): PTH pad 11 [SRCLK] of U10
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(147.0000 mm, 159.0000 mm): Footprint text of U10 (74HC595)
+    @(143.7500 mm, 158.0000 mm): PTH pad 1 [+12V] of C21
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(145.0000 mm, 162.7500 mm): Value field of C21 (100u/25V)
+    @(143.1900 mm, 162.8100 mm): PTH pad 14 [SER] of U10
 
-** Found 0 unconnected pads **
+** Found 177 unconnected pads **
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(63.7290 mm, 132.0640 mm): PTH pad 1 [+12V] of U2
+    @(63.7290 mm, 134.6040 mm): PTH pad 1 [+12V] of U2
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(71.5500 mm, 115.0000 mm): PTH pad 2 [+12V] of F1
+    @(63.7290 mm, 132.0640 mm): PTH pad 1 [+12V] of U2
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(75.6000 mm, 158.0000 mm): Pad 1 [+12V] of R10 on F.Cu
+    @(70.7500 mm, 162.0000 mm): PTH pad 2 [+12V] of D1
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(75.6000 mm, 158.0000 mm): Pad 1 [+12V] of R10 on F.Cu
+    @(63.7290 mm, 134.6040 mm): PTH pad 1 [+12V] of U2
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(75.6000 mm, 158.0000 mm): Pad 1 [+12V] of R10 on F.Cu
+    @(115.0000 mm, 152.8400 mm): PTH pad 5 [+12V] of J5
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(125.0000 mm, 152.8400 mm): PTH pad 5 [+12V] of J6
+    @(115.0000 mm, 152.8400 mm): PTH pad 5 [+12V] of J5
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(125.0000 mm, 152.8400 mm): PTH pad 5 [+12V] of J6
+    @(135.0000 mm, 152.8400 mm): PTH pad 5 [+12V] of J7
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(135.0000 mm, 67.0800 mm): PTH pad 3 [+12V] of J16
+    @(71.5500 mm, 115.0000 mm): PTH pad 2 [+12V] of F1
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(139.2500 mm, 64.0000 mm): PTH pad 1 [+12V] of D2
+    @(135.0000 mm, 67.0800 mm): PTH pad 3 [+12V] of J16
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(143.7500 mm, 158.0000 mm): PTH pad 1 [+12V] of C21
+    @(135.0000 mm, 152.8400 mm): PTH pad 5 [+12V] of J7
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(143.7500 mm, 158.0000 mm): PTH pad 1 [+12V] of C21
+    @(167.1900 mm, 150.1100 mm): PTH pad 9 [+12V] of U5
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(167.1900 mm, 150.1100 mm): PTH pad 9 [+12V] of U5
+    @(179.1900 mm, 150.1100 mm): PTH pad 9 [+12V] of U6
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(191.1900 mm, 150.1100 mm): PTH pad 9 [+12V] of U7
+    @(179.1900 mm, 150.1100 mm): PTH pad 9 [+12V] of U6
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(191.1900 mm, 150.1100 mm): PTH pad 9 [+12V] of U7
+    @(194.2500 mm, 129.0000 mm): PTH pad 1 [+12V] of C20
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(194.2500 mm, 129.0000 mm): PTH pad 1 [+12V] of C20
+    @(194.8900 mm, 122.6200 mm): PTH pad 9 [+12V] of U3
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(63.2500 mm, 162.0000 mm): PTH pad 1 [GND] of D1
+    @(78.2500 mm, 164.0000 mm): PTH pad 2 [GND] of C10
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(63.2500 mm, 162.0000 mm): PTH pad 1 [GND] of D1
+    @(64.5000 mm, 145.0000 mm): PTH pad 2 [GND] of J1
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(63.7290 mm, 121.3960 mm): PTH pad 2 [GND] of U2
+    @(63.7290 mm, 123.9360 mm): PTH pad 2 [GND] of U2
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(63.7290 mm, 123.9360 mm): PTH pad 2 [GND] of U2
+    @(64.5000 mm, 145.0000 mm): PTH pad 2 [GND] of J1
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(78.2500 mm, 164.0000 mm): PTH pad 2 [GND] of C10
+    @(85.9500 mm, 164.0000 mm): Pad 2 [GND] of C11 on F.Cu
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(82.2710 mm, 121.3960 mm): PTH pad 3 [GND] of U2
+    @(82.2710 mm, 123.9360 mm): PTH pad 3 [GND] of U2
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(82.2710 mm, 121.3960 mm): PTH pad 3 [GND] of U2
+    @(94.1900 mm, 109.2700 mm): PTH pad 2 [GND] of U41
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(82.2710 mm, 123.9360 mm): PTH pad 3 [GND] of U2
+    @(94.1900 mm, 135.2700 mm): PTH pad 2 [GND] of U45
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(82.2710 mm, 123.9360 mm): PTH pad 3 [GND] of U2
+    @(63.7290 mm, 123.9360 mm): PTH pad 2 [GND] of U2
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(94.1900 mm, 109.2700 mm): PTH pad 2 [GND] of U41
+    @(101.8100 mm, 109.2700 mm): PTH pad 3 [GND] of U41
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(101.8100 mm, 135.2700 mm): PTH pad 3 [GND] of U45
+    @(105.6900 mm, 135.2700 mm): PTH pad 2 [GND] of U46
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(101.8100 mm, 135.2700 mm): PTH pad 3 [GND] of U45
+    @(94.1900 mm, 135.2700 mm): PTH pad 2 [GND] of U45
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(105.6900 mm, 109.2700 mm): PTH pad 2 [GND] of U42
+    @(101.8100 mm, 109.2700 mm): PTH pad 3 [GND] of U41
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(105.6900 mm, 135.2700 mm): PTH pad 2 [GND] of U46
+    @(113.3100 mm, 135.2700 mm): PTH pad 3 [GND] of U46
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(113.3100 mm, 109.2700 mm): PTH pad 3 [GND] of U42
+    @(117.1900 mm, 109.2700 mm): PTH pad 2 [GND] of U43
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(113.3100 mm, 109.2700 mm): PTH pad 3 [GND] of U42
+    @(105.6900 mm, 109.2700 mm): PTH pad 2 [GND] of U42
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(113.3100 mm, 135.2700 mm): PTH pad 3 [GND] of U46
+    @(117.1900 mm, 135.2700 mm): PTH pad 2 [GND] of U47
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(124.8100 mm, 109.2700 mm): PTH pad 3 [GND] of U43
+    @(117.1900 mm, 109.2700 mm): PTH pad 2 [GND] of U43
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(124.8100 mm, 135.2700 mm): PTH pad 3 [GND] of U47
+    @(128.6900 mm, 135.2700 mm): PTH pad 2 [GND] of U48
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(124.8100 mm, 135.2700 mm): PTH pad 3 [GND] of U47
+    @(117.1900 mm, 135.2700 mm): PTH pad 2 [GND] of U47
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(128.6900 mm, 109.2700 mm): PTH pad 2 [GND] of U44
+    @(124.8100 mm, 109.2700 mm): PTH pad 3 [GND] of U43
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(128.6900 mm, 135.2700 mm): PTH pad 2 [GND] of U48
+    @(136.3100 mm, 135.2700 mm): PTH pad 3 [GND] of U48
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(130.7500 mm, 64.0000 mm): PTH pad 2 [GND] of R3
+    @(77.0000 mm, 56.5400 mm): PTH pad 2 [GND] of J14
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(135.0000 mm, 64.5400 mm): PTH pad 2 [GND] of J16
+    @(130.7500 mm, 64.0000 mm): PTH pad 2 [GND] of R3
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(135.0000 mm, 64.5400 mm): PTH pad 2 [GND] of J16
+    @(168.2000 mm, 83.0000 mm): PTH pad 23 [GND] of U1
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(136.3100 mm, 109.2700 mm): PTH pad 3 [GND] of U44
+    @(128.6900 mm, 109.2700 mm): PTH pad 2 [GND] of U44
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(136.3100 mm, 135.2700 mm): PTH pad 3 [GND] of U48
+    @(142.8000 mm, 136.3400 mm): PTH pad 22 [GND] of U1
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(146.2500 mm, 158.0000 mm): PTH pad 2 [GND] of C21
+    @(150.8100 mm, 150.1100 mm): PTH pad 8 [GND] of U10
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(150.8100 mm, 150.1100 mm): PTH pad 8 [GND] of U10
+    @(142.8000 mm, 136.3400 mm): PTH pad 22 [GND] of U1
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(162.8100 mm, 150.1100 mm): PTH pad 8 [GND] of U11
+    @(150.8100 mm, 150.1100 mm): PTH pad 8 [GND] of U10
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(168.2000 mm, 136.3400 mm): PTH pad 44 [GND] of U1
+    @(168.2000 mm, 133.8000 mm): PTH pad 43 [GND] of U1
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(168.2000 mm, 136.3400 mm): PTH pad 44 [GND] of U1
+    @(162.8100 mm, 150.1100 mm): PTH pad 8 [GND] of U11
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(174.8100 mm, 150.1100 mm): PTH pad 8 [GND] of U5
+    @(162.8100 mm, 150.1100 mm): PTH pad 8 [GND] of U11
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(175.0000 mm, 60.0000 mm): PTH pad 1 [GND] of J18
+    @(168.2000 mm, 83.0000 mm): PTH pad 23 [GND] of U1
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(177.1100 mm, 122.6200 mm): PTH pad 16 [GND] of U3
+    @(168.2000 mm, 133.8000 mm): PTH pad 43 [GND] of U1
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(177.1100 mm, 122.6200 mm): PTH pad 16 [GND] of U3
+    @(168.2000 mm, 83.0000 mm): PTH pad 23 [GND] of U1
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(185.0000 mm, 58.5400 mm): PTH pad 2 [GND] of J15
+    @(195.0000 mm, 58.5400 mm): PTH pad 2 [GND] of J17
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(185.0000 mm, 58.5400 mm): PTH pad 2 [GND] of J15
+    @(175.0000 mm, 60.0000 mm): PTH pad 1 [GND] of J18
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(186.8100 mm, 150.1100 mm): PTH pad 8 [GND] of U6
+    @(174.8100 mm, 150.1100 mm): PTH pad 8 [GND] of U5
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(192.3500 mm, 122.6200 mm): PTH pad 10 [GND] of U3
+    @(197.7500 mm, 129.0000 mm): PTH pad 2 [GND] of C20
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(192.3500 mm, 122.6200 mm): PTH pad 10 [GND] of U3
+    @(177.1100 mm, 122.6200 mm): PTH pad 16 [GND] of U3
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(198.8100 mm, 150.1100 mm): PTH pad 8 [GND] of U7
+    @(186.8100 mm, 150.1100 mm): PTH pad 8 [GND] of U6
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(82.2710 mm, 132.0640 mm): PTH pad 4 [+5V] of U2
+    @(82.2710 mm, 134.6040 mm): PTH pad 4 [+5V] of U2
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(82.2710 mm, 134.6040 mm): PTH pad 4 [+5V] of U2
+    @(142.8000 mm, 133.8000 mm): PTH pad 21 [+5V] of U1
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(142.8000 mm, 133.8000 mm): PTH pad 21 [+5V] of U1
+    @(185.0000 mm, 56.0000 mm): PTH pad 1 [+5V] of J15
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(97.7500 mm, 116.5000 mm): PTH pad 1 [+3V3] of R45
+    @(109.2500 mm, 116.5000 mm): PTH pad 1 [+3V3] of R46
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(97.7500 mm, 142.5000 mm): PTH pad 1 [+3V3] of R53
+    @(109.2500 mm, 142.5000 mm): PTH pad 1 [+3V3] of R54
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(109.2500 mm, 116.5000 mm): PTH pad 1 [+3V3] of R46
+    @(109.2500 mm, 142.5000 mm): PTH pad 1 [+3V3] of R54
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(120.7500 mm, 116.5000 mm): PTH pad 1 [+3V3] of R47
+    @(109.2500 mm, 116.5000 mm): PTH pad 1 [+3V3] of R46
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(120.7500 mm, 142.5000 mm): PTH pad 1 [+3V3] of R55
+    @(109.2500 mm, 142.5000 mm): PTH pad 1 [+3V3] of R54
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(120.7500 mm, 142.5000 mm): PTH pad 1 [+3V3] of R55
+    @(132.2500 mm, 142.5000 mm): PTH pad 1 [+3V3] of R56
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(132.2500 mm, 116.5000 mm): PTH pad 1 [+3V3] of R48
+    @(120.7500 mm, 116.5000 mm): PTH pad 1 [+3V3] of R47
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(142.8000 mm, 83.0000 mm): PTH pad 1 [+3V3] of U1
+    @(142.8000 mm, 85.5400 mm): PTH pad 2 [+3V3] of U1
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(142.8000 mm, 83.0000 mm): PTH pad 1 [+3V3] of U1
+    @(175.0000 mm, 57.4600 mm): PTH pad 2 [+3V3] of J18
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(142.8000 mm, 85.5400 mm): PTH pad 2 [+3V3] of U1
+    @(132.2500 mm, 116.5000 mm): PTH pad 1 [+3V3] of R48
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(143.1900 mm, 152.6500 mm): PTH pad 10 [+3V3] of U10
+    @(155.1900 mm, 152.6500 mm): PTH pad 10 [+3V3] of U11
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(143.1900 mm, 152.6500 mm): PTH pad 10 [+3V3] of U10
+    @(132.2500 mm, 142.5000 mm): PTH pad 1 [+3V3] of R56
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(143.1900 mm, 167.8900 mm): PTH pad 16 [+3V3] of U10
+    @(155.1900 mm, 167.8900 mm): PTH pad 16 [+3V3] of U11
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(143.1900 mm, 167.8900 mm): PTH pad 16 [+3V3] of U10
+    @(143.1900 mm, 152.6500 mm): PTH pad 10 [+3V3] of U10
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(155.1900 mm, 152.6500 mm): PTH pad 10 [+3V3] of U11
+    @(179.7500 mm, 127.0000 mm): PTH pad 2 [+3V3] of R2
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(179.6500 mm, 122.6200 mm): PTH pad 15 [+3V3] of U3
+    @(179.7500 mm, 127.0000 mm): PTH pad 2 [+3V3] of R2
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(179.7500 mm, 127.0000 mm): PTH pad 2 [+3V3] of R2
+    @(203.7500 mm, 167.0000 mm): PTH pad 2 [+3V3] of R4
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(195.0000 mm, 56.0000 mm): PTH pad 1 [+3V3] of J17
+    @(175.0000 mm, 57.4600 mm): PTH pad 2 [+3V3] of J18
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(142.8000 mm, 103.3200 mm): PTH pad 9 [STEP] of U1
+    @(179.6500 mm, 107.3800 mm): PTH pad 7 [STEP] of U3
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(142.8000 mm, 105.8600 mm): PTH pad 10 [DIR] of U1
+    @(177.1100 mm, 107.3800 mm): PTH pad 8 [DIR] of U3
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(142.8000 mm, 108.4000 mm): PTH pad 11 [EN_TMC] of U1
+    @(172.2500 mm, 127.0000 mm): PTH pad 1 [EN_TMC] of R2
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(172.2500 mm, 127.0000 mm): PTH pad 1 [EN_TMC] of R2
+    @(194.8900 mm, 107.3800 mm): PTH pad 1 [EN_TMC] of U3
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(101.8100 mm, 106.7300 mm): PTH pad 4 [OPTO_OUT1] of U41
+    @(105.2500 mm, 116.5000 mm): PTH pad 2 [OPTO_OUT1] of R45
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(105.2500 mm, 116.5000 mm): PTH pad 2 [OPTO_OUT1] of R45
+    @(168.2000 mm, 90.6200 mm): PTH pad 26 [OPTO_OUT1] of U1
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(113.3100 mm, 106.7300 mm): PTH pad 4 [OPTO_OUT2] of U42
+    @(116.7500 mm, 116.5000 mm): PTH pad 2 [OPTO_OUT2] of R46
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(116.7500 mm, 116.5000 mm): PTH pad 2 [OPTO_OUT2] of R46
+    @(168.2000 mm, 93.1600 mm): PTH pad 27 [OPTO_OUT2] of U1
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(124.8100 mm, 106.7300 mm): PTH pad 4 [OPTO_OUT3] of U43
+    @(128.2500 mm, 116.5000 mm): PTH pad 2 [OPTO_OUT3] of R47
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(142.8000 mm, 90.6200 mm): PTH pad 4 [OPTO_OUT3] of U1
+    @(124.8100 mm, 106.7300 mm): PTH pad 4 [OPTO_OUT3] of U43
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(136.3100 mm, 106.7300 mm): PTH pad 4 [OPTO_OUT4] of U44
+    @(139.7500 mm, 116.5000 mm): PTH pad 2 [OPTO_OUT4] of R48
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(142.8000 mm, 93.1600 mm): PTH pad 5 [OPTO_OUT4] of U1
+    @(136.3100 mm, 106.7300 mm): PTH pad 4 [OPTO_OUT4] of U44
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(101.8100 mm, 132.7300 mm): PTH pad 4 [OPTO_OUT5] of U45
+    @(105.2500 mm, 142.5000 mm): PTH pad 2 [OPTO_OUT5] of R53
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(142.8000 mm, 98.2400 mm): PTH pad 7 [OPTO_OUT5] of U1
+    @(101.8100 mm, 132.7300 mm): PTH pad 4 [OPTO_OUT5] of U45
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(113.3100 mm, 132.7300 mm): PTH pad 4 [OPTO_OUT6] of U46
+    @(116.7500 mm, 142.5000 mm): PTH pad 2 [OPTO_OUT6] of R54
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(142.8000 mm, 110.9400 mm): PTH pad 12 [OPTO_OUT6] of U1
+    @(113.3100 mm, 132.7300 mm): PTH pad 4 [OPTO_OUT6] of U46
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(124.8100 mm, 132.7300 mm): PTH pad 4 [OPTO_OUT7] of U47
+    @(128.2500 mm, 142.5000 mm): PTH pad 2 [OPTO_OUT7] of R55
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(142.8000 mm, 131.2600 mm): PTH pad 20 [OPTO_OUT7] of U1
+    @(124.8100 mm, 132.7300 mm): PTH pad 4 [OPTO_OUT7] of U47
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(136.3100 mm, 132.7300 mm): PTH pad 4 [OPTO_OUT8] of U48
+    @(139.7500 mm, 142.5000 mm): PTH pad 2 [OPTO_OUT8] of R56
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(142.8000 mm, 100.7800 mm): PTH pad 8 [OPTO_OUT8] of U1
+    @(136.3100 mm, 132.7300 mm): PTH pad 4 [OPTO_OUT8] of U48
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(60.0000 mm, 56.5400 mm): PTH pad 2 [OPTO_IN1] of J8
+    @(90.7500 mm, 99.5000 mm): PTH pad 1 [OPTO_IN1] of R41
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(66.5000 mm, 56.5400 mm): PTH pad 2 [OPTO_IN2] of J10
+    @(102.2500 mm, 99.5000 mm): PTH pad 1 [OPTO_IN2] of R42
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(73.0000 mm, 56.5400 mm): PTH pad 2 [OPTO_IN3] of J12
+    @(113.7500 mm, 99.5000 mm): PTH pad 1 [OPTO_IN3] of R43
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(77.0000 mm, 59.0800 mm): PTH pad 3 [OPTO_IN4] of J14
+    @(80.7500 mm, 67.2080 mm): PTH pad 2 [OPTO_IN4] of R1
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(80.7500 mm, 67.2080 mm): PTH pad 2 [OPTO_IN4] of R1
+    @(125.2500 mm, 99.5000 mm): PTH pad 1 [OPTO_IN4] of R44
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(89.0000 mm, 56.5400 mm): PTH pad 2 [OPTO_IN5] of J19
+    @(90.7500 mm, 125.5000 mm): PTH pad 1 [OPTO_IN5] of R49
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(95.5000 mm, 56.5400 mm): PTH pad 2 [OPTO_IN6] of J20
+    @(102.2500 mm, 125.5000 mm): PTH pad 1 [OPTO_IN6] of R50
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(102.0000 mm, 56.5400 mm): PTH pad 2 [OPTO_IN7] of J21
+    @(113.7500 mm, 125.5000 mm): PTH pad 1 [OPTO_IN7] of R51
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(108.5000 mm, 56.5400 mm): PTH pad 2 [OPTO_IN8] of J22
+    @(125.2500 mm, 125.5000 mm): PTH pad 1 [OPTO_IN8] of R52
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(94.1900 mm, 106.7300 mm): PTH pad 1 [OPTO_A1] of U41
+    @(98.2500 mm, 99.5000 mm): PTH pad 2 [OPTO_A1] of R41
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(105.6900 mm, 106.7300 mm): PTH pad 1 [OPTO_A2] of U42
+    @(109.7500 mm, 99.5000 mm): PTH pad 2 [OPTO_A2] of R42
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(117.1900 mm, 106.7300 mm): PTH pad 1 [OPTO_A3] of U43
+    @(121.2500 mm, 99.5000 mm): PTH pad 2 [OPTO_A3] of R43
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(128.6900 mm, 106.7300 mm): PTH pad 1 [OPTO_A4] of U44
+    @(132.7500 mm, 99.5000 mm): PTH pad 2 [OPTO_A4] of R44
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(94.1900 mm, 132.7300 mm): PTH pad 1 [OPTO_A5] of U45
+    @(98.2500 mm, 125.5000 mm): PTH pad 2 [OPTO_A5] of R49
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(105.6900 mm, 132.7300 mm): PTH pad 1 [OPTO_A6] of U46
+    @(109.7500 mm, 125.5000 mm): PTH pad 2 [OPTO_A6] of R50
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(117.1900 mm, 132.7300 mm): PTH pad 1 [OPTO_A7] of U47
+    @(121.2500 mm, 125.5000 mm): PTH pad 2 [OPTO_A7] of R51
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(128.6900 mm, 132.7300 mm): PTH pad 1 [OPTO_A8] of U48
+    @(132.7500 mm, 125.5000 mm): PTH pad 2 [OPTO_A8] of R52
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(142.8000 mm, 121.1000 mm): PTH pad 16 [SER] of U1
+    @(143.1900 mm, 162.8100 mm): PTH pad 14 [SER] of U10
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(142.8000 mm, 123.6400 mm): PTH pad 17 [SRCLK] of U1
+    @(143.1900 mm, 155.1900 mm): PTH pad 11 [SRCLK] of U10
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(143.1900 mm, 155.1900 mm): PTH pad 11 [SRCLK] of U10
+    @(155.1900 mm, 155.1900 mm): PTH pad 11 [SRCLK] of U11
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(142.8000 mm, 126.1800 mm): PTH pad 18 [RCLK] of U1
+    @(143.1900 mm, 157.7300 mm): PTH pad 12 [RCLK] of U10
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(143.1900 mm, 157.7300 mm): PTH pad 12 [RCLK] of U10
+    @(155.1900 mm, 157.7300 mm): PTH pad 12 [RCLK] of U11
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(142.8000 mm, 128.7200 mm): PTH pad 19 [OE_595] of U1
+    @(143.1900 mm, 160.2700 mm): PTH pad 13 [OE_595] of U10
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(143.1900 mm, 160.2700 mm): PTH pad 13 [OE_595] of U10
+    @(155.1900 mm, 160.2700 mm): PTH pad 13 [OE_595] of U11
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(196.2500 mm, 167.0000 mm): PTH pad 1 [OE_595] of R4
+    @(155.1900 mm, 160.2700 mm): PTH pad 13 [OE_595] of U11
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(143.1900 mm, 150.1100 mm): PTH pad 9 [QH_U10] of U10
+    @(155.1900 mm, 162.8100 mm): PTH pad 14 [QH_U10] of U11
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(143.1900 mm, 165.3500 mm): PTH pad 15 [SR_Q0] of U10
+    @(174.8100 mm, 167.8900 mm): PTH pad 1 [SR_Q0] of U5
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(150.8100 mm, 167.8900 mm): PTH pad 1 [SR_Q1] of U10
+    @(174.8100 mm, 165.3500 mm): PTH pad 2 [SR_Q1] of U5
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(150.8100 mm, 165.3500 mm): PTH pad 2 [SR_Q2] of U10
+    @(174.8100 mm, 162.8100 mm): PTH pad 3 [SR_Q2] of U5
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(150.8100 mm, 162.8100 mm): PTH pad 3 [SR_Q3] of U10
+    @(174.8100 mm, 160.2700 mm): PTH pad 4 [SR_Q3] of U5
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(150.8100 mm, 160.2700 mm): PTH pad 4 [SR_Q4] of U10
+    @(186.8100 mm, 167.8900 mm): PTH pad 1 [SR_Q4] of U6
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(150.8100 mm, 157.7300 mm): PTH pad 5 [SR_Q5] of U10
+    @(186.8100 mm, 165.3500 mm): PTH pad 2 [SR_Q5] of U6
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(150.8100 mm, 155.1900 mm): PTH pad 6 [SR_Q6] of U10
+    @(186.8100 mm, 162.8100 mm): PTH pad 3 [SR_Q6] of U6
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(150.8100 mm, 152.6500 mm): PTH pad 7 [SR_Q7] of U10
+    @(186.8100 mm, 160.2700 mm): PTH pad 4 [SR_Q7] of U6
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(155.1900 mm, 165.3500 mm): PTH pad 15 [SR_Q8] of U11
+    @(198.8100 mm, 167.8900 mm): PTH pad 1 [SR_Q8] of U7
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(162.8100 mm, 167.8900 mm): PTH pad 1 [SR_Q9] of U11
+    @(198.8100 mm, 165.3500 mm): PTH pad 2 [SR_Q9] of U7
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(162.8100 mm, 165.3500 mm): PTH pad 2 [SR_Q10] of U11
+    @(198.8100 mm, 162.8100 mm): PTH pad 3 [SR_Q10] of U7
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(162.8100 mm, 162.8100 mm): PTH pad 3 [SR_Q11] of U11
+    @(198.8100 mm, 160.2700 mm): PTH pad 4 [SR_Q11] of U7
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(115.0000 mm, 163.0000 mm): PTH pad 1 [BYJ1_A] of J5
+    @(167.1900 mm, 167.8900 mm): PTH pad 16 [BYJ1_A] of U5
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(115.0000 mm, 160.4600 mm): PTH pad 2 [BYJ1_B] of J5
+    @(167.1900 mm, 165.3500 mm): PTH pad 15 [BYJ1_B] of U5
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(115.0000 mm, 157.9200 mm): PTH pad 3 [BYJ1_C] of J5
+    @(167.1900 mm, 162.8100 mm): PTH pad 14 [BYJ1_C] of U5
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(115.0000 mm, 155.3800 mm): PTH pad 4 [BYJ1_D] of J5
+    @(167.1900 mm, 160.2700 mm): PTH pad 13 [BYJ1_D] of U5
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(125.0000 mm, 163.0000 mm): PTH pad 1 [BYJ2_A] of J6
+    @(179.1900 mm, 167.8900 mm): PTH pad 16 [BYJ2_A] of U6
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(125.0000 mm, 160.4600 mm): PTH pad 2 [BYJ2_B] of J6
+    @(179.1900 mm, 165.3500 mm): PTH pad 15 [BYJ2_B] of U6
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(125.0000 mm, 157.9200 mm): PTH pad 3 [BYJ2_C] of J6
+    @(179.1900 mm, 162.8100 mm): PTH pad 14 [BYJ2_C] of U6
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(125.0000 mm, 155.3800 mm): PTH pad 4 [BYJ2_D] of J6
+    @(179.1900 mm, 160.2700 mm): PTH pad 13 [BYJ2_D] of U6
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(135.0000 mm, 163.0000 mm): PTH pad 1 [BYJ3_A] of J7
+    @(191.1900 mm, 167.8900 mm): PTH pad 16 [BYJ3_A] of U7
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(135.0000 mm, 160.4600 mm): PTH pad 2 [BYJ3_B] of J7
+    @(191.1900 mm, 165.3500 mm): PTH pad 15 [BYJ3_B] of U7
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(135.0000 mm, 157.9200 mm): PTH pad 3 [BYJ3_C] of J7
+    @(191.1900 mm, 162.8100 mm): PTH pad 14 [BYJ3_C] of U7
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(135.0000 mm, 155.3800 mm): PTH pad 4 [BYJ3_D] of J7
+    @(191.1900 mm, 160.2700 mm): PTH pad 13 [BYJ3_D] of U7
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(66.5000 mm, 54.0000 mm): PTH pad 1 [+12V_SNS] of J10
+    @(60.0000 mm, 54.0000 mm): PTH pad 1 [+12V_SNS] of J8
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(73.0000 mm, 54.0000 mm): PTH pad 1 [+12V_SNS] of J12
+    @(66.5000 mm, 54.0000 mm): PTH pad 1 [+12V_SNS] of J10
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(73.0000 mm, 54.0000 mm): PTH pad 1 [+12V_SNS] of J12
+    @(73.2500 mm, 67.2080 mm): PTH pad 1 [+12V_SNS] of R1
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(73.2500 mm, 67.2080 mm): PTH pad 1 [+12V_SNS] of R1
+    @(78.4000 mm, 158.0000 mm): Pad 2 [+12V_SNS] of R10 on F.Cu
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(75.7500 mm, 164.0000 mm): PTH pad 1 [+12V_SNS] of C10
+    @(78.4000 mm, 158.0000 mm): Pad 2 [+12V_SNS] of R10 on F.Cu
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(77.0000 mm, 54.0000 mm): PTH pad 1 [+12V_SNS] of J14
+    @(73.0000 mm, 54.0000 mm): PTH pad 1 [+12V_SNS] of J12
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(84.0500 mm, 164.0000 mm): Pad 1 [+12V_SNS] of C11 on F.Cu
+    @(78.4000 mm, 158.0000 mm): Pad 2 [+12V_SNS] of R10 on F.Cu
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(89.0000 mm, 54.0000 mm): PTH pad 1 [+12V_SNS] of J19
+    @(77.0000 mm, 54.0000 mm): PTH pad 1 [+12V_SNS] of J14
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(95.5000 mm, 54.0000 mm): PTH pad 1 [+12V_SNS] of J20
+    @(89.0000 mm, 54.0000 mm): PTH pad 1 [+12V_SNS] of J19
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(102.0000 mm, 54.0000 mm): PTH pad 1 [+12V_SNS] of J21
+    @(95.5000 mm, 54.0000 mm): PTH pad 1 [+12V_SNS] of J20
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(108.5000 mm, 54.0000 mm): PTH pad 1 [+12V_SNS] of J22
+    @(102.0000 mm, 54.0000 mm): PTH pad 1 [+12V_SNS] of J21
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(168.2000 mm, 103.3200 mm): PTH pad 31 [TFT_SCK] of U1
+    @(195.0000 mm, 78.8600 mm): PTH pad 1 [TFT_SCK] of J23
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(195.0000 mm, 78.8600 mm): PTH pad 1 [TFT_SCK] of J23
+    @(195.0000 mm, 71.2400 mm): PTH pad 7 [TFT_SCK] of J17
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(168.2000 mm, 100.7800 mm): PTH pad 30 [TFT_MOSI] of U1
+    @(195.0000 mm, 83.9400 mm): PTH pad 3 [TFT_MOSI] of J23
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(195.0000 mm, 83.9400 mm): PTH pad 3 [TFT_MOSI] of J23
+    @(195.0000 mm, 68.7000 mm): PTH pad 6 [TFT_MOSI] of J17
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(168.2000 mm, 95.7000 mm): PTH pad 28 [TFT_CS] of U1
+    @(195.0000 mm, 61.0800 mm): PTH pad 3 [TFT_CS] of J17
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(168.2000 mm, 126.1800 mm): PTH pad 40 [TFT_DC] of U1
+    @(195.0000 mm, 66.1600 mm): PTH pad 5 [TFT_DC] of J17
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(168.2000 mm, 123.6400 mm): PTH pad 39 [TFT_MISO] of U1
+    @(195.0000 mm, 86.4800 mm): PTH pad 4 [TFT_MISO] of J23
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(168.2000 mm, 121.1000 mm): PTH pad 38 [T_CS] of U1
+    @(195.0000 mm, 81.4000 mm): PTH pad 2 [T_CS] of J23
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(142.8000 mm, 95.7000 mm): PTH pad 6 [T_IRQ] of U1
+    @(195.0000 mm, 89.0200 mm): PTH pad 5 [T_IRQ] of J23
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(142.8000 mm, 118.5600 mm): PTH pad 15 [BUZZER] of U1
+    @(185.0000 mm, 61.0800 mm): PTH pad 3 [BUZZER] of J15
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(135.0000 mm, 62.0000 mm): PTH pad 1 [BLOWER] of J16
+    @(123.2500 mm, 64.0000 mm): PTH pad 1 [BLOWER] of R3
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(142.8000 mm, 113.4800 mm): PTH pad 13 [BLOWER] of U1
+    @(135.0000 mm, 62.0000 mm): PTH pad 1 [BLOWER] of J16
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(59.5000 mm, 145.0000 mm): PTH pad 1 [+12V_RAW] of J1
+    @(66.4500 mm, 115.0000 mm): PTH pad 1 [+12V_RAW] of F1
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(142.8000 mm, 116.0200 mm): PTH pad 14 [TFT_RST] of U1
+    @(195.0000 mm, 63.6200 mm): PTH pad 4 [TFT_RST] of J17
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(168.2000 mm, 118.5600 mm): PTH pad 37 [TFT_BL] of U1
+    @(195.0000 mm, 73.7800 mm): PTH pad 8 [TFT_BL] of J17
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(168.2000 mm, 98.2400 mm): PTH pad 29 [ENC_B] of U1
+    @(175.0000 mm, 52.3800 mm): PTH pad 4 [ENC_B] of J18
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(135.0000 mm, 69.6200 mm): PTH pad 4 [BLW_RET] of J16
+    @(146.7500 mm, 64.0000 mm): PTH pad 2 [BLW_RET] of D2
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(168.2000 mm, 105.8600 mm): PTH pad 32 [ENC_A] of U1
+    @(175.0000 mm, 54.9200 mm): PTH pad 3 [ENC_A] of J18
 
-** Found 0 Footprint errors **
+** Found 157 Footprint errors **
+[net_conflict]: Pad net (+12V_RAW) doesn't match net given by schematic (+12V)
+    Local override; warning
+    @(59.5000 mm, 145.0000 mm): PTH pad 1 [+12V_RAW] of J1
+[missing_footprint]: Missing footprint J2 (NEMA17_OUT)
+    Local override; warning
+[net_conflict]: Pad net (OPTO_IN1) doesn't match net given by schematic ({slash}OPTO_IN1)
+    Local override; warning
+    @(60.0000 mm, 56.5400 mm): PTH pad 2 [OPTO_IN1] of J8
+[net_conflict]: Pad net (OPTO_IN2) doesn't match net given by schematic ({slash}OPTO_IN2)
+    Local override; warning
+    @(66.5000 mm, 56.5400 mm): PTH pad 2 [OPTO_IN2] of J10
+[net_conflict]: Pad net (OPTO_IN3) doesn't match net given by schematic ({slash}OPTO_IN3)
+    Local override; warning
+    @(73.0000 mm, 56.5400 mm): PTH pad 2 [OPTO_IN3] of J12
+[net_conflict]: Pad net (OPTO_IN4) doesn't match net given by schematic ({slash}OPTO_IN4)
+    Local override; warning
+    @(77.0000 mm, 59.0800 mm): PTH pad 3 [OPTO_IN4] of J14
+[net_conflict]: Pad missing net given by schematic (unconnected-(J14-CTRL-Pad4))
+    Local override; warning
+    @(77.0000 mm, 61.6200 mm): PTH pad 4 [<no net>] of J14
+[footprint_symbol_mismatch]: Value (J17) doesn't match symbol value (TFT_LCD)
+    Local override; warning
+    @(195.0000 mm, 56.0000 mm): Footprint J17
+[net_conflict]: Pad net (+3V3) doesn't match net given by schematic (unconnected-(J17-VCC-Pad1))
+    Local override; warning
+    @(195.0000 mm, 56.0000 mm): PTH pad 1 [+3V3] of J17
+[net_conflict]: Pad net (GND) doesn't match net given by schematic (unconnected-(J17-GND-Pad2))
+    Local override; warning
+    @(195.0000 mm, 58.5400 mm): PTH pad 2 [GND] of J17
+[net_conflict]: Pad net (TFT_CS) doesn't match net given by schematic (unconnected-(J17-CS-Pad3))
+    Local override; warning
+    @(195.0000 mm, 61.0800 mm): PTH pad 3 [TFT_CS] of J17
+[net_conflict]: Pad net (TFT_RST) doesn't match net given by schematic (unconnected-(J17-RESET-Pad4))
+    Local override; warning
+    @(195.0000 mm, 63.6200 mm): PTH pad 4 [TFT_RST] of J17
+[net_conflict]: Pad net (TFT_DC) doesn't match net given by schematic (unconnected-(J17-DC-Pad5))
+    Local override; warning
+    @(195.0000 mm, 66.1600 mm): PTH pad 5 [TFT_DC] of J17
+[net_conflict]: Pad net (TFT_MOSI) doesn't match net given by schematic (unconnected-(J17-SDI-Pad6))
+    Local override; warning
+    @(195.0000 mm, 68.7000 mm): PTH pad 6 [TFT_MOSI] of J17
+[net_conflict]: Pad net (TFT_SCK) doesn't match net given by schematic (unconnected-(J17-SCK-Pad7))
+    Local override; warning
+    @(195.0000 mm, 71.2400 mm): PTH pad 7 [TFT_SCK] of J17
+[net_conflict]: Pad net (TFT_BL) doesn't match net given by schematic (unconnected-(J17-LED-Pad8))
+    Local override; warning
+    @(195.0000 mm, 73.7800 mm): PTH pad 8 [TFT_BL] of J17
+[net_conflict]: Pad missing net given by schematic (unconnected-(J17-SDO-Pad9))
+    Local override; warning
+    @(195.0000 mm, 76.3200 mm): PTH pad 9 [<no net>] of J17
+[net_conflict]: Pad net (ENC_A) doesn't match net given by schematic (Net-(J18-ENC_A))
+    Local override; warning
+    @(175.0000 mm, 54.9200 mm): PTH pad 3 [ENC_A] of J18
+[net_conflict]: Pad net (ENC_B) doesn't match net given by schematic (Net-(J18-ENC_B))
+    Local override; warning
+    @(175.0000 mm, 52.3800 mm): PTH pad 4 [ENC_B] of J18
+[footprint_symbol_mismatch]: Value (J23) doesn't match symbol value (TFT_TP)
+    Local override; warning
+    @(195.0000 mm, 78.8600 mm): Footprint J23
+[net_conflict]: Pad net (TFT_SCK) doesn't match net given by schematic (unconnected-(J23-T_CLK-Pad1))
+    Local override; warning
+    @(195.0000 mm, 78.8600 mm): PTH pad 1 [TFT_SCK] of J23
+[net_conflict]: Pad net (T_CS) doesn't match net given by schematic (unconnected-(J23-T_CS-Pad2))
+    Local override; warning
+    @(195.0000 mm, 81.4000 mm): PTH pad 2 [T_CS] of J23
+[net_conflict]: Pad net (TFT_MOSI) doesn't match net given by schematic (unconnected-(J23-T_DIN-Pad3))
+    Local override; warning
+    @(195.0000 mm, 83.9400 mm): PTH pad 3 [TFT_MOSI] of J23
+[net_conflict]: Pad net (TFT_MISO) doesn't match net given by schematic (unconnected-(J23-T_DO-Pad4))
+    Local override; warning
+    @(195.0000 mm, 86.4800 mm): PTH pad 4 [TFT_MISO] of J23
+[net_conflict]: Pad net (T_IRQ) doesn't match net given by schematic (unconnected-(J23-T_IRQ-Pad5))
+    Local override; warning
+    @(195.0000 mm, 89.0200 mm): PTH pad 5 [T_IRQ] of J23
+[net_conflict]: Pad net (OPTO_IN4) doesn't match net given by schematic ({slash}OPTO_IN4)
+    Local override; warning
+    @(80.7500 mm, 67.2080 mm): PTH pad 2 [OPTO_IN4] of R1
+[net_conflict]: Pad net (+3V3) doesn't match net given by schematic (unconnected-(U1-3V3b-Pad2))
+    Local override; warning
+    @(142.8000 mm, 85.5400 mm): PTH pad 2 [+3V3] of U1
+[net_conflict]: Pad missing net given by schematic (unconnected-(U1-RST-Pad3))
+    Local override; warning
+    @(142.8000 mm, 88.0800 mm): PTH pad 3 [<no net>] of U1
+[net_conflict]: Pad net (OPTO_OUT3) doesn't match net given by schematic (unconnected-(U1-IO4-Pad4))
+    Local override; warning
+    @(142.8000 mm, 90.6200 mm): PTH pad 4 [OPTO_OUT3] of U1
+[net_conflict]: Pad net (OPTO_OUT4) doesn't match net given by schematic (unconnected-(U1-IO5-Pad5))
+    Local override; warning
+    @(142.8000 mm, 93.1600 mm): PTH pad 5 [OPTO_OUT4] of U1
+[net_conflict]: Pad net (T_IRQ) doesn't match net given by schematic (unconnected-(U1-IO6-Pad6))
+    Local override; warning
+    @(142.8000 mm, 95.7000 mm): PTH pad 6 [T_IRQ] of U1
+[net_conflict]: Pad net (OPTO_OUT5) doesn't match net given by schematic (unconnected-(U1-IO7-Pad7))
+    Local override; warning
+    @(142.8000 mm, 98.2400 mm): PTH pad 7 [OPTO_OUT5] of U1
+[net_conflict]: Pad net (OPTO_OUT8) doesn't match net given by schematic (unconnected-(U1-IO15-Pad8))
+    Local override; warning
+    @(142.8000 mm, 100.7800 mm): PTH pad 8 [OPTO_OUT8] of U1
+[net_conflict]: Pad net (STEP) doesn't match net given by schematic ({slash}STEP)
+    Local override; warning
+    @(142.8000 mm, 103.3200 mm): PTH pad 9 [STEP] of U1
+[net_conflict]: Pad net (DIR) doesn't match net given by schematic ({slash}DIR)
+    Local override; warning
+    @(142.8000 mm, 105.8600 mm): PTH pad 10 [DIR] of U1
+[net_conflict]: Pad net (EN_TMC) doesn't match net given by schematic ({slash}EN)
+    Local override; warning
+    @(142.8000 mm, 108.4000 mm): PTH pad 11 [EN_TMC] of U1
+[net_conflict]: Pad net (OPTO_OUT6) doesn't match net given by schematic (unconnected-(U1-IO8-Pad12))
+    Local override; warning
+    @(142.8000 mm, 110.9400 mm): PTH pad 12 [OPTO_OUT6] of U1
+[net_conflict]: Pad net (BLOWER) doesn't match net given by schematic (unconnected-(U1-IO3-Pad13))
+    Local override; warning
+    @(142.8000 mm, 113.4800 mm): PTH pad 13 [BLOWER] of U1
+[net_conflict]: Pad net (TFT_RST) doesn't match net given by schematic (unconnected-(U1-IO46-Pad14))
+    Local override; warning
+    @(142.8000 mm, 116.0200 mm): PTH pad 14 [TFT_RST] of U1
+[net_conflict]: Pad net (BUZZER) doesn't match net given by schematic (unconnected-(U1-IO9-Pad15))
+    Local override; warning
+    @(142.8000 mm, 118.5600 mm): PTH pad 15 [BUZZER] of U1
+[net_conflict]: Pad net (SER) doesn't match net given by schematic (unconnected-(U1-IO10-Pad16))
+    Local override; warning
+    @(142.8000 mm, 121.1000 mm): PTH pad 16 [SER] of U1
+[net_conflict]: Pad net (SRCLK) doesn't match net given by schematic (unconnected-(U1-IO11-Pad17))
+    Local override; warning
+    @(142.8000 mm, 123.6400 mm): PTH pad 17 [SRCLK] of U1
+[net_conflict]: Pad net (RCLK) doesn't match net given by schematic (unconnected-(U1-IO12-Pad18))
+    Local override; warning
+    @(142.8000 mm, 126.1800 mm): PTH pad 18 [RCLK] of U1
+[net_conflict]: Pad net (OE_595) doesn't match net given by schematic (unconnected-(U1-IO13-Pad19))
+    Local override; warning
+    @(142.8000 mm, 128.7200 mm): PTH pad 19 [OE_595] of U1
+[net_conflict]: Pad net (OPTO_OUT7) doesn't match net given by schematic (unconnected-(U1-IO14-Pad20))
+    Local override; warning
+    @(142.8000 mm, 131.2600 mm): PTH pad 20 [OPTO_OUT7] of U1
+[net_conflict]: Pad net (GND) doesn't match net given by schematic (unconnected-(U1-GND-Pad23))
+    Local override; warning
+    @(168.2000 mm, 83.0000 mm): PTH pad 23 [GND] of U1
+[net_conflict]: Pad missing net given by schematic (unconnected-(U1-TX0-Pad24))
+    Local override; warning
+    @(168.2000 mm, 85.5400 mm): PTH pad 24 [<no net>] of U1
+[net_conflict]: Pad missing net given by schematic (unconnected-(U1-RX0-Pad25))
+    Local override; warning
+    @(168.2000 mm, 88.0800 mm): PTH pad 25 [<no net>] of U1
+[net_conflict]: Pad net (OPTO_OUT1) doesn't match net given by schematic (unconnected-(U1-IO1-Pad26))
+    Local override; warning
+    @(168.2000 mm, 90.6200 mm): PTH pad 26 [OPTO_OUT1] of U1
+[net_conflict]: Pad net (OPTO_OUT2) doesn't match net given by schematic (unconnected-(U1-IO2-Pad27))
+    Local override; warning
+    @(168.2000 mm, 93.1600 mm): PTH pad 27 [OPTO_OUT2] of U1
+[net_conflict]: Pad net (TFT_CS) doesn't match net given by schematic (unconnected-(U1-IO42-Pad28))
+    Local override; warning
+    @(168.2000 mm, 95.7000 mm): PTH pad 28 [TFT_CS] of U1
+[net_conflict]: Pad net (ENC_B) doesn't match net given by schematic (Net-(J18-ENC_B))
+    Local override; warning
+    @(168.2000 mm, 98.2400 mm): PTH pad 29 [ENC_B] of U1
+[net_conflict]: Pad net (TFT_MOSI) doesn't match net given by schematic (unconnected-(U1-IO40-Pad30))
+    Local override; warning
+    @(168.2000 mm, 100.7800 mm): PTH pad 30 [TFT_MOSI] of U1
+[net_conflict]: Pad net (TFT_SCK) doesn't match net given by schematic (unconnected-(U1-IO39-Pad31))
+    Local override; warning
+    @(168.2000 mm, 103.3200 mm): PTH pad 31 [TFT_SCK] of U1
+[net_conflict]: Pad net (ENC_A) doesn't match net given by schematic (Net-(J18-ENC_A))
+    Local override; warning
+    @(168.2000 mm, 105.8600 mm): PTH pad 32 [ENC_A] of U1
+[net_conflict]: Pad missing net given by schematic (unconnected-(U1-IO37-Pad33))
+    Local override; warning
+    @(168.2000 mm, 108.4000 mm): PTH pad 33 [<no net>] of U1
+[net_conflict]: Pad missing net given by schematic (unconnected-(U1-IO36-Pad34))
+    Local override; warning
+    @(168.2000 mm, 110.9400 mm): PTH pad 34 [<no net>] of U1
+[net_conflict]: Pad missing net given by schematic (unconnected-(U1-IO35-Pad35))
+    Local override; warning
+    @(168.2000 mm, 113.4800 mm): PTH pad 35 [<no net>] of U1
+[net_conflict]: Pad missing net given by schematic (unconnected-(U1-IO0-Pad36))
+    Local override; warning
+    @(168.2000 mm, 116.0200 mm): PTH pad 36 [<no net>] of U1
+[net_conflict]: Pad net (TFT_BL) doesn't match net given by schematic (unconnected-(U1-IO45-Pad37))
+    Local override; warning
+    @(168.2000 mm, 118.5600 mm): PTH pad 37 [TFT_BL] of U1
+[net_conflict]: Pad net (T_CS) doesn't match net given by schematic (unconnected-(U1-IO48-Pad38))
+    Local override; warning
+    @(168.2000 mm, 121.1000 mm): PTH pad 38 [T_CS] of U1
+[net_conflict]: Pad net (TFT_MISO) doesn't match net given by schematic (unconnected-(U1-IO47-Pad39))
+    Local override; warning
+    @(168.2000 mm, 123.6400 mm): PTH pad 39 [TFT_MISO] of U1
+[net_conflict]: Pad net (TFT_DC) doesn't match net given by schematic (unconnected-(U1-IO21-Pad40))
+    Local override; warning
+    @(168.2000 mm, 126.1800 mm): PTH pad 40 [TFT_DC] of U1
+[net_conflict]: Pad missing net given by schematic (unconnected-(U1-IO20-Pad41))
+    Local override; warning
+    @(168.2000 mm, 128.7200 mm): PTH pad 41 [<no net>] of U1
+[net_conflict]: Pad missing net given by schematic (unconnected-(U1-IO19-Pad42))
+    Local override; warning
+    @(168.2000 mm, 131.2600 mm): PTH pad 42 [<no net>] of U1
+[net_conflict]: Pad net (GND) doesn't match net given by schematic (unconnected-(U1-GNDb-Pad43))
+    Local override; warning
+    @(168.2000 mm, 133.8000 mm): PTH pad 43 [GND] of U1
+[net_conflict]: Pad net (GND) doesn't match net given by schematic (unconnected-(U1-GNDc-Pad44))
+    Local override; warning
+    @(168.2000 mm, 136.3400 mm): PTH pad 44 [GND] of U1
+[net_conflict]: Pad net (GND) doesn't match net given by schematic (+5V)
+    Local override; warning
+    @(82.2710 mm, 123.9360 mm): PTH pad 3 [GND] of U2
+[net_conflict]: Pad net (GND) doesn't match net given by schematic (+5V)
+    Local override; warning
+    @(82.2710 mm, 121.3960 mm): PTH pad 3 [GND] of U2
+[net_conflict]: Pad net (+5V) doesn't match net given by schematic (GND)
+    Local override; warning
+    @(82.2710 mm, 132.0640 mm): PTH pad 4 [+5V] of U2
+[net_conflict]: Pad net (+5V) doesn't match net given by schematic (GND)
+    Local override; warning
+    @(82.2710 mm, 134.6040 mm): PTH pad 4 [+5V] of U2
+[footprint_symbol_mismatch]: Value (U3) doesn't match symbol value (TMC2209)
+    Local override; warning
+    @(186.0000 mm, 115.0000 mm): Footprint U3
+[net_conflict]: Pad net (EN_TMC) doesn't match net given by schematic ({slash}EN)
+    Local override; warning
+    @(194.8900 mm, 107.3800 mm): PTH pad 1 [EN_TMC] of U3
+[net_conflict]: Pad missing net given by schematic (unconnected-(U3-MS1-Pad2))
+    Local override; warning
+    @(192.3500 mm, 107.3800 mm): PTH pad 2 [<no net>] of U3
+[net_conflict]: Pad missing net given by schematic (unconnected-(U3-MS2-Pad3))
+    Local override; warning
+    @(189.8100 mm, 107.3800 mm): PTH pad 3 [<no net>] of U3
+[net_conflict]: Pad missing net given by schematic (unconnected-(U3-PDN-Pad4))
+    Local override; warning
+    @(187.2700 mm, 107.3800 mm): PTH pad 4 [<no net>] of U3
+[net_conflict]: Pad missing net given by schematic (unconnected-(U3-PDN2-Pad5))
+    Local override; warning
+    @(184.7300 mm, 107.3800 mm): PTH pad 5 [<no net>] of U3
+[net_conflict]: Pad missing net given by schematic (unconnected-(U3-CLK-Pad6))
+    Local override; warning
+    @(182.1900 mm, 107.3800 mm): PTH pad 6 [<no net>] of U3
+[net_conflict]: Pad net (STEP) doesn't match net given by schematic ({slash}STEP)
+    Local override; warning
+    @(179.6500 mm, 107.3800 mm): PTH pad 7 [STEP] of U3
+[net_conflict]: Pad net (DIR) doesn't match net given by schematic ({slash}DIR)
+    Local override; warning
+    @(177.1100 mm, 107.3800 mm): PTH pad 8 [DIR] of U3
+[net_conflict]: Pad net (MotA2) doesn't match net given by schematic (Net-(J2-A2))
+    Local override; warning
+    @(189.8100 mm, 122.6200 mm): PTH pad 11 [MotA2] of U3
+[net_conflict]: Pad net (MotA1) doesn't match net given by schematic (Net-(J2-A1))
+    Local override; warning
+    @(187.2700 mm, 122.6200 mm): PTH pad 12 [MotA1] of U3
+[net_conflict]: Pad net (MotB1) doesn't match net given by schematic ({slash}EN)
+    Local override; warning
+    @(184.7300 mm, 122.6200 mm): PTH pad 13 [MotB1] of U3
+[net_conflict]: Pad net (MotB2) doesn't match net given by schematic ({slash}STEP)
+    Local override; warning
+    @(182.1900 mm, 122.6200 mm): PTH pad 14 [MotB2] of U3
+[net_conflict]: Pad net (OPTO_A1) doesn't match net given by schematic (unconnected-(U41-A-Pad1))
+    Local override; warning
+    @(94.1900 mm, 106.7300 mm): PTH pad 1 [OPTO_A1] of U41
+[net_conflict]: Pad net (GND) doesn't match net given by schematic (unconnected-(U41-K-Pad2))
+    Local override; warning
+    @(94.1900 mm, 109.2700 mm): PTH pad 2 [GND] of U41
+[net_conflict]: Pad net (GND) doesn't match net given by schematic (unconnected-(U41-E-Pad3))
+    Local override; warning
+    @(101.8100 mm, 109.2700 mm): PTH pad 3 [GND] of U41
+[net_conflict]: Pad net (OPTO_OUT1) doesn't match net given by schematic (unconnected-(U41-C-Pad4))
+    Local override; warning
+    @(101.8100 mm, 106.7300 mm): PTH pad 4 [OPTO_OUT1] of U41
+[net_conflict]: Pad net (OPTO_A2) doesn't match net given by schematic (unconnected-(U42-A-Pad1))
+    Local override; warning
+    @(105.6900 mm, 106.7300 mm): PTH pad 1 [OPTO_A2] of U42
+[net_conflict]: Pad net (GND) doesn't match net given by schematic (unconnected-(U42-K-Pad2))
+    Local override; warning
+    @(105.6900 mm, 109.2700 mm): PTH pad 2 [GND] of U42
+[net_conflict]: Pad net (GND) doesn't match net given by schematic (unconnected-(U42-E-Pad3))
+    Local override; warning
+    @(113.3100 mm, 109.2700 mm): PTH pad 3 [GND] of U42
+[net_conflict]: Pad net (OPTO_OUT2) doesn't match net given by schematic (unconnected-(U42-C-Pad4))
+    Local override; warning
+    @(113.3100 mm, 106.7300 mm): PTH pad 4 [OPTO_OUT2] of U42
+[net_conflict]: Pad net (OPTO_A3) doesn't match net given by schematic (unconnected-(U43-A-Pad1))
+    Local override; warning
+    @(117.1900 mm, 106.7300 mm): PTH pad 1 [OPTO_A3] of U43
+[net_conflict]: Pad net (GND) doesn't match net given by schematic (unconnected-(U43-K-Pad2))
+    Local override; warning
+    @(117.1900 mm, 109.2700 mm): PTH pad 2 [GND] of U43
+[net_conflict]: Pad net (GND) doesn't match net given by schematic (unconnected-(U43-E-Pad3))
+    Local override; warning
+    @(124.8100 mm, 109.2700 mm): PTH pad 3 [GND] of U43
+[net_conflict]: Pad net (OPTO_OUT3) doesn't match net given by schematic (unconnected-(U43-C-Pad4))
+    Local override; warning
+    @(124.8100 mm, 106.7300 mm): PTH pad 4 [OPTO_OUT3] of U43
+[net_conflict]: Pad net (OPTO_A4) doesn't match net given by schematic (unconnected-(U44-A-Pad1))
+    Local override; warning
+    @(128.6900 mm, 106.7300 mm): PTH pad 1 [OPTO_A4] of U44
+[net_conflict]: Pad net (GND) doesn't match net given by schematic (unconnected-(U44-K-Pad2))
+    Local override; warning
+    @(128.6900 mm, 109.2700 mm): PTH pad 2 [GND] of U44
+[net_conflict]: Pad net (GND) doesn't match net given by schematic (unconnected-(U44-E-Pad3))
+    Local override; warning
+    @(136.3100 mm, 109.2700 mm): PTH pad 3 [GND] of U44
+[net_conflict]: Pad net (OPTO_OUT4) doesn't match net given by schematic (unconnected-(U44-C-Pad4))
+    Local override; warning
+    @(136.3100 mm, 106.7300 mm): PTH pad 4 [OPTO_OUT4] of U44
+[net_conflict]: Pad net (OPTO_A5) doesn't match net given by schematic (unconnected-(U45-A-Pad1))
+    Local override; warning
+    @(94.1900 mm, 132.7300 mm): PTH pad 1 [OPTO_A5] of U45
+[net_conflict]: Pad net (GND) doesn't match net given by schematic (unconnected-(U45-K-Pad2))
+    Local override; warning
+    @(94.1900 mm, 135.2700 mm): PTH pad 2 [GND] of U45
+[net_conflict]: Pad net (GND) doesn't match net given by schematic (unconnected-(U45-E-Pad3))
+    Local override; warning
+    @(101.8100 mm, 135.2700 mm): PTH pad 3 [GND] of U45
+[net_conflict]: Pad net (OPTO_OUT5) doesn't match net given by schematic (unconnected-(U45-C-Pad4))
+    Local override; warning
+    @(101.8100 mm, 132.7300 mm): PTH pad 4 [OPTO_OUT5] of U45
+[net_conflict]: Pad net (OPTO_A6) doesn't match net given by schematic (unconnected-(U46-A-Pad1))
+    Local override; warning
+    @(105.6900 mm, 132.7300 mm): PTH pad 1 [OPTO_A6] of U46
+[net_conflict]: Pad net (GND) doesn't match net given by schematic (unconnected-(U46-K-Pad2))
+    Local override; warning
+    @(105.6900 mm, 135.2700 mm): PTH pad 2 [GND] of U46
+[net_conflict]: Pad net (GND) doesn't match net given by schematic (unconnected-(U46-E-Pad3))
+    Local override; warning
+    @(113.3100 mm, 135.2700 mm): PTH pad 3 [GND] of U46
+[net_conflict]: Pad net (OPTO_OUT6) doesn't match net given by schematic (unconnected-(U46-C-Pad4))
+    Local override; warning
+    @(113.3100 mm, 132.7300 mm): PTH pad 4 [OPTO_OUT6] of U46
+[net_conflict]: Pad net (OPTO_A7) doesn't match net given by schematic (unconnected-(U47-A-Pad1))
+    Local override; warning
+    @(117.1900 mm, 132.7300 mm): PTH pad 1 [OPTO_A7] of U47
+[net_conflict]: Pad net (GND) doesn't match net given by schematic (unconnected-(U47-K-Pad2))
+    Local override; warning
+    @(117.1900 mm, 135.2700 mm): PTH pad 2 [GND] of U47
+[net_conflict]: Pad net (GND) doesn't match net given by schematic (unconnected-(U47-E-Pad3))
+    Local override; warning
+    @(124.8100 mm, 135.2700 mm): PTH pad 3 [GND] of U47
+[net_conflict]: Pad net (OPTO_OUT7) doesn't match net given by schematic (unconnected-(U47-C-Pad4))
+    Local override; warning
+    @(124.8100 mm, 132.7300 mm): PTH pad 4 [OPTO_OUT7] of U47
+[net_conflict]: Pad net (OPTO_A8) doesn't match net given by schematic (unconnected-(U48-A-Pad1))
+    Local override; warning
+    @(128.6900 mm, 132.7300 mm): PTH pad 1 [OPTO_A8] of U48
+[net_conflict]: Pad net (GND) doesn't match net given by schematic (unconnected-(U48-K-Pad2))
+    Local override; warning
+    @(128.6900 mm, 135.2700 mm): PTH pad 2 [GND] of U48
+[net_conflict]: Pad net (GND) doesn't match net given by schematic (unconnected-(U48-E-Pad3))
+    Local override; warning
+    @(136.3100 mm, 135.2700 mm): PTH pad 3 [GND] of U48
+[net_conflict]: Pad net (OPTO_OUT8) doesn't match net given by schematic (unconnected-(U48-C-Pad4))
+    Local override; warning
+    @(136.3100 mm, 132.7300 mm): PTH pad 4 [OPTO_OUT8] of U48
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(69.0000 mm, 115.0000 mm): Footprint F1
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(67.0000 mm, 162.0000 mm): Footprint D1
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(185.0000 mm, 56.0000 mm): Footprint J15
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(135.0000 mm, 62.0000 mm): Footprint J16
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(94.5000 mm, 99.5000 mm): Footprint R41
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(101.5000 mm, 116.5000 mm): Footprint R45
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(106.0000 mm, 99.5000 mm): Footprint R42
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(113.0000 mm, 116.5000 mm): Footprint R46
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(117.5000 mm, 99.5000 mm): Footprint R43
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(124.5000 mm, 116.5000 mm): Footprint R47
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(129.0000 mm, 99.5000 mm): Footprint R44
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(136.0000 mm, 116.5000 mm): Footprint R48
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(94.5000 mm, 125.5000 mm): Footprint R49
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(101.5000 mm, 142.5000 mm): Footprint R53
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(106.0000 mm, 125.5000 mm): Footprint R50
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(113.0000 mm, 142.5000 mm): Footprint R54
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(117.5000 mm, 125.5000 mm): Footprint R51
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(124.5000 mm, 142.5000 mm): Footprint R55
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(129.0000 mm, 125.5000 mm): Footprint R52
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(136.0000 mm, 142.5000 mm): Footprint R56
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(147.0000 mm, 159.0000 mm): Footprint U10
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(159.0000 mm, 159.0000 mm): Footprint U11
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(171.0000 mm, 159.0000 mm): Footprint U5
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(183.0000 mm, 159.0000 mm): Footprint U6
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(195.0000 mm, 159.0000 mm): Footprint U7
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(115.0000 mm, 163.0000 mm): Footprint J5
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(125.0000 mm, 163.0000 mm): Footprint J6
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(135.0000 mm, 163.0000 mm): Footprint J7
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(89.0000 mm, 54.0000 mm): Footprint J19
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(95.5000 mm, 54.0000 mm): Footprint J20
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(102.0000 mm, 54.0000 mm): Footprint J21
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(108.5000 mm, 54.0000 mm): Footprint J22
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(200.0000 mm, 167.0000 mm): Footprint R4
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(176.0000 mm, 127.0000 mm): Footprint R2
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(127.0000 mm, 64.0000 mm): Footprint R3
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(143.0000 mm, 64.0000 mm): Footprint D2
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(77.0000 mm, 158.0000 mm): Footprint R10
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(77.0000 mm, 164.0000 mm): Footprint C10
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(85.0000 mm, 164.0000 mm): Footprint C11
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(196.0000 mm, 129.0000 mm): Footprint C20
+[extra_footprint]: Extra footprint
+    Local override; warning
+    @(145.0000 mm, 158.0000 mm): Footprint C21
 
 ** Ignored checks **
     - Footprint has no courtyard defined

@@ -4,20 +4,19 @@
 **PCB:** `esp32_baseboard` (generator: `gen_power_carrier.py`)  
 **Mục tiêu:** văn phòng ~20 cm, **ổn định >3 năm**, **tổng giá kinh tế** (chỉ nâng cấp khi chênh ít).
 
-> 🔴 **CHƯA ĐỒNG BỘ — CHẶN FAB (2026-08-28).** Tài liệu này đã cập nhật sang
-> **28BYJ-48 + ULN2003 + 74HC595**, **1 công tắc HOME mỗi trục**. Nhưng
-> `gen_power_carrier.py` **vẫn đang sinh 3× DRV8871 + 6 jack limit + J5–J7 loại 1×02**.
-> Phải sửa generator rồi chạy lại DRC trước khi đặt PCB. Việc còn phải làm ở generator:
-> footprint/symbol ULN2003AN + 74HC595 (DIP-16) thay `DRV8871_Module`; J5–J7 đổi
-> 1×02 → 1×05; thêm R4; đấu COM(9) của U5–U7 lên `+12V`; **xoá J9/J11/J13 và U9**;
-> J4 1×10 → 1×06; bỏ C22/C23.
+> ✅ **Generator đã đồng bộ.** `gen_power_carrier.py` sinh
+> **U10 = module 74HC595-24IO** ([Shopee](https://shopee.vn/-C%C3%B3-s%E1%BA%B5n-M%E1%BA%A1ch-m%E1%BB%9F-r%E1%BB%99ng-I-O-24-ch%C3%A2n-74HC595-thegioimodule-i.951399259.42633627766))
+> **bên phải ESP32** (J24 CTRL + J25 Q) → **ULN2003AN ×3** + 28BYJ J5–J7,
+> HOME endstop J8/J10/J12 **1×04**, **U41–U44 PC817 ×4**, TFT **có touch**, J18 ENC,
+> board **220×160 mm**. Spare GPIO: IO7/8/14/15. Firmware: **shiftOut 3 byte**.
+> Vẫn cần FreeRouting + DRC trước fab.
 
 Nguồn 12V ngoài → J1 → F1 PTC → `+12V` (+ D1 TVS) → các rail / driver.
 
 ```
 PSU 12V ──J1── F1 ── +12V ──┬── U2 MP1584 ── +5V ── U1 / TFT / buzzer  (buck duy nhat)
                             ├── J16 AOD4184 ── bơm khí 370 12V
-                            ├── U3 TMC2209 ── J2 NEMA17
+                            ├── U3 TMC2209 Mot ── NEMA17 (không J2)
                             ├── U5–U7 ULN2003 ── J5–J7 28BYJ-48 (bản 12V)
                             └── R10/C10/C11 ── +12V_SNS ── limit + BUP
 ```
@@ -32,21 +31,21 @@ PSU 12V ──J1── F1 ── +12V ──┬── U2 MP1584 ── +5V ─�
 | **F1** | PTC radial ~3A / 30V (RXE030 / MF-R300 class) | Ø~9–11 | 1 | Bảo vệ ngắn mạch | RAW → `+12V` |
 | **D1** | TVS P6KE15A (DO-41) | axial | 1 | Clamp surge 12V | `+12V`–GND |
 | **U1** | **ESP32-S3-DevKitC-1 N16R8** (bản `v1.1`, **không** hậu tố `V`) | ~63×25 | 1 | MCU | Socket 2×22 @2.54, row 25.4; cấp **5V** từ U2 |
-| **U2** | **MP1584EN** fixed **5V** | ~22×17 | 1 | Buck logic **duy nhất** | `+12V` → `+5V` (ESP32 / TFT / buzzer) |
+| **U2** | **MP1584EN** fixed **5V** ([Shopee 41383641614](https://shopee.vn/MP1584EN-Mini-DC-Buck-41383641614)) | ~22×17 | 1 | Buck logic **duy nhất** | `+12V` → `+5V`; pad 18.54×10.67 mm |
 | **U3** | **TMC2209** stepstick **BTT** + heatsink | ~15×20 | 1 | Driver NEMA17 | VM=12V, VIO=3V3; STEP/DIR/EN |
-| **U4** | **PC817 4CH** | ~48×38 | 1 | Level-shift 4 ngõ vào field | IN1–3 = **limit HOME trục 1/2/3**, IN4 = **BUP** → IO1, 2, 4, 5 |
-| ~~**U9**~~ | ~~PC817 4CH~~ | ~48×38 | **DNP** | **KHÔNG HÀN** — sau khi bỏ 3 limit MAX chỉ còn 4 ngõ vào field, vừa đúng một con U4. Giữ footprint, giải phóng **IO6, 7, 8, 9** | — |
+| **U41–U44** | **PC817** DIP-4 | ~5×7 | **4** | Level-shift → 3V3 | IN1–3 **HOME**, IN4 **BUP** → IO1,2,4,5 |
+| **R41–R44** | Điện trở axial **2k2** | pitch ~7.5 | 4 | LED series PC817 (~5 mA @12V) | `OPTO_INx` → anode |
+| **R45–R48** | Điện trở axial **10k** | pitch ~7.5 | 4 | Pull-up collector → GPIO | `+3V3` → `OPTO_OUTx` |
+| ~~**U4/U9**~~ | ~~PC817 4CH module~~ | — | **BỎ** | Module Shopee không có hàng chân; thay bằng chip rời | — |
 
-> ⚠️ **Không phải cách ly galvanic.** `GND_I` nối thẳng vào `GND` (một PSU
-> duy nhất thì không cách ly được). Vai trò thật của U4/U9 là **hạ mức
-> 12 V → 3.3 V + chắn xung trên dây field**, đừng kỳ vọng khả năng chống
-> nhiễu của opto cách ly thật.
-| **U5** | **ULN2003AN** DIP-16 | ~20×7 | 1 | Đệm 4 pha stepper trục 1 | IN từ U10 Q1–Q4 → J5; **COM(9) → `+12V`** |
-| **U6** | **ULN2003AN** DIP-16 | ~20×7 | 1 | Đệm 4 pha stepper trục 2 | IN từ U10 Q5–Q8 → J6; **COM(9) → `+12V`** |
-| **U7** | **ULN2003AN** DIP-16 | ~20×7 | 1 | Đệm 4 pha stepper trục 3 | IN từ U11 Q1–Q4 → J7; **COM(9) → `+12V`** |
-| **U10** | **74HC595** DIP-16 | ~20×7 | 1 | Shift reg 1 (8 pha) | SER IO10, SRCLK IO11, RCLK IO12, `/OE` IO13 |
-| **U11** | **74HC595** DIP-16 | ~20×7 | 1 | Shift reg 2, nối tiếp U10 | `QH'` của U10 → SER; dùng 4/8 ngõ |
-| **R4** | Điện trở axial **10k** | pitch ~7.5 | 1 | Pull-up `/OE` — giữ ngõ 595 Hi-Z lúc boot | `/OE` → `+3V3` |
+> ⚠️ **Không phải cách ly galvanic.** `GND` chung (một PSU). Vai trò: **hạ 12 V → 3.3 V + chắn xung field**.
+| **U5** | **ULN2003AN** DIP-16 | ~20×7 | 1 | Đệm 4 pha stepper trục 1 | IN ← SR_Q0–3 → J5; **COM(9) → `+12V`** |
+| **U6** | **ULN2003AN** DIP-16 | ~20×7 | 1 | Đệm 4 pha stepper trục 2 | IN ← SR_Q4–7 → J6; **COM(9) → `+12V`** |
+| **U7** | **ULN2003AN** DIP-16 | ~20×7 | 1 | Đệm 4 pha stepper trục 3 | IN ← SR_Q8–11 → J7; **COM(9) → `+12V`** |
+| **U10** | **74HC595-24IO** module (3×595) | ~66×20 | **1** | [Shopee thegioimodule](https://shopee.vn/-C%C3%B3-s%E1%BA%B5n-M%E1%BA%A1ch-m%E1%BB%9F-r%E1%BB%99ng-I-O-24-ch%C3%A2n-74HC595-thegioimodule-i.951399259.42633627766) — **bên phải ESP32** | J24 CTRL + J25 Q; 12/24 → ULN |
+| **J24** | Header cái **1×06** | pitch 2.54 | 1 | Cắm CTRL module | LDEN GND VCC LDSI LDSTR LDSCK |
+| **J25** | Header cái **1×24** | pitch 2.54 | 1 | Cắm Q module | 1_Q0…3_Q7; Q0–11 → ULN |
+| **R4** | Điện trở axial **10k** | pitch ~7.5 | 1 | Pull-up LDEN/`OE` (boot Hi-Z) | `OE_595` → `+3V3` |
 | **R1** | Điện trở axial **4k7** | pitch ~7.5 | 1 | Pull-up BUP NPN | `+12V_SNS` → OUT |
 | **R2** | Điện trở axial **10k** | pitch ~7.5 | 1 | Pull-up EN của TMC2209 | `/EN_TMC` → `+3V3` |
 | **R3** | Điện trở axial **10k** | pitch ~7.5 | 1 | Pull-down PWM bơm | `/BLOWER` → GND |
@@ -62,18 +61,23 @@ PSU 12V ──J1── F1 ── +12V ──┬── U2 MP1584 ── +5V ─�
 
 | Ref | Header | SL | Cắm ra ngoài |
 |-----|--------|----|--------------|
-| **J2** | 1×04 | 1 | NEMA17 A2/A1/B1/B2 |
-| **J4** | **1×06** | 1 | Opto field (GND_I, VCC_I, **IN1…IN4**) — song song với J8/J10/J12/J14. *(was 1×10: U9 không hàn nên IN5–IN8 không tồn tại)* |
-| **J5** | **1×05** | 1 | **28BYJ-48 trục 1** — JST-XH 5P, trùng giắc zin của động cơ |
+| **J2** | ~~1×04~~ | **XOÁ** | Trùng Mot trên U3 TMC2209 — NEMA17 hàn/cắm thẳng chân Mot module |
+| ~~**J4**~~ | ~~1×06~~ | **XOÁ** | Trùng hoàn toàn J8/J10/J12/J14 (`OPTO_IN1…IN4` từng chân). Phía vào của U4 nay lấy **`+12V_SNS`** — cùng rail các giắc limit đã mang — thay cho chân `OPTO_VCC_I` riêng |
+| **J5** | **1×05** | 1 | **28BYJ-48 trục 1** — JST-XH 5P (ULN2003 chip rời không có giắc sẵn) |
 | **J6** | **1×05** | 1 | **28BYJ-48 trục 2** |
 | **J7** | **1×05** | 1 | **28BYJ-48 trục 3** |
-| **J8** | 1×02 | 1 | Limit **HOME** trục 1 (cơ khí, chân NC) |
-| **J10** | 1×02 | 1 | Limit **HOME** trục 2 |
-| **J12** | 1×02 | 1 | Limit **HOME** trục 3 |
+| **J8** | **1×04** endstop | 1 | HOME trục 1 — [module CNC/3D](https://shopee.vn/Module-c%C3%B4ng-t%E1%BA%AFc-h%C3%A0nh-tr%C3%ACnh-Endstop-CNC-Printer-3D-i.951399259.23532922598); **VCC+GND NC**; SIG+SNS = dry NC → `+12V_SNS` / OPTO_IN1 |
+| **J10** | **1×04** endstop | 1 | HOME trục 2 (như J8 → OPTO_IN2) |
+| **J12** | **1×04** endstop | 1 | HOME trục 3 (như J8 → OPTO_IN3) |
+| **J19** | 1×02 | 1 | Field **ESTOP** (dry contact → OPTO_IN5) |
+| **J20** | 1×02 | 1 | Field **HOPPER** level (→ OPTO_IN6) |
+| **J21** | 1×02 | 1 | Field **DOOR** (→ OPTO_IN7) |
+| **J22** | 1×02 | 1 | Field **SPARE** (→ OPTO_IN8) |
 | **J14** | 1×04 | 1 | BUP-30S (+12 / GND / OUT / CTRL) |
 | **J15** | 1×03 | 1 | Buzzer 5V (VCC / GND / SIG) |
 | **J16** | 1×04 | 1 | AOD4184 (PWM / GND / **+12V** / FAN−) |
-| **J17** | 1×11 | 1 | TFT SPI + touch I2C (+ RST / BL / T_INT) — **không có MISO** |
+| **J17** | **1×09** LCD | 1 | MSP3520 pins 1–9: VCC…SDO; SDO **NC** |
+| **J23** | **1×05** touch | 1 | MSP3520 pins 10–14: T_CLK…T_IRQ — **liền dưới J17**, cùng cột, đúng thứ tự module |
 
 **J3:** không dùng.
 
@@ -88,11 +92,11 @@ PSU 12V ──J1── F1 ── +12V ──┬── U2 MP1584 ── +5V ─�
 | 3 | **MP1584EN** 3A, phân loại 5V | **1**/2 | 42.000 | **U2** (con thứ 2 = dự phòng) | ⚠️ xem R-2 |
 | 5 | **AOD4184** MOSFET cách ly | 1 | 25.000 | → J16 | ✅ đúng |
 | 6 | **MKS TMC2209 V2.0** (Makerbase, hàng đặt trước) | 1 | 160.313 | U3 | ⚠️ xem R-4 |
-| 7 | **NEMA 17** 42×34 mm | 1 | 225.000 | → J2 | ✅ đúng |
-| 9 | **OMRON SS-5GL2** (SPDT, cần gạt bản lề) | **3**/6 | 96.000 | → J8, J10, J12 | ✅ dùng chân **NC**. Thân 19,8×10,2×6,4 khớp hốc trong `byj_rack_stage.py`; 30 triệu lần tác động |
-| 10 | **PC817 opto 4 kênh** | **1**/2 | 47.000 | U4 | ✅ đúng — đo footprint trước fab. Con thứ 2 không hàn (U9 = DNP) |
+| 7 | **NEMA 17** 42×34 mm | 1 | 225.000 | → U3 Mot | ✅ đúng |
+| 9 | **Module endstop CNC/3D** (giắc 1×04) | **3** | — | → J8, J10, J12 | ✅ VCC/GND **không dùng** trên carrier; SIG+SNS dry NC qua PC817. Thay OMRON SS-5GL2 + dây rời |
+| 10 | **PC817 DIP-4** (chip rời) | **8**/50 | — | U41–U48 | ✅ gói 50; 4 bắt buộc + 4 field dự phòng |
 | 11 | Autonics **BUP-30S** | 1 | 480.000 | → J14 | ✅ đúng |
-| 12 | **TFT 3.5" 320×480 SPI ILI9488** | 1 | 395.000 | → J17 | 🔴 **xem R-1 — chặn fab** |
+| 12 | **TFT 3.5" 320×480 SPI ILI9488** | 1 | 395.000 | → J17 1×9 + J23 1×5 | ✅ khớp MSP3520 (R-1) |
 | 13 | Bơm khí mini, phân loại **"BƠM 280 3.7V"** | 1 | 44.000 | — | ❌ **không lắp** — mua **370 khí 12V** (§G) |
 
 **Tổng phần điện CÒN DÙNG: 2.028.313₫** · cơ khí còn dùng ~617.000₫ *(665.000 trừ ~48.000 ty ren/đai ốc/khớp nối 4–3 đã bỏ)*
@@ -119,7 +123,7 @@ T8 — vẫn dùng.)*
 |------|-----------|----|---------|
 | **Động cơ** | **28BYJ-48 bản 12V** (KHÔNG phải bản 5V) | **3** | **Bắt buộc bản 12V** — xem R-8. Giắc zin JST-XH 5P cắm thẳng J5–J7 |
 | **Driver** | **ULN2003AN** DIP-16 — **U5–U7** | **3** | Mua con IC rời, KHÔNG mua bo breakout (bo có 4 LED, tốn chỗ, không cần) |
-| **Driver** | **74HC595** DIP-16 — **U10, U11** | **2** | Mở rộng ngõ ra, giải bài toán GPIO — xem R-7 |
+| **Driver** | **74HC595-24IO** module — **U10** | **1** | [Shopee](https://shopee.vn/-C%C3%B3-s%E1%BA%B5n-M%E1%BA%A1ch-m%E1%BB%9F-r%E1%BB%99ng-I-O-24-ch%C3%A2n-74HC595-thegioimodule-i.951399259.42633627766) — **không** LED-thanh 8 LED |
 | **Passive** | Điện trở axial **10k** — **R4** | 1 | Pull-up `/OE`, **bắt buộc** (boot-state) |
 | **Đầu nối** | Cáp nối dài **JST-XH 5P** đực–cái | 3 | Cáp zin của 28BYJ-48 chỉ ~20 cm, không tới được mạch đế |
 | Bảo vệ | PTC radial ~3A/30V (RXE030 / MF-R300) — **F1** | 1 | |
@@ -134,49 +138,45 @@ T8 — vẫn dùng.)*
 | Báo hiệu | **Buzzer active 5V** | 1 | → J15 |
 | Đầu nối | Terminal block 2P pitch 5.0 mm — **J1** | 1 | |
 | Đầu nối | Socket cái 2×22 pitch 2.54 (cho U1) — **mạ vàng** | 1 bộ | |
-| Đầu nối | Socket DIP-16 cho U5–U7, U10, U11 | 5 | Cắm IC, thay được khi hỏng |
-| Đầu nối | Header đực 2.54: **1×2 ×6**, 1×3, 1×4 ×3, **1×5 ×3**, **1×6**, 1×11 | — | mạ vàng. *(J5–J7: 1×02 → 1×05. **XOÁ J9/J11/J13** — U9 không hàn nên không còn kênh opto phía sau. J4: 1×10 → 1×06)* |
+| Đầu nối | Socket DIP-16 cho U5–U7 | 3 | Cắm ULN |
+| Đầu nối | Header cái 1×06 + 1×24 (J24/J25) | 1+1 | Cắm module 595-24IO |
+| Đầu nối | Socket DIP-4 cho U41–U44 (tuỳ chọn) | 4 | |
+| Đầu nối | Header đực 2.54: **1×2 ×4** (J19–J22), **1×4 endstop ×3** (J8/J10/J12), 1×3 ×1 (J15), **1×4 ×3** (J14/J16/J18), **1×5 ×4** (J5–J7 + J23), **1×9 ×1** (J17 LCD) | — | mạ vàng |
+| **Driver** | **PC817** DIP-4 — **U41–U48** | **8** | Chip rời |
+| **Passive** | Điện trở axial **2k2** — LED R41–R44, R49–R52 | 8 | LED series |
+| **Passive** | Điện trở axial **10k** — PU R45–R48, R53–R56 | 8 | Pull-up collector |
 | **Khí** | **Bơm khí 370 định mức 12V** | **1 + 1 dự phòng** | J16 từ `+12V`; xem §G |
 | Khí | Ống silicone **4×6 mm** + tee Y + 2 vòi Ø0,8–1,2 mm | 1 bộ | Cổ bơm typ. Ø4,3 mm |
-| PCB | Fab 2 lớp 175×175 mm | — | route xong R2/R3/D2 + DRC rồi hãy đặt |
+| PCB | Fab 2 lớp **220×160 mm** | — | route xong R2/R3/D2 + DRC rồi hãy đặt |
 
 ---
 
 ## B3) Rủi ro đã nhận diện trên đơn hàng
 
-### 🔴 R-1 — TFT ILI9488 3.5": nhiều khả năng là touch **điện trở XPT2046**, không phải điện dung I2C
+### ✅ R-5 — PC817: **đã đổi sang chip rời DIP-4** (không còn module 4CH)
 
-**Chặn fab. Phải xác nhận trước khi đặt PCB.**
+Board dùng **U41–U48 PC817 DIP-4 ×8** + LED **2k2** + PU **10k**.
+IN1–4 = HOME×3 + BUP (bắt buộc). IN5–8 = ESTOP / HOPPER / DOOR / SPARE
+(giắc J19–J22) — thay footprint U9 module cũ.
 
-Đại đa số module "3.5 inch 320×480 SPI ILI9488" trên thị trường đi kèm
-**XPT2046 (điện trở, giao tiếp SPI)** chứ không phải FT6336/GT911 (điện dung,
-I2C). Nếu đúng vậy thì J17 hiện tại **sai hoàn toàn ở khối touch**: 3 chân
-SDA / SCL / T_INT vô dụng, và XPT2046 lại cần đúng đường **MISO** vừa bị bỏ.
+Mạch mỗi kênh: `OPTO_INx —[2k2]— A`, `K→GND`, `+3V3 —[10k]— C=OPTO_OUTx`, `E→GND`.
 
-**Cách xác nhận:** nhìn mặt sau module — có IC nhỏ ghi `XPT2046` và hàng chân
-ghi `T_CLK / T_CS / T_DIN / T_DO / T_IRQ` là điện trở. Nếu chỉ có 2 chân
-`SDA / SCL` cạnh chân nguồn thì là điện dung.
+### ✅ R-1 — TFT ILI9488 3.5" thegioimodule: **XPT2046**, giắc **J17 1×9 + J23 1×5**
 
-**Tin tốt: vẫn vừa đúng 11 chân, chỉ đổi nhãn — không phải đổi số chân J17.**
+Module Shopee: hai hàng đực **9 chân display + 5 chân touch** liền nhau thẳng hàng
+→ PCB tách **J17 (LCD)** rồi **J23 (touch)** ngay dưới, cùng cột 2.54 mm — thứ tự giống
+[MSP3520 / lcdwiki](https://www.lcdwiki.com/3.5inch_SPI_Module_ILI9488_SKU:MSP3520).
 
-| J17 | Bản điện dung (hiện tại) | GPIO | → Bản XPT2046 | GPIO |
-|-----|--------------------------|------|---------------|------|
-| 1 | GND | — | GND | — |
-| 2 | 3V3 | — | 3V3 | — |
-| 3 | SCK | 39 | SCK *(dùng chung)* | 39 |
-| 4 | MOSI | 40 | MOSI *(dùng chung)* | 40 |
-| 5 | CS | 42 | **MISO** *(dùng chung)* | **41** |
-| 6 | DC | 21 | LCD_CS | 42 |
-| 7 | RST | 46 | DC | 21 |
-| 8 | BL | 45 | RST | 46 |
-| 9 | SDA | 47 | BL | 45 |
-| 10 | SCL | 48 | **T_CS** | **47** |
-| 11 | T_INT | 41 | **T_IRQ** | **48** |
+| Jack.pin | Module pin | Silk module | Net board |
+|----------|------------|-------------|-----------|
+| J17.1–2 | 1–2 | VCC, GND | +3V3, GND |
+| J17.3–8 | 3–8 | CS, RST, DC, SDI, SCK, LED | TFT_CS/RST/DC/MOSI/SCK/BL |
+| J17.9 | 9 | SDO (MISO LCD) | **NC** (ILI9488 SDO thường không Hi-Z) |
+| J23.1–5 | 10–14 | T_CLK, T_CS, T_DIN, T_DO, T_IRQ | SCK, T_CS, MOSI, MISO, T_IRQ(IO6) |
 
-Vẫn 11 chân, vẫn 28 GPIO, vẫn 0 dự phòng. Chỉ cần sửa `TFT_HEADER` +
-`TFT_GPIO` rồi regenerate.
+SPI dùng chung: `SCK↔T_CLK`, `MOSI↔T_DIN`; MISO chỉ từ `T_DO`.
 
-**Kèm theo 2 vấn đề phụ của ILI9488:**
+**Lưu ý phụ ILI9488** (không đổi chân):
 
 - **SPI của ILI9488 chỉ nhận màu 18-bit (3 byte/pixel)**, không có RGB565.
   480×320×3 = 460 KB/khung → ở SPI 40 MHz là ~92 ms/khung ≈ **11 FPS** khi vẽ
@@ -222,26 +222,17 @@ DevKit.
 - **Không kèm heatsink** → phải mua rời.
 - **"Hàng đặt trước"** → có thể về chậm, đừng để chặn tiến độ lắp.
 
-### 🔴 R-7 — GPIO: ULN2003 tốn 4 chân/trục, KHÔNG nối thẳng được
+### ✅ R-7 — GPIO: ULN2003 ×3 qua **module 74HC595-24IO** (4 chân ESP)
 
-**Đây là lý do có U10/U11 74HC595. Đừng bỏ chúng đi.**
+**U10** = [module Shopee 24 chân / 3×595](https://shopee.vn/-C%C3%B3-s%E1%BA%B5n-M%E1%BA%A1ch-m%E1%BB%9F-r%E1%BB%99ng-I-O-24-ch%C3%A2n-74HC595-thegioimodule-i.951399259.42633627766)
+cắm **bên phải ESP32** (J24 CTRL + J25 Q) + R4 LDEN PU. 12 pha đầu → U5–U7; ESP **IO10–13**.
 
-DRV8871 chỉ cần 2 chân/trục, ULN2003 cần **4**. Ngân sách GPIO của board vốn đã
-**0 dự phòng**:
+| Phương án | Chân ESP | Ghi chú |
+|-----------|----------|---------|
+| **Module 3×595 → ULN×3** | **4** | 1_Q0–3→U5; 1_Q4–7→U6; 2_Q0–3→U7 |
+| ~~2× DIP trên board~~ | ~~4~~ | đổi sang module cho dễ hàn |
 
-| Phương án | Chân motor | Chân limit | Chênh so với hiện tại |
-|-----------|-----------|-----------|----------------------|
-| Hiện tại (3× DRV8871 + 6 limit) | 6 | 6 | baseline, dùng 28/28 |
-| 3× ULN2003 nối THẲNG + 3 limit home | 12 | 3 | **+3 → tràn**, kể cả sau khi hy sinh Touch INT (IO41) và spare OUT8 (IO9) vẫn **thiếu 1 chân** |
-| **3× ULN2003 qua 2× 74HC595 + 3 limit home** | **4** | **3** | **−5 → dùng 23/28, dư 5** ✅ |
-
-74HC595 nối tiếp nhau: 16 ngõ ra, dùng 12 cho 3 con ULN2003. Ở 800 Hz × 3 trục,
-mỗi lần cập nhật chỉ tốn 16 bit — dưới 4 % CPU kể cả bit-bang.
-
-**`/OE` phải có pull-up 10k (R4) và do IO13 điều khiển.** Nội dung thanh ghi 595
-lúc cấp nguồn là **ngẫu nhiên**; nếu `/OE` nối thẳng xuống GND thì có thể cả 4 pha
-cùng đóng ngay lúc boot. Pull-up giữ ngõ ra Hi-Z → ngõ vào ULN2003 tự bị mạng trở
-nội kéo xuống → động cơ tắt. Firmware kéo `/OE` xuống sau lần latch đầu tiên.
+Firmware: **shiftOut 3 byte** (24 bit) mỗi lần latch; spare **IO7/8/14/15**.
 
 ### 🔴 R-8 — PHẢI mua đúng bản 28BYJ-48 **12V**
 
@@ -272,7 +263,7 @@ trở giữa dây đỏ và một dây bất kỳ**: ~50 Ω là bản 5V (trả 
 |-----------|------|
 | Limit **HOME** trục 1/2/3 (opto OUT1–3) | IO1, 2, 4 |
 | BUP (opto OUT4) | IO5 |
-| *(U9 không hàn — 4 kênh opto biến mất)* | **IO6, 7, 8, 9 — GPIO TỰ DO** |
+| ESTOP / HOPPER / DOOR / SPARE (opto OUT5–8) | IO7, 8, 14, 15 |
 | Stepper SER / SRCLK / RCLK / `/OE` | IO10 / 11 / 12 / 13 |
 | *(giải phóng khi bỏ DRV8871)* | **IO14, IO15 dự phòng** |
 | TMC STEP / DIR / EN | IO16 / 17 / 18 |
@@ -298,23 +289,22 @@ trở giữa dây đỏ và một dây bất kỳ**: ~50 Ω là bản 5V (trả 
 | **Dùng được** | **33** |
 | Thiết kế dùng | **22** *(was 28)* |
 | Để trống bắt buộc (IO0, IO19, IO20, IO43, IO44) | 5 |
-| **Dự phòng** | **6** *(was 0)* — IO6, 7, 8, 9, 14, 15 |
+| **Dự phòng** | **0** — IO7/8/14/15 lấy cho opto IN5–8; IO6 = T_IRQ |
 
 Đợt đổi sang stepper (2026-08-28) **cởi được nút thắt GPIO**, dù ULN2003 tốn 4
 chân/trục thay vì 2: 74HC595 gom 12 pha về 4 chân (−2), và quyết định **chỉ 1 công
-tắc HOME mỗi trục** bỏ được 3 limit MAX (−3), và U9 không hàn bỏ thêm 4 kênh opto
-(−4). Từ 0 dự phòng lên **6**.
+tắc HOME mỗi trục** bỏ được 3 limit MAX (−3), và chỉ 4 kênh opto (3 HOME + BUP)
+thay vì 8 (−4 GPIO). Từ 0 dự phòng lên **6**.
 
 Cả 6 chân dự phòng đều là **GPIO tự do thật** (vào, ra, PWM, bus phụ — tuỳ ý):
 
 | Chân | Được giải phóng nhờ |
 |------|--------------------|
 | **IO14, IO15** | Bỏ 3× DRV8871 (mỗi con ăn 2 chân), thay bằng 4 chân qua 74HC595 |
-| **IO6, 7, 8, 9** | **U9 không hàn** — chỉ còn 4 ngõ vào field (3 limit + BUP), vừa đúng một con U4 |
+| **IO6, 7, 8** (+ IO9 dùng buzzer) | Chỉ 4 kênh opto rời (U41–U44), không còn 4 kênh module thứ 2 |
 
-**Muốn thêm ngõ vào cách mức 12 V** (E-stop, cảm biến mức phễu, công tắc cửa): footprint
-U9 vẫn nằm trên PCB — hàn IC + thêm header là có lại 4 kênh, đổi lại mất IO6–IO9.
-Không phải làm lại board.
+**Muốn thêm ngõ vào cách mức 12 V** (E-stop, cảm biến mức phễu, công tắc cửa): thêm
+PC817 DIP-4 + 2k2/10k trên rev PCB sau (GPIO dự phòng IO6–8,14,15). Không còn footprint U9.
 
 Hai đánh đổi cũ vẫn giữ (nay đã có đường lùi nhờ 6 chân dự phòng):
 
@@ -325,7 +315,7 @@ Hai đánh đổi cũ vẫn giữ (nay đã có đường lùi nhờ 6 chân d�
    trở Vref trên module; không đọc được `DRV_STATUS` (quá nhiệt / hở pha).
 
 **Đường thoát nếu sau này bí một chân:** hy sinh `T_INT` — poll FT6336 qua I2C ở
-50–100 Hz (chỉ tốn ~1% băng thông bus) và **J17.11 / IO41 thành chân dự phòng**.
+50–100 Hz (chỉ tốn ~1% băng thông bus) và **J23.2 / IO41 thành chân dự phòng**.
 Ngoài ra đã có sẵn **6 chân dự phòng** (IO6, 7, 8, 9, 14, 15) nên đường thoát này gần
 như không bao giờ phải dùng tới.
 
@@ -359,9 +349,8 @@ phải có mức an toàn xác định bằng phần cứng:
 - **MP1584 bản ADJ**: chỉnh 5.0 V, đo lại, rồi **khoá biến trở bằng keo /
   sơn móng tay**. MP1584 không có OVP ngõ ra — biến trở trôi là 12 V thẳng
   vào DevKit.
-- **PC817 4CH**: đổi trở hạn dòng LED phía field từ 1k lên **2.2k** (~5 mA
-  thay vì ~11 mA). CTR của PC817 suy giảm theo thời gian dẫn — đây là fix
-  rẻ nhất để đạt mục tiêu >3 năm.
+- **PC817 DIP-4**: R LED **2.2k** (R41–R44); pull-up collector **10k** (R45–R48).
+  CTR suy giảm theo thời gian dẫn — 2.2k (~5 mA) bền hơn 1k trên module.
 - **28BYJ-48**: **BẮT BUỘC bản 12V** — xem R-8. Nhận hàng đo điện trở đỏ↔dây bất kỳ:
   ~50 Ω là bản 5V (trả lại), ~150–300 Ω là 12V.
 - **ULN2003AN**: nhớ nối **COM (chân 9) lên `+12V`** — đó là đường về của diode dập
@@ -387,7 +376,7 @@ Thang: **OK** = giữ | **CHỌN KỸ** = cùng giá nhưng đúng SKU | **DỰ 
 | ESP32-S3 DevKitC **N16R8** | **CHỌN KỸ** | Phổ biến ở VN. Vừa đủ GPIO (28/33, dư 0) — bản `v1.1`, **không** hậu tố `V` | baseline |
 | MP1584 ×2 | **CHỌN KỸ** | Bản **5V cố định**, derate ≤1.5A; không ADJ / không buck công nghiệp | ~0 |
 | TMC2209 | **CHỌN KỸ** | **BTT thật** + heatsink; I_run vừa | +20–40k vs clone |
-| PC817 4CH ×2 | **OK** | Gọn hơn 8CH; shop rõ; LED field không đẩy dòng cao | ~0–10k |
+| PC817 DIP-4 ×4 + R | **OK** | 2k2 LED trên board; bỏ module không chân | −module |
 | ~~DRV8871 ×3~~ → **ULN2003 ×3 + 74HC595 ×2** | **OK** | ~15k tổng thay vì 255k; không có gì phải chỉnh dòng; giải luôn bài toán GPIO | **−240k** |
 | Capacitor 105°C | **CHỌN KỸ** | 470µ / 47µ long-life | +5–15k |
 | Header mạ vàng | **CHỌN KỸ** | Field + socket U1 | +10–20k |
@@ -417,8 +406,8 @@ Thang: **OK** = giữ | **CHỌN KỸ** = cùng giá nhưng đúng SKU | **DỰ 
 
 ## E) Việc cần đo trước khi fab PCB
 
-1. Module **PC817 4CH** thật: pad pitch / khoảng 2 hàng (~25.4?).  
-2. **MP1584** pad span X/Y.  
+1. **PC817 DIP-4** ×4 + R 2k2/10k — chuẩn JEDEC, không đo module.  
+2. **MP1584** Shopee [41383641614](https://shopee.vn/MP1584EN-Mini-DC-Buck-41383641614) fixed 5V — pad span **18.54 × 10.67 mm** (8 lỗ, 2 lỗ/chân).  
 3. ~~DRV8871 footprint~~ → **giắc JST-XH 5P** (J5–J7): đo pitch/pad thực tế của cáp
    nối dài mua kèm. U5–U7 / U10 / U11 là DIP-16 tiêu chuẩn, không cần đo.  
 4. **ESP32-S3-DevKitC** row 25.4 / 44 pin.  
@@ -457,9 +446,9 @@ Thang đánh giá: **✅ đạt** | **⚠️ chọn đúng SKU** | **🔴 wear /
 | **U1** | **ESP32-S3-DevKitC-1-N16R8** rev **v1.1** | `DevKitC-1 N16R8 Type-C` | Không hậu tố `V`; USB-C; đủ GPIO | WS2812 onboard ở IO38 = ENC_A (v1.1) | ✅ đã mua — ⚠️ kiểm rev |
 | **U2** | **MP1584EN** module **5 V cố định** | `MP1584 5V cố định` | **1 module**; derate ≤1,5 A; không ADJ | Không potentiometer; đo 5,00 V | ⚠️ đã mua ×2 — lắp **1**, 1 dự phòng |
 | **U3** | **TMC2209** Makerbase **V2.0** + heatsink | `MKS TMC2209 V2.0` | R_sense MKS; I_run vừa; có tản | Heatsink gắn; tra Vref V2.0 | ⚠️ đã mua |
-| **U4** | **PC817 4CH** module | `PC817 4 kênh` | LED field **2,2 k** (đổi từ 1k); CTR lâu dài | Đo footprint ~48×38 | ✅ |
+| **U41–U44** | **PC817** DIP-4 | `PC817 DIP` | LED **2,2 k** (R41–R44); PU **10k** (R45–R48) | Socket tùy chọn | ✅ |
 | **U5–U7** | **ULN2003AN** DIP-16 | `ULN2003AN DIP` | COM(9)→`+12V`; chỉ 4/7 kênh dùng | IC rời, không bo LED | ⚠️ chưa mua |
-| **U10/U11** | **74HC595** DIP-16 | `74HC595 DIP` | VCC=3V3; R4 pull-up `/OE`; `/SRCLR`→3V3 | DIP tiêu chuẩn | ⚠️ chưa mua |
+| **U10** | **74HC595-24IO** module | [Shopee 42633627766](https://shopee.vn/-C%C3%B3-s%E1%BA%B5n-M%E1%BA%A1ch-m%E1%BB%9F-r%E1%BB%99ng-I-O-24-ch%C3%A2n-74HC595-thegioimodule-i.951399259.42633627766) | 3×595; hàn header rồi cắm J24/J25; VCC=3V3; đo khớp lỗ trước fab | Tem thegioimodule; LDSI/LDSCK/LDSTR/LDEN | 🔴 **MUA** ×1 |
 | **Motor 3 trục** | **28BYJ-48-12V** | `28BYJ-48 12V` (không ghi 5V12V chung) | R đỏ↔pha ~150–300 Ω; firmware **cắt 4 pha khi dừng** | Đo Ω: ~50 Ω = bản 5V → trả | ⚠️ chưa mua |
 | **NEMA17** | 42×34 mm + **TMC2209** | `NEMA17 42` | I_run hợp lý; không stall lâu | — | ✅ |
 | **Limit ×3** | **OMRON SS-5GL2** | `SS-5GL2` / `SS-5GL2T` | NC fail-safe; ≥10⁶ chu kỳ cơ | Chân NC vào opto | ✅ |
@@ -471,7 +460,7 @@ Thang đánh giá: **✅ đạt** | **⚠️ chọn đúng SKU** | **🔴 wear /
 | **R3** | **10k** axial | `điện trở 10k` | Pull-down `/BLOWER` (IO3 strapping) | — | ⚠️ chưa hàn |
 | **Ống khí** | Silicone **4×6 mm** + tee Y + 2 nozzle | `ống silicone 4mm` `tee Y 4mm` | Lỗ vòi **0,8–1,2 mm**; thổi TX/RX, không thổi vào máng viên | Thử áp trên kính BUP | ⚠️ chưa mua |
 | **Buzzer** | Active **5 V** | `buzzer 5V active` | Logic 3V3-compatible | — | ⚠️ chưa mua |
-| **TFT** | Xem R-1 (ILI9488 / XPT2046) | — | 3V3-native hoặc đổi pinout J17 | Xác nhận IC touch | 🔴 chặn fab |
+| **TFT** | ILI9488 + XPT2046 J17+J23 | `MSP3520` | VCC=3V3; LCD SDO NC | Cắm đúng pin1 VCC | ✅ |
 
 ### G.2 Bơm khí — chốt mua
 

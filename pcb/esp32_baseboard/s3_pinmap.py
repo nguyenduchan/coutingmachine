@@ -3,37 +3,21 @@
 USB at top. Left = J1 pads 1..22, Right = J3 pads 23..44.
 Avoid GPIO19/20 (USB) and GPIO43/44 (UART0 console).
 
-TARGET PART: ESP32-S3-DevKitC-1 **N16R8** (octal PSRAM) - the variant that is
-actually stocked in VN. Octal PSRAM claims GPIO33-37, so **GPIO35/36/37 are
-unusable** here and only 33 of the 36 header GPIOs are left.
+TARGET PART: ESP32-S3-DevKitC-1 **N16R8** (octal PSRAM).
+GPIO35/36/37 unusable (octal PSRAM).
 
-That budget is exact: 28 for the design + 5 that must stay free (USB IO19/20,
-UART0 IO43/44, BOOT IO0) = 33.
+BOM sync:
+  - U10 = Shopee 74HC595-24IO module (3x595) east of ESP32 -> ULN (12 of 24 Q)
+  - 4x PC817: HOME x3 + BUP
+  - TFT LCD SPI + XPT2046 touch (MISO/T_CS/T_IRQ)
+  - EC11 ENC on IO38/IO41
+  - Spare: IO7, IO8, IO14, IO15
 
-HMI: TFT ILI9488 SPI + XPT2046 resistive touch (shared SCK/MOSI; dedicated
-MISO=T_DO + T_CS; no T_IRQ — poll). LCD SDO is NOT wired. GPIO41 and GPIO38
-carry the EC11 rotary encoder (ENC_A/B).
-On-screen Enter replaces ENC_SW so no third GPIO is required.
-
-ENC_A and the buzzer swapped GPIOs (IO9 <-> IO38) for layout: both header
-rows of the socket are fixed, and IO38/IO41 are the pair that comes out on
-the same side as J18, so the encoder no longer needs a net crossing the
-socket. The buzzer is a single output and its jack moved instead.
-
-GPIO0 carries the BOOT button, so it is input-only in practice.
-
-GPIO45/46 ARE usable as outputs: they are strapping pins held by an internal
-weak pull-down through reset, so whatever they drive sees a defined LOW until
-firmware takes over. That is exactly the safe state for a backlight and for an
-active-low reset, which is why the TFT uses them.
-
-Never buy a "V" suffix part (N16R8V / N32R16V): those run VDD_SPI at 1.8 V,
-which drags GPIO47/48 down to 1.8 V logic and breaks TFT MISO / T_CS.
+Never buy a "V" suffix part (N16R8V / N32R16V).
 """
 
 from __future__ import annotations
 
-# Official DevKitC-1 header names (silk-friendly)
 LEFT_PINS = [
     (1, "3V3", "power_out"),
     (2, "3V3b", "power_out"),
@@ -61,8 +45,8 @@ LEFT_PINS = [
 
 RIGHT_PINS = [
     (23, "GND", "passive"),
-    (24, "TX0", "bidirectional"),  # IO43
-    (25, "RX0", "bidirectional"),  # IO44
+    (24, "TX0", "bidirectional"),
+    (25, "RX0", "bidirectional"),
     (26, "IO1", "bidirectional"),
     (27, "IO2", "bidirectional"),
     (28, "IO42", "bidirectional"),
@@ -70,7 +54,7 @@ RIGHT_PINS = [
     (30, "IO40", "bidirectional"),
     (31, "IO39", "bidirectional"),
     (32, "IO38", "bidirectional"),
-    (33, "IO37", "bidirectional"),  # NC on octal — do not route
+    (33, "IO37", "bidirectional"),
     (34, "IO36", "bidirectional"),
     (35, "IO35", "bidirectional"),
     (36, "IO0", "bidirectional"),
@@ -78,83 +62,56 @@ RIGHT_PINS = [
     (38, "IO48", "bidirectional"),
     (39, "IO47", "bidirectional"),
     (40, "IO21", "bidirectional"),
-    (41, "IO20", "bidirectional"),  # USB D+
-    (42, "IO19", "bidirectional"),  # USB D-
+    (41, "IO20", "bidirectional"),
+    (42, "IO19", "bidirectional"),
     (43, "GNDb", "passive"),
     (44, "GNDc", "passive"),
 ]
 
-# --- Functional assignment (commercial SKU) ---
-# Opto OUT1..6 = limits, OUT7 = BUP. OUT8 field channel exists on U9/J4 but
-# is NOT wired to the MCU (GPIO9 is the buzzer).
 OPTO_GPIO = [
     (1, "IO1"),
     (2, "IO2"),
     (4, "IO4"),
     (5, "IO5"),
-    (6, "IO6"),
-    (7, "IO7"),
-    (8, "IO8"),
 ]
 
-# DRV8871 ×3 (IN1/IN2)
-DRV_MOTORS = [
-    ("5", 10, 11, 34, 35),  # U5 IO10/11
-    ("6", 12, 13, 36, 37),  # U6 IO12/13
-    ("7", 14, 15, 38, 39),  # U7 IO14/15
-]
+# 74HC595-24IO module CTRL: LDSI/LDSCK/LDSTR/LDEN = SER/SRCLK/RCLK/OE
+SHIFT_GPIO = {"SER": 10, "SRCLK": 11, "RCLK": 12, "OE": 13}
+# Phase nets are SR_Q0..SR_Q11 (not direct GPIO). Kept empty for verify helpers.
+BYJ_GPIO: dict = {}
+DRV_MOTORS: list = []
 
-# EN is active low and floats at reset -> a 10k pull-up to 3V3 on the
-# baseboard is required, or the stepper is energised from power-on until
-# firmware runs.
-# No UART: PDN_UART would need GPIO36, which octal PSRAM has taken. Set the
-# run current with the module's Vref trimmer; DRV_STATUS readback is not
-# available on this build.
 TMC_GPIO = {"STEP": 16, "DIR": 17, "EN": 18}
-TMC_UART_GPIO = None  # unavailable on N16R8 (GPIO36 = octal PSRAM)
+TMC_UART_GPIO = None
 
-# TFT SPI + XPT2046 touch (polled — no IRQ pin).
-# RST and BL sit on the two strapping pins on purpose: both are pulled low
-# through reset, so the panel comes up held in reset with the backlight off
-# and no external resistor. Firmware releases RST, then ramps BL on LEDC.
-# MISO = T_DO only (do NOT connect LCD SDO). ENC is on IO38/IO41.
 TFT_GPIO = {
-    "SCK": 39,  # + T_CLK on cable
-    "MOSI": 40,  # + T_DIN on cable
-    "MISO": 47,  # T_DO only
-    "CS": 42,  # LCD_CS
+    "SCK": 39,
+    "MOSI": 40,
+    "MISO": 47,  # T_DO
+    "CS": 42,
     "DC": 21,
     "RST": 46,
     "BL": 45,
     "T_CS": 48,
+    "T_IRQ": 6,
 }
 
-# GPIO38 also drives the on-board WS2812 on DevKitC-1 **v1.1**, so ENC_A
-# shares it. The WS2812 only presents its DIN input, so driving IO38 as an
-# encoder input is fine; the LED may flicker as the knob turns. Pin the BOM to
-# v1.1 — on v1.0 the WS2812 is on GPIO48 instead, i.e. on touch T_CS.
-# EC11 on housing wall → cable → J18 (GND/3V3/A/B). SW unused — Enter on TFT.
-# Pull-ups: KY-040 module has them, or use INPUT_PULLUP / 10k to 3V3.
-ENC_GPIO = {"A": 38, "B": 41}  # J18.3 CLK→IO38, J18.4 DT→IO41
-ENC_JACK = "J18"  # PinHeader 1x04 on carrier; encoder is off-board
+# Note: DevKitC-1 v1.1 WS2812 also on IO38 — LED may flicker with ENC.
+ENC_GPIO = {"A": 38, "B": 41}
+ENC_JACK = "J18"
 
 BUZZER_GPIO = 9
-
-# GPIO3 is a strapping pin (JTAG source select) with NO internal pull at
-# reset, so it floats. A 10k pull-down to GND is required, otherwise the
-# diaphragm pump can switch on during boot.
 MOSFET_GPIO = 3
 
-# KiCad symbol/footprint pad number for a GPIO silk name like "IO10"
+SPARE_GPIO = (7, 8, 14, 15)
+
 PIN_BY_NAME = {name: num for num, name, _ in LEFT_PINS + RIGHT_PINS}
-# Also map logical GPIO numbers used in DRV_MOTORS
 for num, name, _ in LEFT_PINS + RIGHT_PINS:
     if name.startswith("IO") and name[2:].isdigit():
         PIN_BY_NAME[int(name[2:])] = num
 
 
 def pad_local(pin_num: int) -> tuple[float, float]:
-    """Footprint local (x,y) for pad number (USB-top convention)."""
     pitch = 2.54
     row = 25.4
     if pin_num <= 22:

@@ -328,7 +328,7 @@
 			(hide yes)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Description" "MP1584EN buck 12V to 5V (Shopee G178, prefer fixed 5V)"
+		(property "Description" "MP1584EN buck 12V→5V fixed Shopee 41383641614"
 			(at 0 0 0)
 			(hide yes)
 			(effects (font (size 1.27 1.27)))
@@ -623,127 +623,401 @@
 			)
 		)
 	)
-	(symbol "DRV8871_Module"
+	(symbol "ULN2003AN"
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
 		(property "Reference" "U"
-			(at 0 10.16 0)
+			(at 0 12.7 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Value" "DRV8871_Module"
-			(at 0 -10.16 0)
+		(property "Value" "ULN2003AN"
+			(at 0 -12.7 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Footprint" "ESP32_Carrier:DRV8871_Module"
+		(property "Footprint" "ESP32_Carrier:ULN2003AN"
 			(at 0 0 0)
 			(hide yes)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Description" "DRV8871 for GA12-N20 @12V"
+		(property "Description" "ULN2003AN DIP-16 for 28BYJ-48; COM=+12V"
 			(at 0 0 0)
 			(hide yes)
 			(effects (font (size 1.27 1.27)))
 		)
-		(symbol "DRV8871_Module_0_1"
+		(symbol "ULN2003AN_0_1"
 			(rectangle
-				(start -10.16 7.62)
-				(end 10.16 -7.62)
+				(start -10.16 10.16)
+				(end 10.16 -10.16)
 				(stroke (width 0.254) (type default))
 				(fill (type background))
 			)
-			(text "DRV8871"
+			(text "ULN2003"
 				(at 0 0 0)
 				(effects (font (size 1.27 1.27)))
 			)
 		)
-		(symbol "DRV8871_Module_1_1"
-			(pin power_in line
-				(at -15.24 5.08 0)
+		(symbol "ULN2003AN_1_1"
+			(pin input line
+				(at -15.24 8.89 0)
 				(length 5.08)
-				(name "VM" (effects (font (size 1.016 1.016))))
+				(name "IN1" (effects (font (size 1.016 1.016))))
 				(number "1" (effects (font (size 1.016 1.016))))
 			)
-			(pin passive line
-				(at -15.24 2.54 0)
+			(pin input line
+				(at -15.24 6.35 0)
 				(length 5.08)
-				(name "GND" (effects (font (size 1.016 1.016))))
+				(name "IN2" (effects (font (size 1.016 1.016))))
 				(number "2" (effects (font (size 1.016 1.016))))
 			)
 			(pin input line
-				(at -15.24 -2.54 0)
+				(at -15.24 3.81 0)
 				(length 5.08)
-				(name "IN1" (effects (font (size 1.016 1.016))))
+				(name "IN3" (effects (font (size 1.016 1.016))))
 				(number "3" (effects (font (size 1.016 1.016))))
 			)
 			(pin input line
-				(at -15.24 -5.08 0)
+				(at -15.24 1.27 0)
 				(length 5.08)
-				(name "IN2" (effects (font (size 1.016 1.016))))
+				(name "IN4" (effects (font (size 1.016 1.016))))
 				(number "4" (effects (font (size 1.016 1.016))))
 			)
-			(pin passive line
-				(at 15.24 2.54 180)
+			(pin input line
+				(at -15.24 -1.27 0)
 				(length 5.08)
-				(name "OUT1" (effects (font (size 1.016 1.016))))
+				(name "IN5" (effects (font (size 1.016 1.016))))
 				(number "5" (effects (font (size 1.016 1.016))))
 			)
+			(pin input line
+				(at -15.24 -3.81 0)
+				(length 5.08)
+				(name "IN6" (effects (font (size 1.016 1.016))))
+				(number "6" (effects (font (size 1.016 1.016))))
+			)
+			(pin input line
+				(at -15.24 -6.35 0)
+				(length 5.08)
+				(name "IN7" (effects (font (size 1.016 1.016))))
+				(number "7" (effects (font (size 1.016 1.016))))
+			)
+			(pin power_in line
+				(at -15.24 -8.89 0)
+				(length 5.08)
+				(name "GND" (effects (font (size 1.016 1.016))))
+				(number "8" (effects (font (size 1.016 1.016))))
+			)
+			(pin power_in line
+				(at 15.24 -8.89 180)
+				(length 5.08)
+				(name "COM" (effects (font (size 1.016 1.016))))
+				(number "9" (effects (font (size 1.016 1.016))))
+			)
 			(pin passive line
-				(at 15.24 -2.54 180)
+				(at 15.24 -6.35 180)
+				(length 5.08)
+				(name "OUT7" (effects (font (size 1.016 1.016))))
+				(number "10" (effects (font (size 1.016 1.016))))
+			)
+			(pin passive line
+				(at 15.24 -3.81 180)
+				(length 5.08)
+				(name "OUT6" (effects (font (size 1.016 1.016))))
+				(number "11" (effects (font (size 1.016 1.016))))
+			)
+			(pin passive line
+				(at 15.24 -1.27 180)
+				(length 5.08)
+				(name "OUT5" (effects (font (size 1.016 1.016))))
+				(number "12" (effects (font (size 1.016 1.016))))
+			)
+			(pin passive line
+				(at 15.24 1.27 180)
+				(length 5.08)
+				(name "OUT4" (effects (font (size 1.016 1.016))))
+				(number "13" (effects (font (size 1.016 1.016))))
+			)
+			(pin passive line
+				(at 15.24 3.81 180)
+				(length 5.08)
+				(name "OUT3" (effects (font (size 1.016 1.016))))
+				(number "14" (effects (font (size 1.016 1.016))))
+			)
+			(pin passive line
+				(at 15.24 6.35 180)
 				(length 5.08)
 				(name "OUT2" (effects (font (size 1.016 1.016))))
-				(number "6" (effects (font (size 1.016 1.016))))
+				(number "15" (effects (font (size 1.016 1.016))))
+			)
+			(pin passive line
+				(at 15.24 8.89 180)
+				(length 5.08)
+				(name "OUT1" (effects (font (size 1.016 1.016))))
+				(number "16" (effects (font (size 1.016 1.016))))
 			)
 		)
 	)
-	(symbol "Conn_1x02_MotorDC"
+	(symbol "74HC595"
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(property "Reference" "U"
+			(at 0 12.7 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "74HC595"
+			(at 0 -12.7 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "ESP32_Carrier:74HC595"
+			(at 0 0 0)
+			(hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" "74HC595 shift register VCC=3V3"
+			(at 0 0 0)
+			(hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(symbol "74HC595_0_1"
+			(rectangle
+				(start -10.16 10.16)
+				(end 10.16 -10.16)
+				(stroke (width 0.254) (type default))
+				(fill (type background))
+			)
+			(text "74HC595"
+				(at 0 0 0)
+				(effects (font (size 1.27 1.27)))
+			)
+		)
+		(symbol "74HC595_1_1"
+			(pin output line
+				(at -15.24 8.89 0)
+				(length 5.08)
+				(name "Q1" (effects (font (size 1.016 1.016))))
+				(number "1" (effects (font (size 1.016 1.016))))
+			)
+			(pin output line
+				(at -15.24 6.35 0)
+				(length 5.08)
+				(name "Q2" (effects (font (size 1.016 1.016))))
+				(number "2" (effects (font (size 1.016 1.016))))
+			)
+			(pin output line
+				(at -15.24 3.81 0)
+				(length 5.08)
+				(name "Q3" (effects (font (size 1.016 1.016))))
+				(number "3" (effects (font (size 1.016 1.016))))
+			)
+			(pin output line
+				(at -15.24 1.27 0)
+				(length 5.08)
+				(name "Q4" (effects (font (size 1.016 1.016))))
+				(number "4" (effects (font (size 1.016 1.016))))
+			)
+			(pin output line
+				(at -15.24 -1.27 0)
+				(length 5.08)
+				(name "Q5" (effects (font (size 1.016 1.016))))
+				(number "5" (effects (font (size 1.016 1.016))))
+			)
+			(pin output line
+				(at -15.24 -3.81 0)
+				(length 5.08)
+				(name "Q6" (effects (font (size 1.016 1.016))))
+				(number "6" (effects (font (size 1.016 1.016))))
+			)
+			(pin output line
+				(at -15.24 -6.35 0)
+				(length 5.08)
+				(name "Q7" (effects (font (size 1.016 1.016))))
+				(number "7" (effects (font (size 1.016 1.016))))
+			)
+			(pin power_in line
+				(at -15.24 -8.89 0)
+				(length 5.08)
+				(name "GND" (effects (font (size 1.016 1.016))))
+				(number "8" (effects (font (size 1.016 1.016))))
+			)
+			(pin output line
+				(at 15.24 -8.89 180)
+				(length 5.08)
+				(name "QH" (effects (font (size 1.016 1.016))))
+				(number "9" (effects (font (size 1.016 1.016))))
+			)
+			(pin input line
+				(at 15.24 -6.35 180)
+				(length 5.08)
+				(name "SRCLR" (effects (font (size 1.016 1.016))))
+				(number "10" (effects (font (size 1.016 1.016))))
+			)
+			(pin input line
+				(at 15.24 -3.81 180)
+				(length 5.08)
+				(name "SRCLK" (effects (font (size 1.016 1.016))))
+				(number "11" (effects (font (size 1.016 1.016))))
+			)
+			(pin input line
+				(at 15.24 -1.27 180)
+				(length 5.08)
+				(name "RCLK" (effects (font (size 1.016 1.016))))
+				(number "12" (effects (font (size 1.016 1.016))))
+			)
+			(pin input line
+				(at 15.24 1.27 180)
+				(length 5.08)
+				(name "OE" (effects (font (size 1.016 1.016))))
+				(number "13" (effects (font (size 1.016 1.016))))
+			)
+			(pin input line
+				(at 15.24 3.81 180)
+				(length 5.08)
+				(name "SER" (effects (font (size 1.016 1.016))))
+				(number "14" (effects (font (size 1.016 1.016))))
+			)
+			(pin output line
+				(at 15.24 6.35 180)
+				(length 5.08)
+				(name "Q0" (effects (font (size 1.016 1.016))))
+				(number "15" (effects (font (size 1.016 1.016))))
+			)
+			(pin power_in line
+				(at 15.24 8.89 180)
+				(length 5.08)
+				(name "VCC" (effects (font (size 1.016 1.016))))
+				(number "16" (effects (font (size 1.016 1.016))))
+			)
+		)
+	)
+	(symbol "Conn_1x05_BYJ"
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
 		(property "Reference" "J"
-			(at 0 5.08 0)
+			(at 0 7.62 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Value" "Conn_1x02_MotorDC"
-			(at 0 -5.08 0)
+		(property "Value" "Conn_1x05_BYJ"
+			(at 0 -7.62 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Footprint" "ESP32_Carrier:PinHeader_1x02_MotorDC"
+		(property "Footprint" "ESP32_Carrier:PinHeader_1x05_BYJ"
 			(at 0 0 0)
 			(hide yes)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Description" "TOP: GA12-N20 2-pin M+ M-"
+		(property "Description" "TOP: 28BYJ-48 JST-XH 5P A B C D +12V"
 			(at 0 0 0)
 			(hide yes)
 			(effects (font (size 1.27 1.27)))
 		)
-		(symbol "Conn_1x02_MotorDC_0_1"
+		(symbol "Conn_1x05_BYJ_0_1"
 			(rectangle
-				(start -2.54 3.81)
-				(end 2.54 -3.81)
+				(start -2.54 6.35)
+				(end 2.54 -6.35)
 				(stroke (width 0.254) (type default))
 				(fill (type background))
 			)
-			(text "DC"
+			(text "BYJ"
 				(at 0 0 0)
 				(effects (font (size 1.016 1.016)))
 			)
 		)
-		(symbol "Conn_1x02_MotorDC_1_1"
+		(symbol "Conn_1x05_BYJ_1_1"
+			(pin passive line
+				(at 0 5.08 90)
+				(length 2.54)
+				(name "A" (effects (font (size 1.016 1.016))))
+				(number "1" (effects (font (size 1.016 1.016))))
+			)
+			(pin passive line
+				(at 0 2.54 90)
+				(length 2.54)
+				(name "B" (effects (font (size 1.016 1.016))))
+				(number "2" (effects (font (size 1.016 1.016))))
+			)
+			(pin passive line
+				(at 0 0 90)
+				(length 2.54)
+				(name "C" (effects (font (size 1.016 1.016))))
+				(number "3" (effects (font (size 1.016 1.016))))
+			)
+			(pin passive line
+				(at 0 -2.54 90)
+				(length 2.54)
+				(name "D" (effects (font (size 1.016 1.016))))
+				(number "4" (effects (font (size 1.016 1.016))))
+			)
+			(pin passive line
+				(at 0 -5.08 90)
+				(length 2.54)
+				(name "+12V" (effects (font (size 1.016 1.016))))
+				(number "5" (effects (font (size 1.016 1.016))))
+			)
+		)
+	)
+	(symbol "Conn_1x04_Endstop"
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(property "Reference" "J"
+			(at 0 7.62 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "Conn_1x04_Endstop"
+			(at 0 -7.62 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "ESP32_Carrier:PinHeader_1x04_Endstop"
+			(at 0 0 0)
+			(hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" "TOP: CNC endstop 1x04; VCC/GND NC; SIG+SNS dry NC to opto"
+			(at 0 0 0)
+			(hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(symbol "Conn_1x04_Endstop_0_1"
+			(rectangle
+				(start -2.54 5.08)
+				(end 2.54 -5.08)
+				(stroke (width 0.254) (type default))
+				(fill (type background))
+			)
+			(text "HOME"
+				(at 0 0 0)
+				(effects (font (size 1.016 1.016)))
+			)
+		)
+		(symbol "Conn_1x04_Endstop_1_1"
+			(pin passive line
+				(at 0 3.81 90)
+				(length 2.54)
+				(name "VCC" (effects (font (size 1.016 1.016))))
+				(number "1" (effects (font (size 1.016 1.016))))
+			)
 			(pin passive line
 				(at 0 1.27 90)
 				(length 2.54)
-				(name "M+" (effects (font (size 1.27 1.27))))
-				(number "1" (effects (font (size 1.27 1.27))))
+				(name "GND" (effects (font (size 1.016 1.016))))
+				(number "2" (effects (font (size 1.016 1.016))))
 			)
 			(pin passive line
 				(at 0 -1.27 90)
 				(length 2.54)
-				(name "M-" (effects (font (size 1.27 1.27))))
-				(number "2" (effects (font (size 1.27 1.27))))
+				(name "SIG" (effects (font (size 1.016 1.016))))
+				(number "3" (effects (font (size 1.016 1.016))))
+			)
+			(pin passive line
+				(at 0 -3.81 90)
+				(length 2.54)
+				(name "SNS" (effects (font (size 1.016 1.016))))
+				(number "4" (effects (font (size 1.016 1.016))))
 			)
 		)
 	)
@@ -815,7 +1089,7 @@
 			(hide yes)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Description" "TOP: Autonics BUP-30S NPN 12V -> opto IN7"
+		(property "Description" "TOP: Autonics BUP-30S NPN 12V -> OPTO_IN4"
 			(at 0 0 0)
 			(hide yes)
 			(effects (font (size 1.27 1.27)))
@@ -900,117 +1174,69 @@
 			)
 		)
 	)
-	(symbol "PC817_4CH_Opto"
+	(symbol "PC817_DIP4"
+		(pin_names
+			(offset 1.016)
+		)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
-		(in_pos_files yes)
 		(property "Reference" "U"
-			(at 0 12.7 0)
+			(at 0 5.08 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Value" "PC817_4CH_Opto"
-			(at 0 -12.7 0)
+		(property "Value" "PC817_DIP4"
+			(at 0 -5.08 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Footprint" "ESP32_Carrier:PC817_4CH_Opto"
+		(property "Footprint" "ESP32_Carrier:PC817_DIP4"
 			(at 0 0 0)
-			(hide yes)
-			(effects (font (size 1.27 1.27)))
+			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "Description" "PC817 4ch opto isolator ~48x38 (Shopee)"
+		(property "Datasheet" "~"
 			(at 0 0 0)
-			(hide yes)
-			(effects (font (size 1.27 1.27)))
+			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(symbol "PC817_4CH_Opto_0_1"
+		(property "Description" "PC817 optocoupler DIP-4 A/K/E/C"
+			(at 0 0 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(symbol "PC817_DIP4_0_1"
 			(rectangle
-				(start -10.16 10.16)
-				(end 10.16 -10.16)
+				(start -5.08 3.81)
+				(end 5.08 -3.81)
 				(stroke (width 0.254) (type default))
 				(fill (type background))
 			)
-			(text "OPTO4"
-				(at 0 0 0)
-				(effects (font (size 1.27 1.27)))
-			)
 		)
-		(symbol "PC817_4CH_Opto_1_1"
+		(symbol "PC817_DIP4_1_1"
 			(pin passive line
-				(at -15.24 7.62 0)
-				(length 5.08)
-				(name "GND_I" (effects (font (size 1.016 1.016))))
+				(at -7.62 2.54 180)
+				(length 2.54)
+				(name "A" (effects (font (size 1.016 1.016))))
 				(number "1" (effects (font (size 1.016 1.016))))
 			)
 			(pin passive line
-				(at -15.24 5.08 0)
-				(length 5.08)
-				(name "VCC_I" (effects (font (size 1.016 1.016))))
+				(at -7.62 -2.54 180)
+				(length 2.54)
+				(name "K" (effects (font (size 1.016 1.016))))
 				(number "2" (effects (font (size 1.016 1.016))))
 			)
 			(pin passive line
-				(at -15.24 2.54 0)
-				(length 5.08)
-				(name "IN1" (effects (font (size 1.016 1.016))))
+				(at 7.62 -2.54 0)
+				(length 2.54)
+				(name "E" (effects (font (size 1.016 1.016))))
 				(number "3" (effects (font (size 1.016 1.016))))
 			)
 			(pin passive line
-				(at -15.24 0.0 0)
-				(length 5.08)
-				(name "IN2" (effects (font (size 1.016 1.016))))
+				(at 7.62 2.54 0)
+				(length 2.54)
+				(name "C" (effects (font (size 1.016 1.016))))
 				(number "4" (effects (font (size 1.016 1.016))))
-			)
-			(pin passive line
-				(at -15.24 -2.54 0)
-				(length 5.08)
-				(name "IN3" (effects (font (size 1.016 1.016))))
-				(number "5" (effects (font (size 1.016 1.016))))
-			)
-			(pin passive line
-				(at -15.24 -5.08 0)
-				(length 5.08)
-				(name "IN4" (effects (font (size 1.016 1.016))))
-				(number "6" (effects (font (size 1.016 1.016))))
-			)
-			(pin passive line
-				(at 15.24 7.62 180)
-				(length 5.08)
-				(name "GND_O" (effects (font (size 1.016 1.016))))
-				(number "7" (effects (font (size 1.016 1.016))))
-			)
-			(pin power_in line
-				(at 15.24 5.08 180)
-				(length 5.08)
-				(name "VCC_O" (effects (font (size 1.016 1.016))))
-				(number "8" (effects (font (size 1.016 1.016))))
-			)
-			(pin passive line
-				(at 15.24 2.54 180)
-				(length 5.08)
-				(name "OUT1" (effects (font (size 1.016 1.016))))
-				(number "9" (effects (font (size 1.016 1.016))))
-			)
-			(pin passive line
-				(at 15.24 0.0 180)
-				(length 5.08)
-				(name "OUT2" (effects (font (size 1.016 1.016))))
-				(number "10" (effects (font (size 1.016 1.016))))
-			)
-			(pin passive line
-				(at 15.24 -2.54 180)
-				(length 5.08)
-				(name "OUT3" (effects (font (size 1.016 1.016))))
-				(number "11" (effects (font (size 1.016 1.016))))
-			)
-			(pin passive line
-				(at 15.24 -5.08 180)
-				(length 5.08)
-				(name "OUT4" (effects (font (size 1.016 1.016))))
-				(number "12" (effects (font (size 1.016 1.016))))
 			)
 		)
 	)
-	(symbol "Conn_1x10_OptoField"
+	(symbol "Conn_1x06_OptoField"
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
@@ -1019,24 +1245,24 @@
 			(at 0 15.24 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Value" "Conn_1x10_OptoField"
+		(property "Value" "Conn_1x06_OptoField"
 			(at 0 -15.24 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Footprint" "ESP32_Carrier:PinHeader_1x10_OptoField"
+		(property "Footprint" "ESP32_Carrier:PinHeader_1x06_OptoField"
 			(at 0 0 0)
 			(hide yes)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Description" "TOP: opto field IN1-8 + GND/VCC isolated"
+		(property "Description" "TOP: opto field GND/VCC + IN1-4 (HOME+BUP)"
 			(at 0 0 0)
 			(hide yes)
 			(effects (font (size 1.27 1.27)))
 		)
-		(symbol "Conn_1x10_OptoField_0_1"
+		(symbol "Conn_1x06_OptoField_0_1"
 			(rectangle
-				(start -2.54 12.7)
-				(end 2.54 -12.7)
+				(start -2.54 7.62)
+				(end 2.54 -7.62)
 				(stroke (width 0.254) (type default))
 				(fill (type background))
 			)
@@ -1045,70 +1271,46 @@
 				(effects (font (size 1.016 1.016)))
 			)
 		)
-		(symbol "Conn_1x10_OptoField_1_1"
+		(symbol "Conn_1x06_OptoField_1_1"
 			(pin passive line
-				(at 0 11.43 90)
+				(at 0 6.35 90)
 				(length 2.54)
 				(name "GND_I" (effects (font (size 1.016 1.016))))
 				(number "1" (effects (font (size 1.016 1.016))))
 			)
 			(pin passive line
-				(at 0 8.89 90)
+				(at 0 3.8099999999999996 90)
 				(length 2.54)
 				(name "VCC_I" (effects (font (size 1.016 1.016))))
 				(number "2" (effects (font (size 1.016 1.016))))
 			)
 			(pin passive line
-				(at 0 6.35 90)
+				(at 0 1.2699999999999996 90)
 				(length 2.54)
 				(name "IN1" (effects (font (size 1.016 1.016))))
 				(number "3" (effects (font (size 1.016 1.016))))
 			)
 			(pin passive line
-				(at 0 3.8099999999999996 90)
+				(at 0 -1.2700000000000005 90)
 				(length 2.54)
 				(name "IN2" (effects (font (size 1.016 1.016))))
 				(number "4" (effects (font (size 1.016 1.016))))
 			)
 			(pin passive line
-				(at 0 1.2699999999999996 90)
+				(at 0 -3.8100000000000005 90)
 				(length 2.54)
 				(name "IN3" (effects (font (size 1.016 1.016))))
 				(number "5" (effects (font (size 1.016 1.016))))
 			)
 			(pin passive line
-				(at 0 -1.2699999999999996 90)
+				(at 0 -6.35 90)
 				(length 2.54)
 				(name "IN4" (effects (font (size 1.016 1.016))))
 				(number "6" (effects (font (size 1.016 1.016))))
 			)
-			(pin passive line
-				(at 0 -3.8100000000000005 90)
-				(length 2.54)
-				(name "IN5" (effects (font (size 1.016 1.016))))
-				(number "7" (effects (font (size 1.016 1.016))))
-			)
-			(pin passive line
-				(at 0 -6.350000000000001 90)
-				(length 2.54)
-				(name "IN6" (effects (font (size 1.016 1.016))))
-				(number "8" (effects (font (size 1.016 1.016))))
-			)
-			(pin passive line
-				(at 0 -8.89 90)
-				(length 2.54)
-				(name "IN7" (effects (font (size 1.016 1.016))))
-				(number "9" (effects (font (size 1.016 1.016))))
-			)
-			(pin passive line
-				(at 0 -11.43 90)
-				(length 2.54)
-				(name "IN8" (effects (font (size 1.016 1.016))))
-				(number "10" (effects (font (size 1.016 1.016))))
-			)
 		)
 	)
-	(symbol "Conn_1x10_TFT"
+	(symbol "Conn_1x09_TFT_LCD"
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
@@ -1117,92 +1319,154 @@
 			(at 0 10.16 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Value" "Conn_1x10_TFT"
+		(property "Value" "Conn_1x09_TFT_LCD"
 			(at 0 -10.16 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Footprint" "ESP32_Carrier:PinHeader_1x10_TFT"
+		(property "Footprint" "ESP32_Carrier:PinHeader_1x09_TFT_LCD"
 			(at 0 0 0)
 			(hide yes)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Description" "TFT SPI + XPT2046 (J17; MISO=T_DO, poll T_CS)"
+		(property "Description" "MSP3520 pins1-9 LCD: VCC GND CS RESET DC SDI SCK LED SDO"
 			(at 0 0 0)
 			(hide yes)
 			(effects (font (size 1.27 1.27)))
 		)
-		(symbol "Conn_1x10_TFT_0_1"
+		(symbol "Conn_1x09_TFT_LCD_0_1"
 			(rectangle
-				(start -2.54 12.7)
-				(end 2.54 -12.7)
+				(start -2.54 11.43)
+				(end 2.54 -11.43)
 				(stroke (width 0.254) (type default))
 				(fill (type background))
 			)
-			(text "TFT+TP"
+			(text "TFT LCD"
 				(at 0 0 0)
 				(effects (font (size 1.016 1.016)))
 			)
 		)
-		(symbol "Conn_1x10_TFT_1_1"
+		(symbol "Conn_1x09_TFT_LCD_1_1"
 			(pin passive line
-				(at 0 11.43 90)
+				(at 0 10.16 90)
 				(length 2.54)
-				(name "GND" (effects (font (size 1.27 1.27))))
+				(name "VCC" (effects (font (size 1.27 1.27))))
 				(number "1" (effects (font (size 1.27 1.27))))
 			)
 			(pin passive line
-				(at 0 8.89 90)
+				(at 0 7.62 90)
 				(length 2.54)
-				(name "3V3" (effects (font (size 1.27 1.27))))
+				(name "GND" (effects (font (size 1.27 1.27))))
 				(number "2" (effects (font (size 1.27 1.27))))
 			)
 			(pin passive line
-				(at 0 6.35 90)
+				(at 0 5.08 90)
 				(length 2.54)
-				(name "SCK" (effects (font (size 1.27 1.27))))
+				(name "CS" (effects (font (size 1.27 1.27))))
 				(number "3" (effects (font (size 1.27 1.27))))
 			)
 			(pin passive line
-				(at 0 3.8099999999999996 90)
+				(at 0 2.54 90)
 				(length 2.54)
-				(name "MOSI" (effects (font (size 1.27 1.27))))
+				(name "RESET" (effects (font (size 1.27 1.27))))
 				(number "4" (effects (font (size 1.27 1.27))))
 			)
 			(pin passive line
-				(at 0 1.2699999999999996 90)
+				(at 0 0.0 90)
 				(length 2.54)
-				(name "MISO" (effects (font (size 1.27 1.27))))
+				(name "DC" (effects (font (size 1.27 1.27))))
 				(number "5" (effects (font (size 1.27 1.27))))
 			)
 			(pin passive line
-				(at 0 -1.2699999999999996 90)
+				(at 0 -2.539999999999999 90)
 				(length 2.54)
-				(name "CS" (effects (font (size 1.27 1.27))))
+				(name "SDI" (effects (font (size 1.27 1.27))))
 				(number "6" (effects (font (size 1.27 1.27))))
 			)
 			(pin passive line
-				(at 0 -3.8100000000000005 90)
+				(at 0 -5.08 90)
 				(length 2.54)
-				(name "DC" (effects (font (size 1.27 1.27))))
+				(name "SCK" (effects (font (size 1.27 1.27))))
 				(number "7" (effects (font (size 1.27 1.27))))
 			)
 			(pin passive line
-				(at 0 -6.350000000000001 90)
+				(at 0 -7.620000000000001 90)
 				(length 2.54)
-				(name "RST" (effects (font (size 1.27 1.27))))
+				(name "LED" (effects (font (size 1.27 1.27))))
 				(number "8" (effects (font (size 1.27 1.27))))
 			)
 			(pin passive line
-				(at 0 -8.89 90)
+				(at 0 -10.16 90)
 				(length 2.54)
-				(name "BL" (effects (font (size 1.27 1.27))))
+				(name "SDO" (effects (font (size 1.27 1.27))))
 				(number "9" (effects (font (size 1.27 1.27))))
 			)
+		)
+	)
+	(symbol "Conn_1x05_TFT_TP"
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(property "Reference" "J"
+			(at 0 10.16 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "Conn_1x05_TFT_TP"
+			(at 0 -10.16 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "ESP32_Carrier:PinHeader_1x05_TFT_TP"
+			(at 0 0 0)
+			(hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" "MSP3520 pins10-14 touch: T_CLK T_CS T_DIN T_DO T_IRQ"
+			(at 0 0 0)
+			(hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(symbol "Conn_1x05_TFT_TP_0_1"
+			(rectangle
+				(start -2.54 6.35)
+				(end 2.54 -6.35)
+				(stroke (width 0.254) (type default))
+				(fill (type background))
+			)
+			(text "TFT TP"
+				(at 0 0 0)
+				(effects (font (size 1.016 1.016)))
+			)
+		)
+		(symbol "Conn_1x05_TFT_TP_1_1"
 			(pin passive line
-				(at 0 -11.43 90)
+				(at 0 5.08 90)
+				(length 2.54)
+				(name "T_CLK" (effects (font (size 1.27 1.27))))
+				(number "1" (effects (font (size 1.27 1.27))))
+			)
+			(pin passive line
+				(at 0 2.54 90)
 				(length 2.54)
 				(name "T_CS" (effects (font (size 1.27 1.27))))
-				(number "10" (effects (font (size 1.27 1.27))))
+				(number "2" (effects (font (size 1.27 1.27))))
+			)
+			(pin passive line
+				(at 0 0.0 90)
+				(length 2.54)
+				(name "T_DIN" (effects (font (size 1.27 1.27))))
+				(number "3" (effects (font (size 1.27 1.27))))
+			)
+			(pin passive line
+				(at 0 -2.54 90)
+				(length 2.54)
+				(name "T_DO" (effects (font (size 1.27 1.27))))
+				(number "4" (effects (font (size 1.27 1.27))))
+			)
+			(pin passive line
+				(at 0 -5.08 90)
+				(length 2.54)
+				(name "T_IRQ" (effects (font (size 1.27 1.27))))
+				(number "5" (effects (font (size 1.27 1.27))))
 			)
 		)
 	)

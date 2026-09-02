@@ -1,0 +1,13 @@
+74HC595
+CP_Radial_D6_100u_25V
+CP_Radial_D8_470u_25V
+Diode_TVS_DO41
+ESP32_S3_DevKitC_44Pin_Socket
+Fuse_PTC_Radial_5.1mm
+MP1584_5V3A
+PC817_4CH_Opto
+PinHeader_1x04_Motor
+R_Axial_4k7_BUP
+TMC2209_StepStick
+TerminalBlock_2P_5.0mm
+ULN2003AN

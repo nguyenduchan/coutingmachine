@@ -1,158 +1,54 @@
-# ESP32-S3 Baseboard — BOM + do ben >3 nam
+# ESP32-S3 Baseboard — BOM (ULN2003 + 74HC595-24IO module)
 
-**Danh sach module day du (ghi nho):** xem [`MODULES.md`](MODULES.md).
+**Full module list:** see [`MODULES.md`](MODULES.md).
 
-May van phong ~20 cm. PSU ngoai **Mean Well 12V/3A**. Limit = **co khi** (ngoai board); board chi co **chan cam**.
+PSU **Mean Well 12V**. Limits = mechanical HOME only (J8/J10/J12). Board is jacks + drivers.
 
-## 1) Linh kien TREN board (module / jack)
+## On-board
 
-| Ref | Linh kien | Vai tro | Trang thai do ben |
-|-----|-----------|---------|-------------------|
-| J1 | Terminal 2P 5.0 mm | +12V_RAW / GND tu PSU | OK |
-| **F1** | PTC radial ~3A 30V | Bao ve ngan mach | **Da them** (re) |
-| **D1** | TVS P6KE15A (DO-41) | Clamp surge 12V | **Da them** (re) |
-| **U1** | **ESP32-S3-DevKitC-1** (44-pin, N8R2/N16R8) | MCU | **Da doi** (bo DevKit V1 + MCP23017) |
-| **U2** | **MP1584EN** 5V | +5V logic / TFT / buzzer | **Da doi** (bo Mini560); **1 buck duy nhat** |
-| **U3** | **TMC2209** stepstick | NEMA17 | Giu — chon hang tot (BTT), heatsink, I_run hop ly |
-| **U4 / U9** | **PC817 4CH ×2** | Cach ly limit + BUP | **Da doi** (bo 8CH dai ~100mm) |
-| **U5–U7** | **DRV8871** x3 | 3x GA12-N20 | **Da doi** (bo L298N) |
-| C* / R10 | Bulk 470u @ driver; R10=10R + C10=47u + C11=100n SNS | Star power | Chon tu 105°C long-life |
-| R1 | 4k7 axial | Pull-up BUP NPN | OK |
-| J2 | Header 1x04 | NEMA17 A+/A−/B+/B− | Chi jack |
-| J4 | Header 1x10 | OPTO field (limit + BUP IN) | Chi jack |
-| J5–J7 | Header 1x02 | Motor DC 1..3 | Chi jack |
-| **J8–J13** | Header 1x02 x6 | **Limit MIN/MAX** (co khi, day ra) | Chi jack — **khong** cam bien tren PCB |
-| J14 | Header 1x04 | BUP-30S | Chi jack |
-| J15 | Header 1x03 | Buzzer 5V | Chi jack |
-| J16 | Header 1x04 | AOD4184 PWM/GND/+12V/FAN− | Chi jack (+ module AOD4184) |
-| J17 | Header 1x10 | TFT SPI + touch I2C (+ RST / BL, poll — no T_INT) | Chi jack |
-| **J18** | Header 1x04 | **EC11 wall-mount** GND/3V3/ENC_A/ENC_B → IO38/IO41 | Chi jack (cap panel) |
+| Ref | Part | Role |
+|-----|------|------|
+| J1 / F1 / D1 | Terminal + PTC + TVS | 12V in + protect |
+| U1 | ESP32-S3-DevKitC-1 N16R8 | MCU |
+| U2 | MP1584EN 5V | Logic buck (only) |
+| U3 | TMC2209 | NEMA17 trên Mot (không J2) |
+| U41–U44 | PC817 DIP-4 ×4 | HOME1-3 + BUP |
+| R41–R44 | 2k2 axial | LED series (~5 mA @12V) |
+| R45–R48 | 10k axial | Collector pull-up → +3V3 |
+| **U10** | **74HC595-24IO module** (3×595) | [Shopee](https://shopee.vn/-C%C3%B3-s%E1%BA%B5n-M%E1%BA%A1ch-m%E1%BB%9F-r%E1%BB%99ng-I-O-24-ch%C3%A2n-74HC595-thegioimodule-i.951399259.42633627766) — **bên phải ESP32** |
+| J24 / J25 | Header cái 1×6 + 1×24 | CTRL + Q (cắm module) |
+| R4 | 10k axial | LDEN/`OE` pull-up → +3V3 |
+| U5–U7 | **ULN2003AN** DIP-16 | 28BYJ; IN←SR_Q*; COM=+12V |
+| R1 | 4k7 | BUP NPN pull-up → OPTO_IN4 |
+| R2/R3 | 10k | EN_TMC PU / BLOWER PD |
+| C20 | 470µ | Bulk @ TMC |
+| C21 | 100µ | Shared ULN COM bulk |
+| ~~J2~~ | — | **XOÁ** (Mot trên U3) |
+| J5–J7 | **1×05** | 28BYJ-48 |
+| J8/J10/J12 | 1×04 endstop | HOME NC @12V → opto |
+| J14 | 1×04 | BUP-30S |
+| J15–J18/J23 | — | Buzzer / TFT LCD+touch / EC11 |
 
-J3: **khong dung**.
+**Deleted:** J2, J4/J9/J11/J13, J19–J22 field (optional later), U4/U9, DRV8871.
 
-## 2) Linh kien NGOAI board (day / module roi)
+> All footprints on **TOP (F.Cu)**; B.Cu for routing only.
 
-| Linh kien | SL | Ghi chu |
-|-----------|----|---------|
-| Mean Well **12V/3A** (hoac tuong duong cong nghiep) | 1 | PSU chinh — **da chot** (bo DDR-rail qua to) |
-| NEMA17 stepper | 1 | Qua J2 |
-| GA12-N20 12V | 3 | Qua J5–J7 |
-| **Limit switch co khi** (NO/NC, Omron-style / KW11 / ME-8108…) | **6** | Qua **J8–J13**; day 2 loi +12V_SNS / COM; **khong** dung cam bien quang hanh trinh |
-| Autonics **BUP-30S** | 1 | Qua J14; thoi bui dinh ky |
-| Buzzer active 5V | 1 | Qua J15 |
-| Module **AOD4184** (logic-level MOSFET) | 1 | Cam J16 |
-| **Bom khi 370 12V** | **1 + 1 du phong** | J16 AOD4184 tu +12V; ON 3s / 5 phut; ong 4x6 + tee + 2 voi |
-| EC11 / KY-040 encoder + num **(gan thanh hop)** | 1 | Qua **J18** (3V3; cap 4 loi; khong noi SW) |
-| TFT + touch (SPI + I2C poll) | 1 | Qua J17 |
-| Ong silicone Ø4 + tee + 2 voi phun | 1 bo | Co khi |
+## GPIO
 
-## 3) GPIO (tom tat)
+| Function | GPIO |
+|----------|------|
+| HOME OUT1-3 / BUP OUT4 | IO1,2,4,5 |
+| SER / SRCLK / RCLK / OE_595 | IO10–13 |
+| TMC STEP/DIR/EN | IO16–18 |
+| TFT SPI + BL + touch | IO39/40/42/21/46/45 + MISO47 T_CS48 T_IRQ6 |
+| ENC_A / ENC_B | IO38 / IO41 |
+| Buzzer / blower | IO9 / IO3 |
+| Spare | IO7,8,14,15 |
 
-| Chuc nang | GPIO |
-|-----------|------|
-| Limit OUT1..6 (qua opto) | IO1,2,4,5,6,7 |
-| BUP OUT7 | IO8 |
-| Spare OUT8 | (khong vao MCU — IO9 = buzzer) |
-| **ENC_A / ENC_B (J18 EC11)** | **IO38 / IO41** |
-| Motor1..3 IN1/IN2 | IO10/11, 12/13, 14/15 |
-| TMC STEP/DIR/EN | IO16/17/18 |
-| TFT SCK/MOSI/CS/DC (khong MISO) | IO39/40/42/21 |
-| TFT RST (chung LCD+touch) / BL PWM | IO46 / IO45 |
-| Touch SDA/SCL (poll, khong INT) | IO47/48 |
-| Buzzer | IO9 |
-| AOD4184 / bom | IO3 |
-| IO35 / IO36 / IO37 | **KHONG dung** - octal PSRAM (N16R8) |
-
-### Passive trang thai boot (DA co tren PCB)
-
-| Ref | Gia tri | Noi | Vi sao |
-|-----|---------|-----|--------|
-| R2 | 10k pull-**up** -> +3V3 | /EN_TMC (IO18) | EN active-low + float luc reset -> stepper bi cap dien truoc khi firmware chay |
-| R3 | 10k pull-**down** -> GND | /BLOWER (IO3) | IO3 la strapping pin, KHONG co pull noi bo -> bom mang co the chay luc boot |
-| D2 | 1N5819 (DO-41) | +12V <-> /BLW_RET | Freewheel bom 370 12V (tai cam); module AOD4184 opto khong co san |
-
-D2: vach tren than diode (cathode) = pad 1 = **+12V**. Lap nguoc la chap nguon.
-
-IO45 / IO46 **khong** can dien tro: ca hai la strapping pin, co pull-down noi
-bo giu suot reset -> BL tat va man giu trong reset ngay tu luc cap nguon.
-
-### Canh bao mua module
-
-- **Chot DevKitC-1 v1.1**: v1.1 dat WS2812 onboard tren GPIO38 (trung ENC_A,
-  vo hai - WS2812 chi la tai DIN, LED co the nhap nhay khi xoay num).
-  v1.0 dat no tren GPIO48 = **trung T_CS touch**.
-- **KHONG mua ban hau to V** (N16R8V / N32R16V): VDD_SPI = 1.8V keo GPIO47/48
-  xuong muc logic 1.8V -> hong bus touch.
-- IO35/36/37 cam tren N16R8 (octal PSRAM). Touch poll I2C (khong T_INT);
-  IO38/IO41 = EC11 ENC tren J18 (thiet bi gan thanh hop, day ve jack).
-
-## 4) Da doi theo goi y do ben (OK)
-
-- MCU: ESP32-S3, du GPIO, **khong MCP23017**
-- Motor DC: **DRV8871** thay L298N (nong / de chet)
-- Buck logic: **MP1584EN** thay Mini560; **1 buck 5V** (U2) cho ESP32/TFT/buzzer
-- PSU: Mean Well 12V/3A (khong DIN-rail qua lon)
-- Star power SNS / MOT; thoi BUP = bom **370 12V** + AOD4184 tu rail +12V
-
-## 5) Do ben >3 nam — chi doi khi gia tang it
-
-| Muc | Quyet dinh | Chi phi |
-|-----|------------|---------|
-| **F1 PTC + D1 TVS @ J1** | **Da them tren PCB** (RXE030/~3A + P6KE15A) | +~5–15k VND |
-| **MP1584** | Giu module re; chon **ban 5V co dinh** (khong ADJ) | ~0 (cung gia) |
-| **Buck cong nghiep** | **Khong doi** (Mean Well/Recom dat) | — |
-| **TMC2209** | Mua **BTT that** + heatsink nho (cung form stepstick) | +~20–40k vs clone |
-| **PC817** | **2× 4CH** (~48×38) thay 8CH | ~0–10k |
-| **Header** | Pin **ma vang** / header chat (khong doi sang JST dat) | +~10–20k |
-| **GA12-N20 / bom mang** | **Khong doi** loai; duty thap + du phong | ~0 |
-| **TFT** | Chon **2.8" IPS** cung phan khuc (tranh man sieu re) | +0–30k |
-| **Socket ESP32** | Header ma vang; han that sau thu neu can | it |
-
-Limit **co khi** Omron-class neu gia gan KW12; board **chi jack**.
-
-## 6) Bom / thoi BUP
+## Regenerate
 
 ```
-+12V → AOD4184 (J16) → bom khi **370 12V** → ong → tee → 2 voi (TX/RX BUP)
+$env:PCB_SKIP_MAZE=1; python gen_power_carrier.py
 ```
 
-Khong dung quat 5015 (ap thap).
-
-## 7) Kich thuoc module — chon gon + chat luong
-
-Carrier PCB **160×100 mm** (4× M3 góc). Opto: **U4+U9 PC817 4CH ×2** (~48×38 moi cai).
-
-| Ref | Footprint board | Kich thuoc that (typ.) | Chon gon + chat luong | Bo / tranh |
-|-----|-----------------|------------------------|------------------------|------------|
-| U1 | Socket 2×22, row 25.4 | DevKitC-1 **~63×25.4×13** | **DevKitC-1 N8R2** (Espressif) — gon hop ly, USB-C, du GPIO | Module bare WROOM (mat USB debug); DevKit V1 30-pin |
-| U2 | 22×17 | MP1584 **22×17×4** | **MP1584EN fixed 5V** — **1 module** cho logic | Mini560; buck “5A” sieu re; ADJ de lech 5V |
-| U3 | ~20×20 | BTT **15.24×20.32** | **BigTreeTech TMC2209 V1.3** + heatsink nho | Clone vo ten; driver lon SPI |
-| U4/U9 | ~48×38 ×2 | Module 4ch | **2× PC817 4CH** (Shopee) — do pad truoc fab | 8ch dai ~100mm |
-| U5–U7 | 28×20 ×3 | Adafruit **~24×20**; Shopee ~25–30×20 | Module **DRV8871** ~25×20, chip that, heatsink; I_lim ~1–1.5A (N20) | L298N (~43×43); TB6612 yeu 12V |
-| J16 mod | Header 1×04 | AOD4184 **~23×16** (co ban ~33×16) | Module **~23×16** opto+AOD4184 | MOSFET khong heatsink / khong opto neu nhieu nhieu |
-| Bom khi | Off-board | 370 ~**55–60 mm** | **370 khí 12V**; 3s/5min; +1 du phong | Quat 5015; bom 5V/3.7V; bom AC 220V |
-| Limit | Chi jack | Micro **~20×6×10** (Omron SS/D2F) | **Omron SS-5 / D2F / KW12** co khi, day 2 loi | Cam bien quang hanh trinh; limit sieu re vo nhua mong |
-| BUP | Chi jack | BUP-30S **~50×25×40** (khoang) | Autonics **BUP-30S** giu | Clone quang |
-| TFT | Chi jack | 2.8" ~**70×50**; 3.5" ~**85×55** | **2.8" IPS + capacitive** (SPI+I2C) — du HMI, gon hop 20 cm | 7" HDMI; man resistive re |
-| PSU | Ngoai vo | LRS-35-12 **~99×82×30** | Mean Well **LRS-35-12** / RSP nho | Adapter no-name; DIN DDR qua to |
-
-### Goi y layout gon (khong doi chuc nang)
-
-1. **U4/U9**: da doi **2×4ch** — do footprint that module Shopee truoc fab.
-2. **U2**: giu MP1584 22×17; dat sat J1.
-3. **U5–U7**: 3 module ~25×20 xep doc, heatsink thap.
-4. **Bom + AOD4184**: treo off-board / vach vo (khong an dien tich PCB).
-5. Carrier target: **160×100 mm** (vach phai trong hop 200 mm; giac/module chia nhom).
-
-### Chat luong vs “nho nhat”
-
-- Nho hon MP1584 ma van >1A tin cay → kho (module re de chay). Can hon: Recom/Murata ~0.5–1A **chi** neu tach TFT sang rail rieng.
-- Khong cat DRV8871 / TMC / DevKitC de “sieu nho” — day la diem do ben.
-
-## Tai tao
-
-```
-python gen_power_carrier.py
-```
-
-Do that truoc fab: ESP32-S3 DevKitC, MP1584 x1, AOD4184, opto 4ch, TFT pinout.
+Board size target **220×160 mm**. Modules ≥10 mm from edge; ≥10 mm from MCU Eco; ≥8 mm between Ecos. Power netclass track **0.70 mm** (matches FreeRouting).

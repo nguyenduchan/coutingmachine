@@ -39,7 +39,7 @@ ROUTED = HERE / "out_freerouting" / "routed.kicad_pcb"
 # optimisation "is known to generate clearance violations".
 # (passes, via cost) per attempt: different effort settings give different
 # results, and the loop stops at the first that routes everything.
-FR_ATTEMPTS = ((30, 60), (60, 30), (100, 100), (200, 60), (60, 120))
+FR_ATTEMPTS = ((30, 60), (60, 30), (100, 100))
 FR_THREADS = 1
 FR_TIMEOUT_S = 900
 
@@ -121,7 +121,11 @@ def export_dsn() -> None:
 # around every drilled hole, i.e. 0.45 mm of copper-to-copper. KiCad's netclass
 # only carries the 0.20, so the extra has to be handed to the router explicitly
 # through the DSN or it routes to the looser rule and trips A7 afterwards.
-A7_CLEARANCE_UM = 450
+# A7 asks for 0.25 mm between a hole's copper and any other net's track edge.
+# Handing FreeRouting exactly that leaves the checker's own arithmetic sitting
+# on equality, where a rounding step either way is a violation, so the router
+# is told to keep 0.50 mm and the check has 0.05 mm of margin to work with.
+A7_CLEARANCE_UM = 500
 A7_TYPES = ("wire_pin", "via_pin", "wire_via", "via_via", "pin_pin")
 
 
@@ -210,10 +214,19 @@ def import_ses() -> int:
     board = pcbnew.LoadBoard(str(UNROUTED))
     if not pcbnew.ImportSpecctraSES(board, str(SES)):
         raise SystemExit("ImportSpecctraSES failed")
-    n = _drop_dangling(board, pcbnew)
     pcbnew.SaveBoard(str(ROUTED), board)
+    # Cleanup is done on the saved file, not on this board object. Once
+    # ExportSpecctraDSN/ImportSpecctraSES have run, this build hands back boards
+    # whose Python proxy has lost its BOARD type, so every pcbnew cleanup call
+    # raises AttributeError -- which _drop_dangling swallowed, leaving the stubs
+    # in place. clean_stubs also catches the leftover pcbnew misses anyway: a
+    # via with a short leg on each layer running to the same free point.
+    import clean_stubs
+
+    dup, n = clean_stubs.clean(ROUTED)
     left = _unconnected_via_drc(ROUTED)
     print(f"SES merged -> {ROUTED}"
+          + (f" ({dup} duplicate(s) removed)" if dup else "")
           + (f" ({n} dangling stub(s) removed)" if n else "")
           + f", {left} unconnected")
     return left
@@ -243,6 +256,55 @@ def _unconnected_via_drc(pcb: Path) -> int:
     return len(re.findall(r"^\[unconnected_items\]", rpt.read_text(encoding="utf-8",
                                                                     errors="replace"), re.M))
 
+
+def _cleanup_in_subprocess() -> tuple[int, int]:
+    """Run the dedupe + dangling sweeps in a fresh interpreter, on ROUTED."""
+    r = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--cleanup"],
+                       capture_output=True, text=True)
+    m = re.search(r"CLEANUP (\d+) (\d+)", r.stdout)
+    if not m:
+        print("  cleanup pass failed:")
+        print((r.stdout + r.stderr).strip()[-500:])
+        return 0, 0
+    return int(m.group(1)), int(m.group(2))
+
+
+def _cleanup_main() -> int:
+    import pcbnew
+
+    board = pcbnew.LoadBoard(str(ROUTED))
+    dup = _dedupe_tracks(board, pcbnew)
+    n = _drop_dangling(board, pcbnew)
+    pcbnew.SaveBoard(str(ROUTED), board)
+    print(f"CLEANUP {dup} {n}")
+    return 0
+
+def _dedupe_tracks(board, pcbnew) -> int:
+    """Drop segments that repeat one already on the board.
+
+    The SES merge can land the same segment several times, forwards and
+    backwards. Duplicates are invisible in a plot but they defeat the dangling
+    sweep below: two copies of one stub each see the other sitting on their free
+    end, so neither looks dangling, and KiCad's own DRC then reports the pair as
+    unconnected track ends.
+    """
+    seen = set()
+    doomed = []
+    for t in board.GetTracks():
+        if t.Type() != pcbnew.PCB_TRACE_T:
+            continue
+        a = (t.GetStart().x, t.GetStart().y)
+        b = (t.GetEnd().x, t.GetEnd().y)
+        key = (t.GetLayer(), t.GetNetCode(), min(a, b), max(a, b))
+        if key in seen:
+            doomed.append(t)
+        else:
+            seen.add(key)
+    for t in doomed:
+        board.Remove(t)
+    if doomed:
+        board.BuildConnectivity()
+    return len(doomed)
 
 def _drop_dangling(board, pcbnew) -> int:
     """Delete track stubs with a free end.
@@ -311,4 +373,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(_cleanup_main() if "--cleanup" in sys.argv else main())
