@@ -1,91 +1,23 @@
 (footprint "R_Axial_4k7_BUP"
 	(version 20260206)
-	(generator "pcbnew")
-	(generator_version "10.0")
+	(generator "gen_power_carrier.py")
+	(generator_version "1.0")
 	(layer "F.Cu")
-	(property "Reference" "REF**"
+	(descr "Axial 4k7 pull-up for BUP-30S NPN -> opto")
+	(tags "resistor axial")
+	(property "Reference" "R**"
 		(at 0 -2.6 0)
 		(layer "F.SilkS")
-		(uuid "438c8de4-dcc9-4996-988b-eeb8bb58dd66")
-		(effects
-			(font
-				(size 0.8 0.8)
-				(thickness 0.12)
-			)
-		)
+		(effects (font (size 0.8 0.8) (thickness 0.12)))
 	)
-	(property "Value" "10k"
+	(property "Value" "4k7"
 		(at 0 2.6 0)
 		(layer "F.SilkS")
-		(uuid "b73fa399-cf5a-4fba-a622-2b0f2d961283")
-		(effects
-			(font
-				(size 0.75 0.75)
-				(thickness 0.1)
-			)
-		)
-	)
-	(property "Datasheet" ""
-		(at 0 0 0)
-		(layer "F.Fab")
-		(hide yes)
-		(uuid "7216b293-d82d-46f3-99e8-986a674fb1af")
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-		)
-	)
-	(property "Description" ""
-		(at 0 0 0)
-		(layer "F.Fab")
-		(hide yes)
-		(uuid "e5733c8f-76b0-4576-8c7e-27ee9d06ce84")
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-		)
+		(effects (font (size 0.75 0.75) (thickness 0.1)))
 	)
 	(attr through_hole)
-	(duplicate_pad_numbers_are_jumpers no)
-	(fp_rect
-		(start -3.2 -1.5)
-		(end 3.2 1.5)
-		(stroke
-			(width 0.12)
-			(type solid)
-		)
-		(fill no)
-		(layer "F.SilkS")
-		(uuid "96869507-e330-4365-8941-deaf6d529bac")
-	)
-	(fp_text user "1"
-		(at -3.75 -2 0)
-		(layer "F.SilkS")
-		(uuid "c17dfffd-d4ad-4212-9556-e34e817f56bb")
-		(effects
-			(font
-				(size 0.6 0.6)
-				(thickness 0.1)
-			)
-		)
-	)
-	(pad "1" thru_hole rect
-		(at -3.75 0)
-		(size 1.6 1.6)
-		(drill 0.8)
-		(layers "*.Cu" "*.Mask")
-		(remove_unused_layers no)
-		(uuid "f23ef88b-dce0-4fb3-8850-c5827978f973")
-	)
-	(pad "2" thru_hole circle
-		(at 3.75 0)
-		(size 1.6 1.6)
-		(drill 0.8)
-		(layers "*.Cu" "*.Mask")
-		(remove_unused_layers no)
-		(uuid "36528571-d897-4c5d-ae9f-a651a4afbc6b")
-	)
-	(embedded_fonts no)
+	(fp_rect (start -3.2 -1.5) (end 3.2 1.5) (stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
+	(fp_rect (start -3.4 -1.7) (end 3.4 1.7) (stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
+	(pad "1" thru_hole circle (at -3.75 0) (size 1.6 1.6) (drill 0.8) (layers "*.Cu" "*.Mask"))
+	(pad "2" thru_hole circle (at 3.75 0) (size 1.6 1.6) (drill 0.8) (layers "*.Cu" "*.Mask"))
 )

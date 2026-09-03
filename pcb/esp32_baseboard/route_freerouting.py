@@ -33,21 +33,21 @@ SES = HERE / "out_freerouting" / "esp32_baseboard.ses"
 UNROUTED = HERE / "out_freerouting" / "unrouted.kicad_pcb"
 ROUTED = HERE / "out_freerouting" / "routed.kicad_pcb"
 
-# Tuning handed to the autorouter. Raise passes if nets are left unrouted; the
-# via cost steers it towards same-layer routes, matching policy A1.
+# Tuning handed to the autorouter. Raise passes if nets are left unrouted.
+# Via cost: moderate — A0 wants pad→via→B.Cu fan-out, so vias are expected;
+# too-high -vc keeps long runs on F under modules (violates A0).
 # -mt 1 is not optional: FreeRouting itself warns that multi-threaded
 # optimisation "is known to generate clearance violations".
 # (passes, via cost) per attempt: different effort settings give different
 # results, and the loop stops at the first that routes everything.
-# (max passes, via cost). FreeRouting is stochastic and this board is
-# tight around the TMC/MCU channel: a single parameter pair closes every
-# net perhaps two runs in three, so several are tried and the first that
-# leaves nothing unconnected wins. Six pairs put a failed board at a few
-# percent instead of one in five.
-FR_ATTEMPTS = ((30, 60), (60, 30), (100, 100),
-               (50, 100), (200, 50), (150, 20))
+FR_ATTEMPTS = ((40, 40), (60, 25), (100, 50),
+               (80, 20), (200, 35), (150, 15))
+if os.environ.get("FR_QUICK") == "1":
+    FR_ATTEMPTS = ((40, 40), (60, 25))
 FR_THREADS = 1
 FR_TIMEOUT_S = 900
+if os.environ.get("FR_QUICK") == "1":
+    FR_TIMEOUT_S = 420
 
 
 MIN_JAVA = 21
@@ -108,11 +108,25 @@ def export_dsn() -> None:
     Left in, FreeRouting treats the in-house tracks as fixed wiring and only
     fills the gaps; we want it to solve the whole board so the two routers can
     be compared on equal terms.
+
+    GND pour zones (A10) are also stripped for the DSN: FreeRouting treats
+    copper pours as keep-outs for other nets and leaves dozens of opens. Zones
+    are re-added and filled after SES merge (fill_gnd_zones).
     """
     import pcbnew
 
     DSN.parent.mkdir(parents=True, exist_ok=True)
-    board = pcbnew.LoadBoard(str(PCB))
+    # KiCad 10 pcbnew.Remove(zone) raises on ZONE proxies — strip in text first.
+    raw = PCB.read_text(encoding="utf-8")
+    stripped = re.sub(r"\n\t\(zone\n(?:.*?\n)*?\t\)", "", raw, flags=re.M)
+    # Also drop filled polygon leftovers if any
+    stripped = re.sub(
+        r"\n\t\(zone\b[\s\S]*?\n\t\)", "", stripped
+    )
+    UNROUTED.write_text(stripped, encoding="utf-8")
+    board = pcbnew.LoadBoard(str(UNROUTED))
+    if board is None:
+        raise SystemExit("LoadBoard failed after zone strip")
     for item in list(board.GetTracks()):
         board.Remove(item)
     pcbnew.SaveBoard(str(UNROUTED), board)
@@ -120,18 +134,87 @@ def export_dsn() -> None:
     if not pcbnew.ExportSpecctraDSN(board, str(DSN)):
         raise SystemExit("ExportSpecctraDSN failed")
     _inject_a7_rules()
-    print(f"DSN -> {DSN} (tracks stripped, A7 clearances injected)")
+    print(f"DSN -> {DSN} (tracks+zones stripped, A7 clearances injected)")
 
 
-# PCB_REVIEW A7 wants HOLE_EXTRA (0.25) on top of the normal clearance (0.20)
-# around every drilled hole, i.e. 0.45 mm of copper-to-copper. KiCad's netclass
-# only carries the 0.20, so the extra has to be handed to the router explicitly
-# through the DSN or it routes to the looser rule and trips A7 afterwards.
-# A7 asks for 0.25 mm between a hole's copper and any other net's track edge.
-# Handing FreeRouting exactly that leaves the checker's own arithmetic sitting
-# on equality, where a rounding step either way is a violation, so the router
-# is told to keep 0.50 mm and the check has 0.05 mm of margin to work with.
-A7_CLEARANCE_UM = 500
+def _iter_zones(board):
+    """KiCad 10: after Specctra, board.Zones() may be a broken proxy."""
+    try:
+        return list(board.Zones())
+    except AttributeError:
+        n = board.GetAreaCount()
+        return [board.GetArea(i) for i in range(n)]
+
+
+def ensure_gnd_zones(board) -> int:
+    """Add F.Cu + B.Cu GND pour outlines if missing (EMI A10)."""
+    import pcbnew
+
+    existing = set()
+    for z in _iter_zones(board):
+        if z.GetNetname() == "GND":
+            existing.add(z.GetLayer())
+    net = board.FindNet("GND")
+    if net is None or net.GetNetCode() <= 0:
+        print("  warn: GND net missing — skip pour")
+        return 0
+    # Board outline from Edge.Cuts bbox
+    bbox = board.GetBoardEdgesBoundingBox()
+    margin = pcbnew.FromMM(0.5)
+    x0, y0 = bbox.GetLeft() + margin, bbox.GetTop() + margin
+    x1, y1 = bbox.GetRight() - margin, bbox.GetBottom() - margin
+    added = 0
+    for layer_name, layer_id, prio in (
+        ("B.Cu", pcbnew.B_Cu, 0),
+        ("F.Cu", pcbnew.F_Cu, 1),
+    ):
+        if layer_id in existing:
+            continue
+        zone = pcbnew.ZONE(board)
+        zone.SetNetCode(net.GetNetCode())
+        zone.SetLayer(layer_id)
+        zone.SetAssignedPriority(prio)
+        zone.SetPadConnection(pcbnew.ZONE_CONNECTION_THERMAL)
+        zone.SetLocalClearance(pcbnew.FromMM(0.35))
+        zone.SetMinThickness(pcbnew.FromMM(0.25))
+        zone.SetThermalReliefGap(pcbnew.FromMM(0.5))
+        zone.SetThermalReliefSpokeWidth(pcbnew.FromMM(0.5))
+        zone.SetIsFilled(False)
+        chain = pcbnew.SHAPE_LINE_CHAIN()
+        for x, y in ((x0, y0), (x1, y0), (x1, y1), (x0, y1)):
+            chain.Append(pcbnew.VECTOR2I(x, y))
+        chain.SetClosed(True)
+        zone.Outline().AddOutline(chain)
+        board.Add(zone)
+        added += 1
+    return added
+
+
+def fill_gnd_zones(pcb: Path) -> None:
+    """Ensure GND pours exist and refill after SES merge (EMI A10 / README N1)."""
+    import pcbnew
+
+    board = pcbnew.LoadBoard(str(pcb))
+    if board is None:
+        raise SystemExit(f"fill_gnd_zones: LoadBoard failed for {pcb}")
+    added = ensure_gnd_zones(board)
+    filler = pcbnew.ZONE_FILLER(board)
+    filler.Fill(_iter_zones(board))
+    pcbnew.SaveBoard(str(pcb), board)
+    n = sum(1 for z in _iter_zones(board) if z.GetNetname() == "GND")
+    print(f"GND zones filled on {pcb.name} ({n} zone(s)"
+          + (f", +{added} created" if added else "") + ")")
+
+
+# PCB_REVIEW A7 asks for 0.45 mm minimum (0.25 HOLE_EXTRA + 0.20 netclass).
+# 500 um cleared that DRC-minimum fine, but a render at that setting still
+# showed traces visibly grazing past unrelated pad rings (m2_opto4, 2026-09-03)
+# -- passing the letter of A7 isn't the same as a gap the eye reads as clear.
+# 900 um routes the small, sparse m2_opto4 module fine (0 unconnected, first
+# attempt) but is too tight a budget for THIS carrier: 63 nets across a much
+# denser 180x145mm board left 3-5 nets unrouted across 6 attempts at 900 um.
+# 700 um is the compromise -- still meaningfully wider than the 500 um floor.
+A7_CLEARANCE_UM = 700
 A7_TYPES = ("wire_pin", "via_pin", "wire_via", "via_via", "pin_pin")
 
 
@@ -161,7 +244,59 @@ def _inject_a7_rules() -> None:
     marker = "      (clearance 50 (type smd_smd))"
     if marker not in text:
         raise SystemExit("DSN rule block not in the expected shape")
-    DSN.write_text(text.replace(marker, marker + extra, 1), encoding="utf-8")
+    text = text.replace(marker, marker + extra, 1)
+
+    # PCB_REVIEW A8: only the easy-to-fab through-via 0.8/0.4 mm.
+    text = re.sub(
+        r'\(via "[^"]*"(?:\s+"[^"]*")*\)',
+        '(via "Via[0-1]_800:400_um")',
+        text,
+        count=1,
+    )
+
+    # PCB_REVIEW A0: prefer long runs on B.Cu (back). Classic 2-layer strategy:
+    # B = horizontal preferred (board is wider than tall → east-west buses),
+    # F = vertical preferred (fan-out / short stubs only). Against-prefer cost
+    # on F is raised so FreeRouting avoids long F tracks under modules.
+    text = text.replace(
+        """    (layer F.Cu
+      (type signal)
+      (property
+        (index 0)
+      )
+    )
+    (layer B.Cu
+      (type signal)
+      (property
+        (index 1)
+      )
+    )""",
+        """    (layer F.Cu
+      (type signal)
+      (direction vertical)
+      (property
+        (index 0)
+      )
+    )
+    (layer B.Cu
+      (type signal)
+      (direction horizontal)
+      (property
+        (index 1)
+      )
+    )""",
+        1,
+    )
+    # Nudge cost: stay with preferred direction (cheap on B horizontal buses).
+    if "(against_prefer_direction_trace_costs" not in text:
+        text = text.replace(
+            marker + extra,
+            marker + extra
+            + "\n      (prefer_direction_trace_costs 1.0)"
+            + "\n      (against_prefer_direction_trace_costs 2.5)",
+            1,
+        )
+    DSN.write_text(text, encoding="utf-8")
 
 
 def force_headless() -> None:
@@ -374,8 +509,9 @@ def main() -> int:
     # Promote: the routed board becomes the deliverable. It lives beside
     # fp-lib-table here, which the out_freerouting/ copy does not.
     shutil.copy2(ROUTED, PCB)
+    fill_gnd_zones(PCB)
     print(f"promoted -> {PCB.name}")
-    return 0
+    return 0 if best == 0 else 1
 
 
 if __name__ == "__main__":

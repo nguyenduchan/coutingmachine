@@ -4,13 +4,13 @@
 All parts on TOP (F.Cu); B.Cu is routing only.
 
 Power path:
-  12V-3A PSU --J1--> F1 PTC --> +12V (D1 TVS to GND)
+  12V-4.2A PSU --J1--> D3+F1(5x20)+D1 on carrier --> +12V ; PC817x4 on carrier (was M2)
        --> MP1584EN U2  -> +5V      -> ESP32-S3 / logic / TFT / buzzer
        --> +12V rail ----> AOD4184 (J16) -> 370 air pump 12V (3s / 5min)
        --> TMC2209 (U3) VM=12V + VIO=3V3; NEMA17 on U3 Mot pins (no J2)
-       --> ULN2003 x3 (U5-U7) COM=+12V, IN from GPIO direct -> J5-J7 28BYJ-48
-Jacks: J5-J7 BYJ, J8/J10/J12 HOME endstop 1×04 (2 NC), J14 BUP, J15 buzzer, J16 AOD4184,
-       J17+J23 TFT+touch, J18 EC11, J15 buzzer. ULN via Shopee 74HC595-24IO module (3x595) east of ESP32.
+       --> ULN2003 driver modules x3 (U5-U7) IN from 595; 28BYJ on module JST (no J5-J7)
+Jacks: J8/J10/J12 HOME XH-2, J14 BUP XH-4, J15 buzzer XH-3, J16 AOD4184 XH-4,
+       J17+J23 TFT, J18 ENC XH-4; PC817x4 on carrier. ULN via 74HC595-24IO (3x595) east of ESP32.
 MCU: ESP32-S3-DevKitC-1 (44-pin, 2x22 @ 2.54, row 25.4). Prefer N16R8;
      do not use GPIO35-37 on octal flash boards.
 """
@@ -25,6 +25,7 @@ import uuid
 from pathlib import Path
 
 from placement_floorplan import balanced_placement
+from gen_submodules import _m2_layout
 from s3_pinmap import (
     BUZZER_GPIO,
     DRV_MOTORS,
@@ -56,14 +57,16 @@ ROOT = Path(__file__).resolve().parent
 LIB = ROOT / "libraries"
 PRETTY = LIB / "ESP32_Carrier.pretty"
 
-# Final copper: 2-layer A* maze (same-layer bends OK). Manual track_* become no-ops.
-# Keep the legacy hand-routing helpers disabled: their track()/via() calls are
-# no-ops whenever this is True, and the copper comes from a router instead.
-USE_MAZE_AUTOROUTE = True
-# The in-house maze router is now the fallback: FreeRouting does the routing
-# (see route_freerouting.py). PCB_SKIP_MAZE=1 emits placement + nets only and
-# hands the board straight to FreeRouting -- seconds instead of ~25 minutes.
-RUN_MAZE = os.environ.get("PCB_SKIP_MAZE", "") != "1"
+# Placement-only: footprints + nets + Eco silk — no tracks / vias / autoroute.
+# Set EMIT_TRACKS=1 in the environment to restore copper routing helpers.
+EMIT_TRACKS = os.environ.get("EMIT_TRACKS", "") == "1"
+
+# Legacy name: when True, track_*/via() are no-ops (copper from maze/FreeRouting).
+USE_MAZE_AUTOROUTE = not EMIT_TRACKS
+
+# In-house maze (slow). Default off — placement only unless EMIT_TRACKS=1 and
+# PCB_SKIP_MAZE is unset.
+RUN_MAZE = EMIT_TRACKS and os.environ.get("PCB_SKIP_MAZE", "") != "1"
 
 PITCH = 2.54
 ROW_SPACING = 25.4
@@ -165,21 +168,56 @@ BUZZER_HEADER = [("1", "VCC5"), ("2", "GND"), ("3", "SIG")]
 MOSFET_HEADER = [("1", "PWM"), ("2", "GND"), ("3", "+12V"), ("4", "FAN-")]
 # KY-040 / EC11: GND, 3V3, CLK(A), DT(B) — SW not on header (Enter on screen)
 ENC_HEADER = [("1", "GND"), ("2", "3V3"), ("3", "ENC_A"), ("4", "ENC_B")]
+# Pluggable sub-modules (see gen_submodules.py / modules/)
+# M1/M2 mate = straight 2.54 pin header (Shopee PC817-style)
+# Field I/O jacks (HOME/BUP/BLW/ENC/BZ) stay JST-XH keyed (pitch 2.5 mm)
+XH_PITCH = 2.5  # JST-XH field jacks only
+# On-board input protect (was pluggable M1): D3 series + F1 5×20 + D1 TVS
+FUSE_5X20_HALF = 11.25  # pad centers ±11.25 mm
+FUSE_5X20_FP = "Fuse_Holder_5x20_Open"
+# M2: two separate rows — IN 1×6 + OUT 1×5
+OPTO_IN_FP = "PinHeader_1x06_OptoIN"
+OPTO_IN_PINS = 6
+OPTO_IN_HEADER = [
+    ("1", "IN1"), ("2", "IN2"), ("3", "IN3"), ("4", "IN4"),
+    ("5", "SNS"), ("6", "GND"),
+]
+OPTO_IN_SYM = "Conn_1x06_OptoIN"
+OPTO_OUT_FP = "PinHeader_1x05_OptoOUT"
+OPTO_OUT_PINS = 5
+OPTO_OUT_HEADER = [
+    ("1", "OUT1"), ("2", "OUT2"), ("3", "OUT3"), ("4", "OUT4"), ("5", "3V3"),
+]
+OPTO_OUT_SYM = "Conn_1x05_OptoOUT"
+# Legacy aliases (docs / older helpers)
+OPTO4_FP = OPTO_IN_FP
+OPTO4_PINS = OPTO_IN_PINS
+OPTO4_HEADER = OPTO_IN_HEADER
+OPTO4_SYM = OPTO_IN_SYM
+HOME_FP = "JST_XH_02_Socket"
+HOME_HEADER = [("1", "SIG"), ("2", "SNS")]
+BUP_XH_FP = "JST_XH_04_Socket"
+BZ_XH_FP = "JST_XH_03_Socket"
+BLW_XH_FP = "JST_XH_04_Socket"
+ENC_XH_FP = "JST_XH_04_Socket"
 ENC_PINS = len(ENC_HEADER)
-ENC_FP = "PinHeader_1x04_ENC"
-ENC_SYM = "Conn_1x04_ENC"
+ENC_FP = ENC_XH_FP
+ENC_SYM = "Conn_JST_XH_04_ENC"
 
 VIA12_DRILL = 0.6
 VIA12_DIA = 1.1
 
 # Carrier; modules keep ≥ MODULE_EDGE_CLEAR from Edge.Cuts.
-# Width grown for ≥8 mm Eco gaps + ≥10 mm MCU keepout (E11.3).
-BOARD_W = 220.0
-BOARD_H = 160.0
+# Compact target 180×150 (hand floorplan); E11 gaps unchanged.
+BOARD_W = 180.0
+BOARD_H = 145.0  # 5 mm multiple; Y layout frozen to LAYOUT_REF_H
 BOARD_W_EXTRA = BOARD_W - 185.0
-MODULE_EDGE_CLEAR = 10.0  # min distance module courtyard → board edge
+# Keep module world XY from last green 180×155 pack when Edge.Cuts shrinks.
+LAYOUT_REF_H = 155.0
+MODULE_EDGE_CLEAR = 5.0  # min distance module courtyard → board edge
 MODULE_MCU_CLEAR = 10.0  # min gap any non-MCU Eco ↔ MCU Eco
-MODULE_CLUSTER_GAP = 8.0  # min gap between same-face Eco boxes (E11.2)
+MODULE_CLUSTER_GAP = 6.0  # was 8; on-board OPTO stack needs corridor room (E11.2)
+
 SILK_TEXT_MIN_MM = 0.8  # KiCad board-setup silk text minimum
 MOUNT_INSET = 3.5  # M3 hole centers from Edge.Cuts (mounts may sit in margin)
 MOUNT_DRILL = 3.2
@@ -219,20 +257,11 @@ BYJ_HEADER = [("1", "A"), ("2", "B"), ("3", "C"), ("4", "D"), ("5", "+12V")]
 BYJ_FP = "PinHeader_1x05_BYJ"
 BYJ_SYM = "Conn_1x05_BYJ"
 
-# CNC/3D endstop module 1×04 (Shopee). VCC+GND unused on carrier; SIG+SNS =
-# dry NC → opto (+12V_SNS / OPTO_INx). Keep isolation via PC817.
-ENDSTOP_FP = "PinHeader_1x04_Endstop"
-ENDSTOP_SYM = "Conn_1x04_Endstop"
-ENDSTOP_HEADER = [
-    ("1", "VCC"),  # unused on PCB
-    ("2", "GND"),  # unused
-    ("3", "SIG"),  # → OPTO_INx
-    ("4", "SNS"),  # → +12V_SNS
-]
-ENDSTOP_SHOPEE = (
-    "https://shopee.vn/Module-c%C3%B4ng-t%E1%BA%AFc-h%C3%A0nh-tr%C3%ACnh-Endstop-CNC-Printer-3D"
-    "-i.951399259.23532922598"
-)
+# Dry NC limit switch + JST-XH 2P (SIG/SNS) — not CNC 1×04 module.
+ENDSTOP_FP = HOME_FP
+ENDSTOP_SYM = "Conn_JST_XH_02"
+ENDSTOP_HEADER = HOME_HEADER
+ENDSTOP_NOTE = "Dry NC limit + JST-XH 2P (SIG/SNS); no CNC 4-pin module"
 
 # DIP-16 (ULN2003AN / 74HC595)
 DIP16_ROW = 7.62
@@ -429,10 +458,10 @@ def write_tmc2209_footprint() -> Path:
     a('\t\t(layer "F.SilkS")')
     a("\t\t(effects (font (size 1 1) (thickness 0.15)))")
     a("\t)")
-    a('\t(property "Value" "TMC2209_StepStick"')
+    a('\t(property "Value" "TMC2209"')
     a(f'\t\t(at 0 {TMC_H / 2 + 1.8} 0)')
-    a('\t\t(layer "F.Fab")')
-    a("\t\t(effects (font (size 1 1) (thickness 0.15)))")
+    a('\t\t(layer "F.SilkS")')
+    a("\t\t(effects (font (size 0.9 0.9) (thickness 0.12)))")
     a("\t)")
     a("\t(attr through_hole)")
     for layer, w in (("F.CrtYd", 0.05), ("F.Fab", 0.1), ("F.SilkS", 0.12)):
@@ -443,6 +472,16 @@ def write_tmc2209_footprint() -> Path:
         a("\t\t(fill none)")
         a(f'\t\t(layer "{layer}")')
         a("\t)")
+    a('\t(fp_text user "THAY TMC2209"')
+    a(f"\t\t(at 0 {TMC_H / 2 + 3.4} 0)")
+    a('\t\t(layer "F.SilkS")')
+    a('\t\t(effects (font (size 0.7 0.7) (thickness 0.1)))')
+    a("\t)")
+    a('\t(fp_text user "NEMA=Mot pins"')
+    a(f"\t\t(at 0 {TMC_H / 2 + 4.8} 0)")
+    a('\t\t(layer "F.SilkS")')
+    a('\t\t(effects (font (size 0.65 0.65) (thickness 0.1)))')
+    a("\t)")
     a('\t(fp_text user "CTRL"')
     a(f"\t\t(at {-hx - 3.5} 0 90)")
     a('\t\t(layer "F.SilkS")')
@@ -488,6 +527,171 @@ def write_tmc2209_footprint() -> Path:
 
 def uid() -> str:
     return str(uuid.uuid4())
+
+
+def inject_module_groups(
+    pcb_text: str,
+    cluster_boxes: list[tuple],
+    eco_gfx: dict[str, list[str]],
+    uid_fn=uid,
+    *,
+    label_pad_mm: float = 12.0,
+) -> str:
+    """KiCad groups: footprints + Eco outline + board silk/labels per cluster."""
+    import re as _re
+
+    def _hit(x: float, y: float, pad: float) -> str | None:
+        best = None
+        best_area = 1e30
+        for _f, lab, x0, y0, x1, y1 in cluster_boxes:
+            if x0 - pad <= x <= x1 + pad and y0 - pad <= y <= y1 + pad:
+                area = (x1 - x0) * (y1 - y0)
+                if area < best_area:
+                    best_area = area
+                    best = lab
+        return best
+
+    members: dict[str, list[str]] = {
+        lab: list(eco_gfx.get(lab, [])) for _f, lab, *_rest in cluster_boxes
+    }
+
+    # --- Footprints ---
+    fps: list[tuple[str, float, float, str]] = []
+    for m in _re.finditer(
+        r'\n\t\(footprint [^\n]+\n'
+        r'\t\t\(layer [^\n]+\n'
+        r'\t\t\(uuid "([^"]+)"\)\n'
+        r"\t\t\(at ([-\d.]+) ([-\d.]+)(?: ([-\d.]+))?\)"
+        r"[\s\S]*?"
+        r'\(property "Reference" "([^"]+)"',
+        pcb_text,
+    ):
+        fps.append((m.group(1), float(m.group(2)), float(m.group(3)), m.group(5)))
+
+    ungrouped_fp: list[str] = []
+    for fuuid, fx, fy, ref in fps:
+        if ref.startswith("H"):
+            continue
+        hit = _hit(fx, fy, 0.05)
+        if hit is None:
+            ungrouped_fp.append(ref)
+            continue
+        members.setdefault(hit, []).append(fuuid)
+
+    # --- Board graphics (silk / Cmts / Eco labels already in eco_gfx) ---
+    # gr_text
+    for m in _re.finditer(
+        r'\n\t\(gr_text "((?:\\.|[^"\\])*)"\s*\n'
+        r"\t\t\(at ([-\d.]+) ([-\d.]+)(?: ([-\d.]+))?\)\s*\n"
+        r'\t\t\(layer "([^"]+)"\)[\s\S]*?'
+        r'\t\t\(uuid "([^"]+)"\)',
+        pcb_text,
+    ):
+        layer, u = m.group(5), m.group(6)
+        if layer.startswith("Eco"):
+            continue  # already via eco_gfx
+        x, y = float(m.group(2)), float(m.group(3))
+        hit = _hit(x, y, label_pad_mm)
+        if hit:
+            members.setdefault(hit, []).append(u)
+
+    # gr_rect — center of box (skip Eco outlines)
+    for m in _re.finditer(
+        r"\n\t\(gr_rect\s*\n"
+        r"\t\t\(start ([-\d.]+) ([-\d.]+)\)\s*\n"
+        r"\t\t\(end ([-\d.]+) ([-\d.]+)\)[\s\S]*?"
+        r'\t\t\(layer "([^"]+)"\)\s*\n'
+        r'\t\t\(uuid "([^"]+)"\)',
+        pcb_text,
+    ):
+        layer, u = m.group(5), m.group(6)
+        if layer.startswith("Eco") or layer == "Edge.Cuts":
+            continue
+        x0, y0, x1, y1 = map(float, m.group(1, 2, 3, 4))
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+        hit = _hit(cx, cy, label_pad_mm)
+        if hit:
+            members.setdefault(hit, []).append(u)
+
+    # gr_poly — centroid of pts
+    for m in _re.finditer(
+        r"\n\t\(gr_poly\s*\n"
+        r"\t\t\(pts\s*\n"
+        r"((?:\t\t\t\(xy [-\d.]+ [-\d.]+\)\n)+)"
+        r"\t\t\)[\s\S]*?"
+        r'\t\t\(layer "([^"]+)"\)\s*\n'
+        r'\t\t\(uuid "([^"]+)"\)',
+        pcb_text,
+    ):
+        layer, u = m.group(2), m.group(3)
+        if layer.startswith("Eco"):
+            continue
+        pts = [
+            (float(a), float(b))
+            for a, b in _re.findall(r"\(xy ([-\d.]+) ([-\d.]+)\)", m.group(1))
+        ]
+        if not pts:
+            continue
+        cx = sum(p[0] for p in pts) / len(pts)
+        cy = sum(p[1] for p in pts) / len(pts)
+        hit = _hit(cx, cy, label_pad_mm)
+        if hit:
+            members.setdefault(hit, []).append(u)
+
+    # gr_line — midpoint (assembly key ticks etc.)
+    for m in _re.finditer(
+        r"\n\t\(gr_line\s*\n"
+        r"\t\t\(start ([-\d.]+) ([-\d.]+)\)\s*\n"
+        r"\t\t\(end ([-\d.]+) ([-\d.]+)\)[\s\S]*?"
+        r'\t\t\(layer "([^"]+)"\)\s*\n'
+        r'\t\t\(uuid "([^"]+)"\)',
+        pcb_text,
+    ):
+        layer, u = m.group(5), m.group(6)
+        if layer.startswith("Eco") or layer == "Edge.Cuts":
+            continue
+        x0, y0, x1, y1 = map(float, m.group(1, 2, 3, 4))
+        hit = _hit((x0 + x1) / 2, (y0 + y1) / 2, label_pad_mm)
+        if hit:
+            members.setdefault(hit, []).append(u)
+
+    blocks: list[str] = []
+    n_labels = 0
+    for _f, lab, *_rest in cluster_boxes:
+        uuids = members.get(lab) or []
+        seen: set[str] = set()
+        uniq = []
+        for u in uuids:
+            if u not in seen:
+                seen.add(u)
+                uniq.append(u)
+        if not uniq:
+            continue
+        # count extras beyond footprints+eco (approx): total - eco
+        eco_n = len(eco_gfx.get(lab, []))
+        n_labels += max(0, len(uniq) - eco_n)
+        gname = lab.split(" - ")[0].strip() if " - " in lab else lab[:48]
+        mem = "\n".join(f'\t\t\t"{u}"' for u in uniq)
+        blocks.append(
+            f'\t(group "{gname}"\n'
+            f'\t\t(uuid "{uid_fn()}")\n'
+            f"\t\t(members\n{mem}\n\t\t)\n"
+            f"\t)"
+        )
+
+    msg = f"  groups: {len(blocks)} clusters (+silk/labels in group)"
+    if ungrouped_fp:
+        msg += f"; ungrouped refs: {ungrouped_fp}"
+    print(msg)
+
+    if not blocks:
+        return pcb_text
+    insert = "\n".join(blocks) + "\n"
+    stripped = pcb_text.rstrip()
+    if not stripped.endswith(")"):
+        return pcb_text + insert
+    idx = stripped.rfind(")")
+    return stripped[:idx] + insert + ")\n"
 
 
 
@@ -759,11 +963,85 @@ def write_dip16_footprint(name: str, descr: str, silk_label: str) -> Path:
 
 
 def write_uln2003_footprint() -> Path:
-    return write_dip16_footprint(
+    """Carrier female 1×6 for M3 ULN2003 daughter (IN1-4 + GND + +12V).
+
+    Commercial Shopee ULN boards are Dupont-only and cannot mate flush; M3
+    provides the pin-header mate + JST-XH 5P for 28BYJ. Pitch stays PITCH so
+    pad centers match `_emit_uln_module` / live routing.
+    """
+    labels = ["IN1", "IN2", "IN3", "IN4", "GND", "+12V"]
+    n = len(labels)
+    span = (n - 1) * PITCH
+    lines: list[str] = []
+    a = lines.append
+    a('(footprint "ULN2003_Module"')
+    a("\t(version 20260206)")
+    a('\t(generator "gen_power_carrier.py")')
+    a('\t(generator_version "2.4")')
+    a('\t(layer "F.Cu")')
+    a(
+        '\t(descr "1x6 keyed socket for M3 ULN2003 daughter (IN1-4 GND +12V); '
+        '28BYJ on M3 JST-XH 5P")'
+    )
+    a('\t(tags "keyed header ULN2003 M3 28BYJ")')
+    a('\t(property "Reference" "REF**"')
+    a("\t\t(at 0 -3.8 0)")
+    a('\t\t(layer "F.SilkS")')
+    a("\t\t(effects (font (size 0.9 0.9) (thickness 0.12)))")
+    a("\t)")
+    a('\t(property "Value" "ULN2003"')
+    a(f"\t\t(at 0 {span + 3.8} 0)")
+    a('\t\t(layer "F.SilkS")')
+    a("\t\t(effects (font (size 0.85 0.85) (thickness 0.12)))")
+    a("\t)")
+    a("\t(attr through_hole)")
+    for layer, w in (("F.CrtYd", 0.05), ("F.Fab", 0.1), ("F.SilkS", 0.12)):
+        a("\t(fp_rect")
+        a("\t\t(start -3.2 -2.0)")
+        a(f"\t\t(end 3.2 {span + 2.0})")
+        a(f"\t\t(stroke (width {w}) (type solid))")
+        a("\t\t(fill none)")
+        a(f'\t\t(layer "{layer}")')
+        a("\t)")
+    a("\t(fp_line (start -3.2 -0.6) (end -4.2 0)")
+    a('\t\t(stroke (width 0.15) (type solid)) (layer "F.SilkS")')
+    a("\t)")
+    a("\t(fp_line (start -4.2 0) (end -3.2 0.6)")
+    a('\t\t(stroke (width 0.15) (type solid)) (layer "F.SilkS")')
+    a("\t)")
+    a('\t(fp_text user "KEY"')
+    a("\t\t(at -5.2 0 0)")
+    a('\t\t(layer "F.SilkS")')
+    a('\t\t(effects (font (size 0.7 0.7) (thickness 0.1)))')
+    a("\t)")
+    a('\t(fp_text user "cam M3 ULN2003 (board roi, khong day Dupont)"')
+    a(f"\t\t(at 0 {span + 5.4} 0)")
+    a('\t\t(layer "F.SilkS")')
+    a('\t\t(effects (font (size 0.6 0.6) (thickness 0.1)))')
+    a("\t)")
+    for i, lab in enumerate(labels):
+        y = i * PITCH
+        a(f'\t(fp_text user "{lab}"')
+        a(f"\t\t(at 4.2 {y} 0)")
+        a('\t\t(layer "F.SilkS")')
+        a("\t\t(effects (font (size 0.65 0.65) (thickness 0.1)) (justify left))")
+        a("\t)")
+        shape = "rect" if i == 0 else "circle"
+        a(f'\t(pad "{i + 1}" thru_hole {shape}')
+        a(f"\t\t(at 0 {y})")
+        a("\t\t(size 1.6 1.6)")
+        a("\t\t(drill 0.9)")
+        a('\t\t(layers "*.Cu" "*.Mask")')
+        a("\t)")
+    a(")")
+    out = PRETTY / "ULN2003_Module.kicad_mod"
+    out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    write_dip16_footprint(
         "ULN2003AN",
-        "ULN2003AN DIP-16 darlington array for 28BYJ-48 (COM=+12V)",
+        "DIP-16 on M3 daughter — carrier uses ULN2003_Module 1x6 socket",
         "ULN2003",
     )
+    return out
 
 
 def write_74hc595_footprint() -> Path:
@@ -929,15 +1207,47 @@ def write_screw_terminal_footprint() -> Path:
     a("\t\t(stroke (width 0.25) (type solid))")
     a('\t\t(layer "F.SilkS")')
     a("\t)")
-    a('\t(fp_text user "+12V"')
+    a('\t(fp_text user "+12V_RAW"')
     a(f"\t\t(at {-TB_PITCH / 2} {y0 - 1.6} 0)")
     a('\t\t(layer "F.SilkS")')
-    a('\t\t(effects (font (size 0.8 0.8) (thickness 0.12)))')
+    a('\t\t(effects (font (size 0.75 0.75) (thickness 0.12)))')
     a("\t)")
     a('\t(fp_text user "GND"')
     a(f"\t\t(at {TB_PITCH / 2} {y0 - 1.6} 0)")
     a('\t\t(layer "F.SilkS")')
     a('\t\t(effects (font (size 0.8 0.8) (thickness 0.12)))')
+    a("\t)")
+    a('\t(fp_text user "+"')
+    a(f"\t\t(at {-TB_PITCH / 2} 0 0)")
+    a('\t\t(layer "F.SilkS")')
+    a('\t\t(effects (font (size 1.4 1.4) (thickness 0.2)))')
+    a("\t)")
+    a('\t(fp_text user "-"')
+    a(f"\t\t(at {TB_PITCH / 2} 0 0)")
+    a('\t\t(layer "F.SilkS")')
+    a('\t\t(effects (font (size 1.4 1.4) (thickness 0.2)))')
+    a("\t)")
+    a('\t(fp_text user "J1 12V PSU"')
+    a(f"\t\t(at 0 {y0 - 3.2} 0)")
+    a('\t\t(layer "F.SilkS")')
+    a('\t\t(effects (font (size 0.85 0.85) (thickness 0.12)))')
+    a("\t)")
+    a('\t(fp_text user "RED=+  BLK=-"')
+    a(f"\t\t(at 0 {y1 + 3.2} 0)")
+    a('\t\t(layer "F.SilkS")')
+    a('\t\t(effects (font (size 0.7 0.7) (thickness 0.1)))')
+    a("\t)")
+    a('\t(fp_text user "NO REVERSE"')
+    a(f"\t\t(at 0 {y1 + 1.8} 0)")
+    a('\t\t(layer "F.SilkS")')
+    a('\t\t(effects (font (size 0.65 0.65) (thickness 0.1)))')
+    a("\t)")
+    # Triangular polarity cue toward + pad
+    a("\t(fp_poly")
+    a(f"\t\t(pts (xy {-TB_PITCH / 2 - 1.2} 2.8) (xy {-TB_PITCH / 2 + 1.2} 2.8) (xy {-TB_PITCH / 2} 4.2))")
+    a('\t\t(stroke (width 0.12) (type solid))')
+    a('\t\t(fill solid)')
+    a('\t\t(layer "F.SilkS")')
     a("\t)")
 
     a('\t(pad "1" thru_hole rect')
@@ -960,8 +1270,142 @@ def write_screw_terminal_footprint() -> Path:
     return out
 
 
+def write_jst_xh_socket(n_pins: int, fp_name: str, pin_names: list[str], title: str) -> Path:
+    """JST-XH nP female — polarized shroud, pitch 2.5 mm."""
+    pitch = XH_PITCH
+    span = (n_pins - 1) * pitch
+    lines: list[str] = []
+    a = lines.append
+    a(f'(footprint "{fp_name}"')
+    a("\t(version 20260206)")
+    a('\t(generator "gen_power_carrier.py")')
+    a('\t(layer "F.Cu")')
+    a(f'\t(descr "JST-XH {n_pins}P female keyed — {title}")')
+    a('\t(tags "JST XH keyed polarized anti-reverse")')
+    a('\t(property "Reference" "J**"')
+    a(f"\t\t(at 0 {-2.8} 0)")
+    a('\t\t(layer "F.SilkS")')
+    a("\t\t(effects (font (size 1 1) (thickness 0.15)))")
+    a("\t)")
+    a(f'\t(property "Value" "{fp_name}"')
+    a(f"\t\t(at 0 {span + 2.8} 0)")
+    a('\t\t(layer "F.Fab")')
+    a("\t\t(effects (font (size 0.8 0.8) (thickness 0.12)))")
+    a("\t)")
+    a("\t(attr through_hole)")
+    for layer, w in (("F.CrtYd", 0.05), ("F.Fab", 0.1), ("F.SilkS", 0.12)):
+        a("\t(fp_rect")
+        a(f"\t\t(start -3.2 {-2.0})")
+        a(f"\t\t(end 3.2 {span + 2.0})")
+        a(f"\t\t(stroke (width {w}) (type solid))")
+        a("\t\t(fill none)")
+        a(f'\t\t(layer "{layer}")')
+        a("\t)")
+    a("\t(fp_line")
+    a("\t\t(start -3.2 -0.6)")
+    a("\t\t(end -4.2 0)")
+    a("\t\t(stroke (width 0.15) (type solid))")
+    a('\t\t(layer "F.SilkS")')
+    a("\t)")
+    a("\t(fp_line")
+    a("\t\t(start -4.2 0)")
+    a("\t\t(end -3.2 0.6)")
+    a("\t\t(stroke (width 0.15) (type solid))")
+    a('\t\t(layer "F.SilkS")')
+    a("\t)")
+    a('\t(fp_text user "KEY"')
+    a("\t\t(at -5.2 0 0)")
+    a('\t\t(layer "F.SilkS")')
+    a('\t\t(effects (font (size 0.7 0.7) (thickness 0.1)))')
+    a("\t)")
+    for i, name in enumerate(pin_names):
+        y = i * pitch
+        a(f'\t(fp_text user "{name}"')
+        a(f"\t\t(at 4.2 {y} 0)")
+        a('\t\t(layer "F.SilkS")')
+        a('\t\t(effects (font (size 0.65 0.65) (thickness 0.1)) (justify left))')
+        a("\t)")
+        shape = "rect" if i == 0 else "circle"
+        a(f'\t(pad "{i + 1}" thru_hole {shape}')
+        a(f"\t\t(at 0 {y})")
+        a("\t\t(size 1.6 1.6)")
+        a("\t\t(drill 0.9)")
+        a('\t\t(layers "*.Cu" "*.Mask")')
+        a("\t)")
+    a(")")
+    out = PRETTY / f"{fp_name}.kicad_mod"
+    out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return out
+
+
+def write_jst_xh_04_socket() -> Path:
+    return write_jst_xh_socket(4, BUP_XH_FP, ["+12V", "GND", "OUT", "CTRL"], "BUP/BLW/ENC")
+
+
+def write_all_jst_xh_sockets() -> list[Path]:
+    """Field I/O XH — pin-header mates for M2 via write_pin_header_footprint."""
+    return [
+        write_jst_xh_socket(2, HOME_FP, [p[1] for p in HOME_HEADER], "HOME SIG/SNS"),
+        write_jst_xh_socket(3, BZ_XH_FP, ["VCC5", "GND", "SIG"], "buzzer"),
+        write_jst_xh_socket(4, BUP_XH_FP, ["+12V", "GND", "OUT", "CTRL"], "BUP/BLW/ENC"),
+    ]
+
+
+def write_fuse_holder_5x20() -> Path:
+    """Open PCB clips for 5×20 mm cartridge — field-replaceable F1."""
+    half = FUSE_5X20_HALF
+    lines: list[str] = []
+    a = lines.append
+    a(f'(footprint "{FUSE_5X20_FP}"')
+    a("\t(version 20260206)")
+    a('\t(generator "gen_power_carrier.py")')
+    a('\t(layer "F.Cu")')
+    a('\t(descr "Open fuse clips 5x20mm pad span 22.5mm — replaceable cartridge")')
+    a('\t(tags "fuse holder 5x20 replaceable")')
+    a('\t(property "Reference" "F**"')
+    a(f"\t\t(at 0 {-half - 2.5} 0)")
+    a('\t\t(layer "F.SilkS")')
+    a("\t\t(effects (font (size 0.9 0.9) (thickness 0.12)))")
+    a("\t)")
+    a('\t(property "Value" "5x20 T3.15A"')
+    a(f"\t\t(at 0 {half + 2.5} 0)")
+    a('\t\t(layer "F.SilkS")')
+    a("\t\t(effects (font (size 0.7 0.7) (thickness 0.1)))")
+    a("\t)")
+    a("\t(attr through_hole)")
+    for layer, w in (("F.CrtYd", 0.05), ("F.Fab", 0.1), ("F.SilkS", 0.12)):
+        a("\t(fp_rect")
+        a(f"\t\t(start {-half - 2.2} -4.0)")
+        a(f"\t\t(end {half + 2.2} 4.0)")
+        a(f"\t\t(stroke (width {w}) (type solid))")
+        a("\t\t(fill none)")
+        a(f'\t\t(layer "{layer}")')
+        a("\t)")
+    a('\t(fp_text user "RUT ONG"')
+    a("\t\t(at 0 -5.2 0)")
+    a('\t\t(layer "F.SilkS")')
+    a('\t\t(effects (font (size 0.55 0.55) (thickness 0.08)))')
+    a("\t)")
+    a('\t(pad "1" thru_hole rect')
+    a(f"\t\t(at {-half} 0)")
+    a("\t\t(size 2.2 2.8)")
+    a("\t\t(drill 1.2)")
+    a('\t\t(layers "*.Cu" "*.Mask")')
+    a("\t)")
+    a('\t(pad "2" thru_hole circle')
+    a(f"\t\t(at {half} 0)")
+    a("\t\t(size 2.2 2.8)")
+    a("\t\t(drill 1.2)")
+    a('\t\t(layers "*.Cu" "*.Mask")')
+    a("\t)")
+    a(")")
+    out = PRETTY / f"{FUSE_5X20_FP}.kicad_mod"
+    out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return out
+
+
 def write_ptc_fuse_footprint() -> Path:
-    """THT radial PTC ~pitch 5.1 mm (RXE030 / MF-R300 class, ~3A hold)."""
+    """Legacy PTC lib (unused on board — prefer write_fuse_holder_5x20)."""
     lines: list[str] = []
     a = lines.append
     a('(footprint "Fuse_PTC_Radial_5.1mm"')
@@ -970,7 +1414,7 @@ def write_ptc_fuse_footprint() -> Path:
     a('\t(layer "F.Cu")')
     a(
         '\t(descr "Radial PTC resettable fuse lead pitch 5.1mm '
-        '(e.g. RXE030 / 30V 3A hold). Cheap input protection.")'
+        '(e.g. RXE030 / 30V 3A hold). Unused — board uses 5x20 holder.")'
     )
     a('\t(tags "PTC fuse resettable")')
     a('\t(property "Reference" "F"')
@@ -1968,6 +2412,18 @@ def write_symbol_lib() -> Path:
         TFT_TP_SYM, TFT_TP_FP, TFT_TP_HEADER, "TFT TP",
         "MSP3520 pins10-14 touch: T_CLK T_CS T_DIN T_DO T_IRQ",
     )
+    _emit_conn_header_sym(
+        OPTO_IN_SYM, OPTO_IN_FP, OPTO_IN_HEADER, "1x6 M2-IN",
+        "J31A 1x6 pin — M2 field IN + SNS/GND",
+    )
+    _emit_conn_header_sym(
+        OPTO_OUT_SYM, OPTO_OUT_FP, OPTO_OUT_HEADER, "1x5 M2-OUT",
+        "J31B 1x5 pin — M2 OUT + 3V3",
+    )
+    _emit_conn_header_sym(
+        ENDSTOP_SYM, ENDSTOP_FP, ENDSTOP_HEADER, "HOME XH2",
+        "Dry NC limit JST-XH 2P SIG/SNS",
+    )
 
     # --- J18 EC11 encoder ---
     a(f'\t(symbol "{ENC_SYM}"')
@@ -2237,6 +2693,8 @@ def write_schematic_v2() -> Path:
             _embed_from_lib(ENDSTOP_SYM),
             _embed_from_lib("Conn_1x02_LimitSW"),
             _embed_from_lib("Conn_1x04_BUP30S"),
+            _embed_from_lib(OPTO_IN_SYM),
+            _embed_from_lib(OPTO_OUT_SYM),
             _embed_from_lib("R_BUP_Pullup"),
         ]
     )
@@ -2358,9 +2816,9 @@ def write_schematic_v2() -> Path:
         f'\t(uuid "{sch_uuid}")',
         '\t(paper "A3")',
         "\t(title_block",
-        '\t\t(title "ESP32-S3 Baseboard - MP1584 + TMC + ULN2003 direct GPIO")',
-        '\t\t(comment 1 "BOTTOM: J1 U2 U3 U5-7 U1 | TOP: J5-7 HOME TFT")',
-        '\t\t(comment 2 "ULN COM=+12V; 595 OE R4; PC817 DIP-4 x4")',
+        '\t\t(title "ESP32-S3 Baseboard - J30/M1 + J31A/B/M2 + TMC + ULN")',
+        '\t\t(comment 1 "Carrier sockets: J30 POWER_PROT | J31A IN + J31B OUT")',
+        '\t\t(comment 2 "Daughters in modules/; ULN COM=+12V; 595 OE R4")',
         "\t)",
         "\t(lib_symbols",
         emb,
@@ -2457,29 +2915,7 @@ def write_schematic_v2() -> Path:
         f'\t\t\t(project "esp32_baseboard" (path "/{sch_uuid}" (reference "U3") (unit 1)))',
         "\t\t)",
         "\t)",
-        # J2 NEMA17 (TOP)
-        f'\t(symbol (lib_id "ESP32_Carrier:Conn_1x04_Motor") (at {j2[0]} {j2[1]} 0) (unit 1)',
-        f'\t\t(uuid "{j2_uuid}")',
-        f'\t\t(property "Reference" "J2" (at {j2[0]} {j2[1] - 10.16} 0)',
-        "\t\t\t(effects (font (size 1.27 1.27)))",
-        "\t\t)",
-        f'\t\t(property "Value" "NEMA17_OUT" (at {j2[0]} {j2[1] + 10.16} 0)',
-        "\t\t\t(effects (font (size 1.27 1.27)))",
-        "\t\t)",
-        f'\t\t(property "Footprint" "ESP32_Carrier:PinHeader_1x04_Motor" (at {j2[0]} {j2[1]} 0)',
-        "\t\t\t(effects (font (size 1.27 1.27)) (hide yes))",
-        "\t\t)",
-        f'\t\t(property "Datasheet" "~" (at {j2[0]} {j2[1]} 0)',
-        "\t\t\t(effects (font (size 1.27 1.27)) (hide yes))",
-        "\t\t)",
-        f'\t\t(pin "1" (uuid "{uid()}"))',
-        f'\t\t(pin "2" (uuid "{uid()}"))',
-        f'\t\t(pin "3" (uuid "{uid()}"))',
-        f'\t\t(pin "4" (uuid "{uid()}"))',
-        "\t\t(instances",
-        f'\t\t\t(project "esp32_baseboard" (path "/{sch_uuid}" (reference "J2") (unit 1)))',
-        "\t\t)",
-        "\t)",
+        # NEMA17 on U3 Mot pins (no J2 jack — was duplicate of TMC Mot)
         # J17 TFT LCD 1×9 + J23 touch 1×5 (MSP3520 contiguous column)
         f'\t(symbol (lib_id "ESP32_Carrier:{TFT_LCD_SYM}") (at {j3[0]} {j3[1]} 0) (unit 1)',
         f'\t\t(uuid "{j3_uuid}")',
@@ -2539,10 +2975,12 @@ def write_schematic_v2() -> Path:
         f'\t\t\t(project "esp32_baseboard" (path "/{sch_uuid}" (reference "J18") (unit 1)))',
         "\t\t)",
         "\t)",
-        # Power
-        *wire_path(j1_p1, (j1_p1[0], y12), (u2_vinp[0], y12), u2_vinp),
-        *wire_path((u2_vinp[0], y12), (u3_vm[0], y12), u3_vm),
+        # Power: J1 RAW -> J30(M1) -> +12V (labels; M1 parts live on daughter)
+        *wire_path(j1_p1, (j1_p1[0], y12 - 5.08)),
+        label("+12V_RAW", j1_p1[0] + 2.54, y12 - 5.08),
+        *wire_path(u2_vinp, (u2_vinp[0], y12), (u3_vm[0], y12), u3_vm),
         label("+12V", 55.88, y12),
+        text("J30/M1: D3+F1+D1 between RAW and +12V (see J30)", 20.32, 28.0, 1.0),
         *wire_path(u2_voutp, (u2_voutp[0], y5), (u1_vin[0], y5), u1_vin),
         label("+5V", 120.65, y5),
         *wire_path(j1_p2, (j1_p2[0], ygnd)),
@@ -2563,45 +3001,75 @@ def write_schematic_v2() -> Path:
         label("STEP", 140.0, u3_step[1]),
         label("DIR", 140.0, u3_dir[1]),
         label("EN", 140.0, u3_en[1]),
-        # Motor phases U3 -> J2
-        *wire_path(u3_a2, (u3_a2[0] + 10, u3_a2[1]), (j2_pin(1)[0], u3_a2[1]), j2_pin(1)),
-        *wire_path(u3_a1, (u3_a1[0] + 12, u3_a1[1]), (j2_pin(2)[0], u3_a1[1]), j2_pin(2)),
-        *wire_path(u3_b1, (u3_b1[0] + 14, u3_b1[1]), (j2_pin(3)[0], u3_b1[1]), j2_pin(3)),
-        *wire_path(u3_b2, (u3_b2[0] + 16, u3_b2[1]), (j2_pin(4)[0], u3_b2[1]), j2_pin(4)),
+        # Motor phases on U3 Mot (no J2)
+        label("MotA2", u3_a2[0] + 5.08, u3_a2[1]),
+        label("MotA1", u3_a1[0] + 5.08, u3_a1[1]),
+        label("MotB1", u3_b1[0] + 5.08, u3_b1[1]),
+        label("MotB2", u3_b2[0] + 5.08, u3_b2[1]),
+        text("NEMA17 -> U3 Mot pins (khong J2)", u3[0] + 20, u3[1] - 15, 1.0),
         # J3 legacy sensor removed — TFT/buzzer/MOSFET on separate jacks (PCB)
     ]
 
-    # --- Discrete PC817 U41-U48 (schematic labels; PCB is source of truth) ---
-    parts.append(text("U41-U44 PC817 DIP-4 + 2k2/10k (HOME×3+BUP)", 210.0, 55.88, 1.27))
-    parts.append(text("IN: HOME×3 + BUP only (no field)", 210.0, 61.0, 1.0))
-    for i, (uref, _rl, _rp, _iid, inet, _oid, onet, _aid, _anet, tag) in enumerate(OPTO_CH):
-        col, row = i % 4, i // 4
-        at = (240.0 + col * 25.4, 88.9 + row * 25.4)
-        su = uid()
-        parts += [
-            f'\t(symbol (lib_id "ESP32_Carrier:PC817_DIP4") (at {at[0]} {at[1]} 0) (unit 1)',
-            f'\t\t(uuid "{su}")',
-            f'\t\t(property "Reference" "{uref}" (at {at[0]} {at[1] - 6.35} 0)',
-            "\t\t\t(effects (font (size 1.27 1.27)))",
-            "\t\t)",
-            f'\t\t(property "Value" "PC817" (at {at[0]} {at[1] + 6.35} 0)',
-            "\t\t\t(effects (font (size 1.27 1.27)))",
-            "\t\t)",
-            f'\t\t(property "Footprint" "ESP32_Carrier:PC817_DIP4" (at {at[0]} {at[1]} 0)',
-            "\t\t\t(effects (font (size 1.27 1.27)) (hide yes))",
-            "\t\t)",
-            f'\t\t(pin "1" (uuid "{uid()}"))',
-            f'\t\t(pin "2" (uuid "{uid()}"))',
-            f'\t\t(pin "3" (uuid "{uid()}"))',
-            f'\t\t(pin "4" (uuid "{uid()}"))',
-            "\t\t(instances",
-            f'\t\t\t(project "esp32_baseboard" (path "/{sch_uuid}" (reference "{uref}") (unit 1)))',
-            "\t\t)",
-            "\t)",
-        ]
-        parts.append(label(inet.lstrip("/"), at[0] - 12.7, at[1] + 2.54))
-        parts.append(label(onet.lstrip("/"), at[0] + 10.16, at[1] + 2.54))
-        parts.append(text(tag, at[0] - 4, at[1] - 10.16, 1.0))
+    # --- J31A/J31B M2 OPTO4 (D3/F1/D1 on carrier — no J30/M1) ---
+    j31a = (230.0, 88.9)
+    j31b = (255.0, 88.9)
+    parts.append(text("J1->D3->F1->D1->+12V on carrier (no J30/M1)", 20.32, 85.0, 1.0))
+    parts.append(text("J31A=IN 1x6 | J31B=OUT 1x5 — plug M2 (4xPC817 + 2k2/10k)", 210.0, 55.88, 1.0))
+    ju31a, ju31b = uid(), uid()
+    # Pin y for 1xN Conn: pin i at local y = (n-1)*1.27 - (i-1)*2.54
+    def _hdr_pin(at, n_pins, pin_n):
+        ly = (n_pins - 1) * 1.27 - (pin_n - 1) * 2.54
+        return (at[0], at[1] - ly)
+
+    parts.append(label("+12V_RAW", 38.1, 50.0))
+    parts.append(label("+12V", 50.8, 50.0))
+
+    parts += [
+        f'\t(symbol (lib_id "ESP32_Carrier:{OPTO_IN_SYM}") (at {j31a[0]} {j31a[1]} 0) (unit 1)',
+        f'\t\t(uuid "{ju31a}")',
+        f'\t\t(property "Reference" "J31A" (at {j31a[0]} {j31a[1] - 15.24} 0)',
+        "\t\t\t(effects (font (size 1.27 1.27)))",
+        "\t\t)",
+        f'\t\t(property "Value" "M2_IN" (at {j31a[0]} {j31a[1] + 15.24} 0)',
+        "\t\t\t(effects (font (size 1.27 1.27)))",
+        "\t\t)",
+        f'\t\t(property "Footprint" "ESP32_Carrier:{OPTO_IN_FP}" (at {j31a[0]} {j31a[1]} 0)',
+        "\t\t\t(effects (font (size 1.27 1.27)) (hide yes))",
+        "\t\t)",
+        *[f'\t\t(pin "{n}" (uuid "{uid()}"))' for n in range(1, OPTO_IN_PINS + 1)],
+        "\t\t(instances",
+        f'\t\t\t(project "esp32_baseboard" (path "/{sch_uuid}" (reference "J31A") (unit 1)))',
+        "\t\t)",
+        "\t)",
+        f'\t(symbol (lib_id "ESP32_Carrier:{OPTO_OUT_SYM}") (at {j31b[0]} {j31b[1]} 0) (unit 1)',
+        f'\t\t(uuid "{ju31b}")',
+        f'\t\t(property "Reference" "J31B" (at {j31b[0]} {j31b[1] - 12.7} 0)',
+        "\t\t\t(effects (font (size 1.27 1.27)))",
+        "\t\t)",
+        f'\t\t(property "Value" "M2_OUT" (at {j31b[0]} {j31b[1] + 12.7} 0)',
+        "\t\t\t(effects (font (size 1.27 1.27)))",
+        "\t\t)",
+        f'\t\t(property "Footprint" "ESP32_Carrier:{OPTO_OUT_FP}" (at {j31b[0]} {j31b[1]} 0)',
+        "\t\t\t(effects (font (size 1.27 1.27)) (hide yes))",
+        "\t\t)",
+        *[f'\t\t(pin "{n}" (uuid "{uid()}"))' for n in range(1, OPTO_OUT_PINS + 1)],
+        "\t\t(instances",
+        f'\t\t\t(project "esp32_baseboard" (path "/{sch_uuid}" (reference "J31B") (unit 1)))',
+        "\t\t)",
+        "\t)",
+    ]
+    for pn, ln in [
+        (1, "OPTO_IN1"), (2, "OPTO_IN2"), (3, "OPTO_IN3"), (4, "OPTO_IN4"),
+        (5, "+12V_SNS"), (6, "GND"),
+    ]:
+        px, py = _hdr_pin(j31a, OPTO_IN_PINS, pn)
+        parts.append(label(ln, px - 12.7, py))
+    for pn, ln in [
+        (1, "OPTO_OUT1"), (2, "OPTO_OUT2"), (3, "OPTO_OUT3"), (4, "OPTO_OUT4"),
+        (5, "+3V3"),
+    ]:
+        px, py = _hdr_pin(j31b, OPTO_OUT_PINS, pn)
+        parts.append(label(ln, px + 8.0, py))
 
     # EC11: IO47=ENC_A, IO45=ENC_B (J18). SW unused.
     def j18_pin(n: int) -> tuple[float, float]:
@@ -2622,7 +3090,7 @@ def write_schematic_v2() -> Path:
     parts += wire_path(j18_pin(2), (j18_pin(2)[0] - 12, j18_pin(2)[1]), (j18_pin(2)[0] - 12, y3v3), (u1_3v3[0], y3v3))
 
     # --- ULN2003 + 74HC595 + 28BYJ (schematic net labels; PCB is source of truth) ---
-    parts.append(text("U10=74HC595-24IO module (Shopee) RIGHT of ESP32; U5-U7 ULN; J5-J7 BYJ", 20.32, 185.0, 1.27))
+    parts.append(text("U10=74HC595-24IO RIGHT of ESP32; U5-U7 ULN module; 28BYJ on module JST (no J5-J7)", 20.32, 185.0, 1.27))
     parts.append(text("CTRL LDEN/GND/VCC/LDSI/LDSTR/LDSCK = OE/GND/3V3/SER/RCLK/SRCLK; R4 LDEN PU", 20.32, 190.5, 1.0))
     parts.append(text("1_Q0-3->U5; 1_Q4-7->U6; 2_Q0-3->U7; shift 3 bytes; COM=+12V", 20.32, 195.58, 1.0))
     # HOME endstop jacks J8/J10/J12 — 1×04 (VCC/GND NC; SIG+SNS used)
@@ -2735,7 +3203,8 @@ def write_schematic_v2() -> Path:
     parts.append(label("+12V", 38.1, 312.42))
     parts.append(label("+12V_SNS", 63.5, 312.42))
     parts.append(text("R10 10R + C10 47u + C11 100n (tren PCB)", 38.1, 317.5, 1.0))
-    parts.append(text("Bulk C20 470u@TMC + C21 100u shared ULN COM (tren PCB)", 38.1, 322.58, 1.0))
+    parts.append(text("Bulk C20 470u@TMC + C21 220u ULN + C24/C25 100n HF (tren PCB)", 38.1, 322.58, 1.0))
+    parts.append(text("Blower: D2 SS24 flyback @ J16 (rail TVS = M1.D1, khong D4 trung)", 38.1, 327.66, 1.0))
 
     used = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27}
 
@@ -2871,19 +3340,8 @@ def write_pcb() -> Path:
         65: "SR_Q9",
         66: "SR_Q10",
         67: "SR_Q11",
-        # ULN OUT -> 28BYJ phases
-        68: "BYJ1_A",
-        69: "BYJ1_B",
-        70: "BYJ1_C",
-        71: "BYJ1_D",
-        72: "BYJ2_A",
-        73: "BYJ2_B",
-        74: "BYJ2_C",
-        75: "BYJ2_D",
-        76: "BYJ3_A",
-        77: "BYJ3_B",
-        78: "BYJ3_C",
-        79: "BYJ3_D",
+        # 68 = +12V_PRE (J1→D3→F1); 69-79 reserved (was BYJ phases)
+        68: "+12V_PRE",
         46: "+12V_SNS",
         47: "/TFT_SCK",
         48: "/TFT_MOSI",
@@ -2971,16 +3429,114 @@ def write_pcb() -> Path:
             via(x1, y2, net, drill, dia)
             track_h(x1, x2, y2, net, w)
 
+    # Service / assembly text that MUST appear on the fab silkscreen so a user
+    # can unplug/replace modules without opening MODULES.md. Keep short, ≥0.8 mm,
+    # and place clear of pads (DRC silk_overlap). Long design notes stay on
+    # Cmts.User via gr_text().
+    # GRAPHICS_INSET: all gr_* text/shapes must stay this far inside Edge.Cuts.
+    GRAPHICS_INSET = 1.0
+
+    def _in_board(x: float, y: float) -> tuple[float, float]:
+        return (
+            min(max(x, ox + GRAPHICS_INSET), ox + bw - GRAPHICS_INSET),
+            min(max(y, oy + GRAPHICS_INSET), oy + bh - GRAPHICS_INSET),
+        )
+
+    def _clip_box(x0, y0, x1, y1):
+        x0 = max(x0, ox + GRAPHICS_INSET)
+        y0 = max(y0, oy + GRAPHICS_INSET)
+        x1 = min(x1, ox + bw - GRAPHICS_INSET)
+        y1 = min(y1, oy + bh - GRAPHICS_INSET)
+        if x1 - x0 < 0.5 or y1 - y0 < 0.5:
+            return None
+        return x0, y0, x1, y1
+
+    def gr_silk(txt, x, y, size=0.85, rot=0, layer="F.SilkS", justify="left"):
+        size = max(SILK_TEXT_MIN_MM, size)
+        # Left-justify so anchor can sit near a safe inset without spilling west.
+        x, y = _in_board(x, y)
+        # If horizontal, keep estimated string end inside east edge
+        if abs(rot) % 180 < 45 or abs(rot) % 180 > 135:
+            est_w = 0.75 * size * len(txt)
+            if x + est_w > ox + bw - GRAPHICS_INSET:
+                x = max(ox + GRAPHICS_INSET, ox + bw - GRAPHICS_INSET - est_w)
+        mirror = " mirror" if layer.startswith("B.") else ""
+        just = f" (justify {justify})" if justify else ""
+        a(f'\t(gr_text "{txt}"')
+        a(f"\t\t(at {x} {y} {rot})")
+        a(f'\t\t(layer "{layer}")')
+        a(
+            f"\t\t(effects (font (size {size} {size}) "
+            f"(thickness {max(0.12, size * 0.14)})){just}{mirror})"
+        )
+        a(f'\t\t(uuid "{uid()}")')
+        a("\t)")
+
+    def gr_silk_line(x0, y0, x1, y1, w=0.15, layer="F.SilkS"):
+        x0, y0 = _in_board(x0, y0)
+        x1, y1 = _in_board(x1, y1)
+        a("\t(gr_line")
+        a(f"\t\t(start {x0} {y0})")
+        a(f"\t\t(end {x1} {y1})")
+        a(f"\t\t(stroke (width {w}) (type solid))")
+        a(f'\t\t(layer "{layer}")')
+        a(f'\t\t(uuid "{uid()}")')
+        a("\t)")
+
+    def gr_silk_rect(x0, y0, x1, y1, w=0.15, layer="F.SilkS"):
+        clipped = _clip_box(x0, y0, x1, y1)
+        if clipped is None:
+            return
+        x0, y0, x1, y1 = clipped
+        a("\t(gr_rect")
+        a(f"\t\t(start {x0} {y0})")
+        a(f"\t\t(end {x1} {y1})")
+        a(f"\t\t(stroke (width {w}) (type solid))")
+        a("\t\t(fill none)")
+        a(f'\t\t(layer "{layer}")')
+        a(f'\t\t(uuid "{uid()}")')
+        a("\t)")
+
+    def gr_silk_poly(pts: list[tuple[float, float]], w=0.12, fill=True, layer="F.SilkS"):
+        pts = [_in_board(x, y) for x, y in pts]
+        a("\t(gr_poly")
+        a("\t\t(pts")
+        for x, y in pts:
+            a(f"\t\t\t(xy {x} {y})")
+        a("\t\t)")
+        a(f"\t\t(stroke (width {w}) (type solid))")
+        a(f'\t\t(fill {"solid" if fill else "none"})')
+        a(f'\t\t(layer "{layer}")')
+        a(f'\t\t(uuid "{uid()}")')
+        a("\t)")
+
+    def asm_key_triangle(cx, cy, tip_left=True, s=1.4):
+        """Filled KEY triangle at pin-1 side (assembler cue)."""
+        if tip_left:
+            gr_silk_poly([(cx, cy), (cx + s, cy - s * 0.7), (cx + s, cy + s * 0.7)])
+        else:
+            gr_silk_poly([(cx, cy), (cx - s, cy - s * 0.7), (cx - s, cy + s * 0.7)])
+
+    def asm_plug_box(x0, y0, x1, y1, title: str, line2: str = ""):
+        """Boxed callout: what to plug + orientation (fab silk)."""
+        gr_silk_rect(x0, y0, x1, y1, w=0.2)
+        gr_silk(title, x0 + 0.8, y0 + 1.6, 0.8)
+        if line2:
+            gr_silk(line2, x0 + 0.8, y0 + 3.2, 0.7)
+        # pin1 KEY triangle on left of box
+        asm_key_triangle(x0 - 1.2, (y0 + y1) / 2, tip_left=True, s=1.2)
+
     # Long build notes go on Cmts.User, not the silkscreen: at 0.8 mm on a
     # 235x132 board they collide with the group boxes and the pads they sit
     # beside, and they are documentation rather than assembly markings.
-    def gr_text(txt, x, y, layer, size=1.0, rot=0):
+    def gr_text(txt, x, y, layer, size=1.0, rot=0, justify="left"):
         # Descriptive text goes on the documentation layer, not the
         # silkscreen. Every part already prints its own reference and value
         # from its footprint; these extra notes only added 68 silk_overlap and
         # silk_over_copper warnings on a board this dense, and at 0.8 mm
         # crammed between the zone boxes they were not readable anyway.
         # Zone outlines (gr_box) stay on silk.
+        # Exception: callers that need fab silk must use gr_silk() instead.
         if layer in ("F.SilkS", "B.SilkS"):
             layer = "Cmts.User"
         # Clamp to the fab's legibility floor: KiCad's board-setup silk minimum
@@ -2988,22 +3544,33 @@ def write_pcb() -> Path:
         # on a real board. Back-layer text also has to be mirrored, or it reads
         # backwards once the board is flipped over.
         size = max(SILK_TEXT_MIN_MM, size)
+        x, y = _in_board(x, y)
+        if abs(rot) % 180 < 45 or abs(rot) % 180 > 135:
+            est_w = 0.75 * size * len(txt)
+            if justify == "left" and x + est_w > ox + bw - GRAPHICS_INSET:
+                x = max(ox + GRAPHICS_INSET, ox + bw - GRAPHICS_INSET - est_w)
         mirror = " " if layer.startswith("B.") else ""
+        just = f" (justify {justify})" if justify else ""
         a(f'\t(gr_text "{txt}"')
         a(f"\t\t(at {x} {y} {rot})")
         a(f'\t\t(layer "{layer}")')
         a(
             f"\t\t(effects (font (size {size} {size}) "
-            f"(thickness {max(0.15, size * 0.15)})){mirror})"
+            f"(thickness {max(0.15, size * 0.15)})){just}{mirror})"
         )
         a(f'\t\t(uuid "{uid()}")')
         a("\t)")
 
-    def gr_box(x0, y0, x1, y1, layer, w=0.12, color=None):
+    def gr_box(x0, y0, x1, y1, layer, w=0.12, color=None, uuid_s: str | None = None):
         # Zone outlines on F/B.SilkS remapped to Cmts — they are documentation.
         # Eco1/Eco2 keep the layer (cluster labels for the designer).
         if layer in ("F.SilkS", "B.SilkS"):
             layer = "Cmts.User"
+        clipped = _clip_box(x0, y0, x1, y1)
+        if clipped is None:
+            return None
+        x0, y0, x1, y1 = clipped
+        u = uuid_s or uid()
         a("\t(gr_rect")
         a(f"\t\t(start {x0} {y0})")
         a(f"\t\t(end {x1} {y1})")
@@ -3017,13 +3584,15 @@ def write_pcb() -> Path:
             )
         a("\t\t(fill none)")
         a(f'\t\t(layer "{layer}")')
-        a(f'\t\t(uuid "{uid()}")')
+        a(f'\t\t(uuid "{u}")')
         a("\t)")
+        return u
 
     # Cluster outline colors (RGBA 0–255): TOP cyan / BOTTOM orange — easy to tell faces apart
     CLUSTER_COLOR_TOP = (0, 200, 255, 255)      # Eco1.User — mặt trên
     CLUSTER_COLOR_BOT = (255, 140, 0, 255)       # Eco2.User — mặt dưới
     cluster_boxes: list[tuple] = []  # (face, label, x0, y0, x1, y1) for E11.9
+    cluster_eco_gfx: dict[str, list[str]] = {}  # label → Eco rect/text UUIDs for groups
 
     def cluster_outline(label: str, x0: float, y0: float, x1: float, y1: float, face="F", pad=1.5):
         """Labeled AABB around a same-function module cluster (Eco1 front / Eco2 back)."""
@@ -3032,25 +3601,38 @@ def write_pcb() -> Path:
         if y0 > y1:
             y0, y1 = y1, y0
         x0, y0, x1, y1 = x0 - pad, y0 - pad, x1 + pad, y1 + pad
+        # E11 uses true Eco AABB (may sit in the 10 mm module margin).
+        cluster_boxes.append((face, label, x0, y0, x1, y1))
+        # Graphics must stay inside Edge.Cuts — clip draw only.
+        clipped = _clip_box(x0, y0, x1, y1)
+        if clipped is None:
+            return
+        dx0, dy0, dx1, dy1 = clipped
         layer = "Eco1.User" if face == "F" else "Eco2.User"
         color = CLUSTER_COLOR_TOP if face == "F" else CLUSTER_COLOR_BOT
-        gr_box(x0, y0, x1, y1, layer, w=0.35, color=color)
-        lx = x0 + 1.2
-        ly = y0 + 2.4
+        rect_u = uid()
+        gr_box(dx0, dy0, dx1, dy1, layer, w=0.35, color=color, uuid_s=rect_u)
+        lx = max(dx0 + 1.2, ox + GRAPHICS_INSET)
+        ly = min(max(dy0 + 2.4, oy + GRAPHICS_INSET), oy + bh - GRAPHICS_INSET)
         size = max(SILK_TEXT_MIN_MM, 1.0)
+        est = 0.75 * size * len(label)
+        max_w = (ox + bw - GRAPHICS_INSET) - lx
+        draw_label = label
+        if est > max_w and max_w > 8:
+            n = max(8, int(max_w / (0.75 * size)) - 1)
+            draw_label = label[:n] + "…"
         mirror = " " if face == "B" else ""
-        # KiCad 10 PCB: font has no (color …) — only size/thickness/bold/italic
-        a(f'\t(gr_text "{label}"')
+        text_u = uid()
+        a(f'\t(gr_text "{draw_label}"')
         a(f"\t\t(at {lx} {ly} 0)")
         a(f'\t\t(layer "{layer}")')
         a(
             f"\t\t(effects (font (size {size} {size}) "
-            f"(thickness {max(0.15, size * 0.15)})){mirror})"
+            f"(thickness {max(0.15, size * 0.15)})) (justify left){mirror})"
         )
-        a(f'\t\t(uuid "{uid()}")')
+        a(f'\t\t(uuid "{text_u}")')
         a("\t)")
-        # Record for same-face non-overlap check (E11.9)
-        cluster_boxes.append((face, label, x0, y0, x1, y1))
+        cluster_eco_gfx.setdefault(label, []).extend([rect_u, text_u])
 
     def fp_silk_rect(x0, y0, x1, y1, layer="F.SilkS", w=0.12):
         """Rectangular body outline on silk for discrete passives."""
@@ -3157,10 +3739,12 @@ def write_pcb() -> Path:
     a('\t(net_class "Power" "12V/5V/GND/motor"')
     a("\t\t(clearance 0.25)")
     a("\t\t(trace_width 1.00)")
-    a("\t\t(via_dia 1.1)")
-    a("\t\t(via_drill 0.6)")
+    # A8: one via size board-wide (0.4/0.8) — do not use a second power via.
+    a("\t\t(via_dia 0.8)")
+    a("\t\t(via_drill 0.4)")
     a('\t\t(add_net "+12V")')
     a('\t\t(add_net "+12V_RAW")')
+    a('\t\t(add_net "+12V_PRE")')
     a('\t\t(add_net "+12V_SNS")')
     a('\t\t(add_net "+5V")')
     a('\t\t(add_net "GND")')
@@ -3169,12 +3753,6 @@ def write_pcb() -> Path:
     a('\t\t(add_net "MotA1")')
     a('\t\t(add_net "MotB1")')
     a('\t\t(add_net "MotB2")')
-    for _bn in (
-        "BYJ1_A", "BYJ1_B", "BYJ1_C", "BYJ1_D",
-        "BYJ2_A", "BYJ2_B", "BYJ2_C", "BYJ2_D",
-        "BYJ3_A", "BYJ3_B", "BYJ3_C", "BYJ3_D",
-    ):
-        a(f'\t\t(add_net "{_bn}")')
     a("\t)")
 
     ox, oy = 35.0, 30.0
@@ -3260,8 +3838,22 @@ def write_pcb() -> Path:
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
         a("\t)")
-    gr_text("M3x4 corner mount", ox + bw / 2 - 12, oy + 2.2, "Cmts.User", 0.8)
-    gr_text("All parts TOP (F.Cu); B.Cu = routing only. Eco1 cluster = cyan", ox + 8, oy + 2.2, "Cmts.User", 0.7)
+    gr_text("M3x4 corner mount", ox + bw / 2 - 12, oy + 2.0, "Cmts.User", 0.75)
+    gr_text("All TOP F.Cu; route prefer B.Cu; Eco1=cyan", ox + 2.0, oy + 3.5, "Cmts.User", 0.7)
+    # Board-edge assembly legend (fab silk) — keep inside Edge.Cuts
+    gr_silk("ESP32 CARRIER - CAM MODULE THEO HINH/CHU", ox + 2.0, oy + 5.2, 0.9)
+    gr_silk("Tam giac=KEY/pin1 | XH khong cam nguoc", ox + 2.0, oy + 6.8, 0.7)
+    gr_silk("J1→D3→F1→+12V | OPTO on-board | RED=+ BLK=-", ox + 2.0, oy + 8.2, 0.7)
+    # Legend pictogram: KEY triangle + XH shroud sketch
+    lx0, ly0 = ox + bw - 40, oy + 2.5
+    gr_silk_rect(lx0, ly0, lx0 + 26, ly0 + 8.0, w=0.18)
+    gr_silk("CHU GIAI", lx0 + 1, ly0 + 1.5, 0.65)
+    asm_key_triangle(lx0 + 4, ly0 + 5.0, tip_left=True, s=1.4)
+    gr_silk("=KEY", lx0 + 6.5, ly0 + 5.2, 0.65)
+    gr_silk_rect(lx0 + 12, ly0 + 3.0, lx0 + 16, ly0 + 6.8, w=0.15)
+    gr_silk_line(lx0 + 12, ly0 + 3.8, lx0 + 11, ly0 + 5.0, w=0.15)
+    gr_silk_line(lx0 + 11, ly0 + 5.0, lx0 + 12, ly0 + 6.2, w=0.15)
+    gr_silk("=XH", lx0 + 17, ly0 + 5.2, 0.6)
 
     rot = PART_ROT  # default; see ROT_TMC / ROT_ENC / ROT_DIP / ROT_BYJ
     tmc_rot = ROT_TMC
@@ -3282,6 +3874,7 @@ def write_pcb() -> Path:
         cluster_gap=MODULE_CLUSTER_GAP + 1.5,  # margin vs actual Eco inflation
         mcu_clear=MODULE_MCU_CLEAR,
         seed=42,
+        layout_bh=LAYOUT_REF_H,
     )
     print(f"Floorplan cost={FP['cost']:.0f}")
     mcu_wx0, mcu_wy0 = FP["mcu_wx0"], FP["mcu_wy0"]
@@ -3290,8 +3883,12 @@ def write_pcb() -> Path:
     mcu_wx1 = mcu_wx0 + (_u1_lx1 - _u1_lx0)
     mcu_wy1 = mcu_wy0 + (_u1_ly1 - _u1_ly0)
     jx, jy = FP["jx"], FP["jy"]
+    d3x, d3y = FP["d3x"], FP["d3y"]
     f1x, f1y = FP["f1x"], FP["f1y"]
     d1x, d1y = FP["d1x"], FP["d1y"]
+    d3_rot = int(FP.get("d3_rot", 0))
+    f1_rot = int(FP.get("f1_rot", 0))
+    d1_rot = int(FP.get("d1_rot", 270))
     mx, my = FP["mx"], FP["my"]
     tx, ty = FP["tx"], FP["ty"]
     j3x, j3y = FP["j3x"], FP["j3y"]
@@ -3352,65 +3949,35 @@ def write_pcb() -> Path:
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a("\t)")
+    # J1 screw: big polarity callout for wireman
+    gr_silk("J1 12V PSU", jx - 8, jy - 8.0, 0.9)
+    gr_silk("RED=+   BLK=-", jx - 8, jy - 6.4, 0.8)
+    gr_silk_poly(
+        [(jx - 4.5, jy - 3.5), (jx - 2.5, jy - 3.5), (jx - 3.5, jy - 1.8)],
+        fill=True,
+    )
+    gr_silk("+", jx - 4.0, jy - 4.8, 1.0)
 
-    # --- F1 PTC (series) + D1 TVS (shunt) after J1 ---
-    # Path: J1.+12V_RAW -> F1 -> +12V ; D1 across +12V-GND
-    # f1x,f1y set in placement map
-    a('\t(footprint "ESP32_Carrier:Fuse_PTC_Radial_5.1mm"')
-    a('\t\t(layer "F.Cu")')
-    a(f'\t\t(uuid "{uid()}")')
-    a(f"\t\t(at {f1x} {f1y} {rot})")
-    a('\t\t(property "Reference" "F1"')
-    a(f"\t\t\t(at 0 -5.2 {rot})")
-    a('\t\t\t(layer "F.SilkS")')
-    a("\t\t\t(effects (font (size 0.9 0.9) (thickness 0.12)))")
-    a(f'\t\t\t(uuid "{uid()}")')
-    a("\t\t)")
-    a('\t\t(property "Value" "PTC_3A_30V"')
-    a(f"\t\t\t(at 0 5.2 {rot})")
-    a('\t\t\t(layer "F.SilkS")')
-    a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)))")
-    a(f'\t\t\t(uuid "{uid()}")')
-    a("\t\t)")
-    a("\t\t(attr through_hole)")
-    fp_silk_rect(-4.2, -4.2, 4.2, 4.2, "F.SilkS")
-    a('\t\t(pad "1" thru_hole rect')
-    a("\t\t\t(at -2.55 0)")
-    a("\t\t\t(size 1.8 1.8)")
-    a("\t\t\t(drill 1.0)")
-    a('\t\t\t(layers "*.Cu" "*.Mask")')
-    a('\t\t\t(net 57 "+12V_RAW")')
-    a(f'\t\t\t(uuid "{uid()}")')
-    a("\t\t)")
-    a('\t\t(pad "2" thru_hole circle')
-    a("\t\t\t(at 2.55 0)")
-    a("\t\t\t(size 1.8 1.8)")
-    a("\t\t\t(drill 1.0)")
-    a('\t\t\t(layers "*.Cu" "*.Mask")')
-    a('\t\t\t(net 1 "+12V")')
-    a(f'\t\t\t(uuid "{uid()}")')
-    a("\t\t)")
-    a("\t)")
-    # d1 at placement map
+    # --- On-board protect rectangle: J1 → D3 → F1 → +12V OUT (east, same Y as J1 +RAW)
+    # D3/F1 @0° (pads along X); D1 TVS @270° under OUT (K north / A south)
     a('\t(footprint "ESP32_Carrier:Diode_TVS_DO41"')
     a('\t\t(layer "F.Cu")')
     a(f'\t\t(uuid "{uid()}")')
-    a(f"\t\t(at {d1x} {d1y} {rot})")
-    a('\t\t(property "Reference" "D1"')
-    a(f"\t\t\t(at 0 -3.2 {rot})")
+    a(f"\t\t(at {d3x} {d3y} {d3_rot})")
+    a('\t\t(property "Reference" "D3"')
+    a(f"\t\t\t(at 0 -2.8 {d3_rot})")
     a('\t\t\t(layer "F.SilkS")')
-    a("\t\t\t(effects (font (size 0.9 0.9) (thickness 0.12)))")
+    a("\t\t\t(effects (font (size 0.85 0.85) (thickness 0.12)))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
-    a('\t\t(property "Value" "P6KE15A"')
-    a(f"\t\t\t(at 0 3.2 {rot})")
+    a('\t\t(property "Value" "SS54"')
+    a(f"\t\t\t(at 0 2.8 {d3_rot})")
     a('\t\t\t(layer "F.SilkS")')
-    a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)))")
+    a("\t\t\t(effects (font (size 0.75 0.75) (thickness 0.1)))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a("\t\t(attr through_hole)")
     fp_silk_rect(-3.2, -1.5, 3.2, 1.5, "F.SilkS")
-    # cathode band mark + K label (pad2 / +X) — follows PART_ROT
     a("\t\t(fp_line")
     a("\t\t\t(start 2.2 -1.2)")
     a("\t\t\t(end 2.2 1.2)")
@@ -3418,45 +3985,131 @@ def write_pcb() -> Path:
     a('\t\t\t(layer "F.SilkS")')
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
-    fp_silk_text("K", 3.75, -2.2, rot, 0.7)
-    fp_silk_text("A", -3.75, -2.2, rot, 0.7)
-    # pad1 anode -> GND; pad2 cathode band -> +12V (uni TVS)
-    a('\t\t(pad "1" thru_hole rect')
-    a("\t\t\t(at -3.75 0)")
-    a("\t\t\t(size 1.7 1.7)")
-    a("\t\t\t(drill 0.9)")
+    a('\t\t(pad "1" thru_hole rect (at -3.75 0) (size 1.7 1.7) (drill 0.9)')
     a('\t\t\t(layers "*.Cu" "*.Mask")')
-    a('\t\t\t(net 2 "GND")')
+    a('\t\t\t(net 57 "+12V_RAW")')
+    a(f'\t\t\t(uuid "{uid()}")')
+    a("\t\t)")
+    a('\t\t(pad "2" thru_hole circle (at 3.75 0) (size 1.7 1.7) (drill 0.9)')
+    a('\t\t\t(layers "*.Cu" "*.Mask")')
+    a('\t\t\t(net 68 "+12V_PRE")')
+    a(f'\t\t\t(uuid "{uid()}")')
+    a("\t\t)")
+    a("\t)")
+
+    # F1 @0°: pad1 PRE west, pad2 +12V OUT east (aligned with J1 +RAW)
+    a(f'\t(footprint "ESP32_Carrier:{FUSE_5X20_FP}"')
+    a('\t\t(layer "F.Cu")')
+    a(f'\t\t(uuid "{uid()}")')
+    a(f"\t\t(at {f1x} {f1y} {f1_rot})")
+    a('\t\t(property "Reference" "F1"')
+    a(f'\t\t\t(at 0 -5.6 {f1_rot})')
+    a('\t\t\t(layer "F.SilkS")')
+    a("\t\t\t(effects (font (size 0.9 0.9) (thickness 0.12)))")
+    a(f'\t\t\t(uuid "{uid()}")')
+    a("\t\t)")
+    a('\t\t(property "Value" "5x20 T3.15A"')
+    a(f'\t\t\t(at 0 5.6 {f1_rot})')
+    a('\t\t\t(layer "F.SilkS")')
+    a("\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)))")
+    a(f'\t\t\t(uuid "{uid()}")')
+    a("\t\t)")
+    a("\t\t(attr through_hole)")
+    a("\t\t(fp_rect")
+    a(f"\t\t\t(start {-FUSE_5X20_HALF - 2.2} -4.0)")
+    a(f"\t\t\t(end {FUSE_5X20_HALF + 2.2} 4.0)")
+    a('\t\t\t(stroke (width 0.12) (type solid))')
+    a("\t\t\t(fill none)")
+    a('\t\t\t(layer "F.SilkS")')
+    a(f'\t\t\t(uuid "{uid()}")')
+    a("\t\t)")
+    a('\t\t(fp_text user "RUT ONG"')
+    a(f"\t\t\t(at 0 -7.0 {f1_rot})")
+    a('\t\t\t(layer "F.SilkS")')
+    a('\t\t\t(effects (font (size 0.5 0.5) (thickness 0.08)))')
+    a(f'\t\t\t(uuid "{uid()}")')
+    a("\t\t)")
+    a('\t\t(pad "1" thru_hole rect')
+    a(f"\t\t\t(at {-FUSE_5X20_HALF} 0)")
+    a("\t\t\t(size 2.2 2.8)")
+    a("\t\t\t(drill 1.2)")
+    a('\t\t\t(layers "*.Cu" "*.Mask")')
+    a('\t\t\t(net 68 "+12V_PRE")')
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a('\t\t(pad "2" thru_hole circle')
-    a("\t\t\t(at 3.75 0)")
-    a("\t\t\t(size 1.7 1.7)")
-    a("\t\t\t(drill 0.9)")
+    a(f"\t\t\t(at {FUSE_5X20_HALF} 0)")
+    a("\t\t\t(size 2.2 2.8)")
+    a("\t\t\t(drill 1.2)")
     a('\t\t\t(layers "*.Cu" "*.Mask")')
     a('\t\t\t(net 1 "+12V")')
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a("\t)")
-    gr_text("F1 PTC + D1 TVS", ox + 20, oy + 73.5, "F.SilkS", 0.7)
 
-    # --- U2 MP1584EN BOTTOM ---
-    # --- U2 MP1584EN BOTTOM (logic +5V) — mx,my from placement map ---
+    # D1 TVS under +12V OUT: pad1 A=GND, pad2 K=+12V
+    a('\t(footprint "ESP32_Carrier:Diode_TVS_DO41"')
+    a('\t\t(layer "F.Cu")')
+    a(f'\t\t(uuid "{uid()}")')
+    a(f"\t\t(at {d1x} {d1y} {d1_rot})")
+    a('\t\t(property "Reference" "D1"')
+    a(f"\t\t\t(at 0 -2.8 {d1_rot})")
+    a('\t\t\t(layer "F.SilkS")')
+    a("\t\t\t(effects (font (size 0.85 0.85) (thickness 0.12)))")
+    a(f'\t\t\t(uuid "{uid()}")')
+    a("\t\t)")
+    a('\t\t(property "Value" "P6KE15A"')
+    a(f"\t\t\t(at 0 2.8 {d1_rot})")
+    a('\t\t\t(layer "F.SilkS")')
+    a("\t\t\t(effects (font (size 0.75 0.75) (thickness 0.1)))")
+    a(f'\t\t\t(uuid "{uid()}")')
+    a("\t\t)")
+    a("\t\t(attr through_hole)")
+    fp_silk_rect(-3.2, -1.5, 3.2, 1.5, "F.SilkS")
+    a("\t\t(fp_line")
+    a("\t\t\t(start 2.2 -1.2)")
+    a("\t\t\t(end 2.2 1.2)")
+    a('\t\t\t(stroke (width 0.12) (type solid))')
+    a('\t\t\t(layer "F.SilkS")')
+    a(f'\t\t\t(uuid "{uid()}")')
+    a("\t\t)")
+    a('\t\t(pad "1" thru_hole rect (at -3.75 0) (size 1.7 1.7) (drill 0.9)')
+    a('\t\t\t(layers "*.Cu" "*.Mask")')
+    a('\t\t\t(net 2 "GND")')
+    a(f'\t\t\t(uuid "{uid()}")')
+    a("\t\t)")
+    a('\t\t(pad "2" thru_hole circle (at 3.75 0) (size 1.7 1.7) (drill 0.9)')
+    a('\t\t\t(layers "*.Cu" "*.Mask")')
+    a('\t\t\t(net 1 "+12V")')
+    a(f'\t\t\t(uuid "{uid()}")')
+    a("\t\t)")
+    a("\t)")
+    # Courtyard silk rectangle around J1+D3+F1+D1 only
+    _prot_x0 = jx - 5.5
+    _prot_y0 = min(jy - 6.0, f1y - 5.0, d1y - 4.5) - 1.0
+    _prot_x1 = f1x + FUSE_5X20_HALF + 3.0
+    _prot_y1 = max(jy + 6.0, f1y + 5.0, d1y + 4.5) + 1.0
+    gr_silk_rect(_prot_x0, _prot_y0, _prot_x1, _prot_y1, w=0.2)
+    gr_silk("12V IN PROT", _prot_x0 + 0.8, _prot_y0 + 1.4, 0.7)
+    gr_silk("J1>D3>F1>+12V OUT", d3x - 2, f1y - 6.2, 0.6)
+    gr_silk("+12V OUT→", f1x + FUSE_5X20_HALF - 2.0, f1y - 5.5, 0.65)
+    gr_silk("NO REVERSE @ J1", jx - 8, jy + 7.5, 0.7)
+
+    # --- U2 MP1584EN (BUCK cluster — near MCU, separate from 12V protect) ---
     a('\t(footprint "ESP32_Carrier:MP1584_5V3A"')
     a('\t\t(layer "F.Cu")')
     a(f'\t\t(uuid "{uid()}")')
     a(f"\t\t(at {mx} {my} {rot})")
     a('\t\t(property "Reference" "U2"')
-    # Inside the body: below it, U2's designator landed on U4's silk outline.
     a(f'\t\t\t(at 0 {-MINI560_H / 2 + 3.0} {rot})')
     a('\t\t\t(layer "F.SilkS")')
     a("\t\t\t(effects (font (size 1 1) (thickness 0.15)))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
-    a('\t\t(property "Value" "MP1584_5V3A"')
+    a('\t\t(property "Value" "MP1584 5V"')
     a(f'\t\t\t(at 0 {MINI560_H / 2 + 1.8} {rot})')
-    a('\t\t\t(layer "F.Fab")')
-    a("\t\t\t(effects (font (size 1 1) (thickness 0.15)))")
+    a('\t\t\t(layer "F.SilkS")')
+    a("\t\t\t(effects (font (size 0.9 0.9) (thickness 0.12)))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a("\t\t(attr through_hole)")
@@ -3489,6 +4142,7 @@ def write_pcb() -> Path:
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
     a("\t)")
+    gr_silk("BUCK 5V → ESP32", mx - 10, my - MINI560_H / 2 - 2.8, 0.7)
 
     # --- U3 TMC2209 (tx,ty; ROT_TMC uncrosses STEP/DIR/EN) ---
     t_hx = TMC_ROW / 2
@@ -3505,8 +4159,8 @@ def write_pcb() -> Path:
     a("\t\t)")
     a('\t\t(property "Value" "TMC2209"')
     a(f'\t\t\t(at 0 {TMC_H / 2 + 1.8} {tmc_rot})')
-    a('\t\t\t(layer "F.Fab")')
-    a("\t\t\t(effects (font (size 1 1) (thickness 0.15)))")
+    a('\t\t\t(layer "F.SilkS")')
+    a("\t\t\t(effects (font (size 0.9 0.9) (thickness 0.12)))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a("\t\t(attr through_hole)")
@@ -3562,6 +4216,8 @@ def write_pcb() -> Path:
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
     a("\t)")
+    gr_silk("U3 TMC2209 - THAY stepstick", tx - 8, ty - TMC_H / 2 - 4.0, 0.75)
+    gr_silk("NEMA17 = chan Mot tren module", tx - 8, ty - TMC_H / 2 - 2.6, 0.7)
 
     # --- U1 ESP32 BOTTOM (fx,fy from placement map) ---
 
@@ -3612,10 +4268,10 @@ def write_pcb() -> Path:
     a("\t\t\t(effects (font (size 1 1) (thickness 0.15)))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
-    a('\t\t(property "Value" "ESP32_S3_DevKitC_1"')
+    a('\t\t(property "Value" "ESP32-S3 DevKitC"')
     a(f"\t\t\t(at 12.7 {y_last + 5.0} {rot})")
-    a('\t\t\t(layer "F.Fab")')
-    a("\t\t\t(effects (font (size 1 1) (thickness 0.15)))")
+    a('\t\t\t(layer "F.SilkS")')
+    a("\t\t\t(effects (font (size 0.9 0.9) (thickness 0.12)))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a("\t\t(attr through_hole)")
@@ -3656,6 +4312,8 @@ def write_pcb() -> Path:
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
     a("\t)")
+    gr_silk("U1 ESP32-S3 DevKitC - THAY board", fx - 6, fy - 12.0, 0.8)
+    gr_silk("USB/anten huong theo silkscreen", fx - 6, fy - 10.5, 0.7)
 
     # J2 removed: NEMA17 wires to U3 Mot pins (A2/A1/B1/B2) on TMC2209 stepstick.
 
@@ -3696,8 +4354,8 @@ def write_pcb() -> Path:
         a("\t\t)")
         a(f'\t\t(property "Value" "{value}"')
         a(f"\t\t\t(at 0 {(n - 1) * PITCH + 3.8} 0)")
-        a('\t\t\t(layer "F.Fab")')
-        a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)))")
+        a('\t\t\t(layer "F.SilkS")')
+        a("\t\t\t(effects (font (size 0.75 0.75) (thickness 0.1)))")
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
         a("\t\t(attr through_hole)")
@@ -3740,17 +4398,19 @@ def write_pcb() -> Path:
             a(f'\t\t\t(uuid "{uid()}")')
             a("\t\t)")
         a("\t)")
-        gr_text(silk_tag, ox - 4.5, oy + (n - 1) * PITCH / 2, "F.SilkS", 0.55)
+        gr_text(silk_tag, ox - 4.5, oy + (n - 1) * PITCH / 2, "Cmts.User", 0.55)
 
     # cy_bot/cy_top = 0.5 on abutting edge → 2.54−1.0 = 1.54 mm courtyard gap
     _emit_tft_header(
-        "J17", TFT_LCD_FP, "TFT_LCD", j3x, j3y,
+        "J17", TFT_LCD_FP, "MSP3520 LCD", j3x, j3y,
         TFT_LCD_HEADER, j17_nets, "LCD", cy_bot=0.5,
     )
     _emit_tft_header(
-        "J23", TFT_TP_FP, "TFT_TP", j23x, j23y,
+        "J23", TFT_TP_FP, "MSP3520 TP", j23x, j23y,
         TFT_TP_HEADER, j23_nets, "TP", cy_top=0.5,
     )
+    gr_silk("J17+J23 = MSP3520 TFT", j3x - 8, j3y - 4.5, 0.8)
+    gr_silk("THAY: rut ca 2 hang, cam dung thu tu pin", j3x - 8, j3y - 3.2, 0.7)
 
     # --- J18 EC11 encoder — ROT_ENC uncrosses ENC_A/B vs U1 ---
     a(f'\t(footprint "ESP32_Carrier:{ENC_FP}"')
@@ -3763,18 +4423,18 @@ def write_pcb() -> Path:
     a("\t\t\t(effects (font (size 1 1) (thickness 0.15)))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
-    a('\t\t(property "Value" "EC11_ENC"')
-    a(f"\t\t\t(at 0 {(ENC_PINS - 1) * PITCH + 3.8} {enc_rot})")
+    a('\t\t(property "Value" "EC11 ENC"')
+    a(f"\t\t\t(at 0 {(ENC_PINS - 1) * XH_PITCH + 3.8} {enc_rot})")
     a('\t\t\t(layer "F.Fab")')
     a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
     a("\t\t(attr through_hole)")
-    span_e = (ENC_PINS - 1) * PITCH
+    span_e = (ENC_PINS - 1) * XH_PITCH
     for layer, w in (("F.CrtYd", 0.05), ("F.Fab", 0.1), ("F.SilkS", 0.12)):
         a("\t\t(fp_rect")
-        a("\t\t\t(start -1.8 -1.8)")
-        a(f"\t\t\t(end 1.8 {span_e + 1.8})")
+        a("\t\t\t(start -3.2 -2.0)")
+        a(f"\t\t\t(end 3.2 {span_e + 2.0})")
         a(f"\t\t\t(stroke (width {w}) (type solid))")
         a("\t\t\t(fill none)")
         a(f'\t\t\t(layer "{layer}")')
@@ -3787,7 +4447,7 @@ def write_pcb() -> Path:
         (60, "/ENC_B", "ENC_B"),
     ]
     for i, (ni, nn, lab) in enumerate(j18_nets):
-        y = i * PITCH
+        y = i * XH_PITCH
         a(f'\t\t(fp_text user "{lab}"')
         a(f"\t\t\t(at 3.8 {y} {enc_rot})")
         a('\t\t\t(layer "F.SilkS")')
@@ -3811,12 +4471,14 @@ def write_pcb() -> Path:
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
     a("\t)")
-    gr_text("J18 ENC wall-mount EC11", j18x - 8, j18y - 5.5, "F.SilkS", 0.7)
-    gr_text("GND 3V3 A=IO38 B=IO41", j18x - 6, j18y - 3.8, "F.SilkS", 0.55)
+    gr_silk("J18 EC11 ENC", j18x - 6, j18y - 6.5, 0.8)
+    gr_silk("1=GND 2=3V3 3=A 4=B", j18x - 6, j18y - 5.0, 0.7)
+    asm_key_triangle(j18x - 5.5, j18y, tip_left=True, s=1.3)
+    asm_plug_box(j18x + 5.5, j18y - 1.5, j18x + 20.0, j18y + 4.0, "CAM EC11", "XH4")
 
     # --- J15 Buzzer TOP ---
     # --- J15 Buzzer TOP — j15 from placement map ---
-    a('\t(footprint "ESP32_Carrier:PinHeader_1x03_Buzzer"')
+    a(f'\t(footprint "ESP32_Carrier:{BZ_XH_FP}"')
     a('\t\t(layer "F.Cu")')
     a(f'\t\t(uuid "{uid()}")')
     a(f"\t\t(at {j15x} {j15y})")
@@ -3826,8 +4488,8 @@ def write_pcb() -> Path:
     a("\t\t\t(effects (font (size 1 1) (thickness 0.15)))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
-    a('\t\t(property "Value" "BUZZER_5V"')
-    a(f"\t\t\t(at 0 {2 * PITCH + 3.8} 0)")
+    a('\t\t(property "Value" "BUZZER 5V"')
+    a(f"\t\t\t(at 0 {2 * XH_PITCH + 3.8} 0)")
     a('\t\t\t(layer "F.Fab")')
     a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)))")
     a(f'\t\t\t(uuid "{uid()}")')
@@ -3835,8 +4497,8 @@ def write_pcb() -> Path:
     a("\t\t(attr through_hole)")
     for layer, w in (("F.CrtYd", 0.05), ("F.Fab", 0.1), ("F.SilkS", 0.12)):
         a("\t\t(fp_rect")
-        a("\t\t\t(start -1.8 -1.8)")
-        a(f"\t\t\t(end 1.8 {2 * PITCH + 1.8})")
+        a("\t\t\t(start -3.2 -2.0)")
+        a(f"\t\t\t(end 3.2 {2 * XH_PITCH + 2.0})")
         a(f"\t\t\t(stroke (width {w}) (type solid))")
         a("\t\t\t(fill none)")
         a(f'\t\t\t(layer "{layer}")')
@@ -3845,28 +4507,31 @@ def write_pcb() -> Path:
     for i, (ni, nn, lab) in enumerate(
         [(3, "+5V", "VCC5"), (2, "GND", "GND"), (54, "/BUZZER", "SIG")]
     ):
-        y = i * PITCH
+        y = i * XH_PITCH
         a(f'\t\t(fp_text user "{lab}"')
-        a(f"\t\t\t(at 3.8 {y} 0)")
-        a('\t\t\t(layer "Cmts.User")')
-        a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)) (justify left))")
+        a(f"\t\t\t(at 4.2 {y} 0)")
+        a('\t\t\t(layer "F.SilkS")')
+        a('\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)) (justify left))')
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
         shape = "rect" if i == 0 else "circle"
         a(f'\t\t(pad "{i + 1}" thru_hole {shape}')
         a(f"\t\t\t(at 0 {y})")
-        a("\t\t\t(size 1.7 1.7)")
-        a("\t\t\t(drill 1.0)")
+        a("\t\t\t(size 1.6 1.6)")
+        a("\t\t\t(drill 0.9)")
         a('\t\t\t(layers "*.Cu" "*.Mask")')
         a(f'\t\t\t(net {ni} "{nn}")')
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
     a("\t)")
+    gr_silk("J15 BUZZER 5V", j15x - 5, j15y - 5.0, 0.75)
+    asm_key_triangle(j15x - 5.0, j15y, tip_left=True, s=1.2)
+    gr_silk("1=VCC 2=GND 3=SIG", j15x + 5.5, j15y + 1.0, 0.65)
 
     # --- J16 MOSFET blower TOP ---
     # ox+115: ox+95 put J16 inside the J4 opto-field header (8 pad clashes)
     # --- J16 MOSFET / blower TOP — j16 from placement map ---
-    a('\t(footprint "ESP32_Carrier:PinHeader_1x04_MOSFET"')
+    a(f'\t(footprint "ESP32_Carrier:{BLW_XH_FP}"')
     a('\t\t(layer "F.Cu")')
     a(f'\t\t(uuid "{uid()}")')
     a(f"\t\t(at {j16x} {j16y})")
@@ -3876,8 +4541,8 @@ def write_pcb() -> Path:
     a("\t\t\t(effects (font (size 1 1) (thickness 0.15)))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
-    a('\t\t(property "Value" "AOD4184"')
-    a(f"\t\t\t(at 0 {3 * PITCH + 3.8} 0)")
+    a('\t\t(property "Value" "AOD4184 12V"')
+    a(f"\t\t\t(at 0 {3 * XH_PITCH + 3.8} 0)")
     a('\t\t\t(layer "F.Fab")')
     a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)))")
     a(f'\t\t\t(uuid "{uid()}")')
@@ -3885,8 +4550,8 @@ def write_pcb() -> Path:
     a("\t\t(attr through_hole)")
     for layer, w in (("F.CrtYd", 0.05), ("F.Fab", 0.1), ("F.SilkS", 0.12)):
         a("\t\t(fp_rect")
-        a("\t\t\t(start -1.8 -1.8)")
-        a(f"\t\t\t(end 1.8 {3 * PITCH + 1.8})")
+        a("\t\t\t(start -3.2 -2.0)")
+        a(f"\t\t\t(end 3.2 {3 * XH_PITCH + 2.0})")
         a(f"\t\t\t(stroke (width {w}) (type solid))")
         a("\t\t\t(fill none)")
         a(f'\t\t\t(layer "{layer}")')
@@ -3900,40 +4565,46 @@ def write_pcb() -> Path:
             (61, "/BLW_RET", "FAN-"),
         ]
     ):
-        y = i * PITCH
+        y = i * XH_PITCH
         a(f'\t\t(fp_text user "{lab}"')
-        a(f"\t\t\t(at 3.8 {y} 0)")
-        a('\t\t\t(layer "Cmts.User")')
-        a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)) (justify left))")
+        a(f"\t\t\t(at 4.2 {y} 0)")
+        a('\t\t\t(layer "F.SilkS")')
+        a('\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)) (justify left))')
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
         shape = "rect" if i == 0 else "circle"
         a(f'\t\t(pad "{i + 1}" thru_hole {shape}')
         a(f"\t\t\t(at 0 {y})")
-        a("\t\t\t(size 1.7 1.7)")
-        a("\t\t\t(drill 1.0)")
+        a("\t\t\t(size 1.6 1.6)")
+        a("\t\t\t(drill 0.9)")
         a('\t\t\t(layers "*.Cu" "*.Mask")')
         if ni:
             a(f'\t\t\t(net {ni} "{nn}")')
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
     a("\t)")
-    gr_text("J16 AOD4184 +12V pump", j16x - 8, j16y - 5.5, "F.SilkS", 0.7)
+    gr_silk("J16 AOD4184 BOM 12V", j16x - 7, j16y - 6.0, 0.75)
+    gr_silk("1=PWM 2=GND 3=+12 4=FAN-", j16x - 7, j16y - 4.5, 0.7)
+    asm_key_triangle(j16x - 5.5, j16y, tip_left=True, s=1.4)
+    asm_plug_box(j16x + 6.0, j16y - 1.5, j16x + 22.0, j16y + 4.5, "CAM AOD4184", "XH4 KEY=PWM")
 
     # Pad world coords (ESP32-S3 DevKitC)
     j1_raw = pad_world(jx, jy, j1_rot, -TB_PITCH / 2, 0)
-    j1_12 = pad_world(f1x, f1y, rot, 2.55, 0)  # +12V after F1 PTC (alias for farm/star)
     j1_gnd = pad_world(jx, jy, j1_rot, TB_PITCH / 2, 0)
-    f1_in = pad_world(f1x, f1y, rot, -2.55, 0)
-    d1_gnd = pad_world(d1x, d1y, rot, -3.75, 0)
-    d1_12v = pad_world(d1x, d1y, rot, 3.75, 0)
+    # Protect chain (horizontal): J1 RAW → D3 → F1 → +12V OUT east; D1 clamps +12V
+    d3_a = pad_world(d3x, d3y, d3_rot, -3.75, 0)
+    d3_k = pad_world(d3x, d3y, d3_rot, 3.75, 0)
+    f1_pre = pad_world(f1x, f1y, f1_rot, -FUSE_5X20_HALF, 0)
+    f1_12 = pad_world(f1x, f1y, f1_rot, FUSE_5X20_HALF, 0)
+    d1_gnd = pad_world(d1x, d1y, d1_rot, -3.75, 0)
+    d1_12 = pad_world(d1x, d1y, d1_rot, 3.75, 0)
     u2_vinp = pad_world(mx, my, rot, -MP1584_PAD_X, MP1584_PAD_Y_MID)
     u2_ving = pad_world(mx, my, rot, -MP1584_PAD_X, -MP1584_PAD_Y_MID)
     u2_voutp = pad_world(mx, my, rot, MP1584_PAD_X, MP1584_PAD_Y_MID)
     u2_voutg = pad_world(mx, my, rot, MP1584_PAD_X, -MP1584_PAD_Y_MID)
     j16_pwm = (j16x, j16y)
-    j16_gnd = (j16x, j16y + PITCH)
-    j16_12v = (j16x, j16y + 2 * PITCH)
+    j16_gnd = (j16x, j16y + XH_PITCH)
+    j16_12v = (j16x, j16y + 2 * XH_PITCH)
 
     # 5V = pad 21 left, GND = pad 22 left, 3V3 = pad 1 left
     u1_vin = pad_world(fx, fy, rot, *pad_local(21))
@@ -3961,40 +4632,40 @@ def write_pcb() -> Path:
     j3_3v3 = (j3x, j3y)           # pin 1 VCC
     j3_gnd = (j3x, j3y + PITCH)   # pin 2 GND
 
-    # === +12V 3A via farm: AFTER F1 PTC (not raw J1) ===
-    # J1 RAW -> F1 -> +12V farm; D1 TVS on +12V
-    # Keep RAW/12V/GND local around J1 — no long diagonals.
-    # J1 RAW -> F1 on Y offset from +12V farm row (same nets, path only)
-    y_raw = j1_raw[1] - 3.0
-    track_h(j1_raw[0], f1_in[0], y_raw, 57, 1.5)
-    via(f1_in[0], y_raw, 57, 0.45, 0.9)
-    track_v(f1_in[0], y_raw, f1_in[1], 57, 1.5)
-    track_v(j1_12[0], j1_12[1], d1_12v[1], 1, 1.0)
-    via(j1_12[0], d1_12v[1], 1, 0.4, 0.8)
-    track_h(j1_12[0], d1_12v[0], d1_12v[1], 1, 0.8)
-    # GND to TVS on offset Y — same pad-row Y would short across +12V stub
-    y_d1g = d1_gnd[1] + 2.0
-    track_v(j1_gnd[0], j1_gnd[1], y_d1g, 2, 0.8)
-    via(j1_gnd[0], y_d1g, 2, 0.4, 0.8)
-    track_h(j1_gnd[0], d1_gnd[0], y_d1g, 2, 0.8)
-    via(d1_gnd[0], y_d1g, 2, 0.4, 0.8)
-    track_v(d1_gnd[0], y_d1g, d1_gnd[1], 2, 0.8)
-
-    # Via farm immediately WEST of F1 (short stub — do not span TFT corridor)
-    farm_cx = j1_12[0] - 4.0
+    # === +12V via farm: AFTER D3+F1 (not raw J1) ===
+    # Horizontal rail: J1 +RAW → D3 → F1 → +12V OUT (same Y); D1 TVS under OUT
+    rail_y = j1_raw[1]
+    if abs(j1_raw[1] - d3_a[1]) > 0.05:
+        track_v(j1_raw[0], j1_raw[1], d3_a[1], 57, 1.5)
+        track_h(j1_raw[0], d3_a[0], d3_a[1], 57, 1.5)
+    else:
+        track_h(j1_raw[0], d3_a[0], rail_y, 57, 1.5)
+    track_h(d3_k[0], f1_pre[0], d3_k[1], 68, 1.5)
+    if abs(d3_k[1] - f1_pre[1]) > 0.05:
+        track_v(f1_pre[0], d3_k[1], f1_pre[1], 68, 1.5)
+    # +12V from F1 pad2 (OUT east)
+    j1_12 = f1_12
+    farm_cx = j1_12[0] + 3.5
     farm_cy = j1_12[1]
-    gr_text("+12V VIA 3A", farm_cx - 4, farm_cy - 5, "F.SilkS", 0.7)
-    gr_text("+12V VIA 3A", farm_cx - 4, farm_cy - 5, "Cmts.User", 0.8)
+    gr_silk("+12V VIA 3A (sau F1)", farm_cx - 2, farm_cy - 5, 0.75)
     for ix in range(VIA12_COUNT_X):
         for iy in range(VIA12_COUNT_Y):
             vx = farm_cx + (ix - 1) * VIA12_PITCH
             vy = farm_cy + (iy - 0.5) * VIA12_PITCH
             via(vx, vy, 1)
     pw = 1.5
-    # +12V: V on B to y12, H on F along spine, V on B to loads (Manhattan)
     track_h(j1_12[0], farm_cx, j1_12[1], 1, pw)
     via(farm_cx, j1_12[1], 1)
     track_h(farm_cx - VIA12_PITCH, farm_cx + VIA12_PITCH, farm_cy, 1, pw)
+    # D1 TVS → +12V / GND (vertical under OUT)
+    track_v(d1_12[0], d1_12[1], j1_12[1], 1, 0.8)
+    if abs(d1_12[0] - j1_12[0]) > 0.05:
+        track_h(d1_12[0], j1_12[0], j1_12[1], 1, 0.8)
+    track_v(d1_gnd[0], d1_gnd[1], j1_gnd[1], 2, 0.7)
+    if abs(d1_gnd[0] - j1_gnd[0]) > 0.05:
+        track_h(d1_gnd[0], j1_gnd[0], j1_gnd[1], 2, 0.7)
+    else:
+        via(d1_gnd[0], j1_gnd[1], 2, 0.4, 0.8)
 
     y12 = oy + 56.0
     x12_east_power = ox + 48.0
@@ -4164,136 +4835,28 @@ def write_pcb() -> Path:
     _tft_bridge(47, j3y + 6 * PITCH, j3y + 9 * PITCH)
     _tft_bridge(48, j3y + 5 * PITCH, j3y + 11 * PITCH)
     bz = pad_world(fx, fy, rot, *pad_local(PIN_BY_NAME["IO9"]))
-    route_mcu_to_top(54, bz, (j15x, j15y + 2 * PITCH), ox + sx(178.0) + 8 * 1.2, side=-3.0, esc_i=8)
+    route_mcu_to_top(54, bz, (j15x, j15y + 2 * XH_PITCH), ox + sx(178.0) + 8 * 1.2, side=-3.0, esc_i=8)
     bl = pad_world(fx, fy, rot, *pad_local(PIN_BY_NAME["IO3"]))
     route_mcu_to_top(55, bl, (j16x, j16y), ox + sx(178.0) + 9 * 1.2, side=-3.0, esc_i=9)
     for i, (ni, gname, pin_i) in enumerate([(62, "IO38", 2), (60, "IO41", 3)]):
         src = pad_world(fx, fy, rot, *pad_local(PIN_BY_NAME[gname]))
-        dst = pad_world(j18x, j18y, enc_rot, 0, pin_i * PITCH)
+        dst = pad_world(j18x, j18y, enc_rot, 0, pin_i * XH_PITCH)
         route_mcu_to_top(ni, src, dst, ox + sx(178.0) + (10 + i) * 1.2, side=-3.0, esc_i=10 + i)
     route_mcu_to_top(4, u1_3v3, j3_3v3, ox + sx(192.0), y_off=-2.0, side=-3.0, esc_i=12)
     route_mcu_to_top(2, u1_gnd_l, j3_gnd, ox + sx(193.5), y_off=2.0, side=-3.0, esc_i=13)
     route_mcu_to_top(2, u1_gnd_l, pad_world(j18x, j18y, enc_rot, 0, 0), ox + sx(193.5), y_off=2.0, side=-3.0, esc_i=13)
-    route_mcu_to_top(4, u1_3v3, pad_world(j18x, j18y, enc_rot, 0, PITCH), ox + sx(192.0), y_off=-2.0, side=-3.0, esc_i=12)
+    route_mcu_to_top(4, u1_3v3, pad_world(j18x, j18y, enc_rot, 0, XH_PITCH), ox + sx(192.0), y_off=-2.0, side=-3.0, esc_i=12)
 
-    # ===== Discrete PC817 ×4 + 2k2 LED + 10k pull-up (BOTTOM) =====
-    rot4 = PART_ROT
-    hx4 = DIP4_ROW / 2
-    y_a = -0.5 * PITCH
-    y_k = y_a + PITCH
+    # ===== J31A/J31B M2 OPTO4 — dual vertical pin headers (mate M2 P1/P2) =====
+    j31ax, j31ay = FP["j31ax"], FP["j31ay"]
+    j31bx, j31by = FP["j31bx"], FP["j31by"]
+    j31_rot = int(FP.get("j31_rot", 0))
+    j31x, j31y = j31ax, j31ay  # legacy alias = IN row
 
-    def _emit_pc817_dip4(ref: str, ux: float, uy: float, anode_net, out_net):
-        """1=A(anode_net) 2=K(GND) 3=E(GND) 4=C(out_net). Silk pin1 + A/K/C/E."""
-        a('\t(footprint "ESP32_Carrier:PC817_DIP4"')
-        a('\t\t(layer "F.Cu")')
-        a(f'\t\t(uuid "{uid()}")')
-        a(f"\t\t(at {ux} {uy} {rot4})")
-        a(f'\t\t(property "Reference" "{ref}"')
-        a(f"\t\t\t(at 0 {-DIP4_BODY_L / 2 - 1.4} {rot4})")
-        a('\t\t\t(layer "F.SilkS")')
-        a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.12)))")
-        a(f'\t\t\t(uuid "{uid()}")')
-        a("\t\t)")
-        a('\t\t(property "Value" "PC817"')
-        a(f"\t\t\t(at 0 {DIP4_BODY_L / 2 + 1.4} {rot4})")
-        a('\t\t\t(layer "F.Fab")')
-        a("\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)))")
-        a(f'\t\t\t(uuid "{uid()}")')
-        a("\t\t)")
-        a("\t\t(attr through_hole)")
-        silk_hx = DIP4_ROW / 2 + DIP4_PAD / 2 + 0.3
-        for layer, w in (("F.CrtYd", 0.05), ("F.Fab", 0.1), ("F.SilkS", 0.12)):
-            a("\t\t(fp_rect")
-            hxr = silk_hx if layer.endswith("SilkS") else DIP4_BODY_W / 2 + 0.2
-            a(f"\t\t\t(start {-hxr} {-DIP4_BODY_L / 2 - 0.2})")
-            a(f"\t\t\t(end {hxr} {DIP4_BODY_L / 2 + 0.2})")
-            a(f"\t\t\t(stroke (width {w}) (type solid))")
-            a("\t\t\t(fill none)")
-            a(f'\t\t\t(layer "{layer}")')
-            a(f'\t\t\t(uuid "{uid()}")')
-            a("\t\t)")
-        fp_pin1_notch(DIP4_BODY_W, y_a, 1.0)
-        # Pin labels in local frame — rotate with part (anti-misplug)
-        fp_silk_text("A", -hx4 - 1.8, y_a, rot4, 0.65)
-        fp_silk_text("K", -hx4 - 1.8, y_k, rot4, 0.65)
-        fp_silk_text("E", hx4 + 1.8, y_k, rot4, 0.65)
-        fp_silk_text("C", hx4 + 1.8, y_a, rot4, 0.65)
-        pad_defs = [
-            ("1", -hx4, y_a, "rect", anode_net),
-            ("2", -hx4, y_k, "circle", (2, "GND")),
-            ("3", hx4, y_k, "circle", (2, "GND")),
-            ("4", hx4, y_a, "circle", out_net),
-        ]
-        for num, px, py, shape, net in pad_defs:
-            a(f'\t\t(pad "{num}" thru_hole {shape}')
-            a(f"\t\t\t(at {px} {py})")
-            a(f"\t\t\t(size {DIP4_PAD} {DIP4_PAD})")
-            a(f"\t\t\t(drill {DIP4_DRILL})")
-            a('\t\t\t(layers "*.Cu" "*.Mask")')
-            a(f'\t\t\t(net {net[0]} "{net[1]}")')
-            a(f'\t\t\t(uuid "{uid()}")')
-            a("\t\t)")
-        a("\t)")
+    # _opto_in_pad_ch defined after on-carrier OPTO placement (R2k2 north pads)
 
-    def _emit_opto_axial(ref: str, val: str, ax: float, ay: float, na, nb, note=""):
-        a('\t(footprint "ESP32_Carrier:R_Axial_4k7_BUP"')
-        a('\t\t(layer "F.Cu")')
-        a(f'\t\t(uuid "{uid()}")')
-        a(f"\t\t(at {ax} {ay} {rot})")
-        a(f'\t\t(property "Reference" "{ref}"')
-        a(f"\t\t\t(at 0 -2.6 {rot})")
-        a('\t\t\t(layer "F.SilkS")')
-        a("\t\t\t(effects (font (size 0.75 0.75) (thickness 0.1)))")
-        a(f'\t\t\t(uuid "{uid()}")')
-        a("\t\t)")
-        a(f'\t\t(property "Value" "{val}"')
-        a(f"\t\t\t(at 0 2.6 {rot})")
-        a('\t\t\t(layer "F.SilkS")')
-        a("\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)))")
-        a(f'\t\t\t(uuid "{uid()}")')
-        a("\t\t)")
-        a("\t\t(attr through_hole)")
-        fp_silk_rect(-3.2, -1.5, 3.2, 1.5, "F.SilkS")
-        fp_silk_text("1", -3.75, -2.0, rot, 0.55)
-        for pnum, (ni, nn), px in ((1, na, -3.75), (2, nb, 3.75)):
-            a(f'\t\t(pad "{pnum}" thru_hole {"rect" if pnum == 1 else "circle"}')
-            a(f"\t\t\t(at {px} 0)")
-            a("\t\t\t(size 1.6 1.6)")
-            a("\t\t\t(drill 0.8)")
-            a('\t\t\t(layers "*.Cu" "*.Mask")')
-            a(f'\t\t\t(net {ni} "{nn}")')
-            a(f'\t\t\t(uuid "{uid()}")')
-            a("\t\t)")
-        a("\t)")
-        if note:
-            gr_text(note, ax - 6, ay + 4.2, "Cmts.User", 0.55)
 
-    ox_o, oy_o = opto_origin
-    opto_row_pitch = 26.0  # RPU row0 vs RLED row1 silk rects need ≥6 mm center gap
-    opto_col_pitch = 11.5
-    gr_text("OPTO PC817x8 + 2k2/10k", ox_o - 8, oy_o - 14, "F.SilkS", 0.7)
-    for i, (uref, rled, rpu, iid, inet, oid, onet, aid, anet, tag) in enumerate(OPTO_CH):
-        col, row = i % 4, i // 4
-        ux = ox_o + col * opto_col_pitch
-        uy = oy_o + row * opto_row_pitch
-        _emit_pc817_dip4(uref, ux, uy, (aid, anet), (oid, onet))
-        _emit_opto_axial(
-            rled, "2k2", ux - 3.5, uy - 8.5,
-            (iid, inet), (aid, anet), f"{rled} LED {tag}",
-        )
-        _emit_opto_axial(
-            rpu, "10k", ux + 3.5, uy + 8.5,
-            (4, "+3V3"), (oid, onet), f"{rpu} PU {tag}",
-        )
-
-    def _opto_in_pad_ch(ch_i: int):
-        """World coords of LED resistor pad1 (OPTO_INx) for channel index."""
-        col, row = ch_i % 4, ch_i // 4
-        ux = ox_o + col * opto_col_pitch
-        uy = oy_o + row * opto_row_pitch
-        return pad_world(ux - 3.5, uy - 8.5, 0, -3.75, 0)
-
-    # --- DIP-16: U5-U7 ULN; BYJ J5-J7; HOME endstop J8/J10/J12 ---
+    # --- U5-U7 ULN2003 driver modules; HOME endstop J8/J10/J12 ---
     dip_y0 = -3.5 * PITCH
     dip_hx = DIP16_ROW / 2
 
@@ -4366,40 +4929,18 @@ def write_pcb() -> Path:
     u6x, u6y = FP["u6x"], FP["u6y"]
     u7x, u7y = FP["u7x"], FP["u7y"]
 
-    def uln_nets(in_ids, byj_ids):
+    def uln_nets(in_ids):
+        # Module header: IN1-4, GND, +12V — 28BYJ on module JST (no carrier BYJ nets)
         d = {
             1: in_ids[0], 2: in_ids[1], 3: in_ids[2], 4: in_ids[3],
-            5: None, 6: None, 7: None,
-            8: (2, "GND"), 9: (1, "+12V"),
-            10: None, 11: None, 12: None,
-            13: byj_ids[3], 14: byj_ids[2], 15: byj_ids[1], 16: byj_ids[0],
+            5: (2, "GND"), 6: (1, "+12V"),
         }
         return d
 
-    _emit_dip16(
-        "ULN2003AN", "U5", "ULN2003AN", u5x, u5y,
-        uln_nets(
-            [(39, "SR_Q0"), (40, "SR_Q1"), (41, "SR_Q2"), (42, "SR_Q3")],
-            [(68, "BYJ1_A"), (69, "BYJ1_B"), (70, "BYJ1_C"), (71, "BYJ1_D")],
-        ),
-    )
-    _emit_dip16(
-        "ULN2003AN", "U6", "ULN2003AN", u6x, u6y,
-        uln_nets(
-            [(43, "SR_Q4"), (44, "SR_Q5"), (45, "SR_Q6"), (63, "SR_Q7")],
-            [(72, "BYJ2_A"), (73, "BYJ2_B"), (74, "BYJ2_C"), (75, "BYJ2_D")],
-        ),
-    )
-    _emit_dip16(
-        "ULN2003AN", "U7", "ULN2003AN", u7x, u7y,
-        uln_nets(
-            [(64, "SR_Q8"), (65, "SR_Q9"), (66, "SR_Q10"), (67, "SR_Q11")],
-            [(76, "BYJ3_A"), (77, "BYJ3_B"), (78, "BYJ3_C"), (79, "BYJ3_D")],
-        ),
-    )
-
-    def _hdr_1xn(fp, ref, val, atx, aty, pads, hrot=0):
-        n = len(pads)
+    def _emit_uln_module(fp, ref, val, atx, aty, nets, hrot=0):
+        # Female 1×6 for M3 ULN2003 daughter (same pad style as M1/M2 headers).
+        # Pitch stays PITCH so pad centers match live routing.
+        span = 5 * PITCH
         a(f'\t(footprint "ESP32_Carrier:{fp}"')
         a('\t\t(layer "F.Cu")')
         a(f'\t\t(uuid "{uid()}")')
@@ -4411,30 +4952,154 @@ def write_pcb() -> Path:
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
         a(f'\t\t(property "Value" "{val}"')
-        a(f"\t\t\t(at 0 {(n - 1) * PITCH + 3.8} {hrot})")
-        a('\t\t\t(layer "F.Fab")')
+        a(f"\t\t\t(at 0 {span + 3.8} {hrot})")
+        a('\t\t\t(layer "F.SilkS")')
         a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)))")
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
         a("\t\t(attr through_hole)")
         for layer, w in (("F.CrtYd", 0.05), ("F.Fab", 0.1), ("F.SilkS", 0.12)):
             a("\t\t(fp_rect")
-            a("\t\t\t(start -1.8 -1.8)")
-            a(f"\t\t\t(end 1.8 {(n - 1) * PITCH + 1.8})")
+            a("\t\t\t(start -3.2 -2.0)")
+            a(f"\t\t\t(end 3.2 {span + 2.0})")
             a(f"\t\t\t(stroke (width {w}) (type solid))")
             a("\t\t\t(fill none)")
             a(f'\t\t\t(layer "{layer}")')
             a(f'\t\t\t(uuid "{uid()}")')
             a("\t\t)")
-        for pi, (neti, netn, lab) in enumerate(pads):
+        a("\t\t(fp_line")
+        a("\t\t\t(start -3.2 -0.6)")
+        a("\t\t\t(end -4.2 0)")
+        a('\t\t\t(stroke (width 0.15) (type solid))')
+        a('\t\t\t(layer "F.SilkS")')
+        a(f'\t\t\t(uuid "{uid()}")')
+        a("\t\t)")
+        a("\t\t(fp_line")
+        a("\t\t\t(start -4.2 0)")
+        a("\t\t\t(end -3.2 0.6)")
+        a('\t\t\t(stroke (width 0.15) (type solid))')
+        a('\t\t\t(layer "F.SilkS")')
+        a(f'\t\t\t(uuid "{uid()}")')
+        a("\t\t)")
+        a('\t\t(fp_text user "KEY"')
+        a(f"\t\t\t(at -5.2 0 {hrot})")
+        a('\t\t\t(layer "F.SilkS")')
+        a('\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)))')
+        a(f'\t\t\t(uuid "{uid()}")')
+        a("\t\t)")
+        a('\t\t(fp_text user "cam M3 ULN2003 (board roi)"')
+        a(f"\t\t\t(at 0 {span + 5.4} {hrot})")
+        a('\t\t\t(layer "F.SilkS")')
+        a("\t\t\t(effects (font (size 0.6 0.6) (thickness 0.1)))")
+        a(f'\t\t\t(uuid "{uid()}")')
+        a("\t\t)")
+        labs = ["IN1", "IN2", "IN3", "IN4", "GND", "+12V"]
+        for pi, lab in enumerate(labs):
             y = pi * PITCH
+            net = nets.get(pi + 1)
             a(f'\t\t(fp_text user "{lab}"')
-            a(f"\t\t\t(at 3.2 {y} {hrot})")
+            a(f"\t\t\t(at 4.2 {y} {hrot})")
             a('\t\t\t(layer "F.SilkS")')
-            a("\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)) (justify left))")
+            a("\t\t\t(effects (font (size 0.65 0.65) (thickness 0.1)) (justify left))")
             a(f'\t\t\t(uuid "{uid()}")')
             a("\t\t)")
-            if pi == 0:
+            shape = "rect" if pi == 0 else "circle"
+            a(f'\t\t(pad "{pi + 1}" thru_hole {shape}')
+            a(f"\t\t\t(at 0 {y})")
+            a("\t\t\t(size 1.6 1.6)")
+            a("\t\t\t(drill 0.9)")
+            a('\t\t\t(layers "*.Cu" "*.Mask")')
+            if net:
+                a(f'\t\t\t(net {net[0]} "{net[1]}")')
+            a(f'\t\t\t(uuid "{uid()}")')
+            a("\t\t)")
+        a("\t)")
+
+    _emit_uln_module(
+        "ULN2003_Module", "U5", "ULN2003 A1", u5x, u5y,
+        uln_nets(
+            [(39, "SR_Q0"), (40, "SR_Q1"), (41, "SR_Q2"), (42, "SR_Q3")],
+        ),
+        hrot=dip_rot,
+    )
+    _emit_uln_module(
+        "ULN2003_Module", "U6", "ULN2003 A2", u6x, u6y,
+        uln_nets(
+            [(43, "SR_Q4"), (44, "SR_Q5"), (45, "SR_Q6"), (63, "SR_Q7")],
+        ),
+        hrot=dip_rot,
+    )
+    _emit_uln_module(
+        "ULN2003_Module", "U7", "ULN2003 A3", u7x, u7y,
+        uln_nets(
+            [(64, "SR_Q8"), (65, "SR_Q9"), (66, "SR_Q10"), (67, "SR_Q11")],
+        ),
+        hrot=dip_rot,
+    )
+    for ux, uy, lab in ((u5x, u5y, "A1"), (u6x, u6y, "A2"), (u7x, u7y, "A3")):
+        gr_silk(f"CAM M3 ULN {lab}", ux - 4, uy - 6.5, 0.7)
+        gr_silk("28BYJ=JST tren module", ux - 4, uy - 5.2, 0.6)
+        asm_key_triangle(ux - 5.5, uy - 2.0, tip_left=True, s=1.3)
+
+    def _hdr_1xn(fp, ref, val, atx, aty, pads, hrot=0, pitch=None, keyed=False):
+        if pitch is None:
+            pitch = PITCH
+        n = len(pads)
+        span = (n - 1) * pitch
+        pad_sz = 1.6 if keyed else 1.7
+        drill = 0.9 if keyed else 1.0
+        half = 3.2 if keyed else 1.8
+        a(f'\t(footprint "ESP32_Carrier:{fp}"')
+        a('\t\t(layer "F.Cu")')
+        a(f'\t\t(uuid "{uid()}")')
+        a(f"\t\t(at {atx} {aty} {hrot})")
+        a(f'\t\t(property "Reference" "{ref}"')
+        a(f"\t\t\t(at 0 {-3.0 if keyed else -3.8} {hrot})")
+        a('\t\t\t(layer "F.SilkS")')
+        a("\t\t\t(effects (font (size 0.9 0.9) (thickness 0.12)))")
+        a(f'\t\t\t(uuid "{uid()}")')
+        a("\t\t)")
+        a(f'\t\t(property "Value" "{val}"')
+        a(f"\t\t\t(at 0 {span + 3.0} {hrot})")
+        a(f'\t\t\t(layer "{"F.SilkS" if keyed else "F.Fab"}")')
+        a("\t\t\t(effects (font (size 0.75 0.75) (thickness 0.1)))")
+        a(f'\t\t\t(uuid "{uid()}")')
+        a("\t\t)")
+        a("\t\t(attr through_hole)")
+        for layer, w in (("F.CrtYd", 0.05), ("F.Fab", 0.1), ("F.SilkS", 0.12)):
+            a("\t\t(fp_rect")
+            a(f"\t\t\t(start {-half} {-2.0 if keyed else -1.8})")
+            a(f"\t\t\t(end {half} {span + (2.0 if keyed else 1.8)})")
+            a(f"\t\t\t(stroke (width {w}) (type solid))")
+            a("\t\t\t(fill none)")
+            a(f'\t\t\t(layer "{layer}")')
+            a(f'\t\t\t(uuid "{uid()}")')
+            a("\t\t)")
+        if keyed:
+            a("\t\t(fp_line")
+            a("\t\t\t(start -3.2 -0.6)")
+            a("\t\t\t(end -4.2 0)")
+            a('\t\t\t(stroke (width 0.15) (type solid))')
+            a('\t\t\t(layer "F.SilkS")')
+            a(f'\t\t\t(uuid "{uid()}")')
+            a("\t\t)")
+            a("\t\t(fp_line")
+            a("\t\t\t(start -4.2 0)")
+            a("\t\t\t(end -3.2 0.6)")
+            a('\t\t\t(stroke (width 0.15) (type solid))')
+            a('\t\t\t(layer "F.SilkS")')
+            a(f'\t\t\t(uuid "{uid()}")')
+            a("\t\t)")
+            fp_silk_text("KEY", -5.2, 0, hrot, 0.65)
+        for pi, (neti, netn, lab) in enumerate(pads):
+            y = pi * pitch
+            a(f'\t\t(fp_text user "{lab}"')
+            a(f"\t\t\t(at {4.2 if keyed else 3.2} {y} {hrot})")
+            a('\t\t\t(layer "F.SilkS")')
+            a("\t\t\t(effects (font (size 0.65 0.65) (thickness 0.1)) (justify left))")
+            a(f'\t\t\t(uuid "{uid()}")')
+            a("\t\t)")
+            if pi == 0 and not keyed:
                 a('\t\t(fp_text user "1"')
                 a(f"\t\t\t(at -2.6 {y} {hrot})")
                 a('\t\t\t(layer "F.SilkS")')
@@ -4444,14 +5109,197 @@ def write_pcb() -> Path:
             shape = "rect" if pi == 0 else "circle"
             a(f'\t\t(pad "{pi + 1}" thru_hole {shape}')
             a(f"\t\t\t(at 0 {y})")
-            a("\t\t\t(size 1.7 1.7)")
-            a("\t\t\t(drill 1.0)")
+            a(f"\t\t\t(size {pad_sz} {pad_sz})")
+            a(f"\t\t\t(drill {drill})")
             a('\t\t\t(layers "*.Cu" "*.Mask")')
             if neti:
                 a(f'\t\t\t(net {neti} "{netn}")')
             a(f'\t\t\t(uuid "{uid()}")')
             a("\t\t)")
         a("\t)")
+
+    # --- On-carrier OPTO4 (was M2 @ J31A/B): same 4-col layout as gen_m2 ---
+    _m2 = _m2_layout()
+    m2_ox, m2_oy = j31ax, j31ay  # content origin = OPTO Eco NW
+    _opto_in_pads = []  # north pad of each 2k2 (IN)
+    _opto_out_pads = []  # south pad of each 10k (OUT)
+    _opto_boxes_parts = []
+    gr_silk("OPTO PC817x4 on-board", m2_ox + 0.5, m2_oy - 1.5, 0.7)
+    # Local SNS HF bypass (same role as M2.C1)
+    cap_x, cap_y = m2_ox + 23.0, m2_oy + 2.5
+    a('\t(footprint "ESP32_Carrier:C_0805_100n"')
+    a('\t\t(layer "F.Cu")')
+    a(f'\t\t(uuid "{uid()}")')
+    a(f"\t\t(at {cap_x} {cap_y})")
+    a('\t\t(property "Reference" "C26"')
+    a("\t\t\t(at 0 -1.8 0)")
+    a('\t\t\t(layer "F.SilkS")')
+    a("\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)))")
+    a(f'\t\t\t(uuid "{uid()}")')
+    a("\t\t)")
+    a('\t\t(property "Value" "100n SNS"')
+    a("\t\t\t(at 0 1.8 0)")
+    a('\t\t\t(layer "F.SilkS")')
+    a("\t\t\t(effects (font (size 0.6 0.6) (thickness 0.08)))")
+    a(f'\t\t\t(uuid "{uid()}")')
+    a("\t\t)")
+    a("\t\t(attr smd)")
+    a("\t\t(fp_rect (start -1.1 -0.7) (end 1.1 0.7)")
+    a('\t\t\t(stroke (width 0.1) (type solid)) (fill none) (layer "F.SilkS")')
+    a(f'\t\t\t(uuid "{uid()}")')
+    a("\t\t)")
+    a('\t\t(pad "1" smd roundrect (at -0.95 0) (size 0.8 1.2)')
+    a('\t\t\t(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25)')
+    a('\t\t\t(net 46 "+12V_SNS")')
+    a(f'\t\t\t(uuid "{uid()}")')
+    a("\t\t)")
+    a('\t\t(pad "2" smd roundrect (at 0.95 0) (size 0.8 1.2)')
+    a('\t\t\t(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25)')
+    a('\t\t\t(net 2 "GND")')
+    a(f'\t\t\t(uuid "{uid()}")')
+    a("\t\t)")
+    a("\t)")
+    _opto_boxes_parts.append(local_rect_world_aabb(cap_x, cap_y, 0, -1.5, -1.0, 1.5, 1.0))
+
+    for i, cx_rel in enumerate(_m2.ch_xs):
+        uref, r_led, r_pu, in_id, in_net, out_id, out_net, aid, anet, tag = OPTO_CH[i]
+        cx = m2_ox + cx_rel
+        cy = m2_oy + _m2.cy
+        ry_in = m2_oy + _m2.ry_in
+        ry_out = m2_oy + _m2.ry_out
+        gr_silk(tag[:4], cx - 1.2, cy - 3.2, 0.4)
+        # PC817
+        a('\t(footprint "ESP32_Carrier:PC817_DIP4"')
+        a('\t\t(layer "F.Cu")')
+        a(f'\t\t(uuid "{uid()}")')
+        a(f"\t\t(at {cx} {cy})")
+        a(f'\t\t(property "Reference" "{uref}"')
+        a('\t\t\t(at 2.4 0 0)')
+        a('\t\t\t(layer "F.SilkS")')
+        a("\t\t\t(effects (font (size 0.45 0.45) (thickness 0.06)))")
+        a(f'\t\t\t(uuid "{uid()}")')
+        a("\t\t)")
+        a('\t\t(property "Value" "PC817"')
+        a('\t\t\t(at -2.4 0 0)')
+        a('\t\t\t(layer "F.Fab")')
+        a("\t\t\t(effects (font (size 0.35 0.35) (thickness 0.05)))")
+        a(f'\t\t\t(uuid "{uid()}")')
+        a("\t\t)")
+        a("\t\t(attr through_hole)")
+        for num, px, py, ni, nn in (
+            ("1", -1.27, -1.27, aid, anet),
+            ("2", -1.27, 1.27, 2, "GND"),
+            ("3", 1.27, 1.27, 2, "GND"),
+            ("4", 1.27, -1.27, out_id, out_net),
+        ):
+            a(f'\t\t(pad "{num}" thru_hole circle')
+            a(f"\t\t\t(at {px} {py})")
+            a("\t\t\t(size 1.4 1.4)")
+            a("\t\t\t(drill 0.8)")
+            a('\t\t\t(layers "*.Cu" "*.Mask")')
+            a(f'\t\t\t(net {ni} "{nn}")')
+            a(f'\t\t\t(uuid "{uid()}")')
+            a("\t\t)")
+        a("\t)")
+        # 2k2 @270 — pad1 IN north, pad2 A south
+        a('\t(footprint "ESP32_Carrier:R_Axial_4k7_BUP"')
+        a('\t\t(layer "F.Cu")')
+        a(f'\t\t(uuid "{uid()}")')
+        a(f"\t\t(at {cx} {ry_in} 270)")
+        a(f'\t\t(property "Reference" "{r_led}"')
+        a('\t\t\t(at 1.6 0 270)')
+        a('\t\t\t(layer "F.SilkS")')
+        a("\t\t\t(effects (font (size 0.4 0.4) (thickness 0.05)))")
+        a(f'\t\t\t(uuid "{uid()}")')
+        a("\t\t)")
+        a('\t\t(property "Value" "2k2"')
+        a('\t\t\t(at -1.6 0 270)')
+        a('\t\t\t(layer "F.SilkS")')
+        a("\t\t\t(effects (font (size 0.35 0.35) (thickness 0.05)))")
+        a(f'\t\t\t(uuid "{uid()}")')
+        a("\t\t)")
+        a("\t\t(attr through_hole)")
+        a("\t\t(fp_rect (start -4.5 -1.4) (end 4.5 1.4)")
+        a('\t\t\t(stroke (width 0.1) (type solid)) (fill none) (layer "F.SilkS")')
+        a(f'\t\t\t(uuid "{uid()}")')
+        a("\t\t)")
+        a('\t\t(pad "1" thru_hole rect (at -3.75 0) (size 1.3 1.3) (drill 0.8)')
+        a('\t\t\t(layers "*.Cu" "*.Mask")')
+        a(f'\t\t\t(net {in_id} "{in_net}")')
+        a(f'\t\t\t(uuid "{uid()}")')
+        a("\t\t)")
+        a('\t\t(pad "2" thru_hole circle (at 3.75 0) (size 1.3 1.3) (drill 0.8)')
+        a('\t\t\t(layers "*.Cu" "*.Mask")')
+        a(f'\t\t\t(net {aid} "{anet}")')
+        a(f'\t\t\t(uuid "{uid()}")')
+        a("\t\t)")
+        a("\t)")
+        # 10k @90 — pad1 +3V3 north, pad2 OUT south
+        a('\t(footprint "ESP32_Carrier:R_Axial_4k7_BUP"')
+        a('\t\t(layer "F.Cu")')
+        a(f'\t\t(uuid "{uid()}")')
+        a(f"\t\t(at {cx} {ry_out} 90)")
+        a(f'\t\t(property "Reference" "{r_pu}"')
+        a('\t\t\t(at 1.6 0 90)')
+        a('\t\t\t(layer "F.SilkS")')
+        a("\t\t\t(effects (font (size 0.4 0.4) (thickness 0.05)))")
+        a(f'\t\t\t(uuid "{uid()}")')
+        a("\t\t)")
+        a('\t\t(property "Value" "10k"')
+        a('\t\t\t(at -1.6 0 90)')
+        a('\t\t\t(layer "F.SilkS")')
+        a("\t\t\t(effects (font (size 0.35 0.35) (thickness 0.05)))")
+        a(f'\t\t\t(uuid "{uid()}")')
+        a("\t\t)")
+        a("\t\t(attr through_hole)")
+        a("\t\t(fp_rect (start -4.5 -1.4) (end 4.5 1.4)")
+        a('\t\t\t(stroke (width 0.1) (type solid)) (fill none) (layer "F.SilkS")')
+        a(f'\t\t\t(uuid "{uid()}")')
+        a("\t\t)")
+        a('\t\t(pad "1" thru_hole rect (at -3.75 0) (size 1.3 1.3) (drill 0.8)')
+        a('\t\t\t(layers "*.Cu" "*.Mask")')
+        a('\t\t\t(net 4 "+3V3")')
+        a(f'\t\t\t(uuid "{uid()}")')
+        a("\t\t)")
+        a('\t\t(pad "2" thru_hole circle (at 3.75 0) (size 1.3 1.3) (drill 0.8)')
+        a('\t\t\t(layers "*.Cu" "*.Mask")')
+        a(f'\t\t\t(net {out_id} "{out_net}")')
+        a(f'\t\t\t(uuid "{uid()}")')
+        a("\t\t)")
+        a("\t)")
+        # Column stubs: IN pad ↔ R ↔ A ↔ PC817; C ↔ R ↔ OUT
+        pin_n = pad_world(cx, ry_in, 270, -3.75, 0)
+        pin_a = pad_world(cx, ry_in, 270, 3.75, 0)
+        u_a = pad_world(cx, cy, 0, -1.27, -1.27)
+        u_c = pad_world(cx, cy, 0, 1.27, -1.27)
+        u_k = pad_world(cx, cy, 0, -1.27, 1.27)
+        pin_3v = pad_world(cx, ry_out, 90, -3.75, 0)
+        pin_o = pad_world(cx, ry_out, 90, 3.75, 0)
+        _opto_in_pads.append(pin_n)
+        _opto_out_pads.append(pin_o)
+        track_v(pin_a[0], pin_a[1], u_a[1], aid, 0.4)
+        track_h(pin_a[0], u_a[0], u_a[1], aid, 0.4)
+        track_v(u_c[0], u_c[1], pin_o[1], out_id, 0.4)
+        track_h(u_c[0], pin_o[0], pin_o[1], out_id, 0.4)
+        track_h(u_k[0], u_k[0] - 1.5, u_k[1], 2, 0.4)
+        via(u_k[0] - 1.5, u_k[1], 2, 0.4, 0.8)
+        # daisy +3V3 along ry_out north pads
+        if i > 0:
+            prev = pad_world(m2_ox + _m2.ch_xs[i - 1], ry_out, 90, -3.75, 0)
+            track_h(prev[0], pin_3v[0], pin_3v[1], 4, 0.4)
+        _opto_boxes_parts.append(local_rect_world_aabb(cx, cy, 0, -2.5, -2.5, 2.5, 2.5))
+        _opto_boxes_parts.append(local_rect_world_aabb(cx, ry_in, 270, -4.5, -1.6, 4.5, 1.6))
+        _opto_boxes_parts.append(local_rect_world_aabb(cx, ry_out, 90, -4.5, -1.6, 4.5, 1.6))
+
+    # Tie first 3V3 PU to MCU 3V3
+    first_3v = pad_world(m2_ox + _m2.ch_xs[0], m2_oy + _m2.ry_out, 90, -3.75, 0)
+    track_h(first_3v[0], u1_3v3[0], first_3v[1], 4, 0.45)
+    via(u1_3v3[0], first_3v[1], 4, 0.4, 0.8)
+    track_v(u1_3v3[0], first_3v[1], u1_3v3[1], 4, 0.45)
+
+    def _opto_in_pad_ch(ch_i: int):
+        """World coords of channel IN (2k2 north pad)."""
+        return _opto_in_pads[ch_i]
 
     # --- U10 74HC595-24IO module socket (Thế Giới Module / Shopee) EAST of ESP32 ---
     # Long axis vertical; CTRL 1×6 west (near MCU); Q 1×24 east. Pitch 2.54.
@@ -4498,48 +5346,44 @@ def write_pcb() -> Path:
     mod_x0, mod_y0 = u10_ctrl_x - 2.5, u10_y0 - 2.5
     mod_x1, mod_y1 = u10_q_x + 2.5, u10_y0 + 23 * PITCH + 2.5
     gr_box(mod_x0, mod_y0, mod_x1, mod_y1, "F.SilkS")
-    gr_text("U10 74HC595-24IO module", mod_x0, mod_y0 - 2.2, "F.SilkS", 0.75)
-    gr_text("Shopee thegioimodule 3x595", mod_x0, mod_y1 + 1.8, "Cmts.User", 0.55)
+    gr_silk("U10 = MODULE 74HC595-24IO", mod_x0, mod_y0 - 3.5, 0.8)
+    gr_silk("CAM: J24=CTRL(1x6) J25=Q(1x24) dung huong", mod_x0, mod_y0 - 2.0, 0.7)
+    # Arrow from west (CTRL) toward east (Q)
+    gr_silk_line(u10_ctrl_x + 2, u10_y0 - 3.5, u10_q_x - 2, u10_y0 - 3.5, w=0.2)
+    asm_key_triangle(u10_q_x - 1.5, u10_y0 - 3.5, tip_left=False, s=1.2)
+    gr_silk("CTRL->Q", (u10_ctrl_x + u10_q_x) / 2 - 3, u10_y0 - 5.0, 0.65)
     u10x, u10y = (u10_ctrl_x + u10_q_x) / 2.0, u10_y0 + 11 * PITCH
     u11x, u11y = u10_q_x, u10_y0
 
-    byj_jacks = [
-        ("J5", u5x - 11.0, _dip_y + 4.0, 68, "BYJ1"),
-        ("J6", u6x - 11.0, _dip_y + 4.0, 72, "BYJ2"),
-        ("J7", u7x - 11.0, _dip_y + 4.0, 76, "BYJ3"),
-    ]
-    for jref, jx_b, jy_b, n0, tag in byj_jacks:
-        gr_text(f"{jref} 28BYJ {tag}", jx_b - 10, jy_b - 4.5, "F.SilkS", 0.65)
-        _hdr_1xn(
-            BYJ_FP, jref, "28BYJ48", jx_b, jy_b,
-            [
-                (n0, f"{tag}_A", "A"),
-                (n0 + 1, f"{tag}_B", "B"),
-                (n0 + 2, f"{tag}_C", "C"),
-                (n0 + 3, f"{tag}_D", "D"),
-                (1, "+12V", "+12V"),
-            ],
-            hrot=byj_rot,
-        )
+    # J5-J7 removed: 28BYJ plugs into ULN2003 driver module JST (U5-U7).
+    byj_jacks = []
 
     LIMIT_Y = iy0 + 4.0
+    # HOME west + slightly north of ULN (shrink south Eco vs Edge.Cuts).
+    # Keep ΔY small so ULN rot=180 north pads do not short jack copper.
     home_jacks = [
-        ("J8", u5x + 11.0, _dip_y, 25, "/OPTO_IN1", "HOME1"),
-        ("J10", u6x + 11.0, _dip_y, 26, "/OPTO_IN2", "HOME2"),
-        ("J12", u7x + 11.0, _dip_y, 27, "/OPTO_IN3", "HOME3"),
+        ("J8", u5x - 9.0, u5y - 6.0, 25, "OPTO_IN1", "HOME1"),
+        ("J10", u6x - 9.0, u6y - 6.0, 26, "OPTO_IN2", "HOME2"),
+        ("J12", u7x - 9.0, u7y - 6.0, 27, "OPTO_IN3", "HOME3"),
     ]
     home_limit_pos = []
     for jref, lx, ly, ni, nn, tag in home_jacks:
         home_limit_pos.append((lx, ly))
-        gr_text(f"{jref} {tag}", lx - 2, ly + 12.0, "F.SilkS", 0.65)
+        gr_silk(f"{jref} {tag} NC", lx - 2.0, ly - 4.5, 0.75)
+        gr_silk("1=SIG 2=SNS", lx - 2.0, ly - 3.2, 0.65)
+        asm_key_triangle(lx - 5.0, ly, tip_left=True, s=1.2)
+        # Mini wire diagram: SNS--SW--SIG
+        gr_silk_line(lx + 5.5, ly, lx + 8.0, ly, w=0.15)
+        gr_silk_rect(lx + 8.0, ly - 1.2, lx + 11.5, ly + 1.2, w=0.12)
+        gr_silk("SW", lx + 8.4, ly + 0.3, 0.55)
+        gr_silk_line(lx + 11.5, ly + XH_PITCH, lx + 5.5, ly + XH_PITCH, w=0.15)
         _hdr_1xn(
-            ENDSTOP_FP, jref, f"END_{tag}", lx, ly,
+            ENDSTOP_FP, jref, f"HOME {tag}", lx, ly,
             [
-                (None, "", "VCC"),
-                (None, "", "GND"),
                 (ni, nn, "SIG"),
                 (46, "+12V_SNS", "SNS"),
             ],
+            pitch=XH_PITCH, keyed=True,
         )
 
     field_jacks = []
@@ -4585,18 +5429,22 @@ def write_pcb() -> Path:
 
     # --- J14 BUP-30S + R1 4k7 pull-up (TOP) — j14 from placement map ---
     # R1 pulls OPTO_IN4 up to +12V_SNS; just south of J14, north of opto LED row
-    r1x, r1y = j14x, j14y + 5.2 * PITCH
+    r1x, r1y = j14x, j14y + 5.2 * XH_PITCH
     gr_box(j14x - 6, j14y - 5, j14x + 6, r1y + 4, "F.SilkS")
-    gr_text("J14 BUP-30S NPN", j14x - 3, j14y - 6.5, "F.SilkS", 0.85)
-    gr_text("Brn +12 Blu GND Blk OUT Wht CTRL", j14x - 3, j14y + 3 * PITCH + 4.5, "F.SilkS", 0.65)
-    gr_text("R1 4k7 pullup NPN", r1x - 5, r1y + 3.5, "F.SilkS", 0.7)
+    gr_silk("J14 BUP-30S NPN", j14x - 2, j14y - 7.5, 0.85)
+    gr_silk("Brn=+12 Blu=GND Blk=OUT Wht=CTRL", j14x - 2, j14y + 3 * XH_PITCH + 4.2, 0.7)
+    gr_silk("R1 4k7 pullup", r1x - 4, r1y + 3.2, 0.7)
+    asm_key_triangle(j14x - 5.5, j14y, tip_left=True, s=1.4)
+    # Color legend bars (approx) next to pins
+    for i, lab in enumerate(["Brn", "Blu", "Blk", "Wht"]):
+        gr_silk(lab, j14x - 5.0, j14y + i * XH_PITCH + 0.3, 0.55)
     bup_pads = [
         (1, "+12V", 46, "+12V_SNS"),
         (2, "GND", 2, "GND"),
         (3, "OUT", 28, "/OPTO_IN4"),
         (4, "CTRL", 0, ""),  # jumper to +12V or GND by user
     ]
-    a('\t(footprint "ESP32_Carrier:PinHeader_1x04_BUP30S"')
+    a(f'\t(footprint "ESP32_Carrier:{BUP_XH_FP}"')
     a('\t\t(layer "F.Cu")')
     a(f'\t\t(uuid "{uid()}")')
     a(f"\t\t(at {j14x} {j14y})")
@@ -4606,8 +5454,8 @@ def write_pcb() -> Path:
     a("\t\t\t(effects (font (size 1 1) (thickness 0.15)))")
     a(f'\t\t\t(uuid "{uid()}")')
     a("\t\t)")
-    a('\t\t(property "Value" "BUP_30S"')
-    a(f"\t\t\t(at 0 {3 * PITCH + 3.8} 0)")
+    a('\t\t(property "Value" "BUP-30S"')
+    a(f"\t\t\t(at 0 {3 * XH_PITCH + 3.8} 0)")
     a('\t\t\t(layer "F.Fab")')
     a("\t\t\t(effects (font (size 0.9 0.9) (thickness 0.12)))")
     a(f'\t\t\t(uuid "{uid()}")')
@@ -4615,26 +5463,26 @@ def write_pcb() -> Path:
     a("\t\t(attr through_hole)")
     for layer, w in (("F.CrtYd", 0.05), ("F.Fab", 0.1), ("F.SilkS", 0.12)):
         a("\t\t(fp_rect")
-        a("\t\t\t(start -1.8 -1.8)")
-        a(f"\t\t\t(end 1.8 {3 * PITCH + 1.8})")
+        a("\t\t\t(start -3.2 -2.0)")
+        a(f"\t\t\t(end 3.2 {3 * XH_PITCH + 2.0})")
         a(f"\t\t\t(stroke (width {w}) (type solid))")
         a("\t\t\t(fill none)")
         a(f'\t\t\t(layer "{layer}")')
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
     for i, (num, lab, neti, netn) in enumerate(bup_pads):
-        y = i * PITCH
+        y = i * XH_PITCH
         a(f'\t\t(fp_text user "{lab}"')
-        a(f"\t\t\t(at 3.5 {y} 0)")
-        a('\t\t\t(layer "Cmts.User")')
-        a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.1)) (justify left))")
+        a(f"\t\t\t(at 4.2 {y} 0)")
+        a('\t\t\t(layer "F.SilkS")')
+        a("\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)) (justify left))")
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
         shape = "rect" if i == 0 else "circle"
         a(f'\t\t(pad "{num}" thru_hole {shape}')
         a(f"\t\t\t(at 0 {y})")
-        a("\t\t\t(size 1.7 1.7)")
-        a("\t\t\t(drill 1.0)")
+        a("\t\t\t(size 1.6 1.6)")
+        a("\t\t\t(drill 0.9)")
         a('\t\t\t(layers "*.Cu" "*.Mask")')
         if neti:
             a(f'\t\t\t(net {neti} "{netn}")')
@@ -4723,19 +5571,21 @@ def write_pcb() -> Path:
         if note:
             gr_text(note, ax - 7, ay + 4.6, "Cmts.User", 0.6)
 
-    # TMC EN pull-up — south of U3 center (clear MCU Eco)
-    _axial2("R_Axial_4k7_BUP", "R2", "10k", tx + 2.0, ty + 16.0,
+    # TMC EN pull-up — east of U3 @ rot270 (local −Y → world +X), keep clear of POWER
+    _r2x, _r2y = pad_world(tx, ty, tmc_rot, 0.0, -(TMC_W / 2 + 4.0))
+    _axial2("R_Axial_4k7_BUP", "R2", "10k", _r2x, _r2y,
             (11, "/EN_TMC"), (4, "+3V3"), 0.8, 1.6, "R2 EN_TMC pull-up 10k")
     # Blower PD / freewheel beside J16 (keep inside BLOWER Eco Y)
     _axial2("R_Axial_4k7_BUP", "R3", "10k", j16x - 8.0, j16y + 2.0,
             (55, "/BLOWER"), (2, "GND"), 0.8, 1.6, "R3 BLOWER pull-down 10k")
-    _axial2("Diode_TVS_DO41", "D2", "1N5819", j16x + 8.0, j16y + 2.0,
-            (1, "+12V"), (61, "/BLW_RET"), 0.9, 1.7, "D2 K(band)->+12V")
+    _axial2("Diode_TVS_DO41", "D2", "SS24", j16x + 8.0, j16y + 2.0,
+            (1, "+12V"), (61, "/BLW_RET"), 0.9, 1.7, "D2 SS24 flyback K->+12V")
+    # D4 removed: rail TVS is D1 on carrier (P6KE15A)
 
-    # BUP GND + OUT → U44 (J14 now sits on field row above opto — short stub)
+    # BUP GND + OUT → OPTO_IN4 (R44)
     p12 = (j14x, j14y)
-    pg = (j14x, j14y + PITCH)
-    po = (j14x, j14y + 2 * PITCH)
+    pg = (j14x, j14y + XH_PITCH)
+    po = (j14x, j14y + 2 * XH_PITCH)
     _jg = pad_world(jx, jy, j1_rot, TB_PITCH / 2, 0)
     track_h(pg[0], pg[0] - 6, pg[1], 2, 0.5)
     via(pg[0] - 6, pg[1], 2, 0.4, 0.8)
@@ -4760,15 +5610,15 @@ def write_pcb() -> Path:
     # J1 = star hub. Branch MOT 2.5mm / Branch SNS 0.5mm + RC. GND star separately.
     W_MOT = 2.5
     W_SNS = 0.5
-    gr_text("STAR +12V: MOT 2.5mm | SNS 0.5mm+RC", ox + 4, oy + 44, "Cmts.User", 0.8)
-    gr_text("GND star gap chi gap tai J1-", ox + 4, oy + 46.5, "Cmts.User", 0.8)
+    gr_text("STAR +12V: MOT 2.5mm | SNS 0.5mm+RC", ox + 2.0, oy + 44, "Cmts.User", 0.7)
+    gr_text("GND star gap chi gap tai J1-", ox + 2.0, oy + 46.0, "Cmts.User", 0.7)
 
     # --- RC filter east+south of J1 (F.Cu); clear of U2; J1 stays leftmost ---
     r10x, r10y = FP["r10x"], FP["r10y"]
     c10x, c10y = FP["c10x"], FP["c10y"]
     c11x, c11y = FP["c10x"] + 8.0, FP["c10y"]
     gr_box(r10x - 4, r10y - 4, c11x + 5, c10y + 5, "F.SilkS")
-    gr_text("RC SNS FILTER", r10x - 3, r10y - 5, "F.SilkS", 0.75)
+    gr_silk("RC SNS FILTER R10/C10/C11", r10x - 3, r10y - 5, 0.75)
     a('\t(footprint "ESP32_Carrier:R_1206_10R"')
     a('\t\t(layer "F.Cu")')
     a(f'\t\t(uuid "{uid()}")')
@@ -4908,10 +5758,11 @@ def write_pcb() -> Path:
     via(xs14, j14y, 46, 0.4, 0.8)
     track_h(xs14, j14x, j14y, 46, W_SNS)
 
-    # --- Bulk: C20 SE of TMC; C21 near AXIS1 ULN COM ---
+    # --- Bulk: C20 east of TMC @ rot270; C21 ULN ---
+    _c20x, _c20y = pad_world(tx, ty, tmc_rot, -2.0, -(TMC_W / 2 + 4.5))
     bulk_places = [
-        ("C20", "CP_Radial_D8_470u_25V", "470u/25V", tx + 12.0, ty + 16.0, "TMC"),
-        ("C21", "CP_Radial_D6_100u_25V", "100u/25V", FP["c21x"], FP["c21y"], "ULN"),
+        ("C20", "CP_Radial_D8_470u_25V", "470u/25V", _c20x, _c20y, "TMC"),
+        ("C21", "CP_Radial_D6_100u_25V", "220u/25V", FP["c21x"], FP["c21y"], "ULN"),
     ]
     for ref, fp, val, bx, by, tag in bulk_places:
         pitch_c = 3.5 if "470" in val else 2.5
@@ -4961,13 +5812,50 @@ def write_pcb() -> Path:
         y12b = min(p12b[1], pgdb[1]) - 5.0
         ygdb = max(p12b[1], pgdb[1]) + 5.0
         track_h(p12b[0], x12_drv, y12b, 1, W_MOT)
-        via(p12b[0], y12b, 1, 0.45, 0.9)
+        via(p12b[0], y12b, 1, 0.4, 0.8)
         track_v(p12b[0], y12b, p12b[1], 1, 1.0)
         track_h(pgdb[0], xg_drv, ygdb, 2, W_MOT)
-        via(pgdb[0], ygdb, 2, 0.45, 0.9)
+        via(pgdb[0], ygdb, 2, 0.4, 0.8)
         track_v(pgdb[0], ygdb, pgdb[1], 2, 1.0)
 
+    # HF ceramics near motor supplies — east of U3 @ rot270 (not south into POWER)
+    _c24x, _c24y = pad_world(tx, ty, tmc_rot, 4.0, -(TMC_W / 2 + 3.5))
+    for cref, cx, cy, ctag in (
+        ("C24", _c24x, _c24y, "TMC_HF"),
+        ("C25", FP["c21x"] + 8.0, FP["c21y"], "ULN_HF"),
+    ):
+        gr_text(f"{cref} 100n {ctag}", cx - 3, cy - 2.5, "Cmts.User", 0.55)
+        a('\t(footprint "ESP32_Carrier:C_0805_100n"')
+        a('\t\t(layer "F.Cu")')
+        a(f'\t\t(uuid "{uid()}")')
+        a(f"\t\t(at {cx} {cy})")
+        a(f'\t\t(property "Reference" "{cref}"')
+        a('\t\t\t(at 0 -1.8 0)')
+        a('\t\t\t(layer "F.SilkS")')
+        a('\t\t\t(effects (font (size 0.65 0.65) (thickness 0.1)))')
+        a(f'\t\t\t(uuid "{uid()}")')
+        a("\t\t)")
+        a('\t\t(property "Value" "100n"')
+        a('\t\t\t(at 0 1.8 0)')
+        a('\t\t\t(layer "F.SilkS")')
+        a('\t\t\t(effects (font (size 0.6 0.6) (thickness 0.1)))')
+        a(f'\t\t\t(uuid "{uid()}")')
+        a("\t\t)")
+        a("\t\t(attr smd)")
+        a('\t\t(pad "1" smd roundrect (at -0.95 0) (size 0.9 1.25)')
+        a('\t\t\t(layers "F.Cu" "F.Paste" "F.Mask")')
+        a('\t\t\t(net 1 "+12V")')
+        a(f'\t\t\t(uuid "{uid()}")')
+        a("\t\t)")
+        a('\t\t(pad "2" smd roundrect (at 0.95 0) (size 0.9 1.25)')
+        a('\t\t\t(layers "F.Cu" "F.Paste" "F.Mask")')
+        a('\t\t\t(net 2 "GND")')
+        a(f'\t\t\t(uuid "{uid()}")')
+        a("\t\t)")
+        a("\t)")
+
     # ========== CLUSTER OUTLINES (all TOP / Eco1 cyan) ==========
+
     # Same-function modules share one labeled AABB. Boxes are the UNION of
     # member courtyards so no jack/module/discrete sits outside (E11.14).
     # Same-face boxes must not intersect (E11.9).
@@ -4980,8 +5868,10 @@ def write_pcb() -> Path:
         y1 = max(b[3] for b in boxes) + pad
         return x0, y0, x1, y1
 
-    def _hdr_aabb(ax, ay, n_pins, hrot=0, cy=1.5):
-        span = (n_pins - 1) * PITCH
+    def _hdr_aabb(ax, ay, n_pins, hrot=0, cy=1.5, pitch=None):
+        if pitch is None:
+            pitch = PITCH
+        span = (n_pins - 1) * pitch
         return local_rect_world_aabb(ax, ay, hrot, -cy, -cy, cy, span + cy)
 
     def _dip16_aabb(ax, ay, drot=0):
@@ -5001,16 +5891,16 @@ def write_pcb() -> Path:
     hmi_boxes = [
         _hdr_aabb(j3x, j3y, TFT_LCD_PINS),
         _hdr_aabb(j23x, j23y, TFT_TP_PINS),
-        _hdr_aabb(j18x, j18y, ENC_PINS, enc_rot),
-        _hdr_aabb(j15x, j15y, 3),
+        _hdr_aabb(j18x, j18y, ENC_PINS, enc_rot, pitch=XH_PITCH),
+        _hdr_aabb(j15x, j15y, 3, pitch=XH_PITCH),
     ]
     bup_boxes = [
-        _hdr_aabb(j14x, j14y, 4),
+        _hdr_aabb(j14x, j14y, 4, pitch=XH_PITCH),
         _axial_aabb(r1x, r1y),
     ]
 
     blower_boxes = [
-        _hdr_aabb(j16x, j16y, 4),
+        _hdr_aabb(j16x, j16y, 4, pitch=XH_PITCH),
         _axial_aabb(j16x - 8.0, j16y + 2.0),
         _axial_aabb(j16x + 8.0, j16y + 2.0),
     ]
@@ -5022,63 +5912,62 @@ def write_pcb() -> Path:
         (mod_x0, mod_y0, mod_x1, mod_y1),
     ]
     axis_defs = [
-        (home_jacks[0], (u5x, u5y), byj_jacks[0], "A1: HOME1+U5+J5"),
-        (home_jacks[1], (u6x, u6y), byj_jacks[1], "A2: HOME2+U6+J6"),
-        (home_jacks[2], (u7x, u7y), byj_jacks[2], "A3: HOME3+U7+J7"),
+        (home_jacks[0], (u5x, u5y), "A1: HOME1+ULN - THAY U5"),
+        (home_jacks[1], (u6x, u6y), "A2: HOME2+ULN - THAY U6"),
+        (home_jacks[2], (u7x, u7y), "A3: HOME3+ULN - THAY U7"),
     ]
     axis_box_lists = []
-    for i, (hj, (ux, uy), bj, _lab) in enumerate(axis_defs):
+    for i, (hj, (ux, uy), _lab) in enumerate(axis_defs):
         boxes = [
-            _hdr_aabb(hj[1], hj[2], 4),
-            _dip16_aabb(ux, uy, dip_rot),
-            _hdr_aabb(bj[1], bj[2], 5, byj_rot),
+            _hdr_aabb(hj[1], hj[2], 2, pitch=XH_PITCH),
+            # ULN2003_Module courtyard ~30 x 15.7 mm
+            local_rect_world_aabb(ux, uy, dip_rot, -2.5, -3.0, 22.0, 5 * PITCH + 3.0),
         ]
         if i == 0:
             boxes.append(_radial_aabb(c21x, c21y, 3.55, 1.25))
+            boxes.append(local_rect_world_aabb(c21x + 8.0, c21y, 0, -1.5, -1.0, 1.5, 1.0))
         axis_box_lists.append(boxes)
     power_boxes = [
         local_rect_world_aabb(jx, jy, j1_rot, -5.5, -4.5, 5.5, 4.5),
-        local_rect_world_aabb(f1x, f1y, rot, -5.0, -5.0, 5.0, 5.0),
-        local_rect_world_aabb(d1x, d1y, rot, -4.0, -2.5, 4.0, 2.5),
+        local_rect_world_aabb(d3x, d3y, d3_rot, -4.0, -2.0, 4.0, 2.0),
+        local_rect_world_aabb(
+            f1x, f1y, f1_rot,
+            -FUSE_5X20_HALF - 2.5, -4.5,
+            FUSE_5X20_HALF + 2.5, 4.5,
+        ),
+        local_rect_world_aabb(d1x, d1y, d1_rot, -4.0, -2.0, 4.0, 2.0),
+        local_rect_world_aabb(r10x, r10y, 0, -2.0, -1.2, 2.0, 1.2),
+        local_rect_world_aabb(c10x, c10y, 0, -2.2, -2.2, 2.2, 2.2),
+        local_rect_world_aabb(c11x, c11y, 0, -2.2, -2.2, 2.2, 2.2),
+    ]
+    buck_boxes = [
         local_rect_world_aabb(
             mx, my, rot,
             -MP1584_W / 2 - 0.5, -MP1584_H / 2 - 0.5,
             MP1584_W / 2 + 0.5, MP1584_H / 2 + 0.5,
         ),
-        local_rect_world_aabb(r10x, r10y, 0, -2.0, -1.2, 2.0, 1.2),
-        local_rect_world_aabb(c10x, c10y, 0, -2.2, -2.2, 2.2, 2.2),
-        local_rect_world_aabb(c11x, c11y, 0, -2.2, -2.2, 2.2, 2.2),
     ]
     mcu_boxes = [(fx + _u1_lx0, fy + _u1_ly0, fx + _u1_lx1, fy + _u1_ly1)]
     tmc_boxes = [
         local_rect_world_aabb(tx, ty, tmc_rot, -TMC_W / 2, -TMC_H / 2, TMC_W / 2, TMC_H / 2),
-        _axial_aabb(tx + 2.0, ty + 16.0),
-        _radial_aabb(tx + 12.0, ty + 16.0, 4.4, 1.75),
+        _axial_aabb(_r2x, _r2y),
+        _radial_aabb(_c20x, _c20y, 4.4, 1.75),
+        local_rect_world_aabb(_c24x, _c24y, 0, -1.5, -1.0, 1.5, 1.0),
     ]
-    opto_boxes = []
-    for i, _ch in enumerate(OPTO_CH):
-        col, row = i % 4, i // 4
-        ux = opto_origin[0] + col * opto_col_pitch
-        uy = opto_origin[1] + row * opto_row_pitch
-        silk_hx = DIP4_BODY_W / 2 + 1.2
-        opto_boxes.append(local_rect_world_aabb(
-            ux, uy, rot4,
-            -silk_hx, -DIP4_BODY_L / 2 - 0.5, silk_hx, DIP4_BODY_L / 2 + 0.5,
-        ))
-        opto_boxes.append(_axial_aabb(ux - 3.5, uy - 8.5))
-        opto_boxes.append(_axial_aabb(ux + 3.5, uy + 8.5))
+    opto_boxes = list(_opto_boxes_parts)
 
     # pad=0: member AABBs already include silk/crt margin
-    cluster_outline("C: HMI  J17 LCD + J23 TP + J18 ENC + J15 BZ", *_union_aabb(hmi_boxes, pad=0.2), face="F", pad=0)
-    cluster_outline("U: BUP-30S  J14 + R1 4k7", *_union_aabb(bup_boxes, pad=0.2), face="F", pad=0)
-    cluster_outline("B: BLOWER  J16 AOD4184 + R3/D2", *_union_aabb(blower_boxes, pad=0.2), face="F", pad=0)
-    cluster_outline("5: SHIFT  U10 595-24IO + J24/J25 + R4", *_union_aabb(shift_boxes, pad=0.2), face="F", pad=0)
-    for boxes, (_hj, _u, _bj, lab) in zip(axis_box_lists, axis_defs):
+    cluster_outline("C: HMI TFT+ENC+BZ - THAY theo chu giac", *_union_aabb(hmi_boxes, pad=0.2), face="F", pad=0)
+    cluster_outline("U: BUP-30S J14 - day Brn/Blu/Blk/Wht", *_union_aabb(bup_boxes, pad=0.2), face="F", pad=0)
+    cluster_outline("B: BLOWER J16 AOD4184 - THAY module", *_union_aabb(blower_boxes, pad=0.2), face="F", pad=0)
+    cluster_outline("5: SHIFT U10 595-24IO - THAY module", *_union_aabb(shift_boxes, pad=0.2), face="F", pad=0)
+    for boxes, (_hj, _u, lab) in zip(axis_box_lists, axis_defs):
         cluster_outline(lab, *_union_aabb(boxes, pad=0.2), face="F", pad=0)
-    cluster_outline("1: POWER  J1+F1+D1+U2+RC", *_union_aabb(power_boxes, pad=0.2), face="F", pad=0)
-    cluster_outline("2: MCU  U1 ESP32-S3 DevKitC", *_union_aabb(mcu_boxes, pad=0.2), face="F", pad=0)
-    cluster_outline("3: TMC  U3 + Mot pins (NEMA17 on module)", *_union_aabb(tmc_boxes, pad=0.2), face="F", pad=0)
-    cluster_outline("4: OPTO  U41-U44 PC817 + R2k2/10k", *_union_aabb(opto_boxes, pad=0.2), face="F", pad=0)
+    cluster_outline("1: POWER J1+D3+F1+D1 - THAY ong F1", *_union_aabb(power_boxes, pad=0.2), face="F", pad=0)
+    cluster_outline("1b: BUCK U2 MP1584 5V - THAY module", *_union_aabb(buck_boxes, pad=0.2), face="F", pad=0)
+    cluster_outline("2: MCU U1 ESP32-S3 - THAY DevKitC", *_union_aabb(mcu_boxes, pad=0.2), face="F", pad=0)
+    cluster_outline("3: TMC U3 - THAY stepstick + NEMA tren Mot", *_union_aabb(tmc_boxes, pad=0.2), face="F", pad=0)
+    cluster_outline("4: OPTO PC817x4 on-board - THAY U41-44", *_union_aabb(opto_boxes, pad=0.2), face="F", pad=0)
 
     # E11.9 — same-face cluster outlines must not cut each other
     # E11.2 — same-face Ecos keep ≥ MODULE_CLUSTER_GAP (AABB separation)
@@ -5162,8 +6051,91 @@ def write_pcb() -> Path:
 
     # MOT already fed via y12 spine + right buses — no extra mid-board crossbars.
 
+    # EMI / return plane (README + PCB_REVIEW A10): solid GND pour both layers.
+    # KiCad 10 zone net is bare (net "GND") — (net 2 "GND") fails to parse.
+    # Fill after FreeRouting (route_freerouting.fill_gnd_zones).
+    margin = 0.5
+    zx0, zy0 = ox + margin, oy + margin
+    zx1, zy1 = ox + bw - margin, oy + bh - margin
+    for layer, prio, zuuid in (
+        ("B.Cu", 0, "a10b0001-0000-4000-8000-0000000000b1"),
+        ("F.Cu", 1, "a10f0001-0000-4000-8000-0000000000f1"),
+    ):
+        a("\t(zone")
+        a('\t\t(net "GND")')
+        a(f'\t\t(layer "{layer}")')
+        a(f'\t\t(uuid "{zuuid}")')
+        a("\t\t(hatch edge 0.5)")
+        a(f"\t\t(priority {prio})")
+        a("\t\t(connect_pads")
+        a("\t\t\t(clearance 0.35)")
+        a("\t\t)")
+        a("\t\t(min_thickness 0.25)")
+        a("\t\t(fill yes")
+        a("\t\t\t(thermal_gap 0.5)")
+        a("\t\t\t(thermal_bridge_width 0.5)")
+        a("\t\t\t(island_removal_mode 0)")
+        a("\t\t)")
+        a("\t\t(polygon")
+        a("\t\t\t(pts")
+        a(f"\t\t\t\t(xy {zx0} {zy0}) (xy {zx1} {zy0}) (xy {zx1} {zy1}) (xy {zx0} {zy1})")
+        a("\t\t\t)")
+        a("\t\t)")
+        a("\t)")
+    gr_text("EMI: GND pour F+B | signals prefer B.Cu | power 1.0mm", ox + 2.0, oy + bh - 2.5, "Cmts.User", 0.7)
+
     a(")")
     text = "\n".join(lines) + "\n"
+
+    # E11.g — every board graphic (text/line/rect/poly) stays inside Edge.Cuts
+    def _assert_graphics_inside(pcb_text: str) -> None:
+        import re as _re
+        margin = GRAPHICS_INSET - 0.05
+        bad = []
+        for m in _re.finditer(
+            r'\(gr_text "((?:\\.|[^"\\])*)"\s*\n\t\t\(at ([-\d.]+) ([-\d.]+)'
+            r'(?: ([-\d.]+))?\)\s*\n\t\t\(layer "([^\"]+)"\)\s*\n'
+            r"\t\t\(effects \(font \(size ([-\d.]+)",
+            pcb_text,
+        ):
+            t, ax, ay = m.group(1), float(m.group(2)), float(m.group(3))
+            size = float(m.group(6))
+            # left-justify assumed for our emitters
+            w = 0.75 * size * len(t)
+            h = 1.1 * size
+            if (
+                ax < ox + margin
+                or ay < oy + margin
+                or ax + w > ox + bw - margin
+                or ay + h / 2 > oy + bh - margin
+                or ay - h / 2 < oy + margin
+            ):
+                bad.append(f"text {t[:40]!r} @({ax:.1f},{ay:.1f})")
+        for m in _re.finditer(
+            r"\(gr_rect\s*\n\t\t\(start ([-\d.]+) ([-\d.]+)\)\s*\n\t\t\(end ([-\d.]+) ([-\d.]+)\)"
+            r"((?:(?!\(gr_rect)[\s\S])*?)\(layer \"([^\"]+)\"\)",
+            pcb_text,
+        ):
+            sx, sy, ex, ey = map(float, m.group(1, 2, 3, 4))
+            layer = m.group(6)
+            if layer == "Edge.Cuts":
+                continue
+            bx0, by0 = min(sx, ex), min(sy, ey)
+            bx1, by1 = max(sx, ex), max(sy, ey)
+            if (
+                bx0 < ox + margin
+                or by0 < oy + margin
+                or bx1 > ox + bw - margin
+                or by1 > oy + bh - margin
+            ):
+                bad.append(f"rect {layer} ({bx0:.1f},{by0:.1f})-({bx1:.1f},{by1:.1f})")
+        if bad:
+            raise SystemExit(
+                "E11.g graphics outside Edge.Cuts:\n  " + "\n  ".join(bad[:20])
+            )
+
+    _assert_graphics_inside(text)
+
     if RUN_MAZE:
         text = strip_routes(text)
         pads = parse_pads(text)
@@ -5198,6 +6170,10 @@ def write_pcb() -> Path:
                 break
         if not text.endswith("\n"):
             text += "\n"
+    else:
+        # Placement-only: drop any copper tracks/vias (nets stay on pads)
+        text = strip_routes(text)
+        print("Placement only (no tracks/vias) — set EMIT_TRACKS=1 to route")
     # Net names must not carry a leading slash. KiCad treats "/" as the
     # hierarchy separator, so a global label written "/STEP" comes back as the
     # net "{slash}STEP" — which never matches a pad called "/STEP", and every
@@ -5205,6 +6181,7 @@ def write_pcb() -> Path:
     # what a KiCad-native flow produces anyway.
     text = re.sub(r'\(net (\d+) "/', r'(net \1 "', text)
     text = re.sub(r'\(net "/', '(net "', text)
+    text = inject_module_groups(text, cluster_boxes, cluster_eco_gfx, uid_fn=uid)
     out = ROOT / "esp32_baseboard.kicad_pcb"
     out.write_text(text, encoding="utf-8")
     return out
@@ -5213,38 +6190,84 @@ def write_pcb() -> Path:
 def write_readme() -> Path:
     text = """# ESP32-S3 Baseboard — BOM (ULN2003 + 74HC595-24IO module)
 
-**Full module list:** see [`MODULES.md`](MODULES.md).
+**BOM đầy đủ (audit PCB):** [`BOM.md`](BOM.md) · **Module / mua hàng:** [`MODULES.md`](MODULES.md) · **Review:** [`PCB_REVIEW.md`](PCB_REVIEW.md).
 
-PSU **Mean Well 12V**. Limits = mechanical HOME only (J8/J10/J12). Board is jacks + drivers.
+PSU **Mean Well 12V**. Limits = mechanical HOME only (J8/J10/J12). Board = jacks + drivers; **D3/F1/D1 + PC817×4 hàn trên carrier**; **M3 gần động cơ**.
 
-## On-board
+## On-board (carrier)
 
 | Ref | Part | Role |
 |-----|------|------|
-| J1 / F1 / D1 | Terminal + PTC + TVS | 12V in + protect |
+| J1 | Terminal 2P 5.0 | 12V PSU in (RAW) |
+| **D3** | **SS54** Schottky | Series chống ngược |
+| **F1** | Đế 5×20 + ống **T3.15A** | Cầu chì rút ống |
+| **D1** | **P6KE15A** TVS | Clamp surge trên +12V |
+| **U41–U44** | **PC817** DIP-4 ×4 | HOME1-3 + BUP opto |
+| **R41–R44 / R45–R48** | 2k2 / 10k | LED series / collector PU |
+| **C26** | 100n | SNS HF @ opto |
 | U1 | ESP32-S3-DevKitC-1 N16R8 | MCU |
 | U2 | MP1584EN 5V | Logic buck (only) |
 | U3 | TMC2209 | NEMA17 trên Mot (không J2) |
-| U41–U44 | PC817 DIP-4 ×4 | HOME1-3 + BUP |
-| R41–R44 | 2k2 axial | LED series (~5 mA @12V) |
-| R45–R48 | 10k axial | Collector pull-up → +3V3 |
-| **U10** | **74HC595-24IO module** (3×595) | [Shopee](https://shopee.vn/-C%C3%B3-s%E1%BA%B5n-M%E1%BA%A1ch-m%E1%BB%9F-r%E1%BB%99ng-I-O-24-ch%C3%A2n-74HC595-thegioimodule-i.951399259.42633627766) — **bên phải ESP32** |
-| J24 / J25 | Header cái 1×6 + 1×24 | CTRL + Q (cắm module) |
+| J24 / J25 | Header cái 1×6 + 1×24 | Cắm **74HC595-24IO** (U10 mua rời) |
 | R4 | 10k axial | LDEN/`OE` pull-up → +3V3 |
-| U5–U7 | **ULN2003AN** DIP-16 | 28BYJ; IN←SR_Q*; COM=+12V |
+| U5–U7 | Socket **1×6** → **M3** | Cáp gần 28BYJ; JST trên M3 |
 | R1 | 4k7 | BUP NPN pull-up → OPTO_IN4 |
 | R2/R3 | 10k | EN_TMC PU / BLOWER PD |
+| R10 / C10 / C11 | 10Ω / 47µ / 100n | Star SNS |
+| D2 | **SS24** flyback | Blower inductive kick (rail TVS = D1) |
 | C20 | 470µ | Bulk @ TMC |
-| C21 | 100µ | Shared ULN COM bulk |
+| C21 | 220µ | Shared ULN VCC bulk |
+| C24 / C25 | 100n 0805 | HF @ TMC / ULN |
 | ~~J2~~ | — | **XOÁ** (Mot trên U3) |
-| J5–J7 | **1×05** | 28BYJ-48 |
-| J8/J10/J12 | 1×04 endstop | HOME NC @12V → opto |
-| J14 | 1×04 | BUP-30S |
-| J15–J18/J23 | — | Buzzer / TFT LCD+touch / EC11 |
+| ~~J5–J7~~ | — | **XOÁ** (28BYJ trên M3) |
+| ~~J30 / M1~~ | — | **XOÁ** — D3/F1/D1 trên carrier |
+| J8/J10/J12 | **JST-XH 2P** | HOME dry NC SIG/SNS |
+| J14 | **JST-XH 4P** | BUP-30S |
+| J15 | **JST-XH 3P** | Buzzer 5V |
+| J16 | **JST-XH 4P** | AOD4184 blower |
+| J18 | **JST-XH 4P** | EC11 ENC |
+| J17/J23 | 1×09 / 1×05 @2.54 | TFT LCD + touch |
 
-**Deleted:** J2, J4/J9/J11/J13, J19–J22 field (optional later), U4/U9, DRV8871.
+**Pluggable (JLCPCB snap):** [`modules/`](modules/) — `m3_uln2003`, `submodules_panel`. Chi tiết SL: [`BOM.md`](BOM.md).
 
-> All footprints on **TOP (F.Cu)**; B.Cu for routing only.
+**Deleted:** J2, J5–J7, J30/M1, J31A/B/M2; PC817 trên carrier.
+
+> All footprints on **TOP (F.Cu)**; **đi dây ưu tiên B.Cu** + **GND pour F+B**.
+
+## An toàn điện — nguy cơ chập / cháy / cắm ngược
+
+Chuỗi nguồn: `J1 → D3 SS54 → F1 đế 5×20 T3.15A → D1 TVS → +12V`.  
+Opto: `PC817×4 + 2k2/10k` trên carrier. Panel: `modules/submodules_panel.kicad_pcb` (M3).
+
+### Nguy cơ điện
+
+| Mức | Nguy cơ | Bảo vệ | Ghi chú |
+|-----|---------|--------|---------|
+| **Cao** | Cắm **ngược** dây 12 V tại J1 | **D3 Schottky series** + silk `+`/`−`/`NO REVERSE` | Screw **không** khóa cơ — bắt buộc D3 + dây đỏ/đen |
+| **Cao** | 28BYJ **5 V** trên rail 12 V | Chỉ mua **28BYJ-12V** | R-8 MODULES |
+| **Cao** | NEMA17 stall / Vref cao | C20; F1 ống; FW timeout | Heatsink TMC |
+| Trung | Chập +12V sau F1 | **F1 5×20 T3.15A** (rút ống) + track Power 1,0 mm | Dự phòng ống |
+| Trung | Surge / ESD 12 V | **D1 P6KE15A** | K = +12V |
+| Trung | Bơm inductive kick | **D2 SS24** @ J16 | Rail TVS = D1 |
+| Trung | 595 boot → ULN kéo tải | **R4 OE pull-up** | Bắt buộc |
+| Trung | J16 MOSFET cắm lệch | Silk pin + **JST-XH 4P keyed** | PWM/GND/+12V/FAN− |
+| Thấp | HOME SNS chập GND | R2k2 + opto trên M2 | Không nối GPIO←12V |
+| Thấp | Chập +5V logic | MP1584 limit nội | Tuỳ chọn PTC 0,5 A |
+
+### Giắc / đế — ưu tiên chống ngược
+
+| Giắc | Loại hiện tại | Chống ngược? | Hành động lắp |
+|------|---------------|--------------|---------------|
+| **J1** | Screw 2P 5,0 | Silk + D3 điện | Dây **đỏ=+ / đen=−**; không đảo |
+| **F1** | Đế 5×20 PCB | — | Rút ống khi chảy |
+| J8/10/12 | **JST-XH 2P** | **Có** | Dry NC SIG/SNS |
+| J14 | **JST-XH 4P** | **Có** | BUP Brn/Blu/Blk/Wht |
+| J15/J16/J18 | **XH-3 / XH-4** | **Có** | Không hàn pin trần |
+| J17+J23 | TFT 9+5 @2.54 | Module 2 hàng cố định | Không đảo hàng |
+| J24/J25 | 595 CTRL+Q | Module Shopee cố định | Khớp silkscreen module |
+| U1/U3/U5–7 | Socket module | Pin1 notch / silkscreen | Đúng hướng module |
+
+**Không thay:** D3 ≥5 A Schottky; F1 ống **T ~3 A** 5×20; D1 uni TVS ~15 V; **không** bỏ khóa JST-XH field I/O.
 
 ## GPIO
 
@@ -5258,13 +6281,39 @@ PSU **Mean Well 12V**. Limits = mechanical HOME only (J8/J10/J12). Board is jack
 | Buzzer / blower | IO9 / IO3 |
 | Spare | IO7,8,14,15 |
 
+## Chống nhiễu khi đi dây (EMI / EMC)
+
+Board 2 lớp, tải động cơ + SPI TFT + opto 12 V — nhiễu chủ yếu từ **return path**, **loop diện tích**, và **đường dài dưới module**. Áp dụng khi route / review:
+
+| # | Đề xuất | Trên board này |
+|---|---------|----------------|
+| N1 | **Pour GND hai mặt** (F.Cu + B.Cu), thermal relief pad THT | Zone GND inset 0,5 mm mép; fill sau FreeRouting |
+| N2 | **Tín hiệu dài trên B.Cu**; F.Cu chỉ fan-out pad→via (A0) | FreeRouting prefer B ngang / F dọc |
+| N3 | **Return GND sát tín hiệu** — tránh “đảo” GND đứt bởi bus dài | Pour liên tục; via stitch khi đổi lớp |
+| N4 | **Nguồn rộng + star tại J1** — +12V / GND không dùng chung đường mỏng với GPIO | Netclass Power **1,00 mm**; star silk tại J1 |
+| N5 | **Bulk sát tải nhiễu** — C20 ≤10 mm TMC VM; C21 chung ULN COM | Placement floorplan |
+| N6 | **Vòng motor nhỏ** — MotA/B cặp gần nhau; 28BYJ trên **M3 gần motor** | E10.5 |
+| N7 | **Tách êm / ồn** — HMI+MCU đông; POWER+TMC+ULN+opto tây/nam | Eco cụm E11 |
+| N8 | **SPI / ENC ngắn** — J17/J23/J18 gần U1; không vòng quanh motor | Floorplan HMI |
+| N9 | **Cách ly field 12 V** — HOME/BUP vào opto; không nối thẳng GPIO | PC817 + R series |
+| N10 | **Via một cỡ 0,4/0,8** (A8); ưu tiên đổi lớp tại pad THT (A1) | Ít via “lạ”, dễ fab |
+| N11 | **Không chạy bus dưới cụm module trên F.Cu** | A0 + Manual tick |
+| N12 | Clearance track↔lỗ ≥ A7 (0,45 mm trong DSN) | `route_freerouting` inject |
+
+**Khi fab / lắp:** dây motor xoắn hoặc cặp gần nhau; GND PSU ngắn tới J1; cable TFT/ENC tránh song song dài với dây 12 V motor.
+
+Chi tiết bắt buộc: `PCB_REVIEW.md` mục **A0 / A8 / A10 / E10**.
+
 ## Regenerate
 
-```
+```powershell
 $env:PCB_SKIP_MAZE=1; python gen_power_carrier.py
+python gen_schematic_from_pcb.py
+& "$env:LOCALAPPDATA\Programs\KiCad\10.0\bin\python.exe" route_freerouting.py
+python verify_all.py
 ```
 
-Board size target **220×160 mm**. Modules ≥10 mm from edge; ≥10 mm from MCU Eco; ≥8 mm between Ecos. Power netclass track **0.70 mm** (matches FreeRouting).
+Board **180×145 mm** (bội 5; layout XY đóng băng; Eco ≥10 mm mép). Modules ≥10 mm mép; ≥10 mm MCU Eco; ≥8 mm giữa Ecos. Power netclass **1,00 mm** (peak +12V ~2,3 A).
 """
     out = ROOT / "README.md"
     out.write_text(text, encoding="utf-8")
@@ -5299,7 +6348,7 @@ def write_project() -> Path:
                 {
                     "name": "Power",
                     "clearance": 0.25,
-                    "track_width": 0.70,
+                    "track_width": 1.00,
                     "via_diameter": 0.8,
                     "via_drill": 0.4,
                     "wire_width": 6,
@@ -5358,35 +6407,39 @@ def main() -> None:
         write_esp32_footprint(),
         write_mini560_footprint(),
         write_screw_terminal_footprint(),
-        write_ptc_fuse_footprint(),
+        write_fuse_holder_5x20(),
         write_tvs_do41_footprint(),
         write_tmc2209_footprint(),
         write_pc817_dip4_footprint(),
         write_uln2003_footprint(),
         write_74hc595_footprint(),
         write_pin_header_footprint(4, "PinHeader_1x04_Motor", [p[1] for p in MOTOR_HEADER]),
+        write_pin_header_footprint(OPTO_IN_PINS, OPTO_IN_FP, [p[1] for p in OPTO_IN_HEADER]),
+        write_pin_header_footprint(OPTO_OUT_PINS, OPTO_OUT_FP, [p[1] for p in OPTO_OUT_HEADER]),
         write_pin_header_footprint(TFT_LCD_PINS, TFT_LCD_FP, [p[1] for p in TFT_LCD_HEADER]),
         write_pin_header_footprint(TFT_TP_PINS, TFT_TP_FP, [p[1] for p in TFT_TP_HEADER]),
-        write_pin_header_footprint(3, "PinHeader_1x03_Buzzer", [p[1] for p in BUZZER_HEADER]),
-        write_pin_header_footprint(4, "PinHeader_1x04_MOSFET", [p[1] for p in MOSFET_HEADER]),
-        write_pin_header_footprint(ENC_PINS, ENC_FP, [p[1] for p in ENC_HEADER]),
         write_pin_header_footprint(5, BYJ_FP, [p[1] for p in BYJ_HEADER]),
         write_pin_header_footprint(6, "PinHeader_1x06_595CTRL",
                                   ["LDEN", "GND", "VCC", "LDSI", "LDSTR", "LDSCK"]),
         write_pin_header_footprint(24, "PinHeader_1x24_595Q",
                                   [f"{i//8+1}_Q{i%8}" for i in range(24)]),
-        write_pin_header_footprint(4, ENDSTOP_FP, [p[1] for p in ENDSTOP_HEADER]),
         write_pin_header_footprint(2, "PinHeader_1x02_LimitSW", ["+12V", "SW"]),
-        write_pin_header_footprint(4, "PinHeader_1x04_BUP30S", ["+12V", "GND", "OUT", "CTRL"]),
+        *write_all_jst_xh_sockets(),
         write_r_axial_4k7_bup(),
         *write_star_power_passives(),
     ]
     sym = write_symbol_lib()
     write_lib_tables()
-    sch = write_schematic_v2()
+    # PCB first (placement + nets, no tracks when USE_MAZE_AUTOROUTE).
+    # Schematic is rebuilt from pad→net so it matches D3/F1/D1 + PC817 on carrier.
     pcb = write_pcb()
+    import gen_schematic_from_pcb as _gen_sch
+    _gen_sch.main()
+    sch = ROOT / "esp32_baseboard.kicad_sch"
     pro = write_project()
     readme = write_readme()
+    from gen_submodules import main as gen_submodules_main
+    gen_submodules_main()
     print("Wrote:")
     for p in [*fps, sym, sch, pcb, pro, readme]:
         print(" ", p)
@@ -5400,7 +6453,9 @@ def main() -> None:
         encoding="utf-8",
         errors="replace",
     )
-    print(cov.stdout, end="")
+    print(cov.stdout.encode("ascii", "replace").decode("ascii"), end="")
+    if cov.stderr:
+        print(cov.stderr.encode("ascii", "replace").decode("ascii"), end="")
     if cov.returncode != 0:
         raise SystemExit("E11.14 FAIL — footprint pads outside Eco1 clusters")
 

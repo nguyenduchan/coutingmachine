@@ -1,0 +1,7 @@
+(footprint "PinHeader_1x05_Module"
+	(version 20260206)
+	(generator "gen_submodules.py")
+	(layer "F.Cu")
+	(descr "1x5 male 2.54 to carrier socket")
+	(attr through_hole)
+)

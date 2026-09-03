@@ -92,20 +92,30 @@ def main() -> int:
     for n in ("STEP", "DIR", "EN_TMC", "+12V", "+3V3", "GND"):
         check(n in u3, ok, fail, f"U3 has {n}")
 
-    print("\n=== C) Opto ×4 ===")
-    for uref, rled, rpu, nin, nout, nanode in (
-        ("U41", "R41", "R45", "OPTO_IN1", "OPTO_OUT1", "OPTO_A1"),
-        ("U42", "R42", "R46", "OPTO_IN2", "OPTO_OUT2", "OPTO_A2"),
-        ("U43", "R43", "R47", "OPTO_IN3", "OPTO_OUT3", "OPTO_A3"),
-        ("U44", "R44", "R48", "OPTO_IN4", "OPTO_OUT4", "OPTO_A4"),
-    ):
-        check(uref in pads, ok, fail, f"{uref} present")
-        check(nin in pads.get(rled, {}).values() and nanode in pads.get(rled, {}).values(), ok, fail, f"{rled}")
-        check("+3V3" in pads.get(rpu, {}).values() and nout in pads.get(rpu, {}).values(), ok, fail, f"{rpu}")
-    for gone in ("U45", "U46", "U47", "U48", "U11"):
+    print("\n=== C) Opto on-board PC817×4 (ex-M2) ===")
+    for gone in ("J31A", "J31B", "J31", "J30"):
         check(gone not in pads, ok, fail, f"{gone} removed")
+    for uref in ("U41", "U42", "U43", "U44"):
+        check(uref in pads, ok, fail, f"{uref} on carrier")
+    for rref in ("R41", "R42", "R43", "R44", "R45", "R46", "R47", "R48"):
+        check(rref in pads, ok, fail, f"{rref} on carrier")
+    check("C26" in pads, ok, fail, "C26 SNS HF @ opto")
+    for gone in ("U45", "U46", "U47", "U48"):
+        check(gone not in pads, ok, fail, f"{gone} not used (4ch only)")
+    for jref in ("J8", "J10", "J12"):
+        jh = pads.get(jref, {})
+        check(len(jh) == 2, ok, fail, f"{jref} XH-2 pads")
+        check(jh.get("2") == "+12V_SNS", ok, fail, f"{jref}.2 SNS")
 
-    print("\n=== D) 74HC595-24IO module + ULN + BYJ ===")
+    print("\n=== C2) Power protection on carrier (ex-M1) ===")
+    for pref in ("D3", "F1", "D1"):
+        check(pref in pads, ok, fail, f"{pref} on carrier")
+    check(pads.get("D2", {}).get("2") == "BLW_RET" or "BLW_RET" in pads.get("D2", {}).values(), ok, fail, "D2 flyback")
+    check("D4" not in pads, ok, fail, "D4 removed")
+    check("C24" in pads and "C25" in pads, ok, fail, "C24/C25 HF")
+    check("J2" not in pads, ok, fail, "J2 removed (Mot on U3)")
+
+    print("\n=== D) 74HC595-24IO module + ULN module (28BYJ on module JST) ===")
     j24 = pads.get("J24", {})
     check(j24.get("1") == "OE_595", ok, fail, "J24.1 LDEN")
     check(j24.get("2") == "GND", ok, fail, "J24.2 GND")
@@ -122,19 +132,20 @@ def main() -> int:
         check(j25.get(str(i)) == n, ok, fail, f"J25.{i} {n}")
     r4 = pads.get("R4", {})
     check("+3V3" in r4.values() and "OE_595" in r4.values(), ok, fail, "R4 LDEN PU")
-    for ax, uref, jref, qs in (
-        (1, "U5", "J5", ("SR_Q0", "SR_Q1", "SR_Q2", "SR_Q3")),
-        (2, "U6", "J6", ("SR_Q4", "SR_Q5", "SR_Q6", "SR_Q7")),
-        (3, "U7", "J7", ("SR_Q8", "SR_Q9", "SR_Q10", "SR_Q11")),
+    for uref, qs in (
+        ("U5", ("SR_Q0", "SR_Q1", "SR_Q2", "SR_Q3")),
+        ("U6", ("SR_Q4", "SR_Q5", "SR_Q6", "SR_Q7")),
+        ("U7", ("SR_Q8", "SR_Q9", "SR_Q10", "SR_Q11")),
     ):
-        un, jn = set(pads.get(uref, {}).values()), set(pads.get(jref, {}).values())
-        check("+12V" in un and "GND" in un, ok, fail, f"{uref} COM/GND")
+        un = set(pads.get(uref, {}).values())
+        check("+12V" in un and "GND" in un, ok, fail, f"{uref} +12V/GND")
         for q in qs:
             check(q in un, ok, fail, f"{uref} {q}")
-        for ph in "ABCD":
-            n = f"BYJ{ax}_{ph}"
-            check(n in un and n in jn, ok, fail, f"{jref}<->{uref} {n}")
+        check(not any(str(n).startswith("BYJ") for n in un), ok, fail, f"{uref} no BYJ phase nets")
+    for gone in ("J5", "J6", "J7"):
+        check(gone not in pads, ok, fail, f"{gone} removed (28BYJ on ULN module JST)")
     check("74HC595-24IO" in text or "595-24IO" in text or "PinHeader_1x24_595Q" in text, ok, fail, "595 module on PCB")
+    check("ULN2003_Module" in text, ok, fail, "ULN2003_Module footprint")
 
     print("\n=== E) HMI ===")
     j17 = pads.get("J17", {})

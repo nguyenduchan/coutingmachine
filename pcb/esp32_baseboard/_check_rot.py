@@ -13,6 +13,9 @@ ALLOW = {
     "J5": 180,
     "J6": 180,
     "J7": 180,
+    # M2 dual horizontal rows (IN north / OUT south) @90° — see gen_submodules
+    "J31A": 90,
+    "J31B": 90,
 }
 
 src = Path("esp32_baseboard.kicad_pcb").read_text(encoding="utf-8")

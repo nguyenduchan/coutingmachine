@@ -14,13 +14,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 PCB = ROOT / "esp32_baseboard.kicad_pcb"
 
-# Keep in sync with gen_power_carrier.py
-BOARD_W_MM = 220.0
-BOARD_H_MM = 160.0
-# Vias are allowed as a last resort where no same-layer route exists, but they
-# stay a budget, not a routing tool: the router prices one at ~70 grid steps so
-# it only buys one when the net has no way round on either face.
-MAX_ROUTING_VIAS = 12
+# Actual board size: 2026-09-04 resized snug to components (185.8x96.2, 5mm
+# edge clear), then 2026-09-05 rounded up to 190x100 (extra margin split evenly
+# on all 4 sides). gen_power_carrier.py's BOARD_W/BOARD_H stay 180x145 --
+# that's the from-scratch generator default, not used since current layout is
+# hand-placed.
+BOARD_W_MM = 190.0
+BOARD_H_MM = 100.0
+# FreeRouting uses pad→via→B.Cu (A0/A8); budget is a soft cap, not maze-era 12.
+MAX_ROUTING_VIAS = 120
 
 
 def _banner(title: str) -> None:
@@ -39,15 +41,26 @@ def _run_script(name: str, script: str, required: bool = True) -> bool:
 def _check_board_outline() -> bool:
     _banner("Board outline + routing policy")
     text = PCB.read_text(encoding="utf-8")
-    rect = re.search(
-        r'\(gr_rect\s+\(start\s+([\d.-]+)\s+([\d.-]+)\)\s+\(end\s+([\d.-]+)\s+([\d.-]+)\)'
-        r'[\s\S]*?\(layer\s+"Edge\.Cuts"\)',
-        text,
-    )
-    if rect:
-        x1, y1, x2, y2 = map(float, rect.groups())
-        w, h = abs(x2 - x1), abs(y2 - y1)
-    else:
+    # Prefer Edge.Cuts gr_rect whose layer is in the same block (not a later object).
+    w = h = None
+    for chunk in text.split("(gr_rect")[1:]:
+        head, _, rest = chunk.partition("\n\t)")
+        if 'layer "Edge.Cuts"' not in head and "(layer \"Edge.Cuts\")" not in head:
+            # also accept multiline layer before closing
+            if "Edge.Cuts" not in head.split("(gr_", 1)[0]:
+                continue
+        st = re.search(r"\(start\s+([\d.-]+)\s+([\d.-]+)\)", head)
+        en = re.search(r"\(end\s+([\d.-]+)\s+([\d.-]+)\)", head)
+        if not st or not en:
+            continue
+        x1, y1 = float(st.group(1)), float(st.group(2))
+        x2, y2 = float(en.group(1)), float(en.group(2))
+        cw, ch = abs(x2 - x1), abs(y2 - y1)
+        if cw < 50 or ch < 50:
+            continue  # skip silk/callout boxes that share Edge.Cuts by mistake
+        w, h = cw, ch
+        break
+    if w is None:
         edges = re.findall(
             r'\(gr_line\s+\(start\s+([\d.-]+)\s+([\d.-]+)\)\s+\(end\s+([\d.-]+)\s+([\d.-]+)\)'
             r'[\s\S]*?\(layer\s+"Edge\.Cuts"\)',

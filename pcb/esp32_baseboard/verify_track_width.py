@@ -49,9 +49,9 @@ NET_MIN_WIDTH_MM = {
     "MotA2": 0.34,
     "MotB1": 0.34,
     "MotB2": 0.34,
-    "+12V": 0.70,
-    "+12V_RAW": 0.70,
-    "GND": 0.70,
+    "+12V": 1.00,
+    "+12V_RAW": 1.00,
+    "GND": 1.00,
 }
 for _ax in (1, 2, 3):
     for _ph in "ABCD":

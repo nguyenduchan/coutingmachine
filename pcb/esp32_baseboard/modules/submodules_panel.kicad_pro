@@ -1,0 +1,33 @@
+{
+  "meta": {
+    "filename": "submodules_panel.kicad_pro",
+    "version": 3
+  },
+  "boards": [],
+  "sheets": [],
+  "text_variables": {},
+  "libraries": {
+    "pinned_footprint_libs": [],
+    "pinned_symbol_libs": []
+  },
+  "pcbnew": {
+    "last_paths": {
+      "plot": ""
+    },
+    "page_layout_descr_file": ""
+  },
+  "net_settings": {
+    "classes": [
+      {
+        "name": "Default",
+        "clearance": 0.2,
+        "track_width": 0.35,
+        "via_diameter": 0.8,
+        "via_drill": 0.4
+      }
+    ],
+    "meta": {
+      "version": 3
+    }
+  }
+}

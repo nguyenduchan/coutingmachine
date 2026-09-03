@@ -84,6 +84,10 @@ def main() -> int:
         ("ESP32 GPIO pinmap", run("ESP32 GPIO pinmap", [py, "verify_esp32_nets.py"])),
         ("Signal geometry A5-A7", run("Signal geometry", [py, "_check_signal_routing.py"])),
         ("Track width vs fab + current", run("Track width", [py, "verify_track_width.py"])),
+        ("Sub-modules M1/M2/panel", run("Sub-modules", [py, "verify_modules.py"])),
+        ("Rotations E11.6/13", run("Rotations", [py, "_check_rot.py"])),
+        ("Edge clear E11.10", run("Edge clear", [py, "_check_edge_clear.py"])),
+        ("Cluster cover E11.14", run("Cluster cover", [py, "_check_cluster_cover.py"])),
     ]
     ok_drc, counts = drc(pcb)
     results.append(("KiCad DRC (incl. schematic parity)", ok_drc))

@@ -3,7 +3,7 @@ import math
 import re
 from pathlib import Path
 
-CLEAR = 10.0
+CLEAR = 5.0
 src = Path("esp32_baseboard.kicad_pcb").read_text(encoding="utf-8")
 bx0 = by0 = bx1 = by1 = None
 for chunk in src.split("(gr_rect")[1:]:
@@ -47,8 +47,8 @@ for m in re.finditer(r"\n\t\(footprint ", src):
             (float(r.group(3)), float(r.group(4))),
         ):
             th = math.radians(ar)
-            xs.append(ax + lx * math.cos(th) - ly * math.sin(th))
-            ys.append(ay + lx * math.sin(th) + ly * math.cos(th))
+            xs.append(ax + lx * math.cos(th) + ly * math.sin(th))
+            ys.append(ay - lx * math.sin(th) + ly * math.cos(th))
     if not xs:
         continue
     x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)

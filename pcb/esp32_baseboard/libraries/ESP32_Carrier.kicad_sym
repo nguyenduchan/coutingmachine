@@ -972,7 +972,7 @@
 			(at 0 -7.62 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Footprint" "ESP32_Carrier:PinHeader_1x04_Endstop"
+		(property "Footprint" "ESP32_Carrier:JST_XH_02_Socket"
 			(at 0 0 0)
 			(hide yes)
 			(effects (font (size 1.27 1.27)))
@@ -1470,7 +1470,199 @@
 			)
 		)
 	)
-	(symbol "Conn_1x04_ENC"
+	(symbol "Conn_1x06_OptoIN"
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(property "Reference" "J"
+			(at 0 10.16 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "Conn_1x06_OptoIN"
+			(at 0 -10.16 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "ESP32_Carrier:PinHeader_1x06_OptoIN"
+			(at 0 0 0)
+			(hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" "J31A 1x6 pin — M2 field IN + SNS/GND"
+			(at 0 0 0)
+			(hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(symbol "Conn_1x06_OptoIN_0_1"
+			(rectangle
+				(start -2.54 7.619999999999999)
+				(end 2.54 -7.619999999999999)
+				(stroke (width 0.254) (type default))
+				(fill (type background))
+			)
+			(text "1x6 M2-IN"
+				(at 0 0 0)
+				(effects (font (size 1.016 1.016)))
+			)
+		)
+		(symbol "Conn_1x06_OptoIN_1_1"
+			(pin passive line
+				(at 0 6.35 90)
+				(length 2.54)
+				(name "IN1" (effects (font (size 1.27 1.27))))
+				(number "1" (effects (font (size 1.27 1.27))))
+			)
+			(pin passive line
+				(at 0 3.8099999999999996 90)
+				(length 2.54)
+				(name "IN2" (effects (font (size 1.27 1.27))))
+				(number "2" (effects (font (size 1.27 1.27))))
+			)
+			(pin passive line
+				(at 0 1.2699999999999996 90)
+				(length 2.54)
+				(name "IN3" (effects (font (size 1.27 1.27))))
+				(number "3" (effects (font (size 1.27 1.27))))
+			)
+			(pin passive line
+				(at 0 -1.2700000000000005 90)
+				(length 2.54)
+				(name "IN4" (effects (font (size 1.27 1.27))))
+				(number "4" (effects (font (size 1.27 1.27))))
+			)
+			(pin passive line
+				(at 0 -3.8100000000000005 90)
+				(length 2.54)
+				(name "SNS" (effects (font (size 1.27 1.27))))
+				(number "5" (effects (font (size 1.27 1.27))))
+			)
+			(pin passive line
+				(at 0 -6.35 90)
+				(length 2.54)
+				(name "GND" (effects (font (size 1.27 1.27))))
+				(number "6" (effects (font (size 1.27 1.27))))
+			)
+		)
+	)
+	(symbol "Conn_1x05_OptoOUT"
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(property "Reference" "J"
+			(at 0 10.16 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "Conn_1x05_OptoOUT"
+			(at 0 -10.16 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "ESP32_Carrier:PinHeader_1x05_OptoOUT"
+			(at 0 0 0)
+			(hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" "J31B 1x5 pin — M2 OUT + 3V3"
+			(at 0 0 0)
+			(hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(symbol "Conn_1x05_OptoOUT_0_1"
+			(rectangle
+				(start -2.54 6.35)
+				(end 2.54 -6.35)
+				(stroke (width 0.254) (type default))
+				(fill (type background))
+			)
+			(text "1x5 M2-OUT"
+				(at 0 0 0)
+				(effects (font (size 1.016 1.016)))
+			)
+		)
+		(symbol "Conn_1x05_OptoOUT_1_1"
+			(pin passive line
+				(at 0 5.08 90)
+				(length 2.54)
+				(name "OUT1" (effects (font (size 1.27 1.27))))
+				(number "1" (effects (font (size 1.27 1.27))))
+			)
+			(pin passive line
+				(at 0 2.54 90)
+				(length 2.54)
+				(name "OUT2" (effects (font (size 1.27 1.27))))
+				(number "2" (effects (font (size 1.27 1.27))))
+			)
+			(pin passive line
+				(at 0 0.0 90)
+				(length 2.54)
+				(name "OUT3" (effects (font (size 1.27 1.27))))
+				(number "3" (effects (font (size 1.27 1.27))))
+			)
+			(pin passive line
+				(at 0 -2.54 90)
+				(length 2.54)
+				(name "OUT4" (effects (font (size 1.27 1.27))))
+				(number "4" (effects (font (size 1.27 1.27))))
+			)
+			(pin passive line
+				(at 0 -5.08 90)
+				(length 2.54)
+				(name "3V3" (effects (font (size 1.27 1.27))))
+				(number "5" (effects (font (size 1.27 1.27))))
+			)
+		)
+	)
+	(symbol "Conn_JST_XH_02"
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(property "Reference" "J"
+			(at 0 10.16 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "Conn_JST_XH_02"
+			(at 0 -10.16 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "ESP32_Carrier:JST_XH_02_Socket"
+			(at 0 0 0)
+			(hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" "Dry NC limit JST-XH 2P SIG/SNS"
+			(at 0 0 0)
+			(hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(symbol "Conn_JST_XH_02_0_1"
+			(rectangle
+				(start -2.54 2.54)
+				(end 2.54 -2.54)
+				(stroke (width 0.254) (type default))
+				(fill (type background))
+			)
+			(text "HOME XH2"
+				(at 0 0 0)
+				(effects (font (size 1.016 1.016)))
+			)
+		)
+		(symbol "Conn_JST_XH_02_1_1"
+			(pin passive line
+				(at 0 1.27 90)
+				(length 2.54)
+				(name "SIG" (effects (font (size 1.27 1.27))))
+				(number "1" (effects (font (size 1.27 1.27))))
+			)
+			(pin passive line
+				(at 0 -1.27 90)
+				(length 2.54)
+				(name "SNS" (effects (font (size 1.27 1.27))))
+				(number "2" (effects (font (size 1.27 1.27))))
+			)
+		)
+	)
+	(symbol "Conn_JST_XH_04_ENC"
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
@@ -1479,11 +1671,11 @@
 			(at 0 7.62 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Value" "Conn_1x04_ENC"
+		(property "Value" "Conn_JST_XH_04_ENC"
 			(at 0 -7.62 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Footprint" "ESP32_Carrier:PinHeader_1x04_ENC"
+		(property "Footprint" "ESP32_Carrier:JST_XH_04_Socket"
 			(at 0 0 0)
 			(hide yes)
 			(effects (font (size 1.27 1.27)))
@@ -1493,7 +1685,7 @@
 			(hide yes)
 			(effects (font (size 1.27 1.27)))
 		)
-		(symbol "Conn_1x04_ENC_0_1"
+		(symbol "Conn_JST_XH_04_ENC_0_1"
 			(rectangle
 				(start -2.54 5.08)
 				(end 2.54 -5.08)
@@ -1505,7 +1697,7 @@
 				(effects (font (size 1.016 1.016)))
 			)
 		)
-		(symbol "Conn_1x04_ENC_1_1"
+		(symbol "Conn_JST_XH_04_ENC_1_1"
 			(pin passive line
 				(at 0 3.81 90)
 				(length 2.54)
