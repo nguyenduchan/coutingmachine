@@ -114,9 +114,18 @@ class RouteResult:
 
 
 def _rot_xy(lx: float, ly: float, rot_deg: float) -> tuple[float, float]:
+    """Footprint-local -> board offset for a footprint placed at rot_deg.
+
+    KiCad turns the placement angle counter-clockwise on screen while board y
+    grows downward, so the sine terms carry the opposite sign to the textbook
+    form. With the textbook form a 90/270 footprint's pads all land at their
+    180 mirror -- which is invisible at 0/180 and made every gate that locates
+    pads itself (copper islands, A5-A7, stub cleanup) read U3 and J1 as if
+    they had no pads at all.
+    """
     r = math.radians(rot_deg % 360.0)
     c, s = math.cos(r), math.sin(r)
-    return lx * c - ly * s, lx * s + ly * c
+    return lx * c + ly * s, -lx * s + ly * c
 
 
 def is_power_net(name: str) -> bool:

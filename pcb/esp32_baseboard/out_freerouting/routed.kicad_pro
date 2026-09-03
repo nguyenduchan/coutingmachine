@@ -291,8 +291,8 @@
         "schematic_color": "rgba(0, 0, 0, 0.000)",
         "track_width": 0.25,
         "tuning_profile": "",
-        "via_diameter": 0.6,
-        "via_drill": 0.3,
+        "via_diameter": 0.8,
+        "via_drill": 0.4,
         "wire_width": 6
       },
       {
@@ -308,7 +308,7 @@
         "pcb_color": "rgba(0, 0, 0, 0.000)",
         "priority": -1,
         "schematic_color": "rgba(0, 0, 0, 0.000)",
-        "track_width": 1.5,
+        "track_width": 1.0,
         "tuning_profile": "",
         "via_diameter": 1.1,
         "via_drill": 0.6,
@@ -347,43 +347,67 @@
       },
       {
         "netclass": "Power",
-        "pattern": "/MotA2"
+        "pattern": "MotA2"
       },
       {
         "netclass": "Power",
-        "pattern": "/MotA1"
+        "pattern": "MotA1"
       },
       {
         "netclass": "Power",
-        "pattern": "/MotB1"
+        "pattern": "MotB1"
       },
       {
         "netclass": "Power",
-        "pattern": "/MotB2"
+        "pattern": "MotB2"
       },
       {
         "netclass": "Power",
-        "pattern": "/MotDC1_A"
+        "pattern": "BYJ1_A"
       },
       {
         "netclass": "Power",
-        "pattern": "/MotDC1_B"
+        "pattern": "BYJ1_B"
       },
       {
         "netclass": "Power",
-        "pattern": "/MotDC2_A"
+        "pattern": "BYJ1_C"
       },
       {
         "netclass": "Power",
-        "pattern": "/MotDC2_B"
+        "pattern": "BYJ1_D"
       },
       {
         "netclass": "Power",
-        "pattern": "/MotDC3_A"
+        "pattern": "BYJ2_A"
       },
       {
         "netclass": "Power",
-        "pattern": "/MotDC3_B"
+        "pattern": "BYJ2_B"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "BYJ2_C"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "BYJ2_D"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "BYJ3_A"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "BYJ3_B"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "BYJ3_C"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "BYJ3_D"
       }
     ]
   },
@@ -424,7 +448,7 @@
   },
   "sheets": [
     [
-      "af4aff7a-79bc-48db-83cc-ac656b6fb843",
+      "ae4efc08-011e-444d-a207-c499d4e724e5",
       "Root"
     ]
   ],

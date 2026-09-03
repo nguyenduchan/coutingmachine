@@ -111,8 +111,9 @@ def parse_pcb(text: str) -> tuple[dict[int, str], list[Seg], list[Hole]]:
             sx, sy = float(zm.group(1)), float(zm.group(2))
             drill = float(dm.group(1))
             net, _pn = pad_net(chunk, table)
-            wx = fx + lx * c - ly * s
-            wy = fy + lx * s + ly * c
+            # y grows downward, so the sine terms flip (see maze_router._rot_xy)
+            wx = fx + lx * c + ly * s
+            wy = fy - lx * s + ly * c
             r = max(sx, sy, drill) * 0.5 + HOLE_EXTRA_MM
             holes.append(Hole(wx, wy, r, net, ref, pname))
     # A routing via is a drilled hole too: every other net's copper has to keep

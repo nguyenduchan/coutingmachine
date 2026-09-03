@@ -24,8 +24,24 @@ Adding duplicate image handler for 'Windows animated cursor file'
 Adding duplicate image handler for 'TGA file'
 Adding duplicate image handler for 'XPM file'
 Adding duplicate image handler for 'WebP file'
+Adding duplicate image handler for 'PNG file'
+Adding duplicate image handler for 'JPEG file'
+Adding duplicate image handler for 'TIFF file'
+Adding duplicate image handler for 'GIF file'
+Adding duplicate image handler for 'PNM file'
+Adding duplicate image handler for 'PCX file'
+Adding duplicate image handler for 'IFF file'
+Adding duplicate image handler for 'Windows icon file'
+Adding duplicate image handler for 'Windows cursor file'
+Adding duplicate image handler for 'Windows animated cursor file'
+Adding duplicate image handler for 'TGA file'
+Adding duplicate image handler for 'XPM file'
+Adding duplicate image handler for 'WebP file'
 DSN -> C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\out_freerouting\esp32_baseboard.dsn (tracks stripped, A7 clearances injected)
 headless settings written to C:\Users\Admin\AppData\Local\Temp\freerouting\freerouting.json
-SES merged -> C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\out_freerouting\routed.kicad_pcb (8 duplicate(s) removed) (2 dangling stub(s) removed), 0 unconnected
-  attempt 1 (-mp 30 -vc 60): 0 unconnected
+SES merged -> C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\out_freerouting\routed.kicad_pcb (16 duplicate(s) removed) (9 dangling stub(s) removed), 2 unconnected
+  attempt 1 (-mp 30 -vc 60): 2 unconnected
+headless settings written to C:\Users\Admin\AppData\Local\Temp\freerouting\freerouting.json
+SES merged -> C:\workspace\embedded\CountingMachine\pcb\esp32_baseboard\out_freerouting\routed.kicad_pcb (5 duplicate(s) removed) (3 dangling stub(s) removed), 0 unconnected
+  attempt 2 (-mp 60 -vc 30): 0 unconnected
 promoted -> esp32_baseboard.kicad_pcb

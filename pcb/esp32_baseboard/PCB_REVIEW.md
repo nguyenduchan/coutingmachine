@@ -60,6 +60,35 @@ Chỉ **đi dây** (FreeRouting) khi E11 + C4 đã xanh. Chỉ **đặt PCB** kh
 | A8 | **Via đổi mặt = 0,4 mm khoan / 0,8 mm pad.** Tối thiểu của JLCPCB (2 lớp) là 0,3/0,6; nằm đúng trên mức tối thiểu thì không còn dung sai cho lệch khoan. 0,4 mm là mũi khoan chuẩn, 0,8 mm giữ vành đồng 0,2 mm quanh lỗ, vẫn trong bậc giá rẻ nhất | `net_class Default` trong `gen_power_carrier.py` + `.kicad_pro` |
 | A9 | **`clean_stubs.py` chạy sau mỗi lần merge SES.** FreeRouting trả về đoạn trùng (bản sao y hệt, và đoạn ngắn nằm đè bên trong đoạn dài) — chúng làm hỏng phép quét antenna vì hai bản sao tựa vào đầu tự do của nhau. `pcbnew.TestTrackEndpointDangling` bỏ sót kiểu này, và sau lệnh Specctra thì binding pcbnew mất kiểu BOARD nên mọi lệnh dọn bằng pcbnew ném AttributeError rồi bị nuốt lặng | `drc_report.txt` → `track_dangling` = 0 |
 
+### A10. ⚠️ Dấu của phép xoay pad — 3 cổng cùng nói dối một lúc
+
+**Lỗi đã xảy ra thật, và KiCad DRC thì luôn đúng nên không ai nghi các cổng.**
+
+Toạ độ pad trong footprint là toạ độ **local**; ra board phải xoay theo góc đặt.
+KiCad xoay **ngược chiều kim đồng hồ trên màn hình**, mà **y tăng xuống dưới**, nên
+công thức đúng là:
+
+```python
+px = fx + lx*cos(th) + ly*sin(th)
+py = fy - lx*sin(th) + ly*cos(th)      # dấu sin ngược với dạng sách giáo khoa
+```
+
+Dạng "sách giáo khoa" (`lx*cos - ly*sin`, `lx*sin + ly*cos`) **trùng đáp số ở 0° và
+180°**, chỉ sai ở **90° / 270°** — và sai đúng bằng phép lật 180°. Trên board này chỉ
+có **J1 (90°)** và **U3 (270°)**, nên lỗi nằm im cho tới khi chúng có dây:
+
+| Nơi dùng sai | Hậu quả |
+|---|---|
+| `clean_stubs.py` | Không thấy pad của U3/J1 → xoá **cả chuỗi** track chạm chúng như "dangling": `DIR` mất sạch, `+12V_RAW` đứt trước khi tới J1, `STEP` chỉ còn đoạn ở U1 |
+| `maze_router._rot_xy` (→ `_check_net_copper.py`) | A4 báo 7 net hở trong khi KiCad báo 0 unconnected |
+| `_check_signal_routing.py` | A5–A7 chấm trên vị trí lỗ **sai** của U3/J1 → PASS vô nghĩa |
+
+→ **Không tự tính lại vị trí pad ở mỗi script.** Nếu buộc phải tính, so lại với toạ độ
+KiCad in ra trong `drc_report.txt` (`@(x mm, y mm): PTH pad N of U3`) — đó là trọng tài.
+→ Triệu chứng "FreeRouting bỏ hàng net của footprint xoay 90°" **là chẩn đoán sai** của
+chính lỗi này: file `.ses` vẫn có đủ dây cho `DIR`/`+12V_RAW`, `clean_stubs` mới là nơi
+chúng biến mất. FreeRouting đi dây footprint xoay 1/4 vòng bình thường.
+
 **Net nguồn**: `GND`, `+5V`, `+3V3`, `+12V`, `+12V_RAW`, `+12V_SNS`, `BLW_RET`. (A5/A6 nay áp cho **mọi** net — miễn trừ nguồn từng che giấu 25 short nguồn-với-nguồn thật.)
 
 **Net tín hiệu**: mọi net còn lại (GPIO, shift, BYJ pha, TFT, opto IN/OUT, …).

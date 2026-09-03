@@ -39,7 +39,13 @@ ROUTED = HERE / "out_freerouting" / "routed.kicad_pcb"
 # optimisation "is known to generate clearance violations".
 # (passes, via cost) per attempt: different effort settings give different
 # results, and the loop stops at the first that routes everything.
-FR_ATTEMPTS = ((30, 60), (60, 30), (100, 100))
+# (max passes, via cost). FreeRouting is stochastic and this board is
+# tight around the TMC/MCU channel: a single parameter pair closes every
+# net perhaps two runs in three, so several are tried and the first that
+# leaves nothing unconnected wins. Six pairs put a failed board at a few
+# percent instead of one in five.
+FR_ATTEMPTS = ((30, 60), (60, 30), (100, 100),
+               (50, 100), (200, 50), (150, 20))
 FR_THREADS = 1
 FR_TIMEOUT_S = 900
 

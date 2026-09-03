@@ -379,8 +379,11 @@ def balanced_placement(
     if u10_q_x + 10.0 > ix1:
         u10_ctrl_x = ix1 - 10.0 - mod_ctrl_to_q
         u10_q_x = u10_ctrl_x + mod_ctrl_to_q
-    r4x = min(ix1 - 4.0, u10_q_x + 8.0)
-    r4y = u10_y0 + 1.5 * 2.54
+    # R4 (OE_595 pull-up) sits NORTH of both module headers: east of J25 it
+    # overlapped the 1x24 courtyard, and the space between J24 and J25 is under
+    # the 595 module body once it is plugged in.
+    r4x = (u10_ctrl_x + u10_q_x) / 2.0
+    r4y = u10_y0 - 7.0
 
     u5x, u5y = a1.cx, a1.cy
     u6x, u6y = a2.cx, a2.cy
@@ -429,8 +432,11 @@ def balanced_placement(
         "u10_y0": u10_y0,
         "r4x": r4x,
         "r4y": r4y,
+        # C21 (shared ULN COM bulk): north of the DIP row, not west of it --
+        # west it either hit the J5 courtyard or pushed A1 under the 8 mm
+        # cluster gap to POWER.
         "c21x": u5x - 14.0,
-        "c21y": _dip_y - 2.0,
+        "c21y": _dip_y - 14.0,
         "MOD_CTRL_TO_Q": mod_ctrl_to_q,
     }
 

@@ -1,24 +1,112 @@
 (footprint "Diode_TVS_DO41"
-	(version 20240108)
-	(generator "gen_power_carrier.py")
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
 	(layer "F.Cu")
-	(descr "Axial TVS DO-41 ~7.5mm pitch. Use P6KE15A or SMB equiv for 12V bus.")
-	(tags "TVS diode surge")
-	(property "Reference" "D"
+	(property "Reference" "REF**"
 		(at 0 -2.6 0)
 		(layer "F.SilkS")
-		(effects (font (size 1 1) (thickness 0.15)))
+		(uuid "4f02abef-9c5b-486a-982b-9c91f1e815bc")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.12)
+			)
+		)
 	)
-	(property "Value" "P6KE15A"
+	(property "Value" "1N5819"
 		(at 0 2.6 0)
 		(layer "F.SilkS")
-		(effects (font (size 0.8 0.8) (thickness 0.1)))
+		(uuid "27882190-d1cc-42b3-8f53-ef1e9aa04e29")
+		(effects
+			(font
+				(size 0.75 0.75)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "5f8137d6-e4ef-4fb2-a83b-07328669d2d3")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "069f9def-8ff7-48d8-b34c-8391fb6d983c")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
 	)
 	(attr through_hole)
-	(fp_rect (start -3.2 -1.5) (end 3.2 1.5) (stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
-	(fp_line (start 2.2 -1.2) (end 2.2 1.2) (stroke (width 0.12) (type solid)) (layer "F.SilkS"))
-	(pad "1" thru_hole rect (at -3.75 0) (size 1.7 1.7) (drill 0.9)
-		(layers "*.Cu" "*.Mask"))
-	(pad "2" thru_hole circle (at 3.75 0) (size 1.7 1.7) (drill 0.9)
-		(layers "*.Cu" "*.Mask"))
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_line
+		(start 2.2 -1.2)
+		(end 2.2 1.2)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "e8128bbb-3fae-4cc4-afaa-86c9670c41d1")
+	)
+	(fp_rect
+		(start -3.2 -1.5)
+		(end 3.2 1.5)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.SilkS")
+		(uuid "434fa4e5-c7f0-4bcc-bb84-b0c347488140")
+	)
+	(fp_text user "A"
+		(at -3.75 -2.2 0)
+		(layer "F.SilkS")
+		(uuid "a71503b6-b83a-4c9b-94c6-806b12c11621")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.105)
+			)
+		)
+	)
+	(fp_text user "K"
+		(at 3.75 -2.2 0)
+		(layer "F.SilkS")
+		(uuid "c815b946-42e7-4e3b-bc75-b629f87eb983")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.105)
+			)
+		)
+	)
+	(pad "1" thru_hole rect
+		(at -3.75 0)
+		(size 1.7 1.7)
+		(drill 0.9)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "39844f4b-85c3-4443-9668-b985fd9c600f")
+	)
+	(pad "2" thru_hole circle
+		(at 3.75 0)
+		(size 1.7 1.7)
+		(drill 0.9)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "acca3816-83cc-47a0-aca2-c6ff374345dc")
+	)
+	(embedded_fonts no)
 )

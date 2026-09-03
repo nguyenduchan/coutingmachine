@@ -65,7 +65,11 @@ def _pads(text: str, table: NetTable):
         fx, fy = float(at.group(1)), float(at.group(2))
         th = math.radians(float(at.group(3) or 0))
         # KiCad rotates footprint-local pad coordinates counter-clockwise while
-        # y grows downward, so the sine terms flip sign against the usual form.
+        # y grows downward, so the sine terms flip sign against the usual form
+        # -- the plain form put every pad of a 90/270 footprint at its 180
+        # mirror, so U3 (270) and J1 (90) looked padless and the whole chain of
+        # tracks reaching them was deleted as dangling: no DIR net at all, and
+        # +12V_RAW cut off short of J1.
         # The last pad of a footprint has no following "(pad" to stop at, so the
         # lookahead has to accept the end of the block too -- otherwise one pad
         # per footprint goes missing and the tracks landing on it look dangling.
@@ -79,8 +83,8 @@ def _pads(text: str, table: NetTable):
             if not name:
                 continue
             lx, ly = float(lm.group(1)), float(lm.group(2))
-            px = fx + lx * math.cos(th) - ly * math.sin(th)
-            py = fy + lx * math.sin(th) + ly * math.cos(th)
+            px = fx + lx * math.cos(th) + ly * math.sin(th)
+            py = fy - lx * math.sin(th) + ly * math.cos(th)
             r = max(float(sm.group(1)), float(sm.group(2))) / 2 + 0.05
             lay = "*" if '"*.Cu"' in chunk else ("F.Cu" if '"F.Cu"' in chunk else "B.Cu")
             out.append((name, px, py, r, lay))

@@ -167,7 +167,12 @@ def main() -> int:
                 body = body.replace(
                     f'(symbol "{sym}"', f'(symbol "ESP32_Carrier:{sym}"', 1
                 )
-                used[sym] = {"pins": pins, "names": {}, "body": body}
+                # generic_symbol names its pins "P<n>"; an empty names dict
+                # here made the board say unconnected-(J25-Pad13-Pad13) while
+                # the schematic said unconnected-(J25-P13-Pad13) -> net_conflict
+                used[sym] = {"pins": pins,
+                             "names": {n: f"P{n}" for n in pins},
+                             "body": body}
         elif sym not in used:
             # lib_symbols entries must carry the library prefix, or the symbol
             # instances (which reference "ESP32_Carrier:Name") match nothing and
