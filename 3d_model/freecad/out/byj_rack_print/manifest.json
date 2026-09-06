@@ -1,0 +1,187 @@
+{
+  "model": "byj_rack_stage",
+  "print_parts": [
+    "Housing",
+    "Housing_Lid",
+    "Pinion",
+    "Slide_Bar",
+    "Guide_Rod_A",
+    "Guide_Rod_B",
+    "Guide_Rod_Cap_A",
+    "Guide_Rod_Cap_B"
+  ],
+  "buy_parts": [
+    "BYJ_Motor (28BYJ-48 12V)",
+    "Limit_Switch_Min (KW11)",
+    "Screws M2/M3 as BOM in byj_rack_stage.py (gom 2 vit tu ren M3 DAI >= 14mm rieng cho Guide_Rod_Cap_A/B — dai hon vit thuong vi phai xuyen nap+vach roi ren vao than thanh)"
+  ],
+  "cura": {
+    "recommended": "Open byj_rack_print_plate.stl (1 plate, 1 slice)",
+    "or": "Open Housing.stl + Housing_Lid.stl + Pinion.stl + Slide_Bar.stl + Guide_Rod_A.stl x2 + Guide_Rod_Cap_A.stl x2 (moi file in 2 lan, khong can Guide_Rod_B.stl / Guide_Rod_Cap_B.stl — giong het A)",
+    "notes": [
+      "TAT CA cac file duoi day da o DUNG huong in san (xoay san trong STL neu can) -- mo Cura la in duoc luon, KHONG xoay lai (xoay lai co the bien mot huong 0-overhang thanh huong co overhang, xem PRINT_ROTATIONS trong export_byj_rack_print.py va soat de-in 2026-09-06).",
+      "Housing: day hop dat ban (Z=0), khong can support. 1 diem can luu y: be cong tac rong ruot co 1 'noc' day 4mm bac qua khoang rong ~14.5x22mm (4 canh co thanh do tru) -- van in duoc khong can support nhung nen bat quat lam mat 100% ngay truoc doan do.",
+      "Housing_Lid: mat nap dat ban, khong can support",
+      "Pinion: LIEN KHOI rang + tru/ban cau O10 (khong moay-o duoi) — rang nam ban, cau huong len; Support OFF.",
+      "Slide_Bar: dat nguyen tu the (chan +Y/-Y xuong ban), cau noi tren dinh la NHIP CAU ~19 mm giua 2 chan (khong phai conson) — bat quat 100%, PETG bam ban tot la in duoc, KHONG can bat support (bat support PETG rat kho go vi PETG dinh chinh no)",
+      "Guide_Rod_A/B: tron O5 day phang, da nam san mat phang xuong ban (ZMin=0 tu export), KHONG xoay lai trong Cura — xoay se mat day phang va chi cham ban theo 1 duong tiep tuyen, de bong lop dau",
+      "Guide_Rod_Cap_A/B: DA XOAY -90 do so voi lap rap -- nam phang mat 9.6x9.6mm xuong ban (cao 3mm), 2 lo (than vit + hoc chim mu vit) thanh DUNG (moi lop la 1 vanh tron day du, khong can support). Vit xuyen QUA CHINH GIUA nap, qua vach, roi bat THANG vao lo moi khoan san o dau thanh (M3, dai >= 14mm, vd M3x16) — THAO DUOC (thao vit la rut thanh ra lai). Khong co no thi thanh dan huong khong bi khoa, se xo lech doc truc khi may chay lau (lap rap buoc 6 trong byj_rack_stage.py).",
+      "Gap giua part tren plate: 8 mm"
+    ]
+  },
+  "files": [
+    {
+      "name": "Housing",
+      "file": "Housing.stl",
+      "bbox": {
+        "xmin": -73.554,
+        "xmax": 54.054,
+        "ymin": -31.313,
+        "ymax": 31.313,
+        "zmin": 0.0,
+        "zmax": 41.4,
+        "size_mm": [
+          127.61,
+          62.63,
+          41.4
+        ]
+      }
+    },
+    {
+      "name": "Housing_Lid",
+      "file": "Housing_Lid.stl",
+      "bbox": {
+        "xmin": -73.554,
+        "xmax": 54.054,
+        "ymin": -26.813,
+        "ymax": 26.055,
+        "zmin": 0.0,
+        "zmax": 2.5,
+        "size_mm": [
+          127.61,
+          52.87,
+          2.5
+        ]
+      }
+    },
+    {
+      "name": "Pinion",
+      "file": "Pinion.stl",
+      "bbox": {
+        "xmin": -11.969,
+        "xmax": 11.969,
+        "ymin": -12.05,
+        "ymax": 12.05,
+        "zmin": 0.0,
+        "zmax": 12.8,
+        "size_mm": [
+          23.94,
+          24.1,
+          12.8
+        ]
+      }
+    },
+    {
+      "name": "Slide_Bar",
+      "file": "Slide_Bar.stl",
+      "bbox": {
+        "xmin": -44.054,
+        "xmax": 14.054,
+        "ymin": -23.313,
+        "ymax": 22.555,
+        "zmin": 0.0,
+        "zmax": 35.1,
+        "size_mm": [
+          58.11,
+          45.87,
+          35.1
+        ]
+      }
+    },
+    {
+      "name": "Guide_Rod_A",
+      "file": "Guide_Rod_A.stl",
+      "bbox": {
+        "xmin": -72.054,
+        "xmax": 53.904,
+        "ymin": 16.056,
+        "ymax": 21.054,
+        "zmin": 0.0,
+        "zmax": 4.0,
+        "size_mm": [
+          125.96,
+          5.0,
+          4.0
+        ]
+      }
+    },
+    {
+      "name": "Guide_Rod_B",
+      "file": "Guide_Rod_B.stl",
+      "bbox": {
+        "xmin": -72.054,
+        "xmax": 53.904,
+        "ymin": -21.562,
+        "ymax": -16.564,
+        "zmin": 0.0,
+        "zmax": 4.0,
+        "size_mm": [
+          125.96,
+          5.0,
+          4.0
+        ]
+      }
+    },
+    {
+      "name": "Guide_Rod_Cap_A",
+      "file": "Guide_Rod_Cap_A.stl",
+      "bbox": {
+        "xmin": -37.4,
+        "xmax": -27.8,
+        "ymin": 13.755,
+        "ymax": 23.355,
+        "zmin": 0.0,
+        "zmax": 3.0,
+        "size_mm": [
+          9.6,
+          9.6,
+          3.0
+        ]
+      }
+    },
+    {
+      "name": "Guide_Rod_Cap_B",
+      "file": "Guide_Rod_Cap_B.stl",
+      "bbox": {
+        "xmin": -37.4,
+        "xmax": -27.8,
+        "ymin": -23.863,
+        "ymax": -14.263,
+        "zmin": 0.0,
+        "zmax": 3.0,
+        "size_mm": [
+          9.6,
+          9.6,
+          3.0
+        ]
+      }
+    }
+  ],
+  "plate": {
+    "file": "byj_rack_print_plate.stl",
+    "bbox": {
+      "xmin": 0.0,
+      "xmax": 192.064,
+      "ymin": 0.0,
+      "ymax": 194.96,
+      "zmin": -0.0,
+      "zmax": 41.4,
+      "size_mm": [
+        192.06,
+        194.96,
+        41.4
+      ]
+    }
+  },
+  "gap_mm": 8.0
+}

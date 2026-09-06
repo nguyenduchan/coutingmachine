@@ -1,0 +1,33 @@
+{
+  "model": "28BYJ-48 - split tu file tham chieu THAT (nguoi dung tai ve)",
+  "source": "reference/28BYJ-48_original.FCStd (ban sao, khong sua file goc)",
+  "note": "Chinh xac hon ban parametric tu truoc (byj_rack_stage.py) vi dung dung hinh hoc that: go O9.1, doan tron O5 dai 4.35mm, doan vat rong 3mm dai 5.65mm o dau truc — do THAT bang cach cat lat (slice) file goc theo Z, khong doan tu ban ve 2D.",
+  "bbox_mm": [
+    43.0,
+    31.0,
+    29.3
+  ],
+  "clearance_diam_mm": 1.0,
+  "retention_flange_diam_mm": 7.0,
+  "retention_chamber_diam_mm": 8.0,
+  "note_2026_09_06_lan29": "May in la Ender-3 Pro (pho thong, khong tan nhiet dac biet) -- nguoi dung xac nhan KHONG the in day nhua lo lung khoang cach dai. Gioi han hinh hoc that: du them bao nhieu soi QUANH RIA go giu, TAM dia (O7.0) VAN cach moi soi toi thieu 3.5mm (ban kinh) -- them soi RIA chi giam khe CUNG (tiep tuyen), KHONG giam duoc khoang cach BAN KINH toi tam. Da them 1 CHOT TAM O0.6mm (`CENTER_PIN_D`), noi THANG day khoang (than) len day go giu (truc) -- dien tich tiep xuc CUC NHO (~0.28mm2, so voi 38.5mm2 neu ca dia cham nhu ban dau) nen van de be nhu soi to (chi 1 diem, xoay nhe la gay), nhung giai quyet dung: tam gio chi con cach diem do gan nhat (chot tam HOAC soi ria) toi da ~1.75mm thay vi 3.5mm truoc do.",
+  "strut_count": 10,
+  "strut_count_flange_ring": 10,
+  "strut_rings": 1,
+  "strut_angle_deg": 4.0,
+  "center_pin_diam_mm": 0.6,
+  "print_settings": [
+    "Layer height 0.2mm",
+    "Quat lam mat 100% tu lop dau -- QUAN TRONG voi soi to/chot: nguoi lam mat sai lop dau se lam chung qua deo, kho gay dut gon",
+    "Flow/Extrusion 95-98%",
+    "QUAN TRONG -- Horizontal Expansion = -0.1mm (vach ngoai in nho lai)",
+    "QUAN TRONG -- Hole Horizontal Expansion = +0.1mm (lo tron in to ra) -- 2 setting khac nhau, bat CA HAI (Cura: Special Modes, can bat Expert/Show All Settings)",
+    "Toc do in RAT CHAM (~15-20mm/s) rieng vung go giu (Z 6.65-8.45, gom ca chot tam va lop dau tien cua dia bac cau qua soi+chot) -- day la vung RUI RO NHAT tren Ender-3 Pro. Tu Z 8.45 tro len (doan truc tron + doan vat) la 1 cot tru LIEN TUC tu no, khong con soi to gia co (theo yeu cau lan 30, bo soi o 2 tang tren) -- toc do binh thuong la du vi khong con bac cau, chi la in 1 tru dac tu duoi len"
+  ],
+  "after_print": [
+    "CAM DOAN TRUC (dinh vat, tho tren dinh go O9.1), XOAY QUA LAI vai lan -- 10 soi to se GAY GON (tiet dien nho), truc roi ra quay tu do NGAY, KHONG can cho nguoi/dung dao nhu kieu witness-layer truoc do.",
+    "Go giu O7.0mm o day truc to hon lo tron O6.0mm phia tren -- du gay het soi to, truc VAN KHONG tuot len duoc.",
+    "Neu soi chua gay het: xoay tiep + keo nhe doc truc (khong day manh sang ngang de tranh gay truc O5).",
+    "SAU KHI IN: soi vao (qua khe O9) kiem tra ky lop DAU TIEN cua go giu -- neu thay vong/xe/thieu nhua o giua, co the can tang them so soi hoac giam FLOOR_GAP trong lan chinh sau."
+  ]
+}

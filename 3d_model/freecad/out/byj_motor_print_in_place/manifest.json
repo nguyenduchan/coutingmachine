@@ -1,0 +1,46 @@
+{
+  "model": "byj_rack_stage - BYJ_Motor print-in-place demo",
+  "note": "KHONG phai chi tiet BOM thuc te cua may (dong co that la MUA SAN nguyen khoi). File nay chi de in thu mo hinh truc quay tu do.",
+  "file": "BYJ_Motor_PrintInPlace.stl",
+  "bbox": {
+    "xmin": -27.0,
+    "xmax": 6.0,
+    "ymin": -21.0,
+    "ymax": 21.0,
+    "zmin": 0.0,
+    "zmax": 29.0,
+    "size_mm": [
+      33.0,
+      42.0,
+      29.0
+    ]
+  },
+  "clearance_diam_mm": 1.0,
+  "retention_flange_diam_mm": 7.0,
+  "retention_chamber_diam_mm": 8.0,
+  "strut_count": 10,
+  "strut_height_mm": 0.4,
+  "center_pin_diam_mm": 0.6,
+  "note_2026_09_07_lan33": "clearance_diam_mm = 1.0mm -- GIA TRI DA CHUNG MINH khong dinh cung tren Ender-3 Pro (xem lan 22). Co thu thu hep xuong 0.7mm o lan 32 de bot lac, nhung nguoi dung chon UU TIEN AN TOAN ('neu rui ro, tang khe ho len') nen QUAY LAI 1.0mm. Bu lai do lac bang cach KHAC: keo dai doan OM TRUC (guide length, MOT_SHAFT_BURY 3.0->5.0mm, lan 33) -- don bay dai hon lam giam goc lac o CUNG 1 khe ho, khong can danh doi rui ro dinh cung.",
+  "note_2026_09_07_v3": "Da doi tu 'witness layer' (go giu TUA THANG len day khoang, ban v2) sang SOI TO MANH + CHOT TAM (dung ky thuat da kiem chung o build_28byj48_reference.py, xem memory du an lan 26-31): go giu gio LO LUNG (khong cham day khoang), chi noi voi than qua %d SOI TO quanh rIa (vanh khuyen goc %.0f do, cao chi %.1fmm -- de be) VA 1 CHOT TAM O%.1fmm o giua (giai quyet gioi han hinh hoc: ho tro chi o RIA khong bao gio du de bac cau toi TAM 1 dia -- da xac nhan voi nguoi dung dung Ender-3 Pro, khong bac cau noi khoang ~3.5mm). Dien tich tiep xuc THAT (soi+chot cong lai) rat nho so voi ca mat go giu truoc day -- xoay nhe la gay, KHONG can dao/cho nguoi nhu ban v2.",
+  "print_settings": [
+    "Layer height 0.2mm (khong lon hon) -- lop day de bit mat khe ho",
+    "Quat lam mat 100% NGAY TU LOP DAU, khong tang dan -- QUAN TRONG voi soi to/chot: lam mat sai se lam chung qua deo, kho gay dut gon",
+    "Flow/Extrusion 95-98% -- bu tru lo tron in luon RA NHO hon so danh nghia tren may pho thong (Ender-3 Pro)",
+    "QUAN TRONG -- bat 'Horizontal Expansion' = -0.1mm (Cura: tim 'Horizontal Expansion' trong Special Modes, can bat che do Expert/Show All Settings) -- lam VACH NGOAI (truc, go giu) in NHO lai 0.1mm, giup ho khong bi day chat",
+    "QUAN TRONG -- bat 'Hole Horizontal Expansion' = +0.1mm (rieng setting nay, KHAC voi Horizontal Expansion o tren) -- lam LO TRON (khoang trong than) in TO ra 0.1mm. 2 setting nay CONG DON: bu them ~0.2mm khe ho moi ben (0.4mm duong kinh) BU DAP cho sai so in that cua may pho thong, ngoai 1.0mm danh nghia da thiet ke san trong model",
+    "Toc do in RAT CHAM (~15-20mm/s) rieng vung go giu (lop dau tien cua dia bac cau qua soi+chot) -- day la vung RUI RO NHAT tren Ender-3 Pro. Cac vung khac toc do binh thuong (~30-40mm/s) la du."
+  ],
+  "support": [
+    "BAT 'Generate Support' (Cura) — van can cho 2 CHO overhang o NGOAI (KHONG lien quan gi den khop truc, day la 2 cho khac cua than dong co):",
+    "  1. 2 tai bat vit (thò ra ngoai Ø than ~7mm, day 1mm, la CONSON tran khong co gi do)",
+    "  2. Khoi noi day (mat day hut 1mm so voi day than, ~83mm2 lo lung)",
+    "  - Support Placement: Everywhere; Density thap (~10-15%), Z Distance mac dinh (~0.1-0.2mm)",
+    "KIEM TRA LAI trong Cura preview: KHONG duoc co support sinh o BEN TRONG khoang giu/quanh truc -- day la khoang KIN (chi thong qua khe Ø9 rat nho tren dinh), support sinh o do se KHONG LAY RA DUOC sau khi in. Thiet ke soi to+chot tam da tinh de KHONG can support o vung nay -- neu Cura van tu sinh, dung 'Support Blocker' chan het vung khoang giu."
+  ],
+  "after_print": [
+    "CAM DOAN TRUC (phan lo ra tren dinh go O9), XOAY QUA LAI vai lan -- soi to + chot tam se GAY GON (tiet dien nho), truc roi ra quay tu do NGAY, KHONG can dao/cho nguoi nhu ban v2 truoc.",
+    "Go giu O7.0mm o day truc to hon lo truc tron O6.0mm phia tren -- du gay het soi to/chot, truc VAN KHONG tuot len duoc.",
+    "Neu soi/chot chua gay het: xoay tiep + keo nhe doc truc (khong day manh sang ngang de tranh gay truc O5)."
+  ]
+}

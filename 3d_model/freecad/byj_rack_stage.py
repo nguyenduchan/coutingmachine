@@ -31,22 +31,58 @@ CƠ CẤU (hành trình theo +X; đáy hộp z = 0; TRỤC BÁNH RĂNG THẲNG �
   Housing        - vỏ + sàn + 4 vách + bệ đỡ ĐC + 2 trụ bắt tai ĐC + hốc/lỗ trục trơn
                    + bệ công tắc + máng dây + 4 tai bắt máy + 4 boss bắt nắp. MỘT khối in.
   Housing_Lid    - nắp, 4 vít M3, có KHE cho trụ gá tải chui lên
-  BYJ_Motor      - 28BYJ-48 (mua sẵn): thân O28 x 19, trục O5 hai mặt vát, LỆCH TÂM 8 mm,
-                   2 tai thép cách nhau 35 mm nằm trên đường VUÔNG GÓC với hướng lệch tâm
-  Pinion         - bánh răng thẳng IN 3D, m = 1, z = 16, PA 20 deg, lỗ O5 hai mặt vát
-                   (ép thẳng lên trục — hai mặt vát đã truyền mô men, không cần vít hãm)
+  BYJ_Motor      - 28BYJ-48 (mua sẵn): thân O28 x 19, LỆCH TÂM 8 mm, 2 tai thép cách
+                   nhau 35 mm nằm trên đường VUÔNG GÓC với hướng lệch tâm. KHÔNG còn
+                   gồm trục — có lỗ 2 tầng quanh trục: khoang rộng O(MOT_SHAFT_RET_BORE)
+                   ở đáy (chứa gờ giữ trục) rồi thu lại thành lỗ trơn O(MOT_SHAFT_BORE)
+  BYJ_Motor_Shaft - trục ĐC O5 hai mặt vát, TÁCH RIÊNG khỏi BYJ_Motor (chốt 2026-09-06,
+                   người dùng yêu cầu): khe hở MOT_SHAFT_CLR quanh trục trong lỗ thân —
+                   quay được độc lập (đổi Placement.Rotation để animate), khe hở đủ
+                   rộng nên in 3D thử cũng lắp lọt (không phải kiểu ép chặt). Đáy trục
+                   có GỜ GIỮ O(MOT_SHAFT_RET_D) nằm trong khoang rộng của thân (lần 22)
+                   -> chống tuột lên, vẫn quay tự do
+  Pinion         - bánh răng thẳng IN 3D, m≈1.0045, z=22 (STEPS_PER_MM=59, Ø đỉnh
+                   ≈24.1 mm), PA 20 deg, lỗ O5 hai mặt vát. Đỉnh trụ+bán cầu Ø10
+                   (không moay-ơ dưới)
   Slide_Bar      - THANH TỊNH TIẾN in liền, tiết diện chữ П CƯỠI LÊN bánh răng:
                    chân +Y mang THANH RĂNG + bạc trục A, chân -Y mang bạc trục B,
                    cầu nối nằm TRÊN đầu trục động cơ, trên cầu là TRỤ GÁ TẢI
-  Guide_Rod_A/B  - 2 trục trơn O5 (mua sẵn), song song X. Bạc A LỖ TRÒN (định vị),
-                   bạc B LỖ RÃNH theo Y (chỉ chặn xoay) -> KHÔNG siêu tĩnh, không kẹt
+  Guide_Rod_A/B  - 2 thanh dẫn hướng TRÒN Ø(ROD_D) cắt phẳng đáy, IN 3D (trơn hơn
+                   vuông trên máy đời cũ). A: bạc lỗ tròn khít (định vị). B: bạc
+                   capsule nới Y (chỉ chặn xoay). Đầu +X lỗ mồi tự ren cho Rod_Cap
+  Guide_Rod_Cap_A/B - TẤM PHẲNG VUÔNG chặn đầu +X của mỗi thanh (chốt 2026-09-06, xem
+                   "NẮP CHẶN TRỤC" bên dưới): úp khít cả mặt vách lẫn đầu thanh (đầu
+                   thanh PHẲNG khít mặt vách, không cắm hốc), ép bằng DUY NHẤT 1 vít tự
+                   ren M3 xuyên THẲNG HÀNG vào lỗ mồi ở đầu thanh (không có trụ bắt vít
+                   riêng trên Housing) — THÁO ĐƯỢC, khoá thanh khỏi xô lệch dọc trục
   Limit_Switch_Min - MỘT KW11 bánh xe (HOME), bị ấn DỌC TRỤC bởi mặt đầu -X của thanh
 
-VÌ SAO 2 TRỤC TRƠN (bản ty ren chỉ cần 1):
+ĐỔI SANG THANH VUÔNG IN 3D (chốt 2026-09-06, người dùng quyết, đánh đổi có cân nhắc):
+  Bản trước Guide_Rod là trục thép O5 mạ crôm MUA SẴN — kết luận độ bền 3 năm trước đó
+  (91 giờ chạy, quãng trượt 3.3-6.6 km) dựa trên thép + mỡ, KHÔNG phải nhựa in. Đổi
+  sang thanh in liền cùng vật liệu Slide_Bar (PETG) là ma sát NHỰA-NHỰA khô, mòn nhanh
+  hơn thép nhiều — người dùng đã được báo và CHẤP NHẬN đánh đổi này để khỏi phải mua/đo
+  trục thép riêng. Nếu sau này thấy rơ tăng nhanh hoặc kẹt, việc dễ nhất là bôi mỡ vào
+  2 bạc hoặc quay lại trục thép O5 (bạc vẫn vừa nếu khoét lại tròn).
+  LÝ DO ĐỔI TIẾT DIỆN VUÔNG (không phải tròn khoét bẹt một mặt):
+    - In một trụ tròn NẰM NGANG chỉ chạm bàn in theo MỘT ĐƯỜNG TIẾP TUYẾN suốt chiều
+      dài — lớp đầu tiên mảnh như sợi chỉ dọc theo đó, dễ bong khỏi bàn (nhất là máy
+      không có buồng kín / bàn không phẳng như Ender-3 Pro). Thanh vuông nằm bằng CẢ
+      MỘT MẶT phẳng xuống bàn — bám y hệt in một khối hộp bình thường.
+    - Bạc lỗ vuông tự chống xoay được (không cần thanh phải tròn để "lăn" trong bạc,
+      cơ cấu này vốn dĩ không cho thanh quay quanh trục nó).
+  KHÔNG đổi cả 2 bạc thành lỗ vuông KHÍT: giữ nguyên kiến trúc "A định vị khít + B chỉ
+  chặn xoay (rộng theo Y)" của bản trục tròn — 2 lỗ khít trên một chi tiết in vẫn là
+  SIÊU TĨNH bất kể tiết diện tròn hay vuông, xem mục dưới.
+  2026-09-07 (lần 35→36): CẢ Guide_Rod_A VÀ B ĐỔI thành TRỤ TRÒN cắt phẳng đáy —
+  phương án "tròn khoét bẹt một mặt" (bám bàn như vuông, trơn hơn vuông trên máy đời
+  cũ). Chống xoay vẫn do CẶP 2 thanh (A khít + B rãnh rộng Y), không cần tiết diện vuông.
+
+VÌ SAO 2 THANH DẪN HƯỚNG (bản ty ren chỉ cần 1):
   Bản ty ren dùng đai ốc + trục trơn = 2 ràng buộc song song nên thanh không xoay được.
-  Ở đây ăn khớp răng KHÔNG chặn được thanh xoay quanh trục trơn (xoay là NHẢ KHỚP).
-  Nên phải có trục thứ hai. Bạc thứ hai LÀ RÃNH chứ không phải lỗ tròn: hai lỗ tròn
-  trên một chi tiết in là siêu tĩnh, sai số in / cong vênh sẽ làm kẹt.
+  Ở đây ăn khớp răng KHÔNG chặn được thanh xoay quanh thanh dẫn hướng (xoay là NHẢ
+  KHỚP). Nên phải có thanh thứ hai. Bạc thứ hai LÀ LỖ RỘNG chứ không phải lỗ khít: hai
+  lỗ khít trên một chi tiết in là siêu tĩnh, sai số in / cong vênh sẽ làm kẹt.
 
 VÌ SAO THANH PHẢI CƯỠI CHỮ П LÊN BÁNH RĂNG:
   Bánh răng O18 và đầu trục ĐC (z tới 32.0) đứng ngay giữa hộp tại (0, 0) và KHÔNG di
@@ -79,11 +115,18 @@ CỮ CỨNG ĐẦU +X — BẮT BUỘC KHI KHÔNG CÓ CT MAX:
 THỨ TỰ LẮP (7 bước):
   1. Hàn dây công tắc HOME, bắt 2 vít M2 TỪ TRÊN XUỐNG vào bệ công tắc
   2. Thả 28BYJ-48 thẳng từ trên xuống (2 tai rơi đúng 2 trụ), bắt 2 vít tự ren M3
-  3. Ép Pinion lên trục ĐC (2 mặt vát tự canh), đáy bánh răng tì gờ O9.1
+  3. Ép Pinion lên trục ĐC (2 mặt vát tự canh), đáy bánh răng tì gờ O9.0
   4. Thả Slide_Bar thẳng từ trên xuống, cưỡi lên bánh răng, canh cho răng vào khớp
-  5. Đẩy Guide_Rod_A rồi Guide_Rod_B TỪ NGOÀI vách +X vào, xuyên bạc, tì đáy hốc mù -X
-  6. Luồn dây vào máng, ra khe trên vách -X
-  7. Hạ nắp thẳng từ trên xuống (trụ gá tải chui qua khe), bắt 4 vít M3 góc
+  5. Đẩy Guide_Rod_A rồi Guide_Rod_B (cả hai TRÒN đáy phẳng) TỪ NGOÀI vách +X vào,
+     xuyên bạc, tì đáy hốc mù -X — lắp ở BẤT KỲ góc xoay nào cũng vừa (bạc A tròn
+     khít; bạc B rãnh rộng Y chỉ chặn xoay)
+  6. Úp Guide_Rod_Cap_A/B phẳng lên mặt ngoài vách +X (đầu thanh đã phẳng khít mặt vách
+     sẵn), bắt 1 vít tự ren M3 mỗi cái XUYÊN QUA lỗ ROD_ACCESS_D trên vách rồi bắt THẲNG
+     vào lỗ mồi ở đầu chính thanh (không có trụ riêng nào trên Housing) — vít KÉO thanh
+     áp sát nắp, ép nắp áp sát vách, KHOÁ thanh khỏi xô lệch dọc trục (tháo lại được:
+     chỉ cần tháo 2 vít này)
+  7. Luồn dây vào máng, ra khe trên vách -X
+  8. Hạ nắp thẳng từ trên xuống (trụ gá tải chui qua khe), bắt 4 vít M3 góc
 """
 from __future__ import annotations
 
@@ -123,7 +166,8 @@ FCSTD = OUT / "byj_rack_stage.FCStd"
 SW_MAX = False
 
 # ---------------------------------------------------------------------------
-# 1. ĐỘNG CƠ 28BYJ-48  (GIẢ ĐỊNH — ĐO LẠI KHI CÓ HÀNG, sửa ở đây là đủ)
+# 1. ĐỘNG CƠ 28BYJ-48  (chốt 2026-09-06 theo bản vẽ nhà sản xuất người dùng gửi —
+# thay cho phần lớn GIẢ ĐỊNH trước đó; xem cuối khối này về chỗ CÒN CHƯA CHỐT)
 # ---------------------------------------------------------------------------
 # Các hãng làm 28BYJ-48 khác nhau chút ở khối nối dây và bề dày tai. 4 số quan trọng
 # nhất (O28, cao 19, lệch tâm 8, tai cách 35) thì thống nhất giữa các hãng.
@@ -132,18 +176,117 @@ MOT_H = 19.0                  # cao thân (mặt dưới -> MẶT TRÊN có tr�
 MOT_SHAFT_OFF = 8.0           # trục LỆCH TÂM 8 mm — ở đây hướng lệch là +X
 MOT_SHAFT_D = 5.0
 MOT_SHAFT_FLAT = 3.0          # khoảng cách 2 mặt vát (double-D)
-MOT_SHAFT_L = 10.0            # trục nhô trên MẶT TRÊN thân
-MOT_BOSS_D = 9.1              # gờ quanh chân trục
-MOT_BOSS_H = 1.5
+MOT_SHAFT_FLAT_L = 6.0         # chiều dài đoạn CÓ VÁT, tính từ ĐẦU trục (chốt 2026-09-06
+                                # lần 24, người dùng xác nhận qua bản vẽ: tổng trục nhô
+                                # ra 10mm, "phần côn vát là 6mm" — CHỈ 6mm gần đầu có
+                                # vát, phần còn lại (gờ Ø9 + đoạn tròn trơn phía dưới,
+                                # tổng 4mm) VẪN TRÒN, không vát suốt cả 10mm như bản
+                                # trước. Xem MOT_SHAFT_FLAT_Z0 bên dưới (sau khi có
+                                # MOT_SHAFT_TOP) và make_pinion() — lỗ Pinion PHẢI đổi
+                                # theo cho khớp (tròn ở dưới, vát chỉ ở trên).
+MOT_SHAFT_L = 10.0            # trục nhô trên MẶT TRÊN thân — CHỐT 2026-09-06 (lần 23):
+                                # "10" LÀ tổng chiều dài trục (đầu dãy dimension-chain
+                                # trên cùng, liền kề "19" = cao thân, cùng 1 đường kích
+                                # thước liên tục đo từ đầu trục -> hết thân). Số "6" bên
+                                # cạnh cụm Ø9/5/3/1.5 chỉ là ĐOẠN CÓ VÁT 2 mặt (nằm
+                                # TRONG 10mm đó, gần đầu trục) — chi tiết phụ, model này
+                                # vát PHẲNG suốt cả 10mm (dư ra so với hàng thật chỉ vát
+                                # 6mm gần đầu) là đơn giản hoá AN TOÀN, không ảnh hưởng
+                                # khớp Pinion.
+MOT_BOSS_D = 9.0               # gờ quanh chân trục — chốt theo bản vẽ (Ø9, trước 9.1)
+MOT_BOSS_H = 1.5               # chốt theo bản vẽ (khớp cả 2 hình chi tiết trục)
+# TRỤC TÁCH RIÊNG khỏi thân (chốt 2026-09-06, người dùng yêu cầu): trước đây trục được
+# fuse() thẳng vào thân — dựng đúng nhưng KHÔNG thể hiện được việc trục quay tự do so
+# với thân đứng yên (khác thực tế: thân là vỏ nhựa đứng yên, trục quay bên trong qua ổ
+# bi/bạc). Giờ BYJ_Motor (thân, có LỖ quanh trục) và BYJ_Motor_Shaft (trục, đứng riêng)
+# là 2 Part::Feature khác nhau, khe hở MOT_SHAFT_CLR quanh nhau — xoay được độc lập
+# trong FreeCAD (đổi Placement.Rotation của BYJ_Motor_Shaft để animate). Khe hở đủ rộng
+# để IN 3D IN-PLACE được (2 khối in cùng lúc, đúng vị trí lắp — xem
+# export_byj_rack_print.py hàm export_motor_print_in_place).
+# 2026-09-06 (lần 22): người dùng in thử BYJ_Motor_PrintInPlace.stl trên Ender-3 Pro —
+# trục BỊ DÍNH CỨNG, không quay được. 0.6mm (khe hở BÁN KÍNH chỉ 0.3mm mỗi bên) NHỎ HƠN
+# bề rộng 1 đường nhựa (0.4mm, nozzle phổ thông) — Cura/slicer không "vẽ" nổi 1 bức
+# tường mỏng hơn nozzle ở khe đó, 2 bên chồng nhựa lên nhau thành ĐẶC luôn, không phải
+# chỉ dính ở đáy. Tăng lên 1.0mm (khe BÁN KÍNH 0.5mm/bên — RỘNG HƠN 1 nozzle, kèm bù trừ
+# Horizontal Expansion phía dưới) mới đủ AN TOÀN cho dung sai in thật của máy phổ thông.
+# 2026-09-07 (lần 32): người dùng muốn GIẢM LẮC khi quay — thử thu hẹp 1.0→0.7mm
+# (chưa có số liệu in thử thật ở mức này). Ngay sau đó (lần 33) tăng chiều dài đoạn ôm
+# trục (MOT_SHAFT_BURY) để giảm lắc bằng đòn bẩy dài hơn thay vì khe hở hẹp hơn. Người
+# dùng sau đó chủ động chọn AN TOÀN ("nếu rủi ro, tăng khe hở lên") — QUAY LẠI 1.0mm
+# (giá trị ĐÃ CHỨNG MINH không dính trên Ender-3 Pro, xem lần 22), GIỮ NGUYÊN đoạn ôm
+# trục dài hơn (lần 33, MOT_SHAFT_BURY=5.0) để bù lại độ lắc — kết hợp này AN TOÀN HƠN
+# bản gốc lần 22 (đòn bẩy dài hơn ~gấp đôi ở CÙNG khe hở đã chứng minh an toàn).
+MOT_SHAFT_CLR = 1.0            # khe hở ĐƯỜNG KÍNH quanh trục trong lỗ (in-place)
+MOT_SHAFT_BORE = MOT_SHAFT_D + MOT_SHAFT_CLR       # 6.0  lỗ (đoạn trục trơn), quanh trục
+# 2026-09-07 (lần 33): người dùng yêu cầu tăng chiều dài đoạn ÔM TRỤC (đoạn trục tròn
+# trơn được THÂN bao quanh, tính cả đoạn chôn dưới mặt thân lẫn xuyên gờ Ø9 — "hình trụ
+# đáy") để chống LẮC — đòn bẩy dài hơn thì cùng 1 khe hở (0.7mm) gây góc lắc nhỏ hơn hẳn.
+# Tăng 3.0→5.0mm (dài thêm 2mm) — CHỈ kéo dài đoạn CHÔN trong thân (buried_neck), KHÔNG
+# đụng tới chiều cao gờ Ø9 thật (MOT_BOSS_H, đã chốt theo bản vẽ) hay gờ giữ trục
+# (MOT_SHAFT_RET_H) — "lỗ trong động cơ" (neck bore trong make_motor_body) tự động dài
+# thêm tương ứng vì tính theo công thức phụ thuộc MOT_SHAFT_BURY.
+MOT_SHAFT_BURY = 5.0           # đoạn trục CHÔN xuống trong thân (tròn) — cho trục có
+                                # "gốc" nằm trong lỗ thay vì lơ lửng hoàn toàn phía trên
+                                # mặt thân; datasheet không ghi trị này, tự chọn hợp lý
+# GỜ GIỮ TRỤC chống tuột (lần 22, người dùng yêu cầu "trục không tuột khỏi động cơ"):
+# trước đây lỗ trong thân là 1 ống thẳng đường kính KHÔNG ĐỔI suốt chiều sâu chôn — trục
+# CHỈ dính tạm ở đáy lúc in (witness layer) để có chỗ tựa, không hề có gờ chặn thật —
+# về mặt CƠ HỌC, sau khi bẻ lớp dính đáy để trục quay được thì KHÔNG GÌ giữ trục khỏi
+# tuột thẳng lên trên. Giải pháp: 1 GỜ (flange) đường kính lớn hơn phần trục trơn phía
+# trên, nằm trong 1 khoang RỘNG HƠN riêng ở ĐÁY lỗ — gờ không lọt qua được lỗ trục trơn
+# (MOT_SHAFT_BORE) phía trên nó -> giữ trục không tuột lên, trong khi vẫn có khe hở
+# quanh + phía trên gờ để quay tự do (không fuse cứng như witness layer cũ).
+MOT_SHAFT_RET_D = MOT_SHAFT_D + 2.0                # 7.0  Ø gờ giữ (lớn hơn Ø trục trơn)
+MOT_SHAFT_RET_CLR = 1.0                            # khe hở ĐƯỜNG KÍNH quanh gờ giữ
+MOT_SHAFT_RET_BORE = MOT_SHAFT_RET_D + MOT_SHAFT_RET_CLR   # 8.0  Ø khoang chứa gờ
+MOT_SHAFT_RET_H = 1.5                              # cao gờ giữ
+MOT_SHAFT_RET_TOP_CLR = 0.4    # hở PHÍA TRÊN gờ giữ (không chạm trần khoang — tránh
+                                # thêm 1 mặt dính khi in, chỉ đáy khoang mới cố ý chạm)
+# 2026-09-06/07 (lần 26-31, đúc kết từ build_28byj48_reference.py — xem memory dự án):
+# gờ giữ TỰA THẲNG lên đáy khoang (witness layer full-face, `distToShape()`=0.0 — CÓ
+# CHẠM THẬT) vẫn là rủi ro dính chặt y hệt bài học lần 22, chỉ đổi từ "khe hở quanh trục"
+# sang "khe hở đáy gờ". Áp dụng lại kỹ thuật đã kiểm chứng: gờ LƠ LỬNG (không chạm đáy
+# khoang) + SỢI TƠ MẢNH (vành khuyên góc, xem _wedge_ring/_strut_pair) + 1 CHỐT TÂM nhỏ
+# nối thẳng đáy khoang <-> đáy gờ (giải quyết đúng giới hạn hình học: hỗ trợ CHỈ ở rìa
+# gờ KHÔNG BAO GIỜ đỡ được điểm ở TÂM đĩa, dù thêm bao nhiêu sợi rìa — đã xác nhận với
+# người dùng, Ender-3 Pro không bắc cầu nổi khoảng cách ~3.5mm ở lớp in đầu tiên).
+MOT_SHAFT_RET_FLOOR_GAP = 0.3  # khe hở DƯỚI gờ giữ — KHÔNG chạm đáy khoang nữa
+MOT_SHAFT_RET_STRUT_N = 10     # số sợi tơ quanh gờ giữ (đủ dày để khe hở cung <2.1mm,
+                                # an toàn bắc cầu trên Ender-3 Pro — xem tính toán trong
+                                # hội thoại lần 28)
+MOT_SHAFT_RET_STRUT_ANGLE = 4.0    # độ rộng CUNG (góc, độ) mỗi sợi
+MOT_SHAFT_RET_STRUT_H = 0.4    # cao sợi (Z) — CHỈ ở đáy gờ giữ (nơi cần đỡ lớp in đầu
+                                # tiên nhất), không cao hết cả gờ -> dễ bẻ hơn (lần 31)
+MOT_SHAFT_RET_PIN_D = 0.6      # Ø chốt tâm — nối đáy khoang <-> đáy gờ, dệt tích cực
+                                # nhỏ (~0.3mm²) nên vẫn dễ bẻ như sợi tơ
+assert MOT_SHAFT_RET_D > MOT_SHAFT_BORE            # gờ PHẢI to hơn lỗ trục trơn phía
+                                                    # trên nó, nếu không sẽ tuột lọt qua
+assert (MOT_SHAFT_RET_FLOOR_GAP + MOT_SHAFT_RET_H + MOT_SHAFT_RET_TOP_CLR
+       < MOT_SHAFT_BURY)                          # còn dư đoạn trục trơn phía trên gờ
+                                                    # để dẫn hướng trong thân
 MOT_EAR_SPAN = 35.0           # tâm-tâm 2 lỗ tai, trên đường VUÔNG GÓC hướng lệch tâm
-MOT_EAR_T = 0.8               # tai thép mỏng, nằm TRÊN mặt trên thân
+MOT_EAR_T = 1.0                 # tai thép mỏng — chốt theo bản vẽ (trước 0.8)
 MOT_EAR_W = 7.0               # bề rộng tai (theo X)
-MOT_EAR_HOLE = 4.2
+MOT_EAR_HOLE = 4.0             # chốt theo bản vẽ (Ø4, trước 4.2)
 MOT_EAR_TIP = 21.0            # bán kính tới mép ngoài tai
 MOT_CONN_W = 14.6             # khối nối dây, nhô ra phía -X (xa bánh răng)
 MOT_CONN_H = 16.6
 MOT_CONN_OUT = 5.0            # nhô ra khỏi Ø28
 MOT_CONN_IN = 3.0             # ăn vào TRONG đường kính thân
+# GỜ NỐI nhỏ giữa thân trụ và khối nối dây (chốt 2026-09-06, người dùng chỉ ra trên
+# bản vẽ, hình chi tiết dưới-trái) — CÓ 2 GỜ, nằm ở 2 GÓC GIAO giữa khối nối dây (hình
+# hộp) và thân (hình trụ), tức 2 mép Y = +-MOT_CONN_W/2 của khối nối dây, KHÔNG phải 1
+# gờ ở giữa. Mỗi gờ nhô ra từ MẶT TRỤ THÂN, chạy dọc theo HƯỚNG TRỤC (song song trục
+# Z). Không có số đo vị trí/độ nhô rõ trên bản vẽ (chỉ chắc chắn chiều dài = 6) — TỰ
+# CHỌN độ nhô/bề rộng hợp lý (chi tiết trang trí/gia cố nhỏ, không ảnh hưởng khe hở
+# nào khác trong thiết kế).
+MOT_RIB_L = 6.0                # dài theo Z (dọc trục)
+MOT_RIB_W = 1.6                 # rộng theo Y mỗi gờ — ước lượng, PHẢI nằm trong khe hở
+                                # 1mm mà vành định vị ĐC (ring) đã chừa quanh khối nối
+                                # dây (Housing chưa biết có gờ này) — xem assert dưới
+MOT_RIB_PROUD = 0.4            # nhô ra khỏi mặt trụ thân — PHẢI nhỏ hơn khe hở 0.5mm
+                                # chung quanh thân ĐC (Housing cắt "khe hở quanh thân
+                                # động cơ" ở đúng mức đó) — xem assert dưới
 
 # Điện / cơ tính (dùng cho phần in thông số, không dựng hình)
 MOT_DETENT = 34.3             # N.mm, self-positioning torque KHI ĐÃ TẮT ĐIỆN
@@ -153,31 +296,33 @@ LOAD_N = 0.2                  # lực dọc trục thật (thanh nhựa vài gam
 # ---------------------------------------------------------------------------
 # 2. BÁNH RĂNG + THANH RĂNG
 # ---------------------------------------------------------------------------
-GEAR_M = 1.0                  # module — m1 z18 lỗ 5 là cỡ MUA SẴN được (POM/đồng)
-# z = 18 chứ KHÔNG phải 16. Với PA 20 deg, số răng tối thiểu không bị CẮT CHÂN
-# (undercut) là 17. Bản đầu để z = 16: biên dạng dựng ở đây giữ nguyên thân khai xuống
-# tận vòng cơ sở, trong khi răng thật ở z<17 bị dao cắt lẹm mất phần đó — nên đỉnh răng
-# của thanh răng đâm vào chân răng bánh răng (check "An khop" bắt được 22.7 mm3).
-# z >= 17 thì không còn undercut và biên dạng radial dưới vòng cơ sở là AN TOÀN
-# (nó mảnh hơn chân răng thật, chỉ yếu hơn chút chứ không chèn).
-GEAR_Z = 18
+# m,z chọn sao cho STEPS_PER_MM nguyên đẹp: m = 4096/(STEPS_PER_MM · π · z)
+# → mm/xung ≈ 1/N đúng tới sai số pi (thực dụng = 0 trong dải 2..30 mm).
+# 2026-09-07: tăng Ø đỉnh 19.7 → ~24.1 (z19/N73 → z22/N59), vẫn t_full < 4s.
+GEAR_Z = 22
 GEAR_PA = 20.0                # góc áp lực
 GEAR_FACE = 5.0               # bề rộng răng
 GEAR_BL = 0.12                # rơ ăn khớp: bớt bề dày răng mỗi bên (cả pinion và rack)
-GEAR_HUB_D = 11.0             # moay-ơ bánh răng (ôm trục, chống nghiêng)
-# Moay-ơ nằm PHÍA DƯỚI vành răng, không phải phía trên: phía trên là CẦU của Slide_Bar
-# (cầu phải vượt qua đỉnh trục ĐC nên nó quét ngang ngay trên vành răng). Moay-ơ dưới
-# còn được việc thứ hai: tì lên gờ Ø9.1 của động cơ -> định vị dọc trục cho bánh răng.
-PIN_R = GEAR_M * GEAR_Z / 2.0                  # 8.0  bán kính vòng chia
-PIN_RA = PIN_R + GEAR_M                        # 9.0  đỉnh răng
-PIN_RF = PIN_R - 1.25 * GEAR_M                 # 6.75 chân răng
-PIN_MM_PER_REV = 2.0 * math.pi * PIN_R         # 50.27 mm/vòng
-GEAR_PITCH = math.pi * GEAR_M                  # 3.1416 bước răng
+MOTOR_STEPS_PER_REV = 4096.0   # 28BYJ-48 half-step
+STEPS_PER_MM = 59              # HẰNG SỐ FIRMWARE: bước/mm (dùng trong code điều khiển)
+GEAR_M = MOTOR_STEPS_PER_REV / (STEPS_PER_MM * math.pi * GEAR_Z)
+# Đã BỎ moay-ơ dưới vành răng. Đỉnh trụ+bán cầu Ø PIN_CAP_D đẩy cầu Slide_Bar lên.
+PIN_R = GEAR_M * GEAR_Z / 2.0
+PIN_RA = PIN_R + GEAR_M
+PIN_RF = PIN_R - 1.25 * GEAR_M
+assert 2.0 * PIN_RF > 8.0                      # thân bánh răng (không tính răng) > 8mm
+PIN_MM_PER_REV = 2.0 * math.pi * PIN_R
+GEAR_PITCH = math.pi * GEAR_M
+_TRUE_STEPS_PER_MM = MOTOR_STEPS_PER_REV / PIN_MM_PER_REV
+_STEPS_PER_MM_ERR = abs(STEPS_PER_MM - _TRUE_STEPS_PER_MM) / _TRUE_STEPS_PER_MM
+assert _STEPS_PER_MM_ERR < 0.001, "STEPS_PER_MM lech qua 0.1%% so voi so that, tinh lai"
 
 TRAVEL = 30.0                 # HÀNH TRÌNH YÊU CẦU
-RACK_MARGIN = 6.0             # thanh răng thò thêm mỗi đầu để LUÔN còn ăn khớp
-RACK_L = TRAVEL + 2.0 * RACK_MARGIN            # 42.0
+# Biên mỗi đầu phải phủ ≥ bán kính đỉnh bánh — nếu không tip đụng fill khi quét hết hành trình
+RACK_MARGIN = PIN_RA + 0.5
+RACK_L = TRAVEL + 2.0 * RACK_MARGIN
 RACK_BACK = 1.75              # bề dày lưng thanh răng, tính từ CHÂN răng
+assert RACK_MARGIN + 1e-9 >= PIN_RA, "RACK_MARGIN phai phu kin O dinh banh"
 
 # ---------------------------------------------------------------------------
 # 3. BỐ TRÍ CHUNG. Gốc: TRỤC BÁNH RĂNG tại (x, y) = (0, 0). Đáy hộp z = 0.
@@ -185,12 +330,30 @@ RACK_BACK = 1.75              # bề dày lưng thanh răng, tính từ CHÂN r�
 BASE_T = 3.0                  # sàn
 MOT_Z0 = BASE_T                                # ĐC ngồi thẳng trên sàn
 MOT_TOP = MOT_Z0 + MOT_H                       # 22.0  mặt trên thân
-MOT_EAR_Z1 = MOT_TOP + MOT_EAR_T               # 22.8  mặt trên tai
+# Tai bắt vít PHẲNG với mặt trên thân, KHÔNG lồi lên trên (chốt 2026-09-06, theo đúng
+# hình 3D bản vẽ nhà sản xuất) — tai nằm NGAY DƯỚI mặt trên thân, mặt trên của tai
+# TRÙNG mặt trên thân, không phải thò thêm lên trên như bản trước.
+MOT_EAR_Z0 = MOT_TOP - MOT_EAR_T               # 21.0  mặt dưới tai
+MOT_EAR_Z1 = MOT_TOP                           # 22.0  mặt trên tai = mặt trên thân
 MOT_SHAFT_TOP = MOT_TOP + MOT_SHAFT_L          # 32.0  đỉnh trục
+MOT_SHAFT_FLAT_Z0 = MOT_SHAFT_TOP - MOT_SHAFT_FLAT_L   # 26.0  z BẮT ĐẦU đoạn có vát
+                                                # (phía dưới z này, trục TRÒN TRƠN —
+                                                # xem MOT_SHAFT_FLAT_L)
+assert MOT_SHAFT_FLAT_Z0 > MOT_TOP + MOT_BOSS_H  # đoạn vát phải nằm TRÊN gờ Ø9 (đoạn
+                                                # tròn giữa gờ và chỗ vát còn dư > 0)
+# --- NẮP CHỤP ĐẦU TRỤC trên Pinion (trụ + bán cầu Ø PIN_CAP_D, KHÔNG moay-ơ dưới) ---
+# Trụ+bán cầu bọc kín đoạn trục thò trên vành răng. Đỉnh bán cầu (PIN_DOME_TOP) quyết
+# chiều cao cầu Slide_Bar (BAR_LEG_Z1).
+PIN_CAP_D = 10.0                               # Ø trụ + bán cầu trên đỉnh bánh răng
+PIN_BORE_CLR = 0.25                            # khe lỗ / trục (dễ lắp)
+PIN_CAP_BLIND_CLR = 1.0                        # khe hở đáy lỗ mù, phía trên đỉnh trục thật
+PIN_CAP_TOP = MOT_SHAFT_TOP + PIN_CAP_BLIND_CLR            # đỉnh phần trụ = đáy bán cầu
+PIN_DOME_R = PIN_CAP_D / 2.0                   # bán kính bán cầu = bán kính trụ, liền mạch
+PIN_DOME_TOP = PIN_CAP_TOP + PIN_DOME_R        # đỉnh bán cầu — điểm CAO NHẤT cần né qua
 EAR_SCREW_D = 3.0             # vít TỰ REN M3 bắt tai xuống trụ
 EAR_SCREW_HEAD_D = 5.6
 EAR_SCREW_HEAD_H = 2.0
-EAR_SCREW_TOP = MOT_EAR_Z1 + EAR_SCREW_HEAD_H  # 24.8  đỉnh mũ vít bắt tai
+EAR_SCREW_TOP = MOT_EAR_Z1 + EAR_SCREW_HEAD_H  # 24.0  đỉnh mũ vít bắt tai
 EAR_PILOT_D = 2.5             # lỗ mồi trong trụ cho vít tự ren M3
 EAR_SCREW_L = 8.0
 EAR_POST_W = 8.0              # trụ bắt tai: X
@@ -200,15 +363,16 @@ BAR_CLR_MOT = 0.8             # khe thanh <-> mũ vít bắt tai ĐC
 BAR_Z0 = EAR_SCREW_TOP + BAR_CLR_MOT           # 25.6  ĐÁY THANH (và đáy 2 chân П)
 GEAR_Z0 = BAR_Z0 + 0.4                         # 26.0  đáy bánh răng / thanh răng
 GEAR_Z1 = GEAR_Z0 + GEAR_FACE                  # 31.0
-GEAR_HUB_Z0 = MOT_TOP + MOT_BOSS_H             # 23.5  moay-ơ TÌ LÊN gờ Ø9.1 của ĐC
-GEAR_HUB_H = GEAR_Z0 - GEAR_HUB_Z0             # 2.5
-assert GEAR_HUB_H >= 1.5
 assert GEAR_Z1 <= MOT_SHAFT_TOP - 0.5          # bánh răng phải nằm trọn trên trục
 
-ROD_D = 5.0
-ROD_BORE = ROD_D + 0.4                         # bạc trượt in: khe 0.4
+ROD_D = 5.0                    # Ø thanh dẫn hướng TRÒN (A và B) — đáy phẳng dễ in
+ROD_BORE = ROD_D + 0.4                         # bạc A: lỗ tròn khít Ø(ROD_D+0.4)
 BAR_WALL = 1.3                                 # thịt quanh bạc
-BAR_LEG_Z1 = MOT_SHAFT_TOP + 0.4               # 32.4  đáy CẦU (phải trên đỉnh trục ĐC)
+# Cả A và B: TRỤ TRÒN cắt phẳng đáy (bám bàn in). Chống xoay do CẶP 2 thanh: A khít,
+# B trong rãnh rộng theo Y (chỉ chặn xoay, không siêu tĩnh).
+ROD_FLAT_DEPTH = 1.0           # cắt phẳng đáy sâu 1.0mm — dải bám bàn ~4mm
+assert ROD_FLAT_DEPTH < ROD_D / 2.0
+BAR_LEG_Z1 = PIN_DOME_TOP + 0.4                 # đáy CẦU (phải trên đỉnh BÁN CẦU nắp Pinion)
 BRIDGE_T = 2.0
 BAR_Z1 = BAR_LEG_Z1 + BRIDGE_T                 # 34.4  NÓC THANH
 # Bạc nằm trong CHÂN, mà chân cao HẾT thân thanh (cầu chỉ lấp khoảng giữa 2 chân ở
@@ -217,24 +381,26 @@ ROD_Z = 0.5 * (BAR_Z0 + BAR_Z1)                # 30.0
 assert ROD_Z + ROD_BORE / 2.0 + BAR_WALL <= BAR_Z1 + 1e-9
 assert ROD_Z - ROD_BORE / 2.0 - BAR_WALL >= BAR_Z0 - 1e-9
 
-# --- bố trí theo Y (bánh răng ở y = 0, vòng đỉnh +-9) ---
-RACK_PITCH_Y = PIN_R                           # +8.0  đường chia thanh răng
-RACK_TIP_Y = RACK_PITCH_Y - GEAR_M             # +7.0  đỉnh răng (chĩa về -Y)
-RACK_ROOT_Y = RACK_PITCH_Y + 1.25 * GEAR_M     # +9.25 chân răng
-RACK_BACK_Y = RACK_ROOT_Y + RACK_BACK          # +11.0 lưng thanh răng
-ROD_A_Y = 17.5                                 # trục ĐỊNH VỊ (lỗ tròn), phía thanh răng
-# (17.0 chứ không phải 15.5: THÂN CÔNG TẮC phải chui lọt giữa hai trục trơn, mà bánh xe
-#  của nó lại phải ấn vào CHÂN +Y của thanh — xem SW_YC / sw_roller_y() phía dưới)
-ROD_B_Y = -15.5                                # trục CHỐNG XOAY (lỗ rãnh), phía kia
-# (-14.5 chứ không phải -13: mép trên lỗ RÃNH phải nằm ngoài vòng đỉnh bánh răng,
-#  mà rãnh rộng hơn lỗ tròn ROD_SLOT_Y/2 mỗi bên nên nó mới là cái quyết định)
-ROD_SLOT_Y = 2.0                               # rãnh bạc B nới thêm theo Y
-LEG_B_Y1 = -(PIN_RA + 0.5)                     # -9.5  mặt trong chân -Y (né vòng đỉnh)
-BAR_Y1 = ROD_A_Y + ROD_BORE / 2.0 + BAR_WALL   # +19.5
-BAR_Y0 = ROD_B_Y - ROD_BORE / 2.0 - ROD_SLOT_Y / 2.0 - BAR_WALL   # -17.0
+# --- bố trí theo Y (bánh răng ở y = 0) ---
+RACK_PITCH_Y = PIN_R                           # đường chia thanh răng
+RACK_TIP_Y = RACK_PITCH_Y - GEAR_M             # đỉnh răng (chĩa về -Y)
+RACK_ROOT_Y = RACK_PITCH_Y + 1.25 * GEAR_M     # chân răng
+RACK_BACK_Y = RACK_ROOT_Y + RACK_BACK          # lưng thanh răng
+ROD_SLOT_Y = 0.5                               # rãnh bạc B nới Y (đủ chống siêu tĩnh;
+                                                # quá rộng → yaw lớn, răng chèn khi lệch)
+EAR_POST_YC = MOT_EAR_SPAN / 2.0               # +-17.5  tâm 2 trụ bắt tai
+# Trục A (định vị): đủ ngoài lưng rack + bạc; không thấp hơn tâm tai ĐC.
+ROD_A_Y = max(
+    EAR_POST_YC,
+    RACK_BACK_Y + BAR_WALL + ROD_BORE / 2.0 + 0.5,
+)
+# RÃNH П đủ rộng = Ø đỉnh bánh (2*PIN_RA) — lắp ngang từ đầu thanh.
+LEG_B_Y1 = RACK_TIP_Y - 2.0 * PIN_RA - 0.5     # mặt trong chân -Y, đủ né CẢ bánh răng
+ROD_B_Y = LEG_B_Y1 - ROD_BORE / 2.0 - ROD_SLOT_Y / 2.0 - BAR_WALL - 0.25
+BAR_Y1 = ROD_A_Y + ROD_BORE / 2.0 + BAR_WALL
+BAR_Y0 = ROD_B_Y - ROD_BORE / 2.0 - ROD_SLOT_Y / 2.0 - BAR_WALL
 assert RACK_BACK_Y + BAR_WALL <= ROD_A_Y - ROD_BORE / 2.0 + 1e-9
 assert ROD_B_Y + ROD_BORE / 2.0 + ROD_SLOT_Y / 2.0 + BAR_WALL <= LEG_B_Y1 + 1e-9
-EAR_POST_YC = MOT_EAR_SPAN / 2.0               # +-17.5  tâm 2 trụ bắt tai
 
 # --- bố trí theo X ---
 # Ở HOME, bánh răng ăn khớp tại điểm cách đầu -X của thanh răng RACK_MARGIN + TRAVEL,
@@ -271,13 +437,9 @@ SW_PRESS = 0.5                                 # ấn thêm sau điểm tác đ�
 SW_TERM_L, SW_TERM_W, SW_TERM_T = 5.0, 3.2, 0.5
 SW_TERM_PITCH = 7.0
 SW_TERM_ZONE = SW_TERM_L + 3.5                 # hốc trống: lá đồng + mối hàn + bẻ dây
-# SW_YC bị kẹp giữa HAI ràng buộc ngược nhau:
-#   - THÂN công tắc (dài 20 theo Y) phải chui lọt giữa 2 trục trơn
-#   - BÁNH XE (lệch về +Y so với tâm thân) phải ấn trúng CHÂN +Y của thanh, tức
-#     y >= RACK_ROOT_Y (9.25) — thấp hơn thì nó thò vào vùng trống của chữ П và
-#     KHÔNG chạm gì cả (bản đầu đặt SW_YC = 2.0 -> bánh xe ở y = 7.0, hụt).
-SW_YC = 4.0                                    # tâm thân CT theo Y
 SW_LEVER_GAP = 2.5                             # bánh xe cách mép +Y thân CT
+# SW_YC: bánh xe phải ấn trúng chân +Y (>= RACK_ROOT_Y); thân CT lọt giữa 2 trục.
+SW_YC = max(4.0, RACK_ROOT_Y - SW_L / 2.0 + SW_LEVER_GAP + 0.2)
 SW_HINGE_GAP = 1.0                             # bản lề cần gạt cách mép -Y thân CT
 SW_Z0 = 26.2                                   # đáy thân CT
 SW_Z1 = SW_Z0 + SW_T                           # 32.6
@@ -299,7 +461,9 @@ SW_MAX_FRONT = X_TRIP_MAX + _SW_OVERTRAVEL                 # +41.5
 WALL_T = 2.5
 WALL_END_T = 6.0              # vách -X dày hơn: chứa 2 HỐC MÙ đỡ đầu trục trơn
 ROD_POCKET = 4.5              # chiều sâu hốc mù
-ROD_STICK = 2.0               # trục thò ra ngoài vách +X (để rút ra khi tháo)
+ROD_END_GAP = 0.15             # đầu +X của thanh LÙI VÀO 0.15mm so với mặt ngoài vách
+                                # -> nắp Rod_Cap ép SÁT VÁCH được (không bị thanh chặn
+                                # hờ ở giữa), mà thanh vẫn coi như PHẲNG KHÍT mặt vách
 LID_T = 2.5
 POST_W = 6.0                  # trụ bắt nắp ở 4 góc
 M3_CLEAR = 3.4
@@ -334,8 +498,45 @@ BOX_Z1 = INNER_TOP + LID_T
 # Trục trơn: hốc mù trong vách -X, lỗ XUYÊN vách +X (đẩy từ ngoài vào — bài học của
 # bản ty ren: hai hốc mù quay vào nhau là VÔ NGHIỆM khi cả hai nằm trên một khối cứng)
 ROD_X0 = INNER_X0 - ROD_POCKET
-ROD_LEN = (BOX_X1 + ROD_STICK) - ROD_X0
+ROD_LEN = (BOX_X1 - ROD_END_GAP) - ROD_X0
 ROD_ACCESS_D = ROD_D + 0.4    # lỗ xuyên vách +X
+# Lỗ xuyên vách +X phải xuyên LUÔN qua 2 trụ nắp góc +X (đứng ngay trước vách, x =
+# [INNER_X1-POST_W, INNER_X1], Y rất gần Y 2 thanh dẫn hướng) — xem bẫy đã bắt được
+# trong make_housing(). CÓ 4 TRỤ NẮP GÓC (2 đầu -X, 2 đầu +X) — 2 trụ đầu -X (x =
+# [INNER_X0, INNER_X0+POST_W]) cũng dính bẫy y hệt với hốc mù -X, phải xuyên nốt qua
+# đó nữa. Constants này dùng chung giữa make_housing() và verify().
+ROD_CLEAR_X0 = INNER_X1 - POST_W - 0.5
+ROD_CLEAR_LEN = (INNER_X1 - 0.5 + WALL_T + 2.0) - ROD_CLEAR_X0
+ROD_POCKET_CLEAR_LEN = (INNER_X0 + POST_W + 0.5) - ROD_X0
+
+# --- NẮP CHẶN TRỤC (Rod_Cap), chốt 2026-09-06, ĐƠN GIẢN HOÁ LẦN 2 cùng ngày ---
+# Đẩy thanh dẫn hướng từ ngoài vào tới khi tì đáy hốc mù -X là xong PHÍA -X, nhưng đầu
+# +X trước đây chỉ có khe hở 0.4 mm quanh thanh và KHÔNG có gì chặn lại: rung động mỗi
+# lần Slide_Bar quét qua quét lại làm thanh XÔ LỆCH dần theo X, thậm chí tuột ra ngoài.
+# Đầu +X của thanh PHẲNG KHÍT với mặt ngoài vách (ROD_END_GAP chỉ để nắp ép sát được).
+# VÍT XUYÊN THẲNG HÀNG VỚI TRỤC THANH: vít đi từ ngoài, qua lỗ nắp, qua ĐÚNG lỗ xuyên
+# ROD_ACCESS_D sẵn có trên vách (không khoét thêm lỗ nào khác trên Housing), rồi tự ren
+# vào lỗ mồi khoan sẵn Ở ĐẦU chính thanh dẫn hướng (ROD_TAP_D/ROD_TAP_L) — vít KÉO thanh
+# áp sát nắp trong khi ép nắp áp sát vách, cùng lúc. Thanh bị kẹp giữa đáy hốc mù -X và
+# lực kéo của vít ở +X, hết xô lệch. Vẫn THÁO ĐƯỢC: tháo vít, gỡ nắp, rút thanh ra.
+# (2 bản trước: bản 1 có hốc cắm sâu + 2 chốt gài; bản 2 bỏ chốt nhưng vít vẫn bắt vào 1
+# trụ RIÊNG trong Housing, lệch tâm 10mm theo Z để né lỗ ren nắp hộp. Bản này bỏ luôn
+# trụ riêng đó — vít bắt thẳng vào CHÍNH thanh nên không cần trụ, không cần né lỗ ren
+# nắp hộp nữa vì không còn khoét gì thêm trên vách cả.)
+ROD_TAP_D = M3_TAP                 # lỗ mồi tự ren ở đầu thanh (dùng chung cỡ M3_TAP)
+ROD_TAP_L = 8.0                    # sâu 8mm — cùng độ sâu ren với EAR_SCREW_L cho nhất quán
+CAP_T = 3.0                        # bề dày nắp: đủ chỗ hốc chìm đầu vít (2.0) + 1mm thịt
+CAP_PAD = 2.0                      # viền vật liệu quanh lỗ trục / quanh vít
+CAP_W = max(ROD_BORE, EAR_SCREW_HEAD_D) + 2.0 * CAP_PAD        # 9.6  nắp vuông, tâm = trục thanh
+CAP_SCREW_Z = ROD_Z                            # vít THẲNG HÀNG với tâm thanh, không lệch
+CAP_Z0 = CAP_SCREW_Z - CAP_W / 2.0
+CAP_Z1 = CAP_SCREW_Z + CAP_W / 2.0
+assert ROD_TAP_L < ROD_LEN - 20.0                  # lo mo (khoan tu dau thanh) khong
+                                                    # vuot qua het chieu dai thanh
+assert M3_CLEAR < ROD_D                            # lo vit tren nap NHO HON tiet dien
+                                                    # thanh -> thanh khong the lot qua
+assert ROD_A_Y + CAP_W / 2.0 <= BOX_Y1 - 0.5       # nap khong tho qua mep hop
+assert ROD_B_Y - CAP_W / 2.0 >= BOX_Y0 + 0.5
 
 # 4 tai bắt máy ở 2 đầu theo X (giống bản ty ren: chừa trọn 2 cạnh Y cho cơ cấu ngoài)
 EAR_X, EAR_OUT, EAR_HOLE = 11.0, 9.0, 4.5
@@ -392,6 +593,45 @@ def _cyl_y(d, length, x=0.0, y0=0.0, z=0.0) -> Part.Shape:
     return Part.makeCylinder(d / 2.0, length, App.Vector(x, y0, z), App.Vector(0, 1, 0))
 
 
+def _box_x(wy, wz, length, x0, y=0.0, z=0.0) -> Part.Shape:
+    """Khối chữ nhật quét dọc X, tâm (y, z), cạnh wy (theo Y) x wz (theo Z), dài
+    `length` từ x0. Dùng thay _cyl_x() cho thanh dẫn hướng VUÔNG (Guide_Rod) và bạc
+    của nó — wy != wz cho bạc RÃNH (chặn xoay nhưng nới theo Y)."""
+    return _box2(x0, x0 + length, y - wy / 2.0, y + wy / 2.0, z - wz / 2.0, z + wz / 2.0)
+
+
+def _rod_shape_x(round_shape: bool, d, length, x0, y=0.0, z=0.0) -> Part.Shape:
+    """Probe/lỗ thanh dẫn hướng. `round_shape=True` (mặc định A+B): trụ Ød.
+    `False` giữ hộp vuông (legacy)."""
+    if round_shape:
+        return _cyl_x(d, length, x0, y, z)
+    return _box_x(d, d, length, x0, y, z)
+
+
+def _flat_round_rod_x(d, length, x0, y, z, flat_depth) -> Part.Shape:
+    """Trụ tròn Ød cắt phẳng đáy — in nằm bàn trên máy đời cũ."""
+    body = _cyl_x(d, length, x0, y, z)
+    flat_z1 = z - d / 2.0 + flat_depth
+    flat_cut = _box2(x0 - 0.5, x0 + length + 0.5,
+                     y - d / 2.0 - 0.5, y + d / 2.0 + 0.5,
+                     z - d / 2.0 - 1.0, flat_z1)
+    return _cut(body, flat_cut)
+
+
+def _flat_round_bore_x(d, length, x0, y, z, flat_depth, y_widen: float = 0.0) -> Part.Shape:
+    """Lỗ tròn Ød (capsule nếu y_widen>0) + cung phẳng đáy khớp thanh ray đáy phẳng."""
+    bore = _cyl_x(d, length, x0, y, z)
+    if y_widen > 1e-9:
+        bore = bore.fuse(_box_x(d + y_widen, d, length, x0, y, z))
+    # Cung phẳng đáy: nới thêm dưới mặt phẳng của thanh (rod flat) một chút khe
+    flat_z1 = z - d / 2.0 + flat_depth + 0.15
+    flat_pocket = _box2(x0, x0 + length,
+                        y - (d + y_widen) / 2.0 - 0.05,
+                        y + (d + y_widen) / 2.0 + 0.05,
+                        z - d / 2.0 - 0.05, flat_z1)
+    return bore.fuse(flat_pocket)
+
+
 def _refine(shape: Part.Shape) -> Part.Shape:
     try:
         return shape.removeSplitter()
@@ -408,6 +648,41 @@ def _cut(shape: Part.Shape, tool: Part.Shape) -> Part.Shape:
     except Exception:
         pass
     return shape
+
+
+def _wedge_ring(r0: float, r1: float, h: float, z0: float, angle_deg: float,
+                n: int, cx: float, cy: float) -> Part.Shape:
+    """n miếng VÀNH KHUYÊN GÓC (pie-slice annulus) từ bán kính r0 đến r1, cao h, cách
+    đều quanh tâm (cx,cy) — mỗi miếng rộng angle_deg độ. Dùng CUNG TRÒN thật
+    (Part.makeCylinder có angle) chứ KHÔNG dùng box phẳng — box có 2 mặt đầu PHẲNG chỉ
+    tiếp xúc mặt trụ CONG theo 1 ĐƯỜNG (không phải 1 MẶT), khiến fuse() không gộp được
+    thành 1 khối liên thông (bẫy đã gặp khi làm build_28byj48_reference.py — xem
+    memory dự án). Dùng làm sợi tơ mảnh nối thân/trục, dễ bẻ khi xoay."""
+    outer = Part.makeCylinder(r1, h, App.Vector(0, 0, z0), App.Vector(0, 0, 1), angle_deg)
+    inner = Part.makeCylinder(r0, h, App.Vector(0, 0, z0), App.Vector(0, 0, 1), angle_deg)
+    one = outer.cut(inner)
+    one.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), -angle_deg / 2.0)
+    parts = []
+    for i in range(n):
+        s = one.copy()
+        s.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), 360.0 * i / n)
+        s.translate(App.Vector(cx, cy, 0))
+        parts.append(s)
+    out = parts[0]
+    for p in parts[1:]:
+        out = out.fuse(p)
+    return out
+
+
+def _strut_pair(r0: float, r1: float, angle_deg: float, z0: float, z1: float,
+                n: int, cx: float, cy: float) -> tuple[Part.Shape, Part.Shape]:
+    """Chia sợi tơ làm 2 NỬA tại bán kính giữa (rmid): nửa trong (r0..rmid) thuộc VỀ
+    TRỤC, nửa ngoài (rmid..r1) thuộc VỀ THÂN — 2 nửa CHẠM NHAU đúng 1 MẶT TRỤ CONG
+    mỏng tại rmid (giống 1 "witness layer" nhưng TIẾT DIỆN RẤT NHỎ)."""
+    rmid = 0.5 * (r0 + r1)
+    shaft_half = _wedge_ring(r0, rmid, z1 - z0, z0, angle_deg, n, cx, cy)
+    body_half = _wedge_ring(rmid, r1, z1 - z0, z0, angle_deg, n, cx, cy)
+    return shaft_half, body_half
 
 
 def _sweep_z(shape: Part.Shape, height: float, step: float = 1.5) -> Part.Shape:
@@ -496,27 +771,52 @@ def gear_profile(m: float, z: int, pa_deg: float, bl: float,
 
 
 def make_pinion(angle_deg: float = 0.0) -> Part.Shape:
-    """Bánh răng IN 3D, trục z, tâm (0,0). angle_deg = góc quay quanh z."""
+    """Bánh răng IN 3D liền khối: vành răng + trụ Ø PIN_CAP_D + bán cầu trên đỉnh.
+    Không moay-ơ dưới. Lỗ mù bọc kín đầu trục ĐC."""
     pts = gear_profile(GEAR_M, GEAR_Z, GEAR_PA, GEAR_BL)
     vecs = [App.Vector(x, y, GEAR_Z0) for x, y in pts]
     vecs.append(vecs[0])
     face = Part.Face(Part.makePolygon(vecs))
     body = face.extrude(App.Vector(0, 0, GEAR_FACE))
-    hub = _cyl_z(GEAR_HUB_D, GEAR_HUB_H, 0.0, 0.0, GEAR_HUB_Z0)
-    body = body.fuse(hub)
-    # lỗ trục Ø5 hai mặt vát 3.0 — ép thẳng lên trục ĐC
-    bore_z0 = GEAR_HUB_Z0 - 1.0
-    bore_h = GEAR_Z1 - bore_z0 + 1.0
-    bore = _cyl_z(MOT_SHAFT_D + 0.15, bore_h, 0.0, 0.0, bore_z0)
-    flat = MOT_SHAFT_FLAT + 0.15
-    keep = _box2(-MOT_SHAFT_D, MOT_SHAFT_D, -flat / 2.0, flat / 2.0,
-                 bore_z0 - 0.5, bore_z0 + bore_h + 0.5)
-    bore = bore.common(keep)
+    # trụ + bán cầu trên đỉnh bánh răng
+    cap = _cyl_z(PIN_CAP_D, PIN_CAP_TOP - GEAR_Z1, 0.0, 0.0, GEAR_Z1)
+    dome = Part.makeSphere(PIN_DOME_R, App.Vector(0.0, 0.0, PIN_CAP_TOP),
+                           App.Vector(0, 0, 1), 0.0, 90.0, 360.0)
+    body = body.fuse(cap).fuse(dome)
+    # Lỗ mù từ đáy vành răng tới PIN_CAP_TOP. Đoạn dưới tròn / đoạn vát double-D.
+    bore_d = MOT_SHAFT_D + PIN_BORE_CLR
+    bore_z0 = GEAR_Z0
+    bore_h = PIN_CAP_TOP - bore_z0
+    flat_z0 = max(MOT_SHAFT_FLAT_Z0, bore_z0)
+    if flat_z0 > bore_z0 + 0.2:
+        round_bore = _cyl_z(bore_d, flat_z0 - bore_z0, 0.0, 0.0, bore_z0)
+        flat_bore = _cyl_z(bore_d, bore_z0 + bore_h - flat_z0, 0.0, 0.0, flat_z0)
+        flat = MOT_SHAFT_FLAT + PIN_BORE_CLR
+        keep = _box2(-MOT_SHAFT_D, MOT_SHAFT_D, -flat / 2.0, flat / 2.0,
+                     flat_z0 - 0.5, bore_z0 + bore_h)
+        flat_bore = flat_bore.common(keep)
+        bore = round_bore.fuse(flat_bore)
+    else:
+        flat_bore = _cyl_z(bore_d, bore_h, 0.0, 0.0, bore_z0)
+        flat = MOT_SHAFT_FLAT + PIN_BORE_CLR
+        keep = _box2(-MOT_SHAFT_D, MOT_SHAFT_D, -flat / 2.0, flat / 2.0,
+                     bore_z0 - 0.5, bore_z0 + bore_h)
+        bore = flat_bore.common(keep)
     body = _cut(body, bore)
     body = _refine(body)
     if abs(angle_deg) > 1e-9:
         body.rotate(App.Vector(0, 0, 0), App.Vector(0, 0, 1), angle_deg)
     return body
+
+
+def make_pinion_envelope() -> Part.Shape:
+    """Bao hình Pinion trừ RĂNG (thân Ø chân răng + trụ nắp + bán cầu). Va chạm phần
+    này khi lắp = LỖI; va chạm chỉ ở dải răng = bình thường (cần xoay canh khớp)."""
+    root = _cyl_z(2.0 * PIN_RF, GEAR_FACE, 0.0, 0.0, GEAR_Z0)
+    cap = _cyl_z(PIN_CAP_D, PIN_CAP_TOP - GEAR_Z1, 0.0, 0.0, GEAR_Z1)
+    dome = Part.makeSphere(PIN_DOME_R, App.Vector(0.0, 0.0, PIN_CAP_TOP),
+                           App.Vector(0, 0, 1), 0.0, 90.0, 360.0)
+    return _refine(root.fuse(cap).fuse(dome))
 
 
 def pinion_angle(offset: float) -> float:
@@ -569,36 +869,135 @@ def rack_profile(x0: float, length: float, m: float, pa_deg: float,
 
 
 # ---------------------------------------------------------------------------
-# 8. Chi tiết mua sẵn: động cơ, trục trơn, công tắc
+# 8. Chi tiết mua sẵn (động cơ, công tắc) + thanh dẫn hướng in 3D
 # ---------------------------------------------------------------------------
-def make_motor() -> Part.Shape:
-    """28BYJ-48 dựng đứng, trục lên; tâm thân (MOT_CX, 0), trục tại (0, 0)."""
+def make_motor_body() -> Part.Shape:
+    """28BYJ-48 dựng đứng; tâm thân (MOT_CX, 0). KHÔNG gồm trục — xem make_motor_shaft().
+    Có lỗ Ø(MOT_SHAFT_BORE) xuyên gờ + khoét sâu xuống thân (MOT_SHAFT_BURY) để trục
+    lắp vào với khe hở MOT_SHAFT_CLR, quay tự do quanh trục Z."""
     body = _cyl_z(MOT_D, MOT_H, MOT_CX, 0.0, MOT_Z0)
-    # 2 tai thép nằm TRÊN mặt trên thân, trên đường vuông góc hướng lệch tâm (=> theo Y)
+    # 2 tai thép PHẲNG với mặt trên thân (không lồi lên), trên đường vuông góc hướng
+    # lệch tâm (=> theo Y)
     for s in (+1.0, -1.0):
         ear = _box2(MOT_CX - MOT_EAR_W / 2.0, MOT_CX + MOT_EAR_W / 2.0,
                     min(0.0, s * MOT_EAR_TIP), max(0.0, s * MOT_EAR_TIP),
-                    MOT_TOP, MOT_EAR_Z1)
+                    MOT_EAR_Z0, MOT_EAR_Z1)
         body = body.fuse(ear)
         hole = _cyl_z(MOT_EAR_HOLE, MOT_EAR_T + 1.0, MOT_CX, s * EAR_POST_YC,
-                      MOT_TOP - 0.5)
+                      MOT_EAR_Z0 - 0.5)
         body = _cut(body, hole)
-    # gờ quanh chân trục + trục hai mặt vát
+    # gờ quanh chân trục
     body = body.fuse(_cyl_z(MOT_BOSS_D, MOT_BOSS_H, 0.0, 0.0, MOT_TOP))
-    shaft = _cyl_z(MOT_SHAFT_D, MOT_SHAFT_L, 0.0, 0.0, MOT_TOP)
-    keep = _box2(-MOT_SHAFT_D, MOT_SHAFT_D, -MOT_SHAFT_FLAT / 2.0, MOT_SHAFT_FLAT / 2.0,
-                 MOT_TOP, MOT_SHAFT_TOP + 1.0)
-    body = body.fuse(shaft.common(keep))
+    # lỗ cho trục: 2 TẦNG đường kính — khoang RỘNG ở đáy (chứa gờ giữ trục của
+    # BYJ_Motor_Shaft, xem make_motor_shaft) rồi thu lại thành lỗ trục trơn xuyên hết
+    # gờ Ø9 phía trên. Trục KHÔNG fuse vào đây, chỉ đặt lọt trong lỗ này.
+    _bore_z0 = MOT_TOP - MOT_SHAFT_BURY                        # 19.0  đáy khoang giữ
+    _chamber_h = (MOT_SHAFT_RET_FLOOR_GAP + MOT_SHAFT_RET_H
+                 + MOT_SHAFT_RET_TOP_CLR)   # cao khoang (hở đáy + gờ + hở đỉnh)
+    chamber = _cyl_z(MOT_SHAFT_RET_BORE, _chamber_h, 0.0, 0.0, _bore_z0)
+    body = _cut(body, chamber)
+    _neck_z0 = _bore_z0 + _chamber_h                           # đáy lỗ trục trơn, trên khoang giữ
+    neck = _cyl_z(MOT_SHAFT_BORE, MOT_BOSS_H + MOT_SHAFT_BURY + 1.0 - _chamber_h,
+                 0.0, 0.0, _neck_z0)
+    body = _cut(body, neck)
+    # Sợi tơ mảnh (nửa THÂN) nối với gờ giữ của trục — xem make_motor_shaft() và lần
+    # 26-31 trong memory dự án: gờ giữ LƠ LỬNG (không tựa đáy khoang), chỉ nối qua
+    # SỢI TƠ MẢNH (dễ bẻ khi xoay) + 1 chốt tâm nhỏ (thuộc về trục, xem bên dưới).
+    _flange_z0 = _bore_z0 + MOT_SHAFT_RET_FLOOR_GAP
+    _, _struts_body = _strut_pair(MOT_SHAFT_RET_D / 2.0, MOT_SHAFT_RET_BORE / 2.0,
+                                  MOT_SHAFT_RET_STRUT_ANGLE, _flange_z0,
+                                  _flange_z0 + MOT_SHAFT_RET_STRUT_H,
+                                  MOT_SHAFT_RET_STRUT_N, 0.0, 0.0)
+    body = body.fuse(_struts_body)
     # khối nối dây, nhô về -X
     conn = _box2(MOT_CONN_X0, MOT_CONN_X1,
                  -MOT_CONN_W / 2.0, MOT_CONN_W / 2.0,
                  MOT_Z0 + 1.0, MOT_Z0 + 1.0 + MOT_CONN_H)
     body = body.fuse(conn)
+    # 2 gờ nối nhỏ Ở 2 GÓC GIAO giữa khối nối dây và thân trụ (y = +-MOT_CONN_W/2),
+    # dọc trục Z. ĐÁY GỜ BẰNG ĐÁY KHỐI NỐI DÂY (z = MOT_Z0 + 1.0, không phải đáy thân
+    # MOT_Z0 — khối nối dây tự nó cũng hụt 1mm so với đáy thân, xem MOT_CONN_H). Mặt
+    # trụ CONG nên ở y = +-MOT_CONN_W/2 nó KHÔNG còn ở đúng bán kính MOT_D/2 nữa (đó là
+    # điểm lồi nhất, chỉ đúng tại y=0) — phải tính lại đúng điểm trên mặt trụ tại y đó,
+    # nếu không gờ sẽ lơ lửng ngoài mặt thân, không fuse dính vào đâu cả.
+    _rib_x_edge = MOT_CX - math.sqrt((MOT_D / 2.0) ** 2 - (MOT_CONN_W / 2.0) ** 2)
+    _rib_z0 = MOT_Z0 + 1.0                     # bằng đáy khối nối dây
+    for _s in (1.0, -1.0):
+        _rib_y = _s * MOT_CONN_W / 2.0
+        rib = _box2(_rib_x_edge - MOT_RIB_PROUD, _rib_x_edge + 2.0,
+                   _rib_y - MOT_RIB_W / 2.0, _rib_y + MOT_RIB_W / 2.0,
+                   _rib_z0, _rib_z0 + MOT_RIB_L)
+        body = body.fuse(rib)
     return _refine(body)
 
 
-def make_guide_rod(y: float) -> Part.Shape:
-    return _cyl_x(ROD_D, ROD_LEN, ROD_X0, y, ROD_Z)
+def make_motor_shaft() -> Part.Shape:
+    """Trục ĐC, TÁCH RIÊNG khỏi thân (khe hở MOT_SHAFT_CLR quanh nó trong lỗ của
+    make_motor_body) — quay tự do quanh trục Z, không fuse với thân. Đáy trục có GỜ GIỮ
+    (MOT_SHAFT_RET_D) nằm trong khoang rộng của thân — gờ LƠ LỬNG (không chạm đáy khoang,
+    chốt lần 26-31 sau khi phát hiện witness-layer full-face vẫn CÓ CHẠM THẬT — xem
+    memory dự án), chỉ nối với thân qua SỢI TƠ MẢNH quanh rìa (dễ bẻ khi xoay) + 1 CHỐT
+    TÂM nhỏ (giải quyết giới hạn hình học: hỗ trợ chỉ ở rìa không bao giờ đỡ được điểm ở
+    TÂM đĩa). Gờ KHÔNG lọt qua được lỗ trục trơn phía trên -> giữ trục không tuột lên.
+    Đoạn trục trơn (chôn, giữa gờ và mặt thân) tròn Ø(MOT_SHAFT_D); đoạn nhô khỏi thân
+    CŨNG TRÒN TRƠN cho tới MOT_SHAFT_FLAT_Z0 — CHỈ đoạn cuối MOT_SHAFT_FLAT_L (gần đầu
+    trục) mới vát 2 mặt (double-D, MOT_SHAFT_FLAT), đúng theo bản vẽ + xác nhận người
+    dùng (lần 24): tổng nhô ra 10mm, chỉ 6mm ở đầu có vát."""
+    _bore_z0 = MOT_TOP - MOT_SHAFT_BURY                         # 19.0  đáy khoang (thân)
+    _flange_z0 = _bore_z0 + MOT_SHAFT_RET_FLOOR_GAP             # 19.3  đáy gờ giữ (LƠ LỬNG)
+    ret = _cyl_z(MOT_SHAFT_RET_D, MOT_SHAFT_RET_H, 0.0, 0.0, _flange_z0)
+    buried_neck = _cyl_z(MOT_SHAFT_D,
+                        MOT_TOP - (_flange_z0 + MOT_SHAFT_RET_H),
+                        0.0, 0.0, _flange_z0 + MOT_SHAFT_RET_H)
+    # đoạn TRÒN TRƠN nhô khỏi thân (từ mặt thân tới ngay trước chỗ vát) — bao gồm cả
+    # đoạn còn nằm trong gờ Ø9 của thân (không quan trọng, bị gờ che khuất) lẫn đoạn
+    # thật sự lộ ra ngoài phía trên gờ
+    round_top = _cyl_z(MOT_SHAFT_D, MOT_SHAFT_FLAT_Z0 - MOT_TOP, 0.0, 0.0, MOT_TOP)
+    exposed_flat = _cyl_z(MOT_SHAFT_D, MOT_SHAFT_FLAT_L, 0.0, 0.0, MOT_SHAFT_FLAT_Z0)
+    keep = _box2(-MOT_SHAFT_D, MOT_SHAFT_D, -MOT_SHAFT_FLAT / 2.0, MOT_SHAFT_FLAT / 2.0,
+                 MOT_SHAFT_FLAT_Z0, MOT_SHAFT_TOP + 1.0)
+    # sợi tơ mảnh (nửa TRỤC) + 1 chốt tâm nối thẳng đáy khoang <-> đáy gờ giữ
+    _struts_shaft, _ = _strut_pair(MOT_SHAFT_RET_D / 2.0, MOT_SHAFT_RET_BORE / 2.0,
+                                   MOT_SHAFT_RET_STRUT_ANGLE, _flange_z0,
+                                   _flange_z0 + MOT_SHAFT_RET_STRUT_H,
+                                   MOT_SHAFT_RET_STRUT_N, 0.0, 0.0)
+    center_pin = _cyl_z(MOT_SHAFT_RET_PIN_D, MOT_SHAFT_RET_FLOOR_GAP,
+                        0.0, 0.0, _bore_z0)
+    shaft = (ret.fuse(buried_neck).fuse(round_top).fuse(exposed_flat.common(keep))
+            .fuse(_struts_shaft).fuse(center_pin))
+    return _refine(shaft)
+
+
+def make_guide_rod(y: float, round_shape: bool = True) -> Part.Shape:
+    """Thanh dẫn hướng TRÒN Ø(ROD_D) cắt phẳng đáy — in nằm bàn (máy đời cũ).
+    A và B cùng hình; bạc B trên Slide_Bar nới theo Y để chống xoay không siêu tĩnh.
+    Đầu +X: lỗ mồi tự ren cho Rod_Cap."""
+    body = _flat_round_rod_x(ROD_D, ROD_LEN, ROD_X0, y, ROD_Z, ROD_FLAT_DEPTH)
+    if not round_shape:
+        # legacy vuông — không dùng nữa
+        body = _box_x(ROD_D, ROD_D, ROD_LEN, ROD_X0, y, ROD_Z)
+    tap_x0 = ROD_X0 + ROD_LEN - ROD_TAP_L
+    body = _cut(body, _cyl_x(ROD_TAP_D, ROD_TAP_L + 0.5, tap_x0, y, ROD_Z))
+    return _refine(body)
+
+
+def make_guide_rod_cap(y: float) -> Part.Shape:
+    """Nắp chặn đầu +X của MỘT thanh dẫn hướng — khoá thanh khỏi xô lệch theo X khi đã
+    lắp, nhưng vẫn tháo được (1 vít tự ren M3). MỘT TẤM PHẲNG VUÔNG úp trực tiếp lên cả
+    mặt ngoài vách +X (x = BOX_X1) LẪN đầu thanh (đầu thanh phẳng khít, xem ROD_END_GAP)
+    — không hốc, không chốt: mặt tiếp xúc phẳng rộng tự chống xoay. Vít xuyên nắp, xuyên
+    ĐÚNG lỗ ROD_ACCESS_D sẵn có trên vách (không khoét gì thêm trên Housing), rồi tự ren
+    thẳng vào lỗ mồi ở đầu CHÍNH thanh dẫn hướng — vít THẲNG HÀNG với tâm thanh, kéo
+    thanh áp sát nắp và ép nắp áp sát vách cùng lúc. Guide_Rod_Cap_A/B CÙNG HÌNH DẠNG,
+    chỉ khác y."""
+    body = _box2(BOX_X1, BOX_X1 + CAP_T, y - CAP_W / 2.0, y + CAP_W / 2.0,
+                 CAP_Z0, CAP_Z1)
+    # lỗ xuyên cho thân vít, xuyên hết bề dày nắp
+    body = _cut(body, _cyl_x(M3_CLEAR, CAP_T + 1.0, BOX_X1 - 0.5, y, CAP_SCREW_Z))
+    # hốc chìm đầu vít, khoét từ mặt NGOÀI nắp
+    body = _cut(body, _cyl_x(EAR_SCREW_HEAD_D, EAR_SCREW_HEAD_H + 0.5,
+                             BOX_X1 + CAP_T - EAR_SCREW_HEAD_H, y, CAP_SCREW_Z))
+    return _refine(body)
 
 
 def sw_sign(is_max: bool) -> float:
@@ -704,13 +1103,11 @@ def make_slide_bar(offset: float = 0.0) -> Part.Shape:
     # đầu có 2 mẩu đặc ở đây và nó đâm thẳng vào răng khi thanh về gần HOME.
     # Mặt ấn công tắc là MẶT ĐẦU CỦA CHÂN +Y — nên bánh xe công tắc phải đặt ở
     # y = sw_roller_y() >= RACK_ROOT_Y (có check riêng canh giữ).
-    # 2 bạc trục trơn
-    body = _cut(body, _cyl_x(ROD_BORE, BAR_L + 2.0, x0 - 1.0, ROD_A_Y, ROD_Z))
-    slot = _cyl_x(ROD_BORE, BAR_L + 2.0, x0 - 1.0, ROD_B_Y, ROD_Z)
-    slot = slot.fuse(_box2(x0 - 1.0, x1 + 1.0,
-                           ROD_B_Y - ROD_SLOT_Y / 2.0, ROD_B_Y + ROD_SLOT_Y / 2.0,
-                           ROD_Z - ROD_BORE / 2.0, ROD_Z + ROD_BORE / 2.0))
-    body = _cut(body, slot)
+    # 2 bạc tròn đáy phẳng (khớp thanh ray): A khít; B capsule nới Y (chống xoay).
+    body = _cut(body, _flat_round_bore_x(ROD_BORE, BAR_L + 2.0, x0 - 1.0, ROD_A_Y, ROD_Z,
+                                         ROD_FLAT_DEPTH))
+    body = _cut(body, _flat_round_bore_x(ROD_BORE, BAR_L + 2.0, x0 - 1.0, ROD_B_Y, ROD_Z,
+                                         ROD_FLAT_DEPTH, y_widen=ROD_SLOT_Y))
     # TRỤ GÁ TẢI: trụ dẹt, mọc trên cầu, thò lên qua khe nắp
     pxc = 0.5 * (x0 + x1)
     post = _box2(pxc - POSTL_X / 2.0, pxc + POSTL_X / 2.0,
@@ -779,14 +1176,16 @@ def make_housing() -> Part.Shape:
     body = _cut(outer, _box2(INNER_X0, INNER_X1, INNER_Y0, INNER_Y1,
                              BASE_T, INNER_TOP + 1.0))
     # --- bệ / trụ bắt tai động cơ ---
+    # Trụ chỉ cao tới MOT_EAR_Z0 (không phải MOT_TOP) — CHỪA ĐÚNG chỗ dày MOT_EAR_T cho
+    # tai động cơ nằm PHẲNG với mặt trên thân (không lồi lên), xem MOT_EAR_Z0/Z1.
     for s in (-1.0, 1.0):
         post = _box2(MOT_CX - EAR_POST_W / 2.0, MOT_CX + EAR_POST_W / 2.0,
                      s * EAR_POST_YC - EAR_POST_Y / 2.0,
-                     s * EAR_POST_YC + EAR_POST_Y / 2.0, BASE_T, MOT_TOP)
+                     s * EAR_POST_YC + EAR_POST_Y / 2.0, BASE_T, MOT_EAR_Z0)
         body = body.fuse(post)
-        body = _cut(body, _cyl_z(EAR_PILOT_D, EAR_SCREW_L,
+        body = _cut(body, _cyl_z(EAR_PILOT_D, EAR_SCREW_L + 0.5,
                                  MOT_CX, s * EAR_POST_YC,
-                                 MOT_TOP - EAR_SCREW_L + MOT_EAR_T))
+                                 MOT_EAR_Z1 - EAR_SCREW_L))
     # vành định vị thân ĐC (chống xoay/chống trôi khi chưa siết vít)
     ring = _cyl_z(MOT_D + 5.0, 4.0, MOT_CX, 0.0, BASE_T)
     ring = _cut(ring, _cyl_z(MOT_D + 0.6, 6.0, MOT_CX, 0.0, BASE_T - 1.0))
@@ -806,11 +1205,22 @@ def make_housing() -> Part.Shape:
                   BASE_T, INNER_TOP)
         body = body.fuse(p)
         body = _cut(body, _cyl_z(M3_TAP, 10.0, x, y, INNER_TOP - 10.0))
-    # --- trục trơn: HỐC MÙ vách -X, lỗ XUYÊN vách +X ---
+    # --- thanh dẫn hướng tròn đáy phẳng: HỐC MÙ vách -X, lỗ XUYÊN vách +X ---
+    # (Vít nắp Rod_Cap bắt THẲNG vào chính thanh — xem make_guide_rod/make_guide_rod_cap
+    # — nên không cần trụ hay lỗ ren riêng nào trên Housing ở đây nữa.)
+    # BẪY VỪA BẮT ĐƯỢC (2026-09-06, check "khong dung TOAN BO housing" mới thêm): CẢ 4
+    # trụ nắp góc (2 đầu -X, 2 đầu +X, vòng for phía trên) đứng NGAY TRƯỚC 2 vách, và Y
+    # của chúng rất gần Y của 2 thanh dẫn hướng (cách có ~2mm) — hốc/lỗ trước đây chỉ dài
+    # vừa đủ hết bề dày vách, KHÔNG xuyên qua hết phần trụ, nên thanh đâm thẳng vào thân
+    # trụ đặc = KHÔNG lắp được ở CẢ HAI đầu. Phải kéo dài hốc/lỗ thêm đúng POST_W để
+    # xuyên nốt qua trụ. Trụ chỉ mất tiết diện ở ĐÚNG dải Z của thanh (~5.4mm trong tổng
+    # chiều cao trụ ~32mm) — vẫn còn nguyên phần trên/dưới để chịu va đập cữ cứng, mà tải
+    # va đập ở đây vốn đã rất nhẹ (~4N, xem "HARD_STOP_X").
     for y in (ROD_A_Y, ROD_B_Y):
-        body = _cut(body, _cyl_x(ROD_D + 0.4, INNER_X0 - ROD_X0 + 0.001,
-                                 ROD_X0, y, ROD_Z))
-        body = _cut(body, _cyl_x(ROD_ACCESS_D, WALL_T + 2.0, INNER_X1 - 0.5, y, ROD_Z))
+        body = _cut(body, _flat_round_bore_x(ROD_BORE, ROD_POCKET_CLEAR_LEN,
+                                             ROD_X0, y, ROD_Z, ROD_FLAT_DEPTH))
+        body = _cut(body, _flat_round_bore_x(ROD_ACCESS_D, ROD_CLEAR_LEN,
+                                             ROD_CLEAR_X0, y, ROD_Z, ROD_FLAT_DEPTH))
     # --- lỗ ra dây trên vách -X ---
     body = _cut(body, _cyl_x(CABLE_D, WALL_END_T + 2.0, BOX_X0 - 1.0,
                              DUCT_YC, BASE_T + DUCT_Z1 / 2.0))
@@ -852,7 +1262,24 @@ def _offsets(n: int = 9) -> list[float]:
 def verify(parts: dict) -> list[tuple[str, bool, str]]:
     checks: list[tuple[str, bool, str]] = []
     housing = parts["Housing"]
-    motor = parts["BYJ_Motor"]
+    # thân + trục giờ là 2 Part::Feature TÁCH RIÊNG (khe hở, quay tự do) — mọi check
+    # va chạm dưới đây phải tính trên CẢ CỤM (không phải chỉ thân) mới đúng thực tế
+    motor_body = parts["BYJ_Motor"]
+    motor_shaft = parts["BYJ_Motor_Shaft"]
+    pinion_home = parts["Pinion"]
+    pinion_envelope = make_pinion_envelope()
+    motor = motor_body.fuse(motor_shaft)
+
+    # --- 0. Trục ĐC tách rời: có khe hở thật trong lỗ thân, không chạm nhau ---
+    v_shaft_body = _common_vol(motor_body, motor_shaft)
+    checks.append(("Truc DC tach roi: khong dung than (khe ho O%.1f quanh truc O%.1f, "
+                   "go giu O%.1f trong khoang O%.1f)"
+                   % (MOT_SHAFT_BORE, MOT_SHAFT_D, MOT_SHAFT_RET_D, MOT_SHAFT_RET_BORE),
+                   v_shaft_body < 1e-6, "dung %.3f mm3" % v_shaft_body))
+    # --- 0-bis. soi to + chot tam THAT SU noi lien than/truc (khong roi rac) ---
+    _n_solids_motor = len(motor.Solids)
+    checks.append(("Than+truc DC qua soi to/chot tam la 1 KHOI LIEN THONG (khong roi)",
+                   _n_solids_motor == 1, "%d khoi" % _n_solids_motor))
 
     # --- 1. thanh quét cả hành trình: không đụng vỏ / động cơ / bệ công tắc ---
     worst_h = worst_m = 0.0
@@ -950,14 +1377,14 @@ def verify(parts: dict) -> list[tuple[str, bool, str]]:
         checks.append(("Cu cung cach diem trip 0.8..3.0 mm",
                        0.8 <= over <= 3.0, "%.1f mm" % over))
 
-    # --- 4d. 2 bạc trục trơn thông suốt, trục xỏ qua được ---
+    # --- 4d. 2 bạc thanh dẫn hướng thông suốt, thanh xỏ qua được ---
     bad = []
-    for nm, y in (("A", ROD_A_Y), ("B", ROD_B_Y)):
-        probe = _cyl_x(ROD_D + 0.2, BAR_L + 4.0, bar_x0(0.0) - 2.0, y, ROD_Z)
+    for nm, y, is_round in (("A", ROD_A_Y, True), ("B", ROD_B_Y, True)):
+        probe = _rod_shape_x(is_round, ROD_D + 0.2, BAR_L + 4.0, bar_x0(0.0) - 2.0, y, ROD_Z)
         if _common_vol(probe, make_slide_bar(0.0)) > 1e-6:
             bad.append(nm)
-    checks.append(("2 bac truc tron THONG SUOT ca chieu dai thanh", not bad,
-                   "bac A O%.1f tron, bac B ranh +-%.1f theo Y"
+    checks.append(("2 bac thanh dan huong THONG SUOT ca chieu dai thanh", not bad,
+                   "bac A tron O%.1f khit, bac B ranh rong +-%.1f theo Y (thanh B tron)"
                    % (ROD_BORE, ROD_SLOT_Y / 2.0)))
 
     # --- 5. lắp: động cơ thả thẳng từ trên xuống ---
@@ -966,25 +1393,83 @@ def verify(parts: dict) -> list[tuple[str, bool, str]]:
     checks.append(("Dong co tha THANG tu tren xuong khong vuong", v < 1e-6,
                    "vuong %.2f mm3" % v))
 
-    # --- 6. lắp: thanh thả thẳng từ trên xuống (chưa có trục trơn) ---
+    # --- 6. lắp: thanh thả thẳng từ trên xuống (Pinion đã ép lên trục, chưa có trục
+    # trơn). BẪY BẮT ĐƯỢC (2026-09-06): check cũ có TÊN nhắc "banh rang" nhưng CODE chỉ
+    # so va chạm với `motor`, KHÔNG hề đưa Pinion vào — hoàn toàn không phát hiện được
+    # nếu Pinion (nhất là sau khi thêm trụ+bán cầu, có thể cao/rộng hơn) cản đường hạ
+    # thanh. Giờ tách riêng, so ĐÚNG với Pinion tại vị trí lắp thật (moay-ơ hướng lên
+    # trên trục, xem make_pinion(0.0)).
     bar_home = make_slide_bar(0.0)
     drop = _sweep_z(bar_home, INNER_TOP - BAR_Z0 + 5.0)
     v = _common_vol(drop, housing)
-    v2 = _common_vol(drop, motor)
+    v_mot = _common_vol(drop, motor)
+    v_pin = _common_vol(drop, pinion_home)
     checks.append(("Slide_Bar ha THANG xuong khong vuong vo", v < 1e-6,
                    "vuong %.2f mm3" % v))
-    checks.append(("Slide_Bar ha THANG xuong khong vuong DC/banh rang",
-                   v2 < 1e-6, "vuong %.2f mm3" % v2))
+    checks.append(("Slide_Bar ha THANG xuong khong vuong DONG CO",
+                   v_mot < 1e-6, "vuong %.2f mm3" % v_mot))
+    # Tách "va cham o RANG" (BINH THUONG — moi banh rang-thanh rang THANG deu can
+    # xoay/canh nhe khi ha xuong, khong xoay duoc trong phep tha thang tuyet doi nay,
+    # ban chat an khop chu khong phai loi) khoi "va cham o moay-o/tru nap/ban cau"
+    # (LOI THAT — nghia la phan than banh rang qua kho so voi ranh Slide_Bar).
+    v_pin_env = _common_vol(drop, pinion_envelope)
+    checks.append(("Slide_Bar ha THANG: tru nap/ban cau KHONG vuong (rieng RANG "
+                   "thi binh thuong, xem ghi chu)", v_pin_env < 1e-6,
+                   "vuong %.3f mm3 (rang cham rieng %.2f mm3, xem check duoi)"
+                   % (v_pin_env, v_pin)))
+    checks.append(("(thong tin) Rang cham khi ha thang — BINH THUONG, can xoay nhe luc "
+                   "lap (xem THU TU LAP buoc 4)", True, "cham %.2f mm3" % v_pin))
 
-    # --- 7. lắp: 2 trục trơn đẩy TỪ NGOÀI vách +X ---
-    for nm, y in (("A", ROD_A_Y), ("B", ROD_B_Y)):
-        probe = _cyl_x(ROD_D + 0.2, BOX_X1 - INNER_X1 + 2.0, INNER_X1 - 0.5, y, ROD_Z)
+    # --- 7. lắp: 2 thanh dẫn hướng đẩy TỪ NGOÀI vách +X (xuyên CẢ trụ nắp góc +X) ---
+    for nm, y, is_round in (("A", ROD_A_Y, True), ("B", ROD_B_Y, True)):
+        probe = _rod_shape_x(is_round, ROD_D + 0.2, BOX_X1 - ROD_CLEAR_X0 + 0.5,
+                             ROD_CLEAR_X0, y, ROD_Z)
         thru = _common_vol(probe, housing) < 1e-6
-        pocket = _cyl_x(ROD_D + 0.2, ROD_POCKET - 0.5, ROD_X0 + 0.3, y, ROD_Z)
+        pocket = _rod_shape_x(is_round, ROD_D + 0.2, ROD_POCKET - 0.5,
+                              ROD_X0 + 0.3, y, ROD_Z)
         blind = _common_vol(pocket, housing) < 1e-6
-        checks.append(("Truc tron %s: lo XUYEN vach +X + hoc mu -X" % nm,
+        checks.append(("Thanh dan huong %s: lo XUYEN vach +X (ca trụ) + hoc mu -X" % nm,
                        thru and blind,
-                       "xuyen=%s hoc=%s, truc dai %.1f mm" % (thru, blind, ROD_LEN)))
+                       "xuyen=%s hoc=%s, thanh dai %.1f mm" % (thru, blind, ROD_LEN)))
+        # --- 7-bis. check TONG QUAT: thanh khong dung BAT KY dau nao cua housing tren
+        # suot chieu dai — bat duoc dung bay nay (truoc gio chi check tung doan nho gan
+        # 2 dau, khong check TOAN BO chieu dai, nen bo lot va cham voi tru nap goc +X)
+        v_full = _common_vol(make_guide_rod(y, round_shape=is_round), housing)
+        checks.append(("Thanh dan huong %s: KHONG dung housing tren SUOT chieu dai" % nm,
+                       v_full < 1e-6, "dung %.3f mm3" % v_full))
+
+    # --- 7b. Nắp Rod_Cap: đầu thanh không đụng nắp, nắp CHE kín lối thoát, vít có đường vặn ---
+    for nm, y, is_round in (("A", ROD_A_Y, True), ("B", ROD_B_Y, True)):
+        cap = parts["Guide_Rod_Cap_%s" % nm]
+        rod = make_guide_rod(y, round_shape=is_round)
+        v_rod = _common_vol(rod, cap)
+        # neu thanh bi day THEM 3mm nua (vuot qua vi tri nghi phang khit), no PHAI dung
+        # nap -> xac nhan nap thuc su CHAN duoc thanh, khong ho mot khe nao
+        escape = _rod_shape_x(is_round, ROD_D, 3.0, BOX_X1 - ROD_END_GAP, y, ROD_Z)
+        v_block = _common_vol(escape, cap)
+        # vit tu ren XUYEN QUA lo ROD_ACCESS_D co san tren vach (khong khoet gi them tren
+        # Housing) roi cam THANG vao lo moi o dau thanh -- duong nay phai THONG suot,
+        # khong dung Housing lan phan than thanh NGOAI vung lo moi da khoan san
+        drv_x0 = (ROD_X0 + ROD_LEN - ROD_TAP_L) + 0.5
+        drv_len = (BOX_X1 + 0.5) - drv_x0
+        drv = _cyl_x(ROD_TAP_D - 0.3, drv_len, drv_x0, y, CAP_SCREW_Z)
+        v_drv = _common_vol(drv, housing) + _common_vol(drv, rod)
+        checks.append(("Nap Rod_Cap %s: dau thanh khong dung nap (con khe %.2f)"
+                       % (nm, ROD_END_GAP), v_rod < 1e-6, "dung %.3f mm3" % v_rod))
+        # Nap co lo vit (M3_CLEAR) xuyen giua nen KHONG con chan het duoc tiet dien thanh
+        # nhu ban khong-lo truoc do -- nhung M3_CLEAR < ROD_D (assert o tren) da bao dam
+        # thanh khong the LOT QUA duoc; check nay chi xac nhan CON tiep xuc chan that,
+        # khong phai nap bi dat sai vi tri lech hoan toan khoi thanh.
+        _rod_area = math.pi * (ROD_D / 2.0) ** 2 if is_round else ROD_D * ROD_D
+        checks.append(("Nap Rod_Cap %s: nap CO chan thanh (khong lech vi tri)" % nm,
+                       v_block > 0.15 * 3.0 * _rod_area,
+                       "chan %.1f / %.1f mm3" % (v_block, 3.0 * _rod_area)))
+        checks.append(("Nap Rod_Cap %s: duong vit toi lo mo dau thanh thong suot" % nm,
+                       v_drv < 1e-6, "vuong %.3f mm3" % v_drv))
+        # check tong: nap up dung vi tri, khong dung vo (vit + khoi nap deu da tinh o tren)
+        v_cap_housing = _common_vol(cap, housing)
+        checks.append(("Nap Rod_Cap %s: up khit vach, khong dung vo" % nm,
+                       v_cap_housing < 1e-6, "dung %.3f mm3" % v_cap_housing))
 
     # --- 8. lắp: nắp hạ thẳng, trụ gá tải lọt khe suốt hành trình ---
     lid = parts["Housing_Lid"]
@@ -1055,7 +1540,125 @@ def verify(parts: dict) -> list[tuple[str, bool, str]]:
     secs = TRAVEL / (MOT_RPM * PIN_MM_PER_REV / 60.0)
     checks.append(("Chay het hanh trinh <= 4 s", secs <= 4.0,
                    "%.2f s @ %.0f rpm (%.1f mm/vong)" % (secs, MOT_RPM, PIN_MM_PER_REV)))
+
+    # --- 16. Độ cứng / xô lệch ở tốc độ THẤP (<=60 rpm), quay XUÔI + NGƯỢC ---
+    # Quán tính nhỏ (quasi-tĩnh): xô lệch do rơ bạc + lực tách khớp (góc áp lực), không
+    # do rung tốc độ cao. Bạc A (cạnh thanh răng) định vị Y; bạc B chỉ chặn xoay.
+    rig = analyze_rigidity_low_rpm()
+    checks.append(("Ro bac: yaw toi da <= 1.1 deg (tranh chen rang)",
+                   rig["yaw_max_deg"] <= 1.1,
+                   "%.2f deg (clr_A=%.2f clr_B_Y=%.2f L=%.1f)"
+                   % (rig["yaw_max_deg"], rig["clr_A_mm"], rig["clr_B_y_mm"],
+                      rig["rod_span_mm"])))
+    checks.append(("Xo lech Y tai an khop << do sau rang (con du an khop)",
+                   rig["mesh_y_play_mm"] <= 0.45 * rig["working_depth_mm"],
+                   "play %.3f / depth %.2f mm (du %.2f)"
+                   % (rig["mesh_y_play_mm"], rig["working_depth_mm"],
+                      rig["mesh_engage_margin_mm"])))
+    checks.append(("Luc tach khop (PA) << luc day (detent/R) o <=60 rpm",
+                   rig["F_sep_N"] <= 0.5 * rig["F_drive_N"],
+                   "F_sep=%.2f F_drv=%.2f N" % (rig["F_sep_N"], rig["F_drive_N"])))
+    checks.append(("Uon thanh in (PETG, 2 dau) duoi F_sep: do vong < 0.5 mm",
+                   rig["rod_deflect_mm"] <= 0.5,
+                   "%.3f mm @ F_sep (E=2 GPa, fixed-fixed)" % rig["rod_deflect_mm"]))
+    checks.append(("Vung chet doi chieu (rang+hop so ~1.5deg) <= 0.8 mm",
+                   rig["reverse_deadband_mm"] <= 0.8,
+                   "%.3f mm (mesh %.2f + GB %.2f)"
+                   % (rig["reverse_deadband_mm"], rig["bl_mesh_mm"], rig["bl_gearbox_mm"])))
+    checks.append(("Quan tinh o 60 rpm khong xoc (F_inert << F_drv khi dung 0.2s)",
+                   rig["F_inert_60rpm_N"] <= 0.15 * rig["F_drive_N"],
+                   "F_i=%.3f N (%.1f%% F_drv)" % (rig["F_inert_60rpm_N"],
+                   100.0 * rig["F_inert_60rpm_N"] / rig["F_drive_N"])))
+
+    # Quét hình học — tư thế đạt được trong bạc + đổi chiều trong rơ răng:
+    #   (a) tịnh tiến Y ±clr_A (lực tách/ép khớp) pha danh nghĩa
+    #   (b) yaw ±yaw_max quanh A (B dùng hết rãnh)
+    #   (c) tại pose danh nghĩa: lệch góc ±half backlash (đổi sườn khi đảo chiều)
+    worst_clash = 0.0
+    min_touch_skew = 1e9
+    yaw_deg = rig["yaw_max_deg"]
+    half_bl = 0.5 * math.degrees(rig["bl_mesh_mm"] / PIN_R)
+    poses = [("nom", 0.0, 0.0)]
+    for y_sign in (-1.0, 1.0):
+        poses.append(("ty", y_sign * rig["clr_A_mm"], 0.0))
+    for yaw_sign in (-1.0, 1.0):
+        poses.append(("yaw", 0.0, yaw_sign * yaw_deg))
+    for off in _offsets(5):
+        for _kind, dy, dyaw in poses:
+            bar = make_slide_bar(off)
+            if abs(dy) > 1e-12:
+                bar.translate(App.Vector(0.0, dy, 0.0))
+            if abs(dyaw) > 1e-12:
+                bar.rotate(App.Vector(0.0, ROD_A_Y, ROD_Z), App.Vector(0, 0, 1), dyaw)
+            g = make_pinion(pinion_angle(off))
+            worst_clash = max(worst_clash, _common_vol(g, bar))
+            probe = _cyl_z(2.0 * (PIN_RA + 0.45), GEAR_FACE, 0.0, 0.0, GEAR_Z0)
+            min_touch_skew = min(min_touch_skew, _common_vol(probe, bar))
+        # Đảo chiều: chỉ lệch góc trong vùng rơ, thanh ở pose danh nghĩa
+        bar0 = make_slide_bar(off)
+        for dang in (half_bl, -half_bl):
+            g = make_pinion(pinion_angle(off) + dang)
+            worst_clash = max(worst_clash, _common_vol(g, bar0))
+    checks.append(("Lech bac/doi chieu <=60rpm: khong CHEN rang",
+                   worst_clash < 0.05,
+                   "chen toi da %.4f mm3 (nguong 0.05 — mep rang o yaw max)"
+                   % worst_clash))
+    checks.append(("Lech bac: van CON an khop",
+                   min_touch_skew > 1.0,
+                   "chong lan nho nhat %.2f mm3" % min_touch_skew))
     return checks
+
+
+def analyze_rigidity_low_rpm() -> dict:
+    """Ước lượng xô lệch / độ cứng khi ĐC quay xuôi–ngược ở tốc độ thấp (<=60 rpm).
+
+    Ở <=60 rpm quán tính thanh ~ vài phần trăm lực đẩy — bài toán gần tĩnh. Xô lệch
+    chính: (1) rơ bạc A/B → yaw Slide_Bar, (2) lực tách khớp F·tan(PA), (3) rơ đổi chiều
+    (răng in + hộp số 28BYJ), (4) uốn thanh nhựa in giữa 2 vách.
+    """
+    clr_A = 0.5 * (ROD_BORE - ROD_D)
+    clr_B_y = 0.5 * (ROD_BORE + ROD_SLOT_Y - ROD_D)
+    span = ROD_A_Y - ROD_B_Y
+    yaw = math.atan((clr_A + clr_B_y) / span)
+    # Thanh răng nằm cùng chân với bạc A → lệch Y an khớp ≈ clr_A + yaw·Δy
+    mesh_y = clr_A + abs(math.tan(yaw) * (PIN_R - ROD_A_Y))
+    working_depth = 2.25 * GEAR_M
+    F_drive = MOT_DETENT / PIN_R
+    F_sep = F_drive * math.tan(math.radians(GEAR_PA))
+    # Uốn 1 thanh in PETG: fixed-fixed, nhịp ~ khoảng trong giữa 2 vách, F_sep lên A
+    E_petg = 2000.0  # N/mm^2
+    I_rod = math.pi * (ROD_D ** 4) / 64.0 * 0.85  # trừ đáy phẳng ~15%
+    L_bend = max(INNER_X1 - INNER_X0 - 2.0 * POST_W, BAR_L)
+    rod_deflect = F_sep * (L_bend ** 3) / (192.0 * E_petg * I_rod)
+    bl_mesh = 2.0 * GEAR_BL  # mỗi bên GEAR_BL trên pinion+rack → dọc pitch ~2·bl
+    bl_gb = math.radians(1.5) * PIN_R  # hộp số 28BYJ điển hình ~1–2°
+    # Quán tính: m≈35 g (Slide_Bar PETG), dừng từ v(60rpm) trong Δt=0.2 s
+    m_bar_kg = 0.035
+    v_60 = (PIN_MM_PER_REV * 60.0 / 60.0) / 1000.0  # m/s
+    F_inert = m_bar_kg * (v_60 / 0.2)
+    return {
+        "rpm_design": MOT_RPM,
+        "rpm_check_max": 60.0,
+        "clr_A_mm": clr_A,
+        "clr_B_y_mm": clr_B_y,
+        "rod_span_mm": span,
+        "yaw_max_deg": math.degrees(yaw),
+        "mesh_y_play_mm": mesh_y,
+        "working_depth_mm": working_depth,
+        "mesh_engage_margin_mm": working_depth - mesh_y,
+        "F_drive_N": F_drive,
+        "F_sep_N": F_sep,
+        "rod_deflect_mm": rod_deflect,
+        "bl_mesh_mm": bl_mesh,
+        "bl_gearbox_mm": bl_gb,
+        "reverse_deadband_mm": bl_mesh + bl_gb,
+        "F_inert_60rpm_N": F_inert,
+        "v_mm_s": {
+            "12": PIN_MM_PER_REV * 12.0 / 60.0,
+            "30": PIN_MM_PER_REV * 30.0 / 60.0,
+            "60": PIN_MM_PER_REV * 60.0 / 60.0,
+        },
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -1076,11 +1679,14 @@ def build_parts() -> dict:
     parts = {
         "Housing": make_housing(),
         "Housing_Lid": make_housing_lid(),
-        "BYJ_Motor": make_motor(),
+        "BYJ_Motor": make_motor_body(),
+        "BYJ_Motor_Shaft": make_motor_shaft(),
         "Pinion": make_pinion(0.0),
         "Slide_Bar": make_slide_bar(0.0),
         "Guide_Rod_A": make_guide_rod(ROD_A_Y),
         "Guide_Rod_B": make_guide_rod(ROD_B_Y),
+        "Guide_Rod_Cap_A": make_guide_rod_cap(ROD_A_Y),
+        "Guide_Rod_Cap_B": make_guide_rod_cap(ROD_B_Y),
         "Limit_Switch_Min": make_limit_switch(False),
     }
     if SW_MAX:
@@ -1092,10 +1698,13 @@ COLORS = {
     "Housing": ((0.55, 0.58, 0.65), 0),
     "Housing_Lid": ((0.62, 0.66, 0.72), 55),
     "BYJ_Motor": ((0.25, 0.28, 0.34), 0),
+    "BYJ_Motor_Shaft": ((0.80, 0.65, 0.30), 0),
     "Pinion": ((0.92, 0.62, 0.18), 0),
     "Slide_Bar": ((0.30, 0.66, 0.42), 0),
     "Guide_Rod_A": ((0.78, 0.80, 0.84), 0),
     "Guide_Rod_B": ((0.78, 0.80, 0.84), 0),
+    "Guide_Rod_Cap_A": ((0.62, 0.66, 0.72), 0),
+    "Guide_Rod_Cap_B": ((0.62, 0.66, 0.72), 0),
     "Limit_Switch_Min": ((0.85, 0.25, 0.25), 0),
     "Limit_Switch_Max": ((0.85, 0.25, 0.25), 0),
 }
@@ -1126,7 +1735,13 @@ def main() -> None:
           % (PIN_MM_PER_REV, PIN_MM_PER_REV * MOT_RPM, MOT_RPM))
     print("  Het hanh trinh             : %.2f s"
           % (TRAVEL / (MOT_RPM * PIN_MM_PER_REV / 60.0)))
-    print("  Do phan giai (4096 buoc/vg): %.4f mm/buoc" % (PIN_MM_PER_REV / 4096.0))
+    print("  Do phan giai (%.0f buoc/vg) : %.7f mm/buoc (that, co pi)"
+          % (MOTOR_STEPS_PER_REV, PIN_MM_PER_REV / MOTOR_STEPS_PER_REV))
+    print("  STEPS_PER_MM firmware      : %d buoc/mm (that = %.4f, lech %.5f%%)"
+          % (STEPS_PER_MM, _TRUE_STEPS_PER_MM, _STEPS_PER_MM_ERR * 100.0))
+    _err30 = max(abs(round(d * STEPS_PER_MM) / _TRUE_STEPS_PER_MM - d) for d in range(2, 31))
+    print("  Sai so xa nhat khi di 2..30mm bang STEPS_PER_MM: %.6f mm (%.1f micromet)"
+          % (_err30, _err30 * 1000.0))
     print("  Luc giu khi TAT DIEN       : %.2f N (detent %.1f N.mm / R %.1f)"
           % (MOT_DETENT / PIN_R, MOT_DETENT, PIN_R))
     if SW_MAX:
@@ -1136,7 +1751,8 @@ def main() -> None:
         print("  Cu cung dau +X             : x = %.1f, tuc +%.1f mm sau diem trip"
               % (HARD_STOP_X, HARD_STOP_X - X_TRIP_MAX))
         print("  Gioi han mem khuyen nghi   : 0 .. %.1f mm" % (TRAVEL - 1.0))
-    print("  Truc tron O%.0f             : 2 cay, dai %.1f mm" % (ROD_D, ROD_LEN))
+    print("  Thanh dan huong           : A+B tron O%.0f day phang -- 2 cay IN 3D, dai %.1f mm"
+          % (ROD_D, ROD_LEN))
 
     print("--- NGAN SACH CHIEU DAI HOP (X) ---")
     end_zone = X_TRIP_MIN - INNER_X0
@@ -1169,16 +1785,35 @@ def main() -> None:
         print("  [%s] %-52s %s" % ("OK" if ok else "FAIL", label, detail))
     print("  => %d FAIL / %d checks" % (n_fail, len(checks)))
 
+    rig = analyze_rigidity_low_rpm()
+    print("--- DO CUNG / XO LECH @ <=60 rpm (xuoi+nguoc) ---")
+    print("  Yaw toi da (ro bac)         : %.2f deg" % rig["yaw_max_deg"])
+    print("  Lech Y tai an khop          : %.3f mm (do sau rang %.2f, du %.2f)"
+          % (rig["mesh_y_play_mm"], rig["working_depth_mm"],
+             rig["mesh_engage_margin_mm"]))
+    print("  F day / F tach (PA 20)      : %.2f / %.2f N" % (rig["F_drive_N"], rig["F_sep_N"]))
+    print("  Uon thanh in @ F_sep        : %.3f mm" % rig["rod_deflect_mm"])
+    print("  Vung chet doi chieu         : %.3f mm" % rig["reverse_deadband_mm"])
+    print("  F quan tinh dung @ 60rpm    : %.3f N" % rig["F_inert_60rpm_N"])
+    print("  Van toc pitch 12/30/60 rpm  : %.1f / %.1f / %.1f mm/s"
+          % (rig["v_mm_s"]["12"], rig["v_mm_s"]["30"], rig["v_mm_s"]["60"]))
+
     metrics = {
         "pass": n_fail == 0,
         "checks_fail": n_fail,
         "checks_total": len(checks),
         "travel_mm": TRAVEL,
         "box_outer_mm": [BOX_X1 - BOX_X0, BOX_Y1 - BOX_Y0, BOX_Z1],
-        "gear": {"m": GEAR_M, "z": GEAR_Z, "R": PIN_R, "mm_per_rev": PIN_MM_PER_REV},
+        "gear": {"m": GEAR_M, "z": GEAR_Z, "R": PIN_R, "mm_per_rev": PIN_MM_PER_REV,
+                "body_dia_mm": 2.0 * PIN_RF},
+        "steps_per_mm_firmware": STEPS_PER_MM,
+        "steps_per_mm_true": _TRUE_STEPS_PER_MM,
+        "steps_per_mm_err_pct": _STEPS_PER_MM_ERR * 100.0,
         "rack_len_mm": RACK_L,
         "bar_len_mm": BAR_L,
         "rod_len_mm": ROD_LEN,
+        "rod_cross_section_mm": [ROD_D, ROD_D - ROD_FLAT_DEPTH],
+        "rod_printed": True,
         "sec_full_travel": TRAVEL / (MOT_RPM * PIN_MM_PER_REV / 60.0),
         "hold_force_N": MOT_DETENT / PIN_R,
         "sw_max": SW_MAX,
@@ -1186,10 +1821,19 @@ def main() -> None:
         "hard_stop_x": HARD_STOP_X,
         "hard_stop_over_trip_mm": HARD_STOP_X - X_TRIP_MAX,
         "soft_limit_mm": TRAVEL - 1.0,
+        "rigidity_low_rpm": rig,
     }
     mpath = OUT / "byj_rack_stage_metrics.json"
     mpath.write_text(json.dumps(metrics, indent=2) + "\n", encoding="utf-8")
     print("Metrics:", mpath)
+    rpath = OUT / "byj_rack_rigidity_metrics.json"
+    rpath.write_text(json.dumps({
+        "pass": n_fail == 0,
+        "rpm_max_checked": 60.0,
+        "bidirectional": True,
+        **rig,
+    }, indent=2) + "\n", encoding="utf-8")
+    print("Rigidity:", rpath)
 
     if App.GuiUp and Gui is not None:
         Gui.ActiveDocument = Gui.getDocument(doc.Name)
@@ -1200,4 +1844,16 @@ def main() -> None:
         App.closeDocument(doc.Name)
 
 
-main()
+def _is_main_script() -> bool:
+    """True nếu file NÀY là script được gọi trực tiếp (freecadcmd không set
+    __name__ == "__main__" — nó set thành tên file, giống hệt tên module khi bị
+    import, nên __name__ không phân biệt được. Dùng sys.argv[-1] (script freecadcmd
+    được yêu cầu chạy) so với __file__ của chính module này."""
+    try:
+        return Path(sys.argv[-1]).resolve() == Path(__file__).resolve()
+    except Exception:
+        return False
+
+
+if __name__ == "__main__" or _is_main_script():
+    main()
