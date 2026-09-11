@@ -1,19 +1,14 @@
 #!/usr/bin/env python3
-"""Generate MP1584EN + TMC2209 + PC817 DIP-4 + ULN2003 + ESP32-S3 carrier.
+"""LEGACY — 180×145 ESP32-S3 + ULN/595/TFT carrier.
 
-All parts on TOP (F.Cu); B.Cu is routing only.
+Fab mới dùng:
+    python gen_compact_carrier.py
+    python gen_schematic_from_pcb.py
+    python verify_compact.py
 
-Power path:
-  12V-4.2A PSU --J1--> D3+F1(5x20)+D1 on carrier --> +12V ; PC817x4 on carrier (was M2)
-       --> MP1584EN U2  -> +5V      -> ESP32-S3 / logic / TFT / buzzer
-       --> +12V rail ----> AOD4184 (J16) -> 370 air pump 12V (3s / 5min)
-       --> TMC2209 (U3) VM=12V + VIO=3V3; NEMA17 on U3 Mot pins (no J2)
-       --> ULN2003 driver modules x3 (U5-U7) IN from 595; 28BYJ on module JST (no J5-J7)
-Jacks: J8/J10/J12 HOME XH-2, J14 BUP XH-4, J15 buzzer XH-3, J16 AOD4184 XH-4,
-       J17+J23 TFT, J18 ENC XH-4; PC817x4 on carrier. ULN via 74HC595-24IO (3x595) east of ESP32.
-MCU: ESP32-S3-DevKitC-1 (44-pin, 2x22 @ 2.54, row 25.4). Prefer N16R8;
-     do not use GPIO35-37 on octal flash boards.
+Board mới: 100×100 mm, WROOM-32 hàn, chỉ TMC còn đế cắm.
 """
+# COMPACT_DELEGATE: fab SoT is gen_compact_carrier.py (100×100).
 
 from __future__ import annotations
 
@@ -6401,6 +6396,11 @@ def write_project() -> Path:
 
 
 def main() -> None:
+    raise SystemExit(
+        "LEGACY gen_power_carrier.py — use gen_compact_carrier.py / verify_compact.py"
+    )
+    # unreachable legacy body kept for imports of helpers if any
+
     PRETTY.mkdir(parents=True, exist_ok=True)
     fps = [
         write_mounting_hole_m3(),

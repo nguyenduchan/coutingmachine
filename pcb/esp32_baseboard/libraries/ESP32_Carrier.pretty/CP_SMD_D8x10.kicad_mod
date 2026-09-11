@@ -1,0 +1,13 @@
+(footprint "CP_SMD_D8x10"
+	(version 20240108)
+	(generator "gen_compact_carrier.py")
+	(layer "F.Cu")
+	(descr "SMD electrolytic ~8x10mm (470u/50V class)")
+	(attr smd)
+	(fp_rect (start -5.0 -5.0) (end 5.0 5.0)
+		(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
+	(fp_circle (center 0 0) (end 4.0 0)
+		(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
+	(pad "1" smd rect (at -2.8 0) (size 2.2 4.5) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "2" smd rect (at 2.8 0) (size 2.2 4.5) (layers "F.Cu" "F.Paste" "F.Mask"))
+)
