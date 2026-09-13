@@ -11,6 +11,8 @@ Pipeline (matches EDA guide):
 
 U1 (WROOM) stays fixed: rot=180, antenna north/top keepout.
 J1 (24V) stays fixed: left/west edge, rot=90 (parallel to that edge).
+J_USB stays fixed: south edge, rot=0 (mouth outward, axis ⊥ edge).
+Inlet chain locked: J1 → D3 → F1 (west edge, fuse out south); all post-fuse 24V loads south/east of F1.
 """
 
 from __future__ import annotations
@@ -22,21 +24,30 @@ from typing import Callable, Sequence
 
 
 WEAK_NETS = frozenset({
-    "GND", "+24V", "+24V_RAW", "+24V_PRE", "+24V_SNS", "+5V", "+3V3",
+    "GND", "+24V", "+24V_RAW", "+24V_PRE", "+24V_SNS", "+24V_SNS_PRE",
+    "+24V_MOT", "+5V", "+3V3",
 })
 
-# Parts on these nets must stay near J1 (24V inlet)
-RAIL_24_NETS = frozenset({"+24V", "+24V_RAW", "+24V_PRE", "+24V_SNS"})
+# Parts on these nets must stay near J1 (24V inlet) — but loads only AFTER fuse
+RAIL_24_NETS = frozenset({
+    "+24V", "+24V_RAW", "+24V_PRE", "+24V_SNS", "+24V_SNS_PRE", "+24V_MOT",
+})
+POST_FUSE_NETS = frozenset({
+    "+24V", "+24V_SNS", "+24V_SNS_PRE", "+24V_MOT",
+})  # protected rails (after F1)
+PRE_FUSE_REFS = frozenset({"J1", "D3", "F1"})
 
 EDGE_PREF = {
-    "J_USB": ("S", 6.0),
+    "SW_BOOT": ("S", 5.0),
+    "SW_EN": ("S", 5.0),
     # 24V loads hug west edge near J1
     "U3": ("W", 7.0),
+    "PTC_MOT": ("W", 5.5),
+    "PTC_SNS": ("W", 5.0),
     "J14": ("W", 6.0),
     "J15": ("W", 6.0),
     "J_DISP": ("S", 7.0),
     "J_KEY": ("S", 6.0),
-    "BZ1": ("S", 5.0),
 }
 
 # Spatial bins — POWER/TMC/OPTO packed on west near J1; U1 owns north strip
@@ -91,11 +102,17 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
     others = []
 
     def set_rot(p, rot: float) -> None:
-        """Apply rotation; update courtyard w/h. U1 locked 180, J1 locked 90."""
+        """Apply rotation; update courtyard w/h. U1/J1/J_USB/D3/F1 locked."""
         if p is u1:
             rot = 180.0
         elif p.ref == "J1":
             rot = 90.0
+        elif p.ref == "J_USB":
+            rot = 0.0  # local +Y = mouth → world south (outward)
+        elif p.ref == "D3":
+            rot = 0.0  # anode west → cathode east (RAW→PRE)
+        elif p.ref == "F1":
+            rot = 90.0  # pad1 PRE north, pad2 +24V south (along west edge)
         rot = float(int(rot) % 360)
         if rot not in (0.0, 90.0, 180.0, 270.0):
             rot = 0.0
@@ -136,9 +153,9 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
         ox = min_dx - abs(dx)
         oy = min_dy - abs(dy)
         eps = 0.05
-        # Never move U1/J1 — always shove the other body
-        a_fixed = a.ref in ("U1", "J1")
-        b_fixed = b.ref in ("U1", "J1")
+        # Never move locked edge/inlet parts — always shove the other body
+        a_fixed = a.ref in ("U1", "J1", "J_USB", "D3", "F1")
+        b_fixed = b.ref in ("U1", "J1", "J_USB", "D3", "F1")
 
         def _push_x(target, sgn, push):
             target.x += push * sgn
@@ -234,21 +251,88 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
         j1.y = min(max(j1.y, ymin), ymax)
         clamp(j1)
 
-    # --- pin U1 (antenna north/top) + J1 (24V on west edge) ---
+    def pin_j_usb() -> None:
+        """USB Micro-B: flush south Edge.Cuts, mouth +Y outward (rot=0)."""
+        set_rot(usb, 0.0)
+        # Footprint: mouth at local +Y (silk OUT), pads at −Y (inboard).
+        # CrtYd end y=+4.0 → south face on Edge.Cuts.
+        south_ext = 4.0
+        usb.y = cfg.oy + cfg.board_h - south_ext
+        usb.x = cfg.ox + 0.72 * cfg.board_w
+        usb.x = min(max(usb.x, ix0 + usb.w / 2), ix1 - usb.w / 2)
+
+    def pin_inlet_chain() -> None:
+        """J1 → D3 → F1 along west: fuse vertical, +24V out toward south."""
+        pin_j1()
+        chain_gap = cfg.gap + 0.5
+        set_rot(d3, 0.0)
+        d3.x = j1.x + j1.w / 2 + chain_gap + d3.w / 2
+        d3.y = j1.y
+        d3.y = min(max(d3.y, iy0 + d3.h / 2), iy1 - d3.h / 2)
+        # F1 rot=90: tall on west; clear below J1/D3 courtyards
+        set_rot(f1, 90.0)
+        f1.x = ix0 + f1.w / 2
+        y_clear = max(j1.y + j1.h / 2, d3.y + d3.h / 2) + chain_gap
+        f1.y = y_clear + f1.h / 2
+        f1.y = min(max(f1.y, iy0 + f1.h / 2), iy1 - f1.h / 2)
+
+    def fuse_out_y() -> float:
+        """World Y of F1 pad2 (+24V) with rot=90 (local +11.25 → +Y)."""
+        return f1.y + 11.25
+
+    def fuse_out_x() -> float:
+        """West-strip east face — loads stay east of inlet column."""
+        return max(f1.x + f1.w / 2, d3.x + d3.w / 2, j1.x + j1.w / 2)
+
+    def is_post_fuse_load(p) -> bool:
+        if p.ref in PRE_FUSE_REFS:
+            return False
+        return any(n in POST_FUSE_NETS for n in (p.pad_nets or {}).values())
+
+    def enforce_post_fuse() -> None:
+        """Keep +24V loads out of pre-fuse inlet pocket (west of column AND north of fuse out).
+
+        Allowed: east of inlet column, or south of fuse output (or both).
+        """
+        ymin = fuse_out_y() + cfg.gap
+        xmin = fuse_out_x() + cfg.gap
+        for p in others:
+            if not is_post_fuse_load(p):
+                continue
+            left = p.x - p.w / 2
+            top = p.y - p.h / 2
+            in_pocket = left < xmin and top < ymin
+            if in_pocket:
+                # Prefer push east (beside fuse) — denser than forcing everything south
+                p.x = xmin + p.w / 2
+                if p.y - p.h / 2 < ymin and p.x - p.w / 2 < xmin:
+                    p.y = ymin + p.h / 2
+            clamp(p)
+            eject_keepout(p)
+
+    def pin_locked_edges() -> None:
+        pin_inlet_chain()
+        pin_j_usb()
+        enforce_post_fuse()
+
+    # --- pin U1 + inlet J1→D3→F1 + J_USB ---
     set_rot(u1, 180.0)
     u1.y = cfg.oy + cfg.margin + cfg.ant_clear + cfg.ant_tip
     u1.x = cfg.ox + 0.55 * cfg.board_w
     clamp(u1)
 
     j1 = by_ref["J1"]
-    j1.y = u1.y + 0.28 * cfg.board_h
-    pin_j1()
-
-    locked_refs = {"U1", "J1"}
+    d3 = by_ref["D3"]
+    f1 = by_ref["F1"]
+    usb = by_ref["J_USB"]
+    locked_refs = {"U1", "J1", "J_USB", "D3", "F1"}
     others = [p for p in movable if p.ref not in locked_refs]
 
     def is_locked(p) -> bool:
         return p.ref in locked_refs
+
+    j1.y = u1.y + u1.h / 2 + cfg.gap + j1.h / 2 + 1.0  # tight under U1; F1 hangs south
+    pin_locked_edges()
 
     # --- net graph ---
     def net_weight(net: str) -> float:
@@ -369,19 +453,28 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
         )
         x0, y0, x1, y1 = box
         if rname in ("POWER", "TMC", "OPTO"):
-            # pack east of J1 on the 24V island (west edge)
-            x = max(x0 + 1.0, j1.x + j1.w / 2 + cfg.gap)
-            y = max(y0 + 1.0, j1.y - 12.0)
+            # pack beside/below fuse (east of inlet OR south of fuse out)
+            x = max(x0 + 1.0, fuse_out_x() + cfg.gap)
+            y = max(y0 + 1.0, j1.y - 6.0)
         else:
             x, y = x0 + 1.0, y0 + 1.0
         row_h = 0.0
         for p in group:
             if x + p.w / 2 > x1 - 1.0:
-                x = x0 + 1.0 if rname not in ("POWER", "TMC", "OPTO") else max(x0 + 1.0, j1.x + j1.w / 2 + cfg.gap)
+                x = (
+                    x0 + 1.0
+                    if rname not in ("POWER", "TMC", "OPTO")
+                    else max(x0 + 1.0, fuse_out_x() + cfg.gap)
+                )
                 y += row_h + cfg.gap
                 row_h = 0.0
             p.x = min(max(x + p.w / 2, x0 + p.w / 2), x1 - p.w / 2)
             p.y = min(max(y + p.h / 2, y0 + p.h / 2), y1 - p.h / 2)
+            if is_post_fuse_load(p):
+                xmin = fuse_out_x() + cfg.gap
+                ymin = fuse_out_y() + cfg.gap
+                if p.x - p.w / 2 < xmin and p.y - p.h / 2 < ymin:
+                    p.x = xmin + p.w / 2
             clamp(p)
             eject_keepout(p)
             x += p.w + cfg.gap
@@ -405,9 +498,9 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
         if side == "S":
             return (p.x, iy1 - p.h / 2, 0.4 * s / 10)
         if side == "W":
-            # hug left edge (near J1), stay south of antenna keepout
-            tx = ix0 + p.w / 2 + 1.0
-            ty = max(p.y, ky1 + p.h / 2 + cfg.gap)
+            # hug west post-fuse: east of inlet, may sit beside F1
+            tx = fuse_out_x() + cfg.gap + p.w / 2 + 1.0
+            ty = max(p.y, j1.y)
             return (tx, ty, 0.4 * s / 10)
         if side == "E":
             return (ix1 - p.w / 2, p.y, 0.4 * s / 10)
@@ -438,7 +531,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             p.x, p.y = new_xy[p.ref]
             clamp(p)
             eject_keepout(p)
-        pin_j1()
+        pin_locked_edges()
 
     # =====================================================================
     # 3) Force-directed
@@ -497,15 +590,17 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             kd = in_keepout(p)
             if kd > 0:
                 fx += 1.2 * kd + 0.8
-            # Pull 24V rail parts toward J1 (west)
-            if uses_24v(p):
-                fx += 0.08 * (j1.x + 12.0 - p.x)
-                fy += 0.06 * (j1.y - p.y)
+            # Pull post-fuse 24V loads east of inlet (beside fuse preferred)
+            if is_post_fuse_load(p):
+                tx = fuse_out_x() + 12.0
+                ty = 0.5 * (j1.y + fuse_out_y())
+                fx += 0.12 * (tx - p.x)
+                fy += 0.08 * (ty - p.y)
             p.x += fx + cx
             p.y += fy + cy
             clamp(p)
             eject_keepout(p)
-        pin_j1()
+        pin_locked_edges()
 
     # =====================================================================
     # Cost (shared by GA + SA)
@@ -553,22 +648,29 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             elif side == "S":
                 s += w * abs(p.y - (iy1 - p.h / 2))
             elif side == "W":
-                _a, _b, _c, ky1 = antenna_ko()
-                target_x = ix0 + p.w / 2 + 1.0
-                target_y = max(iy0 + p.h / 2, ky1 + p.h / 2 + cfg.gap)
+                target_x = fuse_out_x() + cfg.gap + p.w / 2 + 1.0
+                target_y = max(iy0 + p.h / 2, j1.y)
                 s += w * (abs(p.x - target_x) + 0.5 * abs(p.y - target_y))
             elif side == "E":
                 s += w * abs(p.x - (ix1 - p.w / 2))
         return s
 
     def rail_24_cost() -> float:
-        """Penalize 24V parts far from J1 (Manhattan)."""
+        """Penalize post-fuse loads inside pre-fuse inlet pocket."""
         s = 0.0
-        tx = j1.x + 14.0
+        xmin = fuse_out_x() + cfg.gap
+        ymin = fuse_out_y() + cfg.gap
+        tx = xmin + 10.0
+        ty = 0.5 * (j1.y + fuse_out_y())
         for p in others:
-            if not uses_24v(p):
+            if not is_post_fuse_load(p):
                 continue
-            s += abs(p.x - tx) + abs(p.y - j1.y)
+            left = p.x - p.w / 2
+            top = p.y - p.h / 2
+            if left < xmin and top < ymin:
+                s += 100.0 * ((xmin - left) ** 2 + (ymin - top) ** 2)
+            s += abs(p.x - tx) + 0.5 * abs(p.y - ty)
+        return s
         return s
 
     def total_cost() -> float:
@@ -591,7 +693,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             p.x, p.y = x, y
             clamp(p)
             eject_keepout(p)
-        pin_j1()
+        pin_locked_edges()
 
     # =====================================================================
     # 4) Genetic / evolutionary
@@ -677,7 +779,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
     for p in others:
         clamp(p)
         eject_keepout(p)
-    pin_j1()
+    pin_locked_edges()
 
     # =====================================================================
     # 6) Legalization — separate courtyards until gap clear
@@ -695,7 +797,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
         for p in others:
             clamp(p)
             eject_keepout(p)
-        pin_j1()
+        pin_locked_edges()
         clamp(u1)
         if not moved:
             break
@@ -744,26 +846,28 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             for p in others:
                 clamp(p)
                 eject_keepout(p)
-            pin_j1()
+            pin_locked_edges()
             if not moved:
                 break
 
     for p in others:
         eject_keepout(p)
-    pin_j1()
+    pin_locked_edges()
 
-    # Soft pull 24V parts toward J1 without breaking clearance
-    tx = j1.x + 14.0
+    # Soft pull post-fuse 24V loads toward east of inlet (beside fuse)
+    tx = fuse_out_x() + 12.0
+    ty = 0.5 * (j1.y + fuse_out_y())
     for _ in range(80):
         moved = False
         for p in others:
-            if not uses_24v(p):
+            if not is_post_fuse_load(p):
                 continue
             ox, oy = p.x, p.y
             p.x += 0.4 * (tx - p.x) / max(abs(tx - p.x), 1.0)
-            p.y += 0.4 * (j1.y - p.y) / max(abs(j1.y - p.y), 1.0)
+            p.y += 0.4 * (ty - p.y) / max(abs(ty - p.y), 1.0)
             clamp(p)
             eject_keepout(p)
+            enforce_post_fuse()
             if in_keepout(p) > 0 or any(overlaps(p, q) for q in movable if q is not p):
                 p.x, p.y = ox, oy
             elif abs(p.x - ox) + abs(p.y - oy) > 0.02:
@@ -781,7 +885,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
         for p in others:
             clamp(p)
             eject_keepout(p)
-        pin_j1()
+        pin_locked_edges()
         clamp(u1)
         if not moved:
             break

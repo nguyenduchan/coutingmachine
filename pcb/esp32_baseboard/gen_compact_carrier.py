@@ -26,7 +26,6 @@ from pathlib import Path
 
 from esp32_pinmap import (
     BUP_GPIO,
-    BUZZER_GPIO,
     KEYPAD_GPIO,
     PIN_BY_NAME,
     TM1637_GPIO,
@@ -45,13 +44,13 @@ PCB = ROOT / "esp32_baseboard.kicad_pcb"
 BOARD_W = 90.0
 BOARD_H = 90.0
 OX, OY = 50.0, 50.0  # Edge.Cuts origin
-MARGIN = 4.0  # keep parts inside edge
-GAP = 2.5  # min clear space between courtyards (mm)
+MARGIN = 3.0  # keep parts inside edge
+GAP = 2.0  # min clear space between courtyards (mm)
 
 # WROOM-32: antenna along local +Y; with rot=180 antenna points world −Y (board top / north).
 ANT_TIP = 13.5  # mm from module origin to antenna tip (courtyard +Y)
-ANT_CLEAR = 15.0  # mm keepout beyond tip (no other parts)
-ANT_HALF_W = 14.0  # keepout half-width about antenna axis
+ANT_CLEAR = 12.0  # mm keepout beyond tip (no other parts)
+ANT_HALF_W = 12.0  # keepout half-width about antenna axis
 
 
 def uid() -> str:
@@ -140,6 +139,8 @@ def ensure_extra_footprints() -> None:
 """,
     )
 
+    # USB Micro-B SMT right-angle: MOUTH at local +Y (overhangs south edge with rot=0);
+    # signal pads at local −Y (toward board interior). Cable plugs from outside.
     write(
         "USB_MicroB",
         """
@@ -147,40 +148,30 @@ def ensure_extra_footprints() -> None:
 \t(version 20240108)
 \t(generator "gen_compact_carrier.py")
 \t(layer "F.Cu")
-\t(descr "USB Micro-B THT")
-\t(attr through_hole)
-\t(fp_rect (start -4.5 -4) (end 4.5 3.5)
-\t\t(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
-\t(fp_rect (start -5 -4.5) (end 5 4)
+\t(descr "USB Micro-B SMT R/A — mouth +Y (edge), pads -Y (inboard)")
+\t(attr smd)
+\t(fp_rect (start -4.0 -3.5) (end 4.0 4.0)
 \t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
-\t(pad "1" thru_hole rect (at -2.0 0) (size 1.2 1.2) (drill 0.7) (layers "*.Cu" "*.Mask"))
-\t(pad "2" thru_hole circle (at -1.0 0) (size 1.2 1.2) (drill 0.7) (layers "*.Cu" "*.Mask"))
-\t(pad "3" thru_hole circle (at 0.0 0) (size 1.2 1.2) (drill 0.7) (layers "*.Cu" "*.Mask"))
-\t(pad "4" thru_hole circle (at 1.0 0) (size 1.2 1.2) (drill 0.7) (layers "*.Cu" "*.Mask"))
-\t(pad "5" thru_hole circle (at 2.0 0) (size 1.2 1.2) (drill 0.7) (layers "*.Cu" "*.Mask"))
-\t(pad "MH1" thru_hole circle (at -3.5 -2.5) (size 1.8 1.8) (drill 1.1) (layers "*.Cu" "*.Mask"))
-\t(pad "MH2" thru_hole circle (at 3.5 -2.5) (size 1.8 1.8) (drill 1.1) (layers "*.Cu" "*.Mask"))
+\t(fp_rect (start -3.4 -2.4) (end 3.4 2.8)
+\t\t(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
+\t(fp_line (start -2.2 3.5) (end 2.2 3.5)
+\t\t(stroke (width 0.15) (type solid)) (layer "F.SilkS"))
+\t(fp_line (start -2.2 3.5) (end -2.2 2.8)
+\t\t(stroke (width 0.15) (type solid)) (layer "F.SilkS"))
+\t(fp_line (start 2.2 3.5) (end 2.2 2.8)
+\t\t(stroke (width 0.15) (type solid)) (layer "F.SilkS"))
+\t(fp_text user "OUT" (at 0 4.4 0) (layer "F.SilkS")
+\t\t(effects (font (size 0.6 0.6) (thickness 0.1))))
+\t(pad "1" smd rect (at -1.30 -2.50) (size 0.40 1.45) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "2" smd rect (at -0.65 -2.50) (size 0.40 1.45) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "3" smd rect (at 0.00 -2.50) (size 0.40 1.45) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "4" smd rect (at 0.65 -2.50) (size 0.40 1.45) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "5" smd rect (at 1.30 -2.50) (size 0.40 1.45) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "MH1" smd rect (at -2.90 0.20) (size 1.50 2.20) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "MH2" smd rect (at 2.90 0.20) (size 1.50 2.20) (layers "F.Cu" "F.Paste" "F.Mask"))
 )
 """,
-    )
-
-    write(
-        "Buzzer_5V_THT",
-        """
-(footprint "Buzzer_5V_THT"
-\t(version 20240108)
-\t(generator "gen_compact_carrier.py")
-\t(layer "F.Cu")
-\t(descr "Active buzzer 5V")
-\t(attr through_hole)
-\t(fp_circle (center 0 0) (end 6 0)
-\t\t(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
-\t(fp_circle (center 0 0) (end 6.5 0)
-\t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
-\t(pad "1" thru_hole rect (at -2.54 0) (size 1.8 1.8) (drill 1.0) (layers "*.Cu" "*.Mask"))
-\t(pad "2" thru_hole circle (at 2.54 0) (size 1.8 1.8) (drill 1.0) (layers "*.Cu" "*.Mask"))
-)
-""",
+        force=True,
     )
 
     write(
@@ -487,21 +478,112 @@ def ensure_extra_footprints() -> None:
 """,
         force=True,
     )
+    # S8050 / SS8050 NPN SOT-23: 1=B 2=E 3=C
     write(
-        "Buzzer_SMD_5V",
+        "S8050_SOT23",
         """
-(footprint "Buzzer_SMD_5V"
+(footprint "S8050_SOT23"
+\t(version 20240108)
+\t(generator "gen_compact_carrier.py")
+\t(layer "F.Cu")
+\t(descr "NPN S8050 SOT-23")
+\t(attr smd)
+\t(fp_rect (start -1.7 -1.65) (end 1.7 1.8)
+\t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
+\t(fp_line (start -0.7 -1.0) (end 0.7 -1.0)
+\t\t(stroke (width 0.12) (type solid)) (layer "F.SilkS"))
+\t(pad "1" smd rect (at -1.05 -1.0) (size 0.7 0.8) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "2" smd rect (at 1.05 -1.0) (size 0.7 0.8) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "3" smd rect (at 0.0 1.1) (size 0.7 0.8) (layers "F.Cu" "F.Paste" "F.Mask"))
+)
+""",
+        force=True,
+    )
+    # 12 MHz crystal 3225 (2-pad class / pads 1-3 used on 4-pad parts)
+    write(
+        "Crystal_SMD_3225",
+        """
+(footprint "Crystal_SMD_3225"
+\t(version 20240108)
+\t(generator "gen_compact_carrier.py")
+\t(layer "F.Cu")
+\t(descr "Crystal 3.2x2.5mm 12MHz")
+\t(attr smd)
+\t(fp_rect (start -2.0 -1.7) (end 2.0 1.7)
+\t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
+\t(fp_rect (start -1.6 -1.25) (end 1.6 1.25)
+\t\t(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
+\t(pad "1" smd rect (at -1.1 0.75) (size 1.0 0.9) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "2" smd rect (at 1.1 0.75) (size 1.0 0.9) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "3" smd rect (at 1.1 -0.75) (size 1.0 0.9) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "4" smd rect (at -1.1 -0.75) (size 1.0 0.9) (layers "F.Cu" "F.Paste" "F.Mask"))
+)
+""",
+        force=True,
+    )
+    # 6x6 mm tactile — hand-solder THT
+    write(
+        "SW_Push_6mm",
+        """
+(footprint "SW_Push_6mm"
+\t(version 20240108)
+\t(generator "gen_compact_carrier.py")
+\t(layer "F.Cu")
+\t(descr "Tactile switch 6x6mm THT")
+\t(attr through_hole)
+\t(fp_rect (start -3.5 -3.5) (end 3.5 3.5)
+\t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
+\t(fp_rect (start -3.0 -3.0) (end 3.0 3.0)
+\t\t(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
+\t(fp_circle (center 0 0) (end 1.2 0)
+\t\t(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
+\t(pad "1" thru_hole circle (at -2.25 -1.5) (size 1.5 1.5) (drill 0.9) (layers "*.Cu" "*.Mask"))
+\t(pad "2" thru_hole circle (at 2.25 -1.5) (size 1.5 1.5) (drill 0.9) (layers "*.Cu" "*.Mask"))
+\t(pad "3" thru_hole circle (at 2.25 1.5) (size 1.5 1.5) (drill 0.9) (layers "*.Cu" "*.Mask"))
+\t	(pad "4" thru_hole circle (at -2.25 1.5) (size 1.5 1.5) (drill 0.9) (layers "*.Cu" "*.Mask"))
+)
+""",
+        force=True,
+    )
+    # SMD PTC 1812 (MF-MSMF / 1812L series, ≥30 V)
+    write(
+        "PTC_1812",
+        """
+(footprint "PTC_1812"
 	(version 20240108)
 	(generator "gen_compact_carrier.py")
 	(layer "F.Cu")
-	(descr "SMD active buzzer 5V ~9x9mm")
+	(descr "Resettable PTC fuse 1812 SMD")
 	(attr smd)
-	(fp_rect (start -5.5 -5.5) (end 5.5 5.5)
+	(fp_rect (start -2.6 -1.5) (end 2.6 1.5)
 		(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
-	(fp_circle (center 0 0) (end 4.5 0)
+	(fp_rect (start -2.2 -1.1) (end 2.2 1.1)
 		(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
-	(pad "1" smd rect (at -3.0 0) (size 1.8 2.5) (layers "F.Cu" "F.Paste" "F.Mask"))
-	(pad "2" smd rect (at 3.0 0) (size 1.8 2.5) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "1" smd roundrect (at -1.85 0) (size 1.15 1.8)
+		(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))
+	(pad "2" smd roundrect (at 1.85 0) (size 1.15 1.8)
+		(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))
+)
+""",
+        force=True,
+    )
+    write(
+        "R_1206_22R",
+        """
+(footprint "R_1206_22R"
+	(version 20240108)
+	(generator "gen_compact_carrier.py")
+	(layer "F.Cu")
+	(descr "22 ohm 1206 SNS series limiter")
+	(attr smd)
+	(fp_rect (start -1.7 -0.9) (end 1.7 0.9)
+		(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
+	(fp_rect (start -1.9 -1.1) (end 1.9 1.1)
+		(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
+	(pad "1" smd roundrect (at -1.4 0) (size 1.0 1.5)
+		(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))
+	(pad "2" smd roundrect (at 1.4 0) (size 1.0 1.5)
+		(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))
 )
 """,
         force=True,
@@ -547,7 +629,7 @@ def courtyard_size(fp_name: str) -> tuple[float, float]:
     if half_w < 0.5 or half_h < 0.5:
         return (12.0, 12.0)
     # Extra packing margin so bodies/silk don't look glued
-    pad = 0.8
+    pad = 0.5
     return (2 * half_w + pad, 2 * half_h + pad)
 
 
@@ -629,18 +711,6 @@ def build_parts() -> list[Part]:
         TMC_GPIO["DIR"]: "/DIR",
         TMC_GPIO["EN"]: "/EN_TMC",
         BUP_GPIO: "/BUP",
-        BUZZER_GPIO: "/BUZZER",
-        TM1637_GPIO["CLK"]: "/TM_CLK",
-        TM1637_GPIO["DIO"]: "/TM_DIO",
-        **{KEYPAD_GPIO[k]: f"/KEY_{k.replace('ROW','R').replace('COL','C')}" for k in KEYPAD_GPIO},
-    }
-    # normalize KEY names
-    gpio_net = {
-        TMC_GPIO["STEP"]: "/STEP",
-        TMC_GPIO["DIR"]: "/DIR",
-        TMC_GPIO["EN"]: "/EN_TMC",
-        BUP_GPIO: "/BUP",
-        BUZZER_GPIO: "/BUZZER",
         TM1637_GPIO["CLK"]: "/TM_CLK",
         TM1637_GPIO["DIO"]: "/TM_DIO",
         KEYPAD_GPIO["ROW0"]: "/KEY_R0",
@@ -651,6 +721,8 @@ def build_parts() -> list[Part]:
         KEYPAD_GPIO["COL1"]: "/KEY_C1",
         KEYPAD_GPIO["COL2"]: "/KEY_C2",
         KEYPAD_GPIO["COL3"]: "/KEY_C3",
+        0: "/IO0",  # boot strap
+        2: "/IO2",  # boot strap pull-up
     }
 
     u1_nets: dict[str, str] = {}
@@ -660,7 +732,7 @@ def build_parts() -> list[Part]:
         elif name == "3V3":
             u1_nets[str(num)] = "+3V3"
         elif name == "EN":
-            u1_nets[str(num)] = "+3V3"
+            u1_nets[str(num)] = "/EN"
         elif name == "TXD0":
             u1_nets[str(num)] = "/UART_TX"
         elif name == "RXD0":
@@ -675,21 +747,48 @@ def build_parts() -> list[Part]:
         P("H2", "MountingHole_M3", "M3", "MOUNT", board_only=True),
         P("H3", "MountingHole_M3", "M3", "MOUNT", board_only=True),
         P("H4", "MountingHole_M3", "M3", "MOUNT", board_only=True),
-        P("J_USB", "USB_MicroB", "USB", "MCU", {
+        P("J_USB", "USB_MicroB", "USB_MicroB", "MCU", {
             "1": "+5V", "2": "/USB_DM", "3": "/USB_DP", "5": "GND", "MH1": "GND", "MH2": "GND",
         }),
+        # CH340C: TXD→ESP RX, RXD←ESP TX; XI/XO crystal; DTR/RTS auto-program
         P("U5", "CH340C", "CH340C", "MCU", {
             "1": "GND", "2": "/UART_RX", "3": "/UART_TX", "4": "+3V3",
-            "5": "/USB_DP", "6": "/USB_DM", "16": "+5V",
+            "5": "/USB_DP", "6": "/USB_DM",
+            "7": "/CH340_XI", "8": "/CH340_XO",
+            "10": "/DTR", "15": "/RTS",
+            "16": "+5V",
+        }),
+        P("Y1", "Crystal_SMD_3225", "12MHz", "MCU", {
+            "1": "/CH340_XI", "3": "/CH340_XO", "2": "GND", "4": "GND",
+        }),
+        P("C_XI", "C_0805", "22p", "MCU", {"1": "/CH340_XI", "2": "GND"}),
+        P("C_XO", "C_0805", "22p", "MCU", {"1": "/CH340_XO", "2": "GND"}),
+        P("C52", "C_0805_100n", "100n", "MCU", {"1": "+3V3", "2": "GND"}),  # CH340 V3
+        P("C53", "C_0805_100n", "100n", "MCU", {"1": "+5V", "2": "GND"}),   # CH340 VCC
+        # Auto-program NodeMCU: DTR→10k→Q1→IO0, RTS→10k→Q2→EN; also C couple for edge assist
+        P("R_DTR", "R_0805_10k", "10k", "MCU", {"1": "/DTR", "2": "/Q_BOOT_B"}),
+        P("R_RTS", "R_0805_10k", "10k", "MCU", {"1": "/RTS", "2": "/Q_EN_B"}),
+        P("C_DTR", "C_0805_100n", "100n", "MCU", {"1": "/DTR", "2": "/IO0"}),
+        P("C_RTS", "C_0805_100n", "100n", "MCU", {"1": "/RTS", "2": "/EN"}),
+        P("Q1", "S8050_SOT23", "S8050", "MCU", {"1": "/Q_BOOT_B", "2": "GND", "3": "/IO0"}),
+        P("Q2", "S8050_SOT23", "S8050", "MCU", {"1": "/Q_EN_B", "2": "GND", "3": "/EN"}),
+        P("R_EN", "R_0805_10k", "10k", "MCU", {"1": "+3V3", "2": "/EN"}),
+        P("R_IO0", "R_0805_10k", "10k", "MCU", {"1": "+3V3", "2": "/IO0"}),
+        P("R_IO2", "R_0805_10k", "10k", "MCU", {"1": "+3V3", "2": "/IO2"}),
+        P("SW_BOOT", "SW_Push_6mm", "BOOT", "MCU", {
+            "1": "/IO0", "2": "/IO0", "3": "GND", "4": "GND",
+        }),
+        P("SW_EN", "SW_Push_6mm", "EN", "MCU", {
+            "1": "/EN", "2": "/EN", "3": "GND", "4": "GND",
         }),
         P("U1", "ESP32_WROOM_32", "WROOM-32", "MCU", u1_nets, rot=180),
         P("U6", "AMS1117_SOT223", "AMS1117-3.3", "MCU", {
             "1": "GND", "2": "+3V3", "3": "+5V", "TAB": "+3V3",
         }),
         P("J1", "TerminalBlock_2P_5.0mm", "24V_IN", "POWER", {"1": "+24V_RAW", "2": "GND"}),
-        # Input protect SMT (fuse holder = hand-solder socket later)
+        # Input protect: reverse (D3) → T2A fuse → TVS clamp (loads after F1 only)
         P("D3", "Diode_SMA", "SS54", "POWER", {"1": "+24V_RAW", "2": "+24V_PRE"}),
-        P("F1", "Fuse_Holder_5x20_Open", "T2.5A", "POWER", {"1": "+24V_PRE", "2": "+24V"}, rot=90),
+        P("F1", "Fuse_Holder_5x20_Open", "T2A", "POWER", {"1": "+24V_PRE", "2": "+24V"}, rot=90),
         P("D1", "Diode_SMB_TVS", "SMBJ26A", "POWER", {"1": "GND", "2": "+24V"}),  # A=GND K=+24V
         # Discrete buck 24V→5V: U2 + L1 + D4 + Rfb + Cbst
         P("U2", "MP1584EN_SOT23-8", "MP1584EN", "POWER", {
@@ -702,19 +801,24 @@ def build_parts() -> list[Part]:
         P("Rfb2", "R_0805_10k", "10k", "POWER", {"1": "/BUCK_FB", "2": "GND"}),
         P("Cbst", "C_0805", "10n", "POWER", {"1": "/BUCK_BS", "2": "/BUCK_SW"}),
         P("Cc", "C_0805", "3n3", "POWER", {"1": "/BUCK_COMP", "2": "GND"}),
-        P("R10", "R_1206_10R", "10R", "POWER", {"1": "+24V", "2": "+24V_SNS"}),
+        # SNS branch: PTC then series R (short at J14/J15 trips PTC_SNS, not whole board)
+        P("PTC_SNS", "PTC_1812", "0.2A", "POWER", {"1": "+24V", "2": "+24V_SNS_PRE"}),
+        P("R10", "R_1206_22R", "22R", "POWER", {"1": "+24V_SNS_PRE", "2": "+24V_SNS"}),
         P("C10", "CP_SMD_D6.3x5.8", "47u/50V", "POWER", {"1": "+24V_SNS", "2": "GND"}),
         P("C11", "C_0805_100n", "100n", "POWER", {"1": "+24V_SNS", "2": "GND"}),
         P("C21", "CP_SMD_D6.3x5.8", "220u/50V", "POWER", {"1": "+24V", "2": "GND"}),
-        P("C20", "CP_SMD_D8x10", "470u/50V", "TMC", {"1": "+24V", "2": "GND"}),
-        P("C24", "C_0805_100n", "100n", "TMC", {"1": "+24V", "2": "GND"}),
+        # Motor VM behind PTC so motor short can isolate without killing MCU rail
+        P("PTC_MOT", "PTC_1812", "1.1A", "TMC", {"1": "+24V", "2": "+24V_MOT"}),
+        P("C20", "CP_SMD_D8x10", "470u/50V", "TMC", {"1": "+24V_MOT", "2": "GND"}),
+        P("C24", "C_0805_100n", "100n", "TMC", {"1": "+24V_MOT", "2": "GND"}),
         P("C5", "CP_SMD_D6.3x5.8", "100u/16V", "MCU", {"1": "+5V", "2": "GND"}),
         P("C51", "C_0805_100n", "100n", "MCU", {"1": "+5V", "2": "GND"}),
+        P("D5", "Diode_SMB_TVS", "SMBJ5.0A", "MCU", {"1": "GND", "2": "+5V"}),  # +5V clamp
         P("C3", "CP_SMD_D6.3x5.8", "47u/10V", "MCU", {"1": "+3V3", "2": "GND"}),
         P("C31", "C_0805_100n", "100n", "MCU", {"1": "+3V3", "2": "GND"}),
         P("U3", "TMC2209_StepStick", "TMC_SOCK", "TMC", {
             "1": "/EN_TMC", "7": "/STEP", "8": "/DIR",
-            "9": "+24V", "10": "GND",
+            "9": "+24V_MOT", "10": "GND",
             "11": "/MotA2", "12": "/MotA1", "13": "/MotB1", "14": "/MotB2",
             "15": "+3V3", "16": "GND",
         }, rot=270),
@@ -734,7 +838,6 @@ def build_parts() -> list[Part]:
             "1": "/KEY_R0", "2": "/KEY_R1", "3": "/KEY_R2", "4": "/KEY_R3",
             "5": "/KEY_C0", "6": "/KEY_C1", "7": "/KEY_C2", "8": "/KEY_C3",
         }),
-        P("BZ1", "Buzzer_SMD_5V", "BUZZ", "HMI", {"1": "+5V", "2": "/BUZZER"}),
         P("J14", "JST_XH_04_Socket", "BUP_U", "OPTO", {
             "1": "+24V_SNS", "2": "GND", "3": "/OPTO_IN_BUP",
         }),
@@ -813,38 +916,48 @@ NETS = {
     11: "/MotB2",
     12: "/BUP",
     13: "/OPTO_IN_BUP",
-    14: "/BUZZER",
-    15: "/TM_CLK",
-    16: "/TM_DIO",
-    17: "/KEY_R0",
-    18: "/KEY_R1",
-    19: "/KEY_R2",
-    20: "/KEY_R3",
-    21: "/KEY_C0",
-    22: "/KEY_C1",
-    23: "/KEY_C2",
-    24: "/KEY_C3",
-    25: "+24V_RAW",
-    26: "+24V_PRE",
-    27: "+24V_SNS",
-    28: "/USB_DP",
-    29: "/USB_DM",
-    30: "/UART_TX",
-    31: "/UART_RX",
-    32: "/BUCK_SW",
-    33: "/BUCK_FB",
-    34: "/BUCK_BS",
-    35: "/BUCK_COMP",
-    36: "/TM_G1",
-    37: "/TM_G2",
-    38: "/TM_G3",
-    39: "/TM_SA",
-    40: "/TM_SB",
-    41: "/TM_SC",
-    42: "/TM_SD",
-    43: "/TM_SE",
-    44: "/TM_SF",
-    45: "/TM_SG",
+    14: "/TM_CLK",
+    15: "/TM_DIO",
+    16: "/KEY_R0",
+    17: "/KEY_R1",
+    18: "/KEY_R2",
+    19: "/KEY_R3",
+    20: "/KEY_C0",
+    21: "/KEY_C1",
+    22: "/KEY_C2",
+    23: "/KEY_C3",
+    24: "+24V_RAW",
+    25: "+24V_PRE",
+    26: "+24V_SNS",
+    27: "/USB_DP",
+    28: "/USB_DM",
+    29: "/UART_TX",
+    30: "/UART_RX",
+    31: "/BUCK_SW",
+    32: "/BUCK_FB",
+    33: "/BUCK_BS",
+    34: "/BUCK_COMP",
+    35: "/TM_G1",
+    36: "/TM_G2",
+    37: "/TM_G3",
+    38: "/TM_SA",
+    39: "/TM_SB",
+    40: "/TM_SC",
+    41: "/TM_SD",
+    42: "/TM_SE",
+    43: "/TM_SF",
+    44: "/TM_SG",
+    45: "/EN",
+    46: "/IO0",
+    47: "/IO2",
+    48: "/DTR",
+    49: "/RTS",
+    50: "/CH340_XI",
+    51: "/CH340_XO",
+    52: "/Q_BOOT_B",
+    53: "/Q_EN_B",
+    54: "+24V_MOT",
+    55: "+24V_SNS_PRE",
 }
 
 
@@ -1169,11 +1282,11 @@ def emit_pcb_v2(parts: list[Part]) -> None:
 def main() -> None:
     global BOARD_W, BOARD_H
     best: tuple[float, list[Part], dict] | None = None
-    # Prefer shrink; few seeds
-    for size in (85.0, 88.0, 90.0, 92.0, 95.0, 100.0, 110.0, 120.0, 150.0):
+    # Prefer smallest clean board; denser pack after GAP/MARGIN tighten
+    for size in (90.0, 95.0, 100.0, 105.0, 110.0, 115.0, 120.0, 130.0):
         BOARD_W = BOARD_H = size
         found = None
-        for seed in (42, 7):
+        for seed in (42, 7, 99, 123):
             parts = build_parts()
             metrics = pack_parts(parts, seed=seed)
             clean = (

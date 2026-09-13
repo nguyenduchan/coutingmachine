@@ -1,0 +1,10 @@
+{
+  "algorithm": "simulated_annealing_hpwl",
+  "parts": 87,
+  "signal_hpwl_mm_before": 11639.9,
+  "signal_hpwl_mm_after": 11560.8,
+  "gap_violations": 0,
+  "outside": 0,
+  "board_w": 150.0,
+  "board_h": 150.0
+}

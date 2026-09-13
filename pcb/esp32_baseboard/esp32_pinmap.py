@@ -1,7 +1,7 @@
-"""ESP32-WROOM-32 pinmap for compact 100×100 counting-machine carrier.
+"""ESP32-WROOM-32 pinmap for compact counting-machine carrier.
 
-BOM sync (2026-09-11): no 595/ULN/TFT/ENC/blower/HOME.
-TMC socket only; TM1637 on-board; 7seg + keypad via external headers; count sensor = BUP-U OR fiber (GPIO4); buzzer.
+BOM sync: no 595/ULN/TFT/ENC/blower/HOME/buzzer.
+TMC socket only; TM1637 on-board; 7seg + keypad via external headers; count sensor = BUP-U OR fiber (GPIO4).
 """
 
 from __future__ import annotations
@@ -63,7 +63,6 @@ for num, name in WROOM_LEFT + WROOM_RIGHT:
 # Function → GPIO number (classic ESP32)
 TMC_GPIO = {"STEP": 16, "DIR": 17, "EN": 18}
 BUP_GPIO = 4  # shared: J14 U-slot IR XOR J15 fiber amp (NPN → PC817)
-BUZZER_GPIO = 25
 TM1637_GPIO = {"CLK": 22, "DIO": 23}
 KEYPAD_GPIO = {
     "ROW0": 13,
@@ -80,12 +79,11 @@ USED_GPIO = sorted(
     {
         *TMC_GPIO.values(),
         BUP_GPIO,
-        BUZZER_GPIO,
         *TM1637_GPIO.values(),
         *KEYPAD_GPIO.values(),
     }
 )
-assert len(USED_GPIO) == 15, USED_GPIO
+assert len(USED_GPIO) == 14, USED_GPIO
 
 
 def wroom_pad_local(pin_num: int) -> tuple[float, float]:
