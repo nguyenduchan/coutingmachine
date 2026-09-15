@@ -64,14 +64,16 @@ TMC2_PINS = {"STEP": "PA6", "DIR": "PA7", "EN": "PA8"}
 BUP_PIN = "PA3"
 IN2_PIN = "PB15"
 IN3_PIN = "PB4"
+# Edge jack J_CNT5 — cheap 5V through-beam / IR (NPN or OC to GND)
+CNT5_PIN = "PD1"
 
-# Pluggable MOSFET / H-bridge / 24V vibrator module (U_PWR)
+# One pluggable MOSFET module per 24V output channel (U_PWR1 / U_PWR2)
 PWR_PINS = {
     "PWM1": "PA11",
     "PWM2": "PA12",
-    "EN": "PB5",
-    "DIR": "PB6",
-    "FAULT": "PB7",  # input, module OD
+    "EN1": "PB5",
+    "EN2": "PB6",
+    "FAULT": "PB7",  # shared OD from either module
 }
 # Pluggable AC vibratory / SSR control (U_VIB) — SSR lives on module
 VIB_PINS = {
@@ -91,7 +93,8 @@ KEYPAD_PINS = {
     "COL3": "PB14",
 }
 USART1_PINS = {"TX": "PA9", "RX": "PA10"}
-SWD_PINS = {"SWDIO": "PA13", "SWCLK": "PA14", "SWO": "PB3"}
+# SWDIO kept for factory pogo if needed; SWCLK=BOOT0 for USB-UART bootloader
+BOOT_PINS = {"SWDIO": "PA13", "SWCLK": "PA14"}  # no SWO / no J_DBG (USB nạp)
 
 USED_GPIO = sorted(
     {
@@ -100,12 +103,13 @@ USED_GPIO = sorted(
         BUP_PIN,
         IN2_PIN,
         IN3_PIN,
+        CNT5_PIN,
         *PWR_PINS.values(),
         *VIB_PINS.values(),
         *TM1637_PINS.values(),
         *KEYPAD_PINS.values(),
         *USART1_PINS.values(),
-        *SWD_PINS.values(),
+        *BOOT_PINS.values(),
     }
 )
 assert len(USED_GPIO) == 31, USED_GPIO

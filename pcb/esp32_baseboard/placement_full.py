@@ -31,28 +31,21 @@ POST_FUSE_NETS = frozenset({
 })
 PRE_FUSE_REFS = frozenset({"J1", "D3", "F1"})
 
-# Soft prefs for non-locked parts (edge jacks are hard-pinned)
+# Soft prefs — only inland parts that prefer south (PTC near motors/fuse)
 EDGE_PREF = {
-    "SW_BOOT": ("N", 4.0),
-    "SW_NRST": ("N", 4.0),
-    "J_DBG": ("N", 6.5),
-    "U3": ("S", 7.5),
-    "U4": ("S", 7.5),
-    "U_PWR": ("S", 6.0),
-    "U_VIB": ("S", 5.5),
-    "PTC_MOT": ("S", 5.0),
-    "PTC_MOT2": ("S", 5.0),
-    "PTC_SNS": ("S", 4.0),
+    "PTC_MOT": ("S", 4.0),
+    "PTC_MOT2": ("S", 4.0),
+    "PTC_SNS": ("S", 3.0),
 }
 
-# Y fractions: N=top(low Y) 3V3 | mid OPTO | S=bottom(high Y) 24V
+# Y fractions: fill mid board (OPTO wall) — avoid empty center
 REGION_BOX = {
-    "MCU": (0.45, 0.04, 0.92, 0.38),
-    "HMI": (0.04, 0.04, 0.55, 0.36),
-    "OPTO": (0.04, 0.32, 0.55, 0.55),
-    "POWER": (0.04, 0.50, 0.45, 0.92),
-    "TMC": (0.30, 0.48, 0.78, 0.92),
-    "PWR": (0.70, 0.48, 0.96, 0.88),
+    "MCU": (0.40, 0.14, 0.94, 0.50),
+    "HMI": (0.06, 0.14, 0.48, 0.42),
+    "OPTO": (0.10, 0.28, 0.75, 0.64),
+    "POWER": (0.06, 0.48, 0.48, 0.84),
+    "TMC": (0.30, 0.48, 0.82, 0.84),  # leftover TMC passives only (sockets on S edge)
+    "PWR": (0.52, 0.38, 0.94, 0.78),
 }
 
 REGION_ORDER = ("POWER", "TMC", "OPTO", "PWR", "MCU", "HMI")
@@ -60,16 +53,27 @@ REGION_ORDER = ("POWER", "TMC", "OPTO", "PWR", "MCU", "HMI")
 LOCKED_REFS = frozenset({
     "U1", "J1", "J_USB", "D3", "F1",
     "J_MOT1", "J_MOT2", "U3", "U4",
-    "J14", "J15", "J_IN2", "J_IN3", "J_KEY", "J_DISP",
-    "J_DBG",
+    "U_PWR1", "U_PWR2", "U_VIB",
+    "J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_P24N", "J_P5N",
+    "J_KEY", "J_DISP", "J_P24S",
+    "SW_BOOT", "SW_NRST",
 })
 
-# External field connectors — may sit on N/S board edges.
-# Everything else must keep ≥ INNER courtyard clearance from Edge.Cuts.
+# All sockets/jacks that mate to external modules/cables → N/S edges only.
 EDGE_JACK_REFS = frozenset({
-    "J1", "J_MOT1", "J_MOT2",
-    "J14", "J15", "J_IN2", "J_IN3",
-    "J_KEY", "J_DISP", "J_USB", "J_DBG",
+    "J1", "J_MOT1", "J_MOT2", "J_P24S",
+    "U3", "U4", "U_PWR1", "U_PWR2", "U_VIB",
+    "J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_P24N", "J_P5N",
+    "J_KEY", "J_DISP", "J_USB",
+})
+
+NORTH_EDGE_JACKS = frozenset({
+    "J_P24N", "J14", "J15", "J_IN2", "J_IN3", "J_P5N", "J_CNT5",
+    "J_KEY", "J_DISP", "J_USB",
+})
+SOUTH_EDGE_JACKS = frozenset({
+    "J1", "J_MOT1", "U3", "J_MOT2", "U4",
+    "U_PWR1", "U_PWR2", "U_VIB", "J_P24S",
 })
 
 
@@ -79,7 +83,7 @@ class PlaceCfg:
     board_h: float
     ox: float
     oy: float
-    margin: float  # non-jack ≥ this from Edge.Cuts
+    margin: float  # non-jack ≥ this from Edge.Cuts (also inland of jack strips)
     jack_margin: float  # field jacks may be closer
     gap: float
     ant_tip: float
@@ -117,6 +121,30 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
     movable = [p for p in parts if not p.board_only]
     u1 = by_ref["U1"]
     others = []
+    # Inland box (updated after edge jacks placed — clears N/S jack rows)
+    inland_clear = max(cfg.gap, 2.5)
+
+    def update_inland_box() -> None:
+        """Non-jack parts must sit south of north jack row and north of south jack row."""
+        nonlocal iy0, iy1
+        iy0 = cfg.oy + cfg.margin
+        iy1 = cfg.oy + cfg.board_h - cfg.margin
+        n_bottom = []
+        for ref in NORTH_EDGE_JACKS:
+            if ref not in by_ref:
+                continue
+            p = by_ref[ref]
+            n_bottom.append(p.y + p.h / 2)
+        s_top = []
+        for ref in SOUTH_EDGE_JACKS:
+            if ref not in by_ref:
+                continue
+            p = by_ref[ref]
+            s_top.append(p.y - p.h / 2)
+        if n_bottom:
+            iy0 = max(iy0, max(n_bottom) + inland_clear)
+        if s_top:
+            iy1 = min(iy1, min(s_top) - inland_clear)
 
     def set_rot(p, rot: float) -> None:
         """Apply rotation; update courtyard w/h. Locked edge parts keep guide angles."""
@@ -131,13 +159,15 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
         elif p.ref == "F1":
             rot = 0.0  # pad1 west PRE, pad2 east +24V
         elif p.ref in (
-            "J_MOT1", "J_MOT2", "J14", "J15", "J_IN2", "J_IN3",
-            "J_KEY", "J_DISP", "J_DBG",
+            "J_MOT1", "J_MOT2", "J_P24S",
+            "J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_P24N", "J_P5N",
+            "J_KEY", "J_DISP",
+            "U_PWR1", "U_PWR2", "U_VIB",
         ):
-            # Native pad row is local +Y → rot 90/270 = pin row || N/S edge (ngang)
+            # Native pad row is local +Y → rot 90 = pin row || N/S edge
             rot = 90.0
         elif p.ref in ("U3", "U4"):
-            rot = 0.0
+            rot = 0.0  # square StepStick; flush south edge
         elif p.ref in ("SW_BOOT", "SW_NRST"):
             rot = 0.0
         rot = float(int(rot) % 360)
@@ -154,19 +184,23 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
         if p.ref in EDGE_JACK_REFS:
             x0, y0, x1, y1 = jx0, jy0, jx1, jy1
         else:
+            # All electronics inland — never share N/S jack rows
             x0, y0, x1, y1 = ix0, iy0, ix1, iy1
         p.x = min(max(p.x, x0 + p.w / 2), x1 - p.w / 2)
         p.y = min(max(p.y, y0 + p.h / 2), y1 - p.h / 2)
 
     def overlaps(a, b) -> bool:
+        # tol: treat exact gap contact as clear (float edge)
+        tol = 1e-3
         return (
-            abs(a.x - b.x) < (a.w + b.w) / 2 + cfg.gap
-            and abs(a.y - b.y) < (a.h + b.h) / 2 + cfg.gap
+            abs(a.x - b.x) + tol < (a.w + b.w) / 2 + cfg.gap
+            and abs(a.y - b.y) + tol < (a.h + b.h) / 2 + cfg.gap
         )
 
     def overlap_depth(a, b) -> float:
-        ox = (a.w + b.w) / 2 + cfg.gap - abs(a.x - b.x)
-        oy = (a.h + b.h) / 2 + cfg.gap - abs(a.y - b.y)
+        tol = 1e-3
+        ox = (a.w + b.w) / 2 + cfg.gap - abs(a.x - b.x) - tol
+        oy = (a.h + b.h) / 2 + cfg.gap - abs(a.y - b.y) - tol
         if ox <= 0 or oy <= 0:
             return 0.0
         return min(ox, oy)
@@ -321,54 +355,96 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             eject_keepout(p)
 
     def pin_edge_jacks() -> None:
-        """All field connectors on N or S only; pin rows || edge (rot 90)."""
-        edge_gap = cfg.gap + 0.75
-        # South: power + motors only (Mot pad-row along edge)
-        u3w = cfg.courtyard_size("TMC2209_StepStick")[0]
+        """All external sockets/jacks on N or S only.
+
+        North = sensors + HMI + USB (cable jacks).
+        South = 24V inlet + Mot + TMC socks + MOSFET/SSR socks + aux P24.
+        """
+        solder_clear = max(2.5, cfg.gap)
+        solder_clear_large = max(3.0, cfg.gap + 0.5)
+        edge_gap = max(cfg.gap + 0.75, solder_clear)
+
+        # --- South W→E: east of F1 body (clear of fuse courtyard) ---
+        j1p = by_ref["J1"]
         f1p = by_ref["F1"]
-        # Clear full F1 body (not just pad2) so U3 under Mot cannot kiss fuse
-        x = f1p.x + f1p.w / 2 + edge_gap
-        for ref in ("J_MOT1", "J_MOT2"):
+        x = max(j1p.x + j1p.w / 2, f1p.x + f1p.w / 2) + solder_clear
+        south_order = (
+            "J_MOT1", "U3",
+            "J_MOT2", "U4",
+            "U_PWR1", "U_PWR2", "U_VIB",
+            "J_P24S",
+        )
+        for ref in south_order:
+            if ref not in by_ref:
+                continue
             p = by_ref[ref]
-            set_rot(p, 90.0)
+            if ref in ("U3", "U4"):
+                set_rot(p, 0.0)
+            else:
+                set_rot(p, 90.0)
             p.y = jy1 - p.h / 2
-            mot_pitch = max(p.w, u3w) + cfg.gap + 1.0
-            p.x = x + max(p.w, u3w) / 2
-            clamp(p)
-            x = p.x - max(p.w, u3w) / 2 + mot_pitch
-        for uref, jref in (("U3", "J_MOT1"), ("U4", "J_MOT2")):
-            u = by_ref[uref]
-            j = by_ref[jref]
-            set_rot(u, 0.0)
-            u.x = j.x
-            u.y = j.y - j.h / 2 - edge_gap - u.h / 2
-            clamp(u)
-        # North: tight cluster SNS→KEY→DISP→DBG→USB (ngang)
-        # cfg.gap+0.15 avoids float "exact-gap" false overlaps in placer
-        n_gap = cfg.gap + 0.15
+            clear = solder_clear_large if ref in ("U3", "U4", "U_PWR1", "U_PWR2") else solder_clear
+            # Keep sequence spacing — do not clamp-X (would stack overlaps)
+            p.x = x + p.w / 2
+            x = p.x + p.w / 2 + clear + 0.05
+
+        # --- North: all I/O plugs in one row (W→E) ---
+        north_order = (
+            "J_P24N",
+            "J14",
+            "J15",
+            "J_IN2",
+            "J_IN3",
+            "J_P5N",
+            "J_CNT5",
+            "J_KEY",
+            "J_DISP",
+            "J_USB",
+        )
         x = jx0 + 0.5
-        north_order = ("J14", "J_IN2", "J_KEY", "J_DISP", "J_DBG", "J_USB")
         for ref in north_order:
             p = by_ref[ref]
             set_rot(p, 180.0 if ref == "J_USB" else 90.0)
             p.y = jy0 + p.h / 2
+            clear = solder_clear_large if ref in ("J_KEY", "J_USB", "J_DISP") else solder_clear
             p.x = x + p.w / 2
-            clamp(p)
-            x = p.x + p.w / 2 + n_gap
-        # Alternates inland, tight under parents
-        for child, parent in (("J15", "J14"), ("J_IN3", "J_IN2")):
-            c, p = by_ref[child], by_ref[parent]
-            set_rot(c, 90.0)
-            c.x = p.x
-            c.y = p.y + p.h / 2 + n_gap + c.h / 2
-            clamp(c)
-        # SW_BOOT / SW_NRST: seeded once elsewhere (movable); do not re-pin here
+            x = p.x + p.w / 2 + clear + 0.05
+        update_inland_box()
+
+    def pin_boot_switches() -> None:
+        """SW_BOOT + SW_NRST locked just inland of J_USB (nạp USB)."""
+        usb = by_ref["J_USB"]
+        gap = max(cfg.gap, 2.5)
+        boots = ("SW_BOOT", "SW_NRST")
+        # Measure after rot
+        for sref in boots:
+            set_rot(by_ref[sref], 0.0)
+        sw0 = by_ref["SW_BOOT"]
+        pitch = sw0.w + gap
+        pair_w = 2 * sw0.w + gap
+        x_left = usb.x - pair_w / 2 + sw0.w / 2
+        # Immediately south of USB / north jack strip
+        y = max(iy0 + sw0.h / 2, usb.y + usb.h / 2 + gap + sw0.h / 2 + 0.1)
+        for i, sref in enumerate(boots):
+            sw = by_ref[sref]
+            set_rot(sw, 0.0)
+            sw.x = x_left + i * pitch
+            sw.y = y
+            clamp(sw)
 
     def pin_locked_edges() -> None:
         pin_inlet_chain()
         pin_j_usb()
         pin_edge_jacks()
+        update_inland_box()
+        pin_boot_switches()
+        for pref in ("D3", "F1"):
+            clamp(by_ref[pref])
+        clamp(u1)
         enforce_post_fuse()
+        for p in movable:
+            if p.ref not in EDGE_JACK_REFS:
+                clamp(p)
 
     # --- pin U1 below north jack strip (MCU / 3V3), east half ---
     set_rot(u1, 0.0)
@@ -387,14 +463,6 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
         return p.ref in locked_refs
 
     pin_locked_edges()
-
-    # Seed tact switches inland near USB (movable)
-    for i, sref in enumerate(("SW_BOOT", "SW_NRST")):
-        sw = by_ref[sref]
-        set_rot(sw, 0.0)
-        sw.x = usb.x - (i + 0.5) * (sw.w + cfg.gap + 0.75)
-        sw.y = usb.y + usb.h / 2 + cfg.gap + 8.0 + sw.h / 2
-        clamp(sw)
 
     # --- net graph ---
     def net_weight(net: str) -> float:
@@ -505,7 +573,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
 
     fm_refine()
 
-    # seed place: POWER/TMC/OPTO start under J1; others in their boxes
+    # seed place: pack into region boxes; OPTO starts at mid-board center
     for rname in REGION_ORDER:
         box = region_box(rname)
         group = sorted(
@@ -514,22 +582,28 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             reverse=True,
         )
         x0, y0, x1, y1 = box
-        if rname in ("POWER", "TMC", "PWR"):
-            # pack in south 24V band, east of fuse
+        if rname in ("POWER", "TMC"):
             x = max(x0 + 1.0, fuse_out_x() + cfg.gap)
             y = max(y0 + 1.0, fuse_out_y() + cfg.gap)
+        elif rname == "PWR":
+            # MOSFET/SSR sockets — mid-south, fill center-east
+            x = x0 + 0.15 * (x1 - x0)
+            y = y0 + 0.20 * (y1 - y0)
         elif rname == "OPTO":
-            x, y = x0 + 1.0, y0 + 1.0
+            # Isolation wall through board mid
+            x = x0 + 0.20 * (x1 - x0)
+            y = y0 + 0.25 * (y1 - y0)
         else:
             x, y = x0 + 1.0, y0 + 1.0
         row_h = 0.0
         for p in group:
             if x + p.w / 2 > x1 - 1.0:
-                x = (
-                    max(x0 + 1.0, fuse_out_x() + cfg.gap)
-                    if rname in ("POWER", "TMC", "PWR")
-                    else x0 + 1.0
-                )
+                if rname in ("POWER", "TMC"):
+                    x = max(x0 + 1.0, fuse_out_x() + cfg.gap)
+                elif rname in ("OPTO", "PWR"):
+                    x = x0 + 0.15 * (x1 - x0)
+                else:
+                    x = x0 + 1.0
                 y += row_h + cfg.gap
                 row_h = 0.0
             p.x = min(max(x + p.w / 2, x0 + p.w / 2), x1 - p.w / 2)
@@ -608,6 +682,23 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             fy += (y0 + p.h / 2 - p.y) * 0.12
         elif p.y > y1 - p.h / 2:
             fy += (y1 - p.h / 2 - p.y) * 0.12
+        # Fill empty mid: OPTO → board center; PWR → mid-south
+        rname = part_of.get(p.ref, "MCU")
+        if rname == "OPTO":
+            mx = cfg.ox + 0.42 * cfg.board_w
+            my = cfg.oy + 0.48 * cfg.board_h
+            fx += 0.08 * (mx - p.x)
+            fy += 0.08 * (my - p.y)
+        elif rname == "PWR":
+            mx = cfg.ox + 0.70 * cfg.board_w
+            my = cfg.oy + 0.55 * cfg.board_h
+            fx += 0.06 * (mx - p.x)
+            fy += 0.06 * (my - p.y)
+        elif rname == "MCU":
+            mx = cfg.ox + 0.68 * cfg.board_w
+            my = cfg.oy + 0.36 * cfg.board_h
+            fx += 0.04 * (mx - p.x)
+            fy += 0.04 * (my - p.y)
         return fx, fy
 
     for _ in range(30):
@@ -844,7 +935,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
     # =====================================================================
     # 6) Legalization — separate courtyards until gap clear
     # =====================================================================
-    for _ in range(120):
+    for _ in range(200):
         moved = False
         for p in others:
             if in_keepout(p) > 0:

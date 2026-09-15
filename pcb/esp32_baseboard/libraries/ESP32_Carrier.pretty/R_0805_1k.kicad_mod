@@ -1,0 +1,11 @@
+(footprint "R_0805_1k"
+	(version 20240108)
+	(generator "gen_compact_carrier.py")
+	(layer "F.Cu")
+	(descr "0805 1k")
+	(attr smd)
+	(fp_rect (start -1.1 -0.7) (end 1.1 0.7)
+		(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
+	(pad "1" smd rect (at -0.95 0) (size 0.7 1.2) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "2" smd rect (at 0.95 0) (size 0.7 1.2) (layers "F.Cu" "F.Paste" "F.Mask"))
+)

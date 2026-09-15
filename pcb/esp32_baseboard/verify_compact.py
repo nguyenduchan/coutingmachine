@@ -68,10 +68,10 @@ def main() -> int:
         bw, bh = x1 - x0, y1 - y0
         check(abs(x0 - 50.0) < 0.01 and abs(y0 - 50.0) < 0.01, ok, fail, "Edge.Cuts origin @50,50")
         check(bw >= 99.5 and bh >= 99.5, ok, fail, f"size {bw:.0f}x{bh:.0f} >= 100x100")
-        check(bw <= 180.01 and bh <= 180.01, ok, fail, f"size {bw:.0f}x{bh:.0f} <= 180")
+        check(bw <= 300.01 and bh <= 300.01, ok, fail, f"size {bw:.0f}x{bh:.0f} <= 300")
         check(bw >= bh - 0.01, ok, fail, f"wide board for DIN N/S edges ({bw:.0f}x{bh:.0f})")
     check("gen_compact_carrier" in text, ok, fail, "generator gen_compact_carrier")
-    check("U_PWR" in text and "U_VIB" in text, ok, fail, "power/vib socket silk or refs")
+    check("U_PWR1" in text and "U_PWR2" in text and "U_VIB" in text, ok, fail, "power/vib socket silk or refs")
     check("J_MOT1" in text and "J_MOT2" in text, ok, fail, "edge motor jacks J_MOT1/2")
     check("Mot_XH_04_Socket" in text, ok, fail, "Mot_XH_04 footprint")
     check("ANT KEEPOUT" not in text, ok, fail, "no ESP antenna keepout")
@@ -80,41 +80,37 @@ def main() -> int:
     print("=== B) Required refs ===")
     pads = pad_table(text)
     for ref in (
-        "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U44", "U45", "U46", "U_PWR", "U_VIB",
-        "J1", "J_MOT1", "J_MOT2", "J14", "J15", "J_IN2", "J_IN3", "J_USB", "J_KEY", "J_DISP", "J_DBG",
+        "U1", "U2", "U3", "U4", "U5", "U6", "U44", "U45", "U46", "U_PWR1", "U_PWR2", "U_VIB",
+        "J1", "J_MOT1", "J_MOT2", "J_P24S",
+        "J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_P24N", "J_P5N",
+        "J_USB", "J_KEY", "J_DISP",
         "D3", "D1", "D4", "D5", "F1", "L1", "R2", "R2B", "R10", "R44", "R48", "Rfb1", "Rfb2",
         "PTC_SNS", "PTC_MOT", "PTC_MOT2",
         "C10", "C11", "C20", "C20B", "C21", "C24", "C24B", "C26", "Cbst", "Cc",
         "C5", "C51", "C3", "C31", "C_MCU", "C_MCU2",
         "Y1", "C_XI", "C_XO", "C52", "C53",
         "R_NRST", "C_NRST", "R_BOOT", "R_SWDIO", "SW_BOOT", "SW_NRST",
-        "R45", "R49", "R46", "R50", "R_PWR_FLT", "R_VIB_FLT",
+        "R45", "R49", "R46", "R50", "R47", "R51", "C27", "U47", "R_PWR_FLT", "R_VIB_FLT",
     ):
         check(ref in pads, ok, fail, f"ref {ref}")
-    for gone in ("Q1", "Q2", "R_DTR", "R_RTS", "C_DTR", "C_RTS", "R_EN", "R_IO0", "R_IO2", "SW_EN", "J_SWD"):
+    for gone in ("Q1", "Q2", "R_DTR", "R_RTS", "C_DTR", "C_RTS", "R_EN", "R_IO0", "R_IO2", "SW_EN", "J_SWD", "U7"):
         check(gone not in pads, ok, fail, f"removed legacy part {gone}")
 
-    print("=== B2) STM32 + USB-UART + Cortex Debug-10 ===")
+    print("=== B2) STM32 + USB-UART boot (no J_DBG) ===")
     u1 = pads.get("U1", {})
     u5 = pads.get("U5", {})
-    jdbg = pads.get("J_DBG", {})
     check("STM32G030C8T6_LQFP48" in text, ok, fail, "STM32 LQFP48 footprint")
-    check("Cortex_Debug_10" in text, ok, fail, "Cortex Debug-10 footprint")
+    check("J_DBG" not in pads, ok, fail, "no J_DBG (USB program only)")
+    check("/SWO" not in text, ok, fail, "no SWO net")
     check(u1.get("6") == "+3V3" and u1.get("7") == "GND", ok, fail, "U1 VDD/VSS")
     check(u1.get("4") == "+3V3" and u1.get("5") == "+3V3", ok, fail, "U1 VBAT/VREF+")
     check(u1.get("10") == "/NRST", ok, fail, "U1 NRST")
     check(u1.get("29") == "/UART_TX" and u1.get("32") == "/UART_RX", ok, fail, "U1 USART1 PA9/PA10")
-    check(u1.get("35") == "/SWDIO" and u1.get("36") == "/SWCLK", ok, fail, "U1 SWD PA13/PA14")
-    check(u1.get("42") == "/SWO", ok, fail, "U1 SWO PB3")
+    check(u1.get("35") == "/SWDIO" and u1.get("36") == "/SWCLK", ok, fail, "U1 SWDIO/BOOT0 pins")
+    check("42" not in u1 or u1.get("42") != "/SWO", ok, fail, "PB3 free (no SWO)")
     check(u5.get("7") == "/CH340_XI" and u5.get("8") == "/CH340_XO", ok, fail, "U5 XI/XO crystal")
     check("10" not in u5 and "15" not in u5, ok, fail, "U5 DTR/RTS not wired")
     check(u5.get("2") == "/UART_RX" and u5.get("3") == "/UART_TX", ok, fail, "CH340-USART cross nets")
-    check(jdbg.get("1") == "+3V3", ok, fail, "J_DBG VTREF=+3V3")
-    check(jdbg.get("2") == "/SWDIO" and jdbg.get("4") == "/SWCLK", ok, fail, "J_DBG SWDIO/SWCLK")
-    check(jdbg.get("3") == "GND" and jdbg.get("5") == "GND" and jdbg.get("9") == "GND", ok, fail, "J_DBG GNDs")
-    check(jdbg.get("6") == "/SWO", ok, fail, "J_DBG SWO")
-    check(jdbg.get("10") == "/NRST", ok, fail, "J_DBG nSRST")
-    check("7" not in jdbg, ok, fail, "J_DBG pin7 KEY no net")
     check(pads.get("R_NRST", {}).get("2") == "/NRST", ok, fail, "R_NRST pull-up")
     check(pads.get("R_BOOT", {}).get("1") == "/SWCLK" and pads.get("R_BOOT", {}).get("2") == "GND", ok, fail, "R_BOOT PD")
     check(pads.get("R_SWDIO", {}).get("2") == "/SWDIO", ok, fail, "R_SWDIO pull-up")
@@ -140,7 +136,6 @@ def main() -> int:
     u2 = pads.get("U2", {})
     u3 = pads.get("U3", {})
     u4 = pads.get("U4", {})
-    u7 = pads.get("U7", {})
     check("/STEP" in u3.values() and "/DIR" in u3.values() and "/EN_TMC" in u3.values(), ok, fail, "U3 TMC1 STEP/DIR/EN")
     check("+24V_MOT" in u3.values() and "+3V3" in u3.values(), ok, fail, "U3 VM1+VIO")
     check("/STEP2" in u4.values() and "/DIR2" in u4.values() and "/EN_TMC2" in u4.values(), ok, fail, "U4 TMC2 STEP/DIR/EN")
@@ -152,13 +147,18 @@ def main() -> int:
     check(u1.get("14") == "/BUP", ok, fail, "U1 BUP PA3")
     check(u1.get("27") == "/IN2" and u1.get("43") == "/IN3", ok, fail, "U1 IN2/IN3")
     check(u1.get("33") == "/PWM_OUT1" and u1.get("34") == "/PWM_OUT2", ok, fail, "U1 PWM power outs")
-    check(u1.get("44") == "/PWR_EN" and u1.get("45") == "/PWR_DIR", ok, fail, "U1 PWR EN/DIR")
+    check(u1.get("44") == "/PWR_EN1" and u1.get("45") == "/PWR_EN2", ok, fail, "U1 PWR EN1/EN2")
     check(u1.get("46") == "/PWR_FAULT", ok, fail, "U1 PWR_FAULT")
     check(u1.get("47") == "/VIB_CTRL" and u1.get("48") == "/VIB_FAULT", ok, fail, "U1 VIB CTRL/FAULT")
-    up = pads.get("U_PWR", {})
-    check(up.get("7") == "/PWM_OUT1" and up.get("8") == "/PWM_OUT2", ok, fail, "U_PWR PWM pads")
-    check(up.get("1") == "+24V" and up.get("5") == "+3V3", ok, fail, "U_PWR supplies")
-    check("PowerMod_2CH_Sock" in text, ok, fail, "PowerMod socket footprint")
+    up1 = pads.get("U_PWR1", {})
+    up2 = pads.get("U_PWR2", {})
+    check(up1.get("4") == "/PWM_OUT1" and up1.get("5") == "/PWR_EN1", ok, fail, "U_PWR1 PWM/EN")
+    check(up2.get("4") == "/PWM_OUT2" and up2.get("5") == "/PWR_EN2", ok, fail, "U_PWR2 PWM/EN")
+    check(up1.get("1") == "+24V" and up1.get("3") == "+3V3", ok, fail, "U_PWR1 supplies")
+    check(up2.get("1") == "+24V" and up2.get("6") == "/PWR_FAULT", ok, fail, "U_PWR2 +24V/FAULT")
+    check("PowerMod_1CH_Sock" in text, ok, fail, "PowerMod 1CH socket footprint")
+    check("PowerMod_2CH_Sock" not in text, ok, fail, "no legacy 2CH power sock")
+    check("U_PWR\"" not in text.replace("U_PWR1", "").replace("U_PWR2", ""), ok, fail, "no bare U_PWR ref")
     uv = pads.get("U_VIB", {})
     check(uv.get("3") == "/VIB_CTRL" and uv.get("1") == "+24V", ok, fail, "U_VIB CTRL/+24V")
     check("VibAC_Sock" in text, ok, fail, "VibAC socket footprint")
@@ -167,10 +167,19 @@ def main() -> int:
     check(pads.get("U44", {}).get("4") == "/BUP", ok, fail, "PC817 count to /BUP")
     check(pads.get("J_IN2", {}).get("3") == "/OPTO_IN2" and pads.get("U45", {}).get("4") == "/IN2", ok, fail, "J_IN2 opto")
     check(pads.get("J_IN3", {}).get("3") == "/OPTO_IN3" and pads.get("U46", {}).get("4") == "/IN3", ok, fail, "J_IN3 opto")
+    check(pads.get("J_CNT5", {}).get("1") == "+5V" and pads.get("J_CNT5", {}).get("3") == "/OPTO_IN_5V", ok, fail, "J_CNT5 5V jack")
+    check(pads.get("U47", {}).get("4") == "/CNT5" and pads.get("R47", {}).get("1") == "+5V", ok, fail, "U47/R47 5V opto")
+    check(pads.get("R51", {}).get("2") == "/CNT5", ok, fail, "R51 CNT5 pull-up")
+    check(u1.get("39") == "/CNT5", ok, fail, "U1 CNT5 on PD1")
+    check(pads.get("J_P24N", {}).get("1") == "+24V_SNS" and pads.get("J_P24N", {}).get("2") == "GND", ok, fail, "J_P24N aux 24V")
+    check(pads.get("J_P5N", {}).get("1") == "+5V" and pads.get("J_P5N", {}).get("2") == "GND", ok, fail, "J_P5N aux 5V")
+    check(pads.get("J_P24S", {}).get("1") == "+24V" and pads.get("J_P24S", {}).get("2") == "GND", ok, fail, "J_P24S aux 24V")
     check(u1.get("15") == "/TM_CLK" and u1.get("16") == "/TM_DIO", ok, fail, "U1 TM1637 PA4/5")
     check(sum(1 for v in u1.values() if v.startswith("/KEY_")) >= 8, ok, fail, "U1 keypad 8")
-    check(u7.get("18") == "/TM_CLK" and u7.get("17") == "/TM_DIO", ok, fail, "U7 CLK/DIO")
-    check(pads.get("J_DISP", {}).get("1") == "/TM_G1", ok, fail, "J_DISP GRID1")
+    jd = pads.get("J_DISP", {})
+    check(jd.get("1") == "/TM_CLK" and jd.get("2") == "/TM_DIO", ok, fail, "J_DISP CLK/DIO")
+    check(jd.get("3") == "+5V" and jd.get("4") == "GND", ok, fail, "J_DISP +5V/GND")
+    check("Disp_XH_04_Socket" in text, ok, fail, "Disp XH-4 footprint")
     check(pads.get("J_KEY", {}).get("1") == "/KEY_R0", ok, fail, "J_KEY R0")
     check("DS1" not in pads, ok, fail, "no on-board DS1 LED")
     check("BZ1" not in pads, ok, fail, "no BZ1 buzzer")
@@ -180,14 +189,13 @@ def main() -> int:
     check(u2.get("1") == "/BUCK_SW" and pads.get("L1", {}).get("2") == "+5V", ok, fail, "discrete buck")
     check(pads.get("U6", {}).get("2") == "+3V3", ok, fail, "U6 AMS1117 3V3")
     check(text.count("TMC2209_StepStick") >= 2, ok, fail, "two TMC sockets")
-    check("TM1637_SOP20" in text, ok, fail, "TM1637 SOP20")
+    check("TM1637_SOP20" not in text, ok, fail, "no on-board TM1637 IC")
     jm1 = pads.get("J_MOT1", {})
     jm2 = pads.get("J_MOT2", {})
     check(jm1.get("1") == "/MotA2" and jm1.get("4") == "/MotB2", ok, fail, "J_MOT1 phases")
     check(jm2.get("1") == "/Mot2A2" and jm2.get("4") == "/Mot2B2", ok, fail, "J_MOT2 phases")
     check(u3.get("11") == "/MotA2" and jm1.get("1") == u3.get("11"), ok, fail, "J_MOT1 tied to U3 Mot")
     check(u4.get("11") == "/Mot2A2" and jm2.get("1") == u4.get("11"), ok, fail, "J_MOT2 tied to U4 Mot")
-
     print("=== D) U1 STM32 placement (north / 3V3 zone) ===")
     for m in re.finditer(r'\n\t\(footprint "', text):
         blk = _block(text, m.start() + 1)
@@ -256,23 +264,27 @@ def main() -> int:
             continue
         check("+24V_RAW" not in vals and "+24V_PRE" not in vals, ok, fail, f"{ref} not on pre-fuse nets")
 
-    print("=== D2c) Edge jack zones (S=MOT, N=SNS/HMI) ===")
-    if em and all(r in pos for r in ("J_MOT1", "J_MOT2", "J14", "J_KEY", "J_DISP")):
+    print("=== D2c) Edge jack zones (S=MOT/TMC/PWR, N=SNS/HMI) ===")
+    if em and all(r in pos for r in ("J_MOT1", "J_MOT2", "J_P24S", "U3", "U4", "U_PWR1", "U_PWR2", "U_VIB", "J14", "J_CNT5", "J_P24N", "J_P5N", "J_KEY", "J_DISP")):
         x0, y0, x1, y1 = map(float, em.groups())
         mid_y = y0 + 0.5 * bh
-        for ref in ("J_MOT1", "J_MOT2"):
+        for ref in ("J_MOT1", "J_MOT2", "J_P24S", "U3", "U4", "U_PWR1", "U_PWR2", "U_VIB"):
             _mx, my, _ = pos[ref]
             check(my > mid_y, ok, fail, f"{ref} south half (y={my:.1f})")
-        for ref in ("J14", "J15", "J_IN2", "J_IN3", "J_KEY", "J_DISP"):
+        for ref in ("J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_P24N", "J_P5N", "J_KEY", "J_DISP"):
             if ref not in pos:
                 continue
             _nx, ny, _ = pos[ref]
             check(ny < mid_y, ok, fail, f"{ref} north half (y={ny:.1f})")
-        check(pos["J_MOT1"][0] < pos["J_MOT2"][0], ok, fail, "J_MOT1 left of J_MOT2")
-        check(pos["J14"][0] < pos["J_DISP"][0], ok, fail, "J14 left of J_DISP")
-        check(pos["J_KEY"][0] < pos["J_DISP"][0], ok, fail, "J_KEY left of J_DISP")
-        check(pos["U3"][1] < pos["J_MOT1"][1], ok, fail, "U3 north of J_MOT1")
-        check(pos["U4"][1] < pos["J_MOT2"][1], ok, fail, "U4 north of J_MOT2")
+        south_seq = ("J_MOT1", "U3", "J_MOT2", "U4", "U_PWR1", "U_PWR2", "U_VIB", "J_P24S")
+        for a, b in zip(south_seq, south_seq[1:]):
+            check(pos[a][0] < pos[b][0], ok, fail, f"{a} left of {b}")
+        north_seq = ("J_P24N", "J14", "J15", "J_IN2", "J_IN3", "J_P5N", "J_CNT5", "J_KEY", "J_DISP")
+        for a, b in zip(north_seq, north_seq[1:]):
+            check(pos[a][0] < pos[b][0], ok, fail, f"{a} left of {b}")
+        check(pos["J_DISP"][0] < pos["J_USB"][0], ok, fail, "J_DISP left of J_USB")
+        for ref in ("J15", "J_IN3"):
+            check(abs(pos[ref][1] - pos["J14"][1]) < 3.0, ok, fail, f"{ref} flush with north jack row")
 
     print("=== D3) J_USB flush north edge (with HMI) ===")
     for m in re.finditer(r'\n\t\(footprint "', text):
@@ -290,16 +302,31 @@ def main() -> int:
             check(ux > (x0 + x1) / 2, ok, fail, f"J_USB east of center (x={ux:.1f})")
         break
 
+    print("=== D3a) SW_BOOT / SW_NRST beside J_USB ===")
+    if "J_USB" in pos and "SW_BOOT" in pos and "SW_NRST" in pos:
+        ux, uy, _ = pos["J_USB"]
+        for sref in ("SW_BOOT", "SW_NRST"):
+            sx, sy, _ = pos[sref]
+            dx = abs(sx - ux)
+            check(dx < 18.0, ok, fail, f"{sref} near J_USB in X (dx={dx:.1f})")
+            check(sy > uy, ok, fail, f"{sref} inland south of J_USB")
+            check(sy < uy + 22.0, ok, fail, f"{sref} close to J_USB in Y (dy={sy - uy:.1f})")
+        bx, _, _ = pos["SW_BOOT"]
+        nx, _, _ = pos["SW_NRST"]
+        check(bx < nx, ok, fail, "SW_BOOT west of SW_NRST")
+
     print("=== D3b) Field jacks only on north/south edges ===")
     field_edge = (
-        "J1", "J_MOT1", "J_MOT2", "J14", "J_IN2",
-        "J_KEY", "J_DISP", "J_USB", "J_DBG",
+        "J1", "J_MOT1", "J_MOT2", "J_P24S",
+        "U3", "U4", "U_PWR1", "U_PWR2", "U_VIB",
+        "J_P24N", "J14", "J15", "J_IN2", "J_IN3", "J_P5N", "J_CNT5",
+        "J_KEY", "J_DISP", "J_USB",
     )
-    field_all = field_edge + ("J15", "J_IN3")
+    field_all = field_edge
     if em:
         x0, y0, x1, y1 = map(float, em.groups())
-        n_lim = y0 + 0.22 * bh
-        s_lim = y1 - 0.22 * bh
+        n_lim = y0 + 0.28 * bh  # deeper south strip (TMC ~20mm)
+        s_lim = y1 - 0.28 * bh
         side_band = 14.0
         mid_lo = y0 + 0.32 * bh
         mid_hi = y1 - 0.32 * bh
@@ -322,11 +349,13 @@ def main() -> int:
     print("=== D3c) Field jacks pin-row || N/S edge (ngang, not dọc) ===")
     # Native pad-row along local Y → must be rot 90/270 on N/S edges
     row_along_y = {
-        "J_MOT1", "J_MOT2", "J14", "J15", "J_IN2", "J_IN3",
-        "J_KEY", "J_DISP", "J_DBG",
+        "J_MOT1", "J_MOT2", "J_P24S",
+        "J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_P24N", "J_P5N",
+        "J_KEY", "J_DISP",
+        "U_PWR1", "U_PWR2", "U_VIB",
     }
-    # Native pad-row along local X (already ngang at 0/180)
-    row_along_x = {"J1": (0.0,), "J_USB": (180.0,)}
+    # Native pad-row along local X (already ngang at 0/180) or square StepStick
+    row_along_x = {"J1": (0.0,), "J_USB": (180.0,), "U3": (0.0,), "U4": (0.0,)}
     if em:
         for ref in row_along_y:
             if ref not in pos:
@@ -340,7 +369,7 @@ def main() -> int:
             _, _, r = pos[ref]
             check(any(abs(r - a) < 1 for a in allowed), ok, fail, f"{ref} rot ngang ({r})")
 
-    print("=== E) Courtyard clearance (gap >= 2.0mm) ===")
+    print("=== E) Courtyard clearance (gap >= 2.5mm) ===")
     bodies: list[tuple[str, float, float, float, float]] = []
     for m in re.finditer(r'\n\t\(footprint "', text):
         blk = _block(text, m.start() + 1)
@@ -364,34 +393,60 @@ def main() -> int:
         if abs(rot - 90) < 1 or abs(rot - 270) < 1:
             hw, hh = hh, hw
         bodies.append((ref_m.group(1), cx, cy, hw, hh))
-    min_gap = 2.0
+    min_gap = 2.5
     clashes = []
+    tol = 1e-3
     for i, (ra, ax, ay, aw, ah) in enumerate(bodies):
         for rb, bx, by, b_hw, b_hh in bodies[i + 1 :]:
             need_x = aw + b_hw + min_gap
             need_y = ah + b_hh + min_gap
-            if abs(ax - bx) < need_x and abs(ay - by) < need_y:
+            if abs(ax - bx) + tol < need_x and abs(ay - by) + tol < need_y:
                 gx = need_x - abs(ax - bx)
                 gy = need_y - abs(ay - by)
                 clashes.append(f"{ra}/{rb}(short {min(gx, gy):.2f})")
     check(not clashes, ok, fail, f"courtyard gap>={min_gap}mm ({len(clashes)} clashes: {clashes[:12]})")
 
-    print("=== E2) Non-jack parts ≥4mm from Edge.Cuts ===")
+    print("=== E2) Non-jack parts inland of jack rows (≥2.5mm clear) ===")
     edge_jacks = {
-        "J1", "J_MOT1", "J_MOT2", "J14", "J15", "J_IN2", "J_IN3",
-        "J_KEY", "J_DISP", "J_USB", "J_DBG",
+        "J1", "J_MOT1", "J_MOT2", "J_P24S",
+        "U3", "U4", "U_PWR1", "U_PWR2", "U_VIB",
+        "J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_P24N", "J_P5N",
+        "J_KEY", "J_DISP", "J_USB",
     }
     if em:
         x0, y0, x1, y1 = map(float, em.groups())
-        need = 4.0
+        need_edge = 4.0
         bad_m = []
         for ref, cx, cy, hw, hh in bodies:
-            if ref in edge_jacks:
+            if ref in edge_jacks or ref.startswith("H"):
                 continue
             d = min(cx - hw - x0, x1 - (cx + hw), cy - hh - y0, y1 - (cy + hh))
-            if d < need - 0.05:
+            if d < need_edge - 0.05:
                 bad_m.append(f"{ref}:{d:.2f}")
-        check(not bad_m, ok, fail, f"non-jack edge clear≥{need}mm ({bad_m[:12]})")
+        check(not bad_m, ok, fail, f"non-jack edge clear≥{need_edge}mm ({bad_m[:12]})")
+        n_jacks = [b for b in bodies if b[0] in (
+            "J_P24N", "J14", "J15", "J_IN2", "J_IN3", "J_P5N", "J_CNT5", "J_KEY", "J_DISP", "J_USB",
+        )]
+        s_jacks = [b for b in bodies if b[0] in (
+            "J1", "J_MOT1", "J_MOT2", "J_P24S", "U3", "U4", "U_PWR1", "U_PWR2", "U_VIB",
+        )]
+        clear = 2.5
+        bad_row = []
+        if n_jacks:
+            n_bottom = max(cy + hh for _, _, cy, _, hh in n_jacks)
+            for ref, cx, cy, hw, hh in bodies:
+                if ref in edge_jacks or ref.startswith("H"):
+                    continue
+                if cy - hh < n_bottom + clear - 0.05:
+                    bad_row.append(f"{ref}:N")
+        if s_jacks:
+            s_top = min(cy - hh for _, _, cy, _, hh in s_jacks)
+            for ref, cx, cy, hw, hh in bodies:
+                if ref in edge_jacks or ref.startswith("H"):
+                    continue
+                if cy + hh > s_top - clear + 0.05:
+                    bad_row.append(f"{ref}:S")
+        check(not bad_row, ok, fail, f"non-jack inland of jack rows ({bad_row[:16]})")
 
     print("=== F) Removed modules ===")
     for bad in (

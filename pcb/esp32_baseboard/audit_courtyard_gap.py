@@ -71,8 +71,8 @@ def main() -> int:
         print(f"gap>={gap:.1f}: {len(h)} clashes")
         for short, a, c in h[:15]:
             print(f"  shortfall {short:.2f}  {a}/{c}")
-    # fail if any shortfall vs 2.0
-    return 0 if not clashes(b, 2.0) else 1
+    # fail if any shortfall vs 2.5
+    return 0 if not clashes(b, 2.5) else 1
 
 
 if __name__ == "__main__":
