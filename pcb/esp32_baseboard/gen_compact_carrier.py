@@ -9,10 +9,12 @@ KiCad-valid S-expr; footprints copied from libraries/ESP32_Carrier.pretty.
 Placement pipeline (no routing) — full EDA guide:
   1) graph partition / min-cut (FM refine)
   2) analytical quadratic wirelength (Jacobi)
-  3) force-directed springs (+ antenna keepout)
+  3) force-directed springs
   4) genetic / evolutionary (XY + 90 rotation)
   5) simulated annealing (XY + rotation, Metropolis)
   6) legalization + shrink Edge.Cuts
+
+MCU: STM32G030C8T6 LQFP48 (replaces ESP32-WROOM-32).
 """
 
 from __future__ import annotations
@@ -24,14 +26,19 @@ import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from esp32_pinmap import (
-    BUP_GPIO,
-    KEYPAD_GPIO,
-    PIN_BY_NAME,
-    TM1637_GPIO,
-    TMC_GPIO,
-    WROOM_LEFT,
-    WROOM_RIGHT,
+from stm32_pinmap import (
+    BUP_PIN,
+    IN2_PIN,
+    IN3_PIN,
+    KEYPAD_PINS,
+    LQFP48_PINS,
+    PWR_PINS,
+    SWD_PINS,
+    TM1637_PINS,
+    TMC2_PINS,
+    TMC_PINS,
+    USART1_PINS,
+    VIB_PINS,
 )
 
 from placement_full import PlaceCfg, pack_parts as _pack_parts_full
@@ -40,17 +47,30 @@ ROOT = Path(__file__).resolve().parent
 PRETTY = ROOT / "libraries" / "ESP32_Carrier.pretty"
 PCB = ROOT / "esp32_baseboard.kicad_pcb"
 
-# Mutated by shrink search in main()
-BOARD_W = 90.0
-BOARD_H = 90.0
+# DIN vertical: clips on left/right; prefer wide board (long N/S edges for jacks)
+BOARD_W = 130.0
+BOARD_H = 100.0
+TARGET_BOARD_MM = 100.0
+# Prefer smallest that packs clean after tight north jack strip
+BOARD_CANDIDATES = (
+    (110.0, 100.0),
+    (115.0, 100.0),
+    (118.0, 100.0),
+    (120.0, 100.0),
+    (125.0, 100.0),
+    (130.0, 100.0),
+    (140.0, 110.0),
+    (160.0, 120.0),
+)
 OX, OY = 50.0, 50.0  # Edge.Cuts origin
-MARGIN = 3.0  # keep parts inside edge
+MARGIN = 4.0  # non-jack parts: ≥4 mm from Edge.Cuts
+JACK_MARGIN = 1.0  # field edge jacks may sit near N/S edges
 GAP = 2.0  # min clear space between courtyards (mm)
 
-# WROOM-32: antenna along local +Y; with rot=180 antenna points world −Y (board top / north).
-ANT_TIP = 13.5  # mm from module origin to antenna tip (courtyard +Y)
-ANT_CLEAR = 12.0  # mm keepout beyond tip (no other parts)
-ANT_HALF_W = 12.0  # keepout half-width about antenna axis
+# No RF antenna (STM32). Keepout disabled (zeros) — PlaceCfg still accepts fields.
+ANT_TIP = 0.0
+ANT_CLEAR = 0.0
+ANT_HALF_W = 0.0
 
 
 def uid() -> str:
@@ -70,42 +90,177 @@ def ensure_extra_footprints() -> None:
         if force or not p.exists():
             p.write_text(body.strip() + "\n", encoding="utf-8")
 
-    # WROOM-32 (antenna +Y)
+    # STM32G030C8T6 — LQFP48 7×7 mm, 0.5 mm pitch (KiCad Y↓; pin1 top-left, CCW)
     pads = []
-    pitch, y0, xl, xr = 1.27, 11.43, -9.0, 9.0
-    for num, name in WROOM_LEFT:
-        y = y0 - (num - 1) * pitch
-        shape = "rect" if num == 1 else "roundrect"
-        rr = " (roundrect_rratio 0.25)" if shape == "roundrect" else ""
+    pitch, reach = 0.5, 4.0
+    half = 11 * pitch / 2  # 2.75
+    for n in range(1, 13):  # left 1..12
+        y = -half + (n - 1) * pitch
+        shape = "rect" if n == 1 else "roundrect"
+        rr = ' (roundrect_rratio 0.25)' if shape == "roundrect" else ""
         pads.append(
-            f'\t(pad "{num}" smd {shape} (at {xl} {y:.3f}) (size 1.5 0.9)'
+            f'\t(pad "{n}" smd {shape} (at {-reach} {y:.3f}) (size 1.2 0.3)'
             f'\n\t\t(layers "F.Cu" "F.Paste" "F.Mask"){rr})'
         )
-    for num, name in WROOM_RIGHT:
-        y = y0 - (38 - num) * pitch
+    for n in range(13, 25):  # bottom 13..24
+        x = -half + (n - 13) * pitch
         pads.append(
-            f'\t(pad "{num}" smd roundrect (at {xr} {y:.3f}) (size 1.5 0.9)'
+            f'\t(pad "{n}" smd roundrect (at {x:.3f} {reach}) (size 0.3 1.2)'
+            f'\n\t\t(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))'
+        )
+    for n in range(25, 37):  # right 25..36 (bottom→top ⇒ y decreasing)
+        y = half - (n - 25) * pitch
+        pads.append(
+            f'\t(pad "{n}" smd roundrect (at {reach} {y:.3f}) (size 1.2 0.3)'
+            f'\n\t\t(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))'
+        )
+    for n in range(37, 49):  # top 37..48 (right→left ⇒ x decreasing)
+        x = half - (n - 37) * pitch
+        pads.append(
+            f'\t(pad "{n}" smd roundrect (at {x:.3f} {-reach}) (size 0.3 1.2)'
             f'\n\t\t(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))'
         )
     write(
-        "ESP32_WROOM_32",
+        "STM32G030C8T6_LQFP48",
         f"""
-(footprint "ESP32_WROOM_32"
+(footprint "STM32G030C8T6_LQFP48"
 \t(version 20240108)
 \t(generator "gen_compact_carrier.py")
 \t(layer "F.Cu")
-\t(descr "ESP32-WROOM-32 soldered module")
-\t(tags "ESP32 WROOM")
+\t(descr "STM32G030C8T6 LQFP-48 7x7mm P0.5mm")
+\t(tags "STM32 G030 LQFP48")
 \t(attr smd)
-\t(fp_rect (start -9.5 -13.5) (end 9.5 13.5)
+\t(fp_rect (start -4.5 -4.5) (end 4.5 4.5)
 \t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
-\t(fp_rect (start -9.5 -13.5) (end 9.5 13.5)
+\t(fp_rect (start -3.5 -3.5) (end 3.5 3.5)
 \t\t(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
-\t(fp_text user "ANT" (at 0 12.2 0) (layer "F.SilkS")
-\t\t(effects (font (size 0.7 0.7) (thickness 0.1))))
+\t(fp_circle (center -3.2 -3.2) (end -2.9 -3.2)
+\t\t(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
+\t(fp_text user "1" (at -5.2 -2.75 0) (layer "F.SilkS")
+\t\t(effects (font (size 0.6 0.6) (thickness 0.1))))
 {chr(10).join(pads)}
 )
 """,
+        force=True,
+    )
+    write(
+        "Cortex_Debug_10",
+        """
+(footprint "Cortex_Debug_10"
+\t(version 20240108)
+\t(generator "gen_compact_carrier.py")
+\t(layer "F.Cu")
+\t(descr "ARM Cortex Debug / CoreSight-10 1.27mm 2x5; pin7 KEY (NPTH)")
+\t(tags "SWD Cortex Debug FTSH-105")
+\t(attr through_hole)
+\t(fp_rect (start -1.8 -3.2) (end 1.8 3.2)
+\t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
+\t(fp_rect (start -1.5 -2.9) (end 1.5 2.9)
+\t\t(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
+\t(fp_text user "DBG" (at 0 -3.6 0) (layer "F.SilkS")
+\t\t(effects (font (size 0.7 0.7) (thickness 0.1))))
+\t(fp_text user "1" (at -2.2 -2.54 0) (layer "F.SilkS")
+\t\t(effects (font (size 0.55 0.55) (thickness 0.08))))
+\t(pad "1" thru_hole rect (at -0.635 -2.54) (size 0.9 0.9) (drill 0.5) (layers "*.Cu" "*.Mask"))
+\t(pad "2" thru_hole circle (at 0.635 -2.54) (size 0.9 0.9) (drill 0.5) (layers "*.Cu" "*.Mask"))
+\t(pad "3" thru_hole circle (at -0.635 -1.27) (size 0.9 0.9) (drill 0.5) (layers "*.Cu" "*.Mask"))
+\t(pad "4" thru_hole circle (at 0.635 -1.27) (size 0.9 0.9) (drill 0.5) (layers "*.Cu" "*.Mask"))
+\t(pad "5" thru_hole circle (at -0.635 0) (size 0.9 0.9) (drill 0.5) (layers "*.Cu" "*.Mask"))
+\t(pad "6" thru_hole circle (at 0.635 0) (size 0.9 0.9) (drill 0.5) (layers "*.Cu" "*.Mask"))
+\t(pad "7" np_thru_hole circle (at -0.635 1.27) (size 0.9 0.9) (drill 0.7) (layers "*.Cu" "*.Mask"))
+\t(pad "8" thru_hole circle (at 0.635 1.27) (size 0.9 0.9) (drill 0.5) (layers "*.Cu" "*.Mask"))
+\t(pad "9" thru_hole circle (at -0.635 2.54) (size 0.9 0.9) (drill 0.5) (layers "*.Cu" "*.Mask"))
+\t(pad "10" thru_hole circle (at 0.635 2.54) (size 0.9 0.9) (drill 0.5) (layers "*.Cu" "*.Mask"))
+)
+""",
+        force=True,
+    )
+
+    # Dual-channel 24V power module socket (MOSFET / H-bridge / DC vibrator)
+    pm_pads = []
+    for n in range(1, 13):
+        row, col = (n - 1) // 2, (n - 1) % 2
+        x = -1.27 if col == 0 else 1.27
+        y = -6.35 + row * 2.54
+        shape = "rect" if n == 1 else "circle"
+        pm_pads.append(
+            f'\t(pad "{n}" thru_hole {shape} (at {x} {y:.2f}) (size 1.7 1.7)'
+            f'\n\t\t(drill 1.0) (layers "*.Cu" "*.Mask"))'
+        )
+    write(
+        "PowerMod_2CH_Sock",
+        f"""
+(footprint "PowerMod_2CH_Sock"
+\t(version 20240108)
+\t(generator "gen_compact_carrier.py")
+\t(layer "F.Cu")
+\t(descr "2x6 2.54mm — MOSFET/H-bridge/DC-vib module socket (no driver on carrier)")
+\t(attr through_hole)
+\t(fp_rect (start -2.5 -7.3) (end 2.5 7.3)
+\t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
+\t(fp_rect (start -2.2 -7.0) (end 2.2 7.0)
+\t\t(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
+\t(fp_text user "U_PWR" (at 0 -8.6 0) (layer "F.SilkS")
+\t\t(effects (font (size 0.7 0.7) (thickness 0.1))))
+\t(fp_text user "1" (at -2.4 -6.35 0) (layer "F.SilkS")
+\t\t(effects (font (size 0.55 0.55) (thickness 0.08))))
+{chr(10).join(pm_pads)}
+)
+""",
+        force=True,
+    )
+    write(
+        "VibAC_Sock",
+        """
+(footprint "VibAC_Sock"
+\t(version 20240108)
+\t(generator "gen_compact_carrier.py")
+\t(layer "F.Cu")
+\t(descr "1x4 — SSR/AC vibratory module control socket")
+\t(attr through_hole)
+\t(fp_rect (start -1.2 -1.1) (end 1.2 8.7)
+\t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
+\t(fp_text user "U_VIB" (at 0 -1.8 0) (layer "F.SilkS")
+\t\t(effects (font (size 0.65 0.65) (thickness 0.1))))
+\t(pad "1" thru_hole rect (at 0 0) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
+\t(pad "2" thru_hole circle (at 0 2.54) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
+\t(pad "3" thru_hole circle (at 0 5.08) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
+\t(pad "4" thru_hole circle (at 0 7.62) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
+)
+""",
+        force=True,
+    )
+    write(
+        "Mot_XH_04_Socket",
+        """
+(footprint "Mot_XH_04_Socket"
+	(version 20240108)
+	(generator "gen_compact_carrier.py")
+	(layer "F.Cu")
+	(descr "JST-XH 4P keyed — NEMA17 phases A2 A1 B1 B2 on board edge")
+	(tags "JST XH motor keyed")
+	(attr through_hole)
+	(fp_rect (start -2.9 -1.0) (end 2.9 8.5)
+		(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
+	(fp_rect (start -2.7 -0.8) (end 2.7 8.3)
+		(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
+	(fp_text user "MOT" (at 0 -1.6 0) (layer "F.SilkS")
+		(effects (font (size 0.7 0.7) (thickness 0.1))))
+	(fp_text user "A2" (at 3.3 0.0 0) (layer "F.SilkS")
+		(effects (font (size 0.55 0.55) (thickness 0.08)) (justify left)))
+	(pad "1" thru_hole rect (at 0 0.0) (size 1.6 1.6) (drill 0.9) (layers "*.Cu" "*.Mask"))
+	(fp_text user "A1" (at 3.3 2.5 0) (layer "F.SilkS")
+		(effects (font (size 0.55 0.55) (thickness 0.08)) (justify left)))
+	(pad "2" thru_hole circle (at 0 2.5) (size 1.6 1.6) (drill 0.9) (layers "*.Cu" "*.Mask"))
+	(fp_text user "B1" (at 3.3 5.0 0) (layer "F.SilkS")
+		(effects (font (size 0.55 0.55) (thickness 0.08)) (justify left)))
+	(pad "3" thru_hole circle (at 0 5.0) (size 1.6 1.6) (drill 0.9) (layers "*.Cu" "*.Mask"))
+	(fp_text user "B2" (at 3.3 7.5 0) (layer "F.SilkS")
+		(effects (font (size 0.55 0.55) (thickness 0.08)) (justify left)))
+	(pad "4" thru_hole circle (at 0 7.5) (size 1.6 1.6) (drill 0.9) (layers "*.Cu" "*.Mask"))
+)
+""",
+        force=True,
     )
 
     write(
@@ -150,9 +305,9 @@ def ensure_extra_footprints() -> None:
 \t(layer "F.Cu")
 \t(descr "USB Micro-B SMT R/A — mouth +Y (edge), pads -Y (inboard)")
 \t(attr smd)
-\t(fp_rect (start -4.0 -3.5) (end 4.0 4.0)
+\t(fp_rect (start -3.5 -3.3) (end 3.5 3.6)
 \t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
-\t(fp_rect (start -3.4 -2.4) (end 3.4 2.8)
+\t(fp_rect (start -3.2 -2.4) (end 3.2 2.6)
 \t\t(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
 \t(fp_line (start -2.2 3.5) (end 2.2 3.5)
 \t\t(stroke (width 0.15) (type solid)) (layer "F.SilkS"))
@@ -183,7 +338,7 @@ def ensure_extra_footprints() -> None:
 \t(layer "F.Cu")
 \t(descr "1x8 keypad header")
 \t(attr through_hole)
-\t(fp_rect (start -1.5 -1.5) (end 1.5 19.5)
+\t(fp_rect (start -1.2 -1.1) (end 1.2 18.9)
 \t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
 \t(pad "1" thru_hole rect (at 0 0) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
 \t(pad "2" thru_hole circle (at 0 2.54) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
@@ -195,6 +350,7 @@ def ensure_extra_footprints() -> None:
 \t(pad "8" thru_hole circle (at 0 17.78) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
 )
 """,
+        force=True,
     )
 
     write(
@@ -206,7 +362,7 @@ def ensure_extra_footprints() -> None:
 	(layer "F.Cu")
 	(descr "1x10 header — external 3-digit 7seg CC (G1-G3 + A-G)")
 	(attr through_hole)
-	(fp_rect (start -1.5 -1.5) (end 1.5 24.6)
+	(fp_rect (start -1.2 -1.1) (end 1.2 24.0)
 		(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
 	(pad "1" thru_hole rect (at 0 0) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
 	(pad "2" thru_hole circle (at 0 2.54) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
@@ -590,29 +746,21 @@ def ensure_extra_footprints() -> None:
     )
 
 
-def courtyard_size(fp_name: str) -> tuple[float, float]:
-    """Return (width, height) packing AABB: max(CrtYd/Silk/Fab, pad extents) + margin."""
+def footprint_aabb(fp_name: str) -> tuple[float, float, float, float]:
+    """Local-coord AABB (xmin, ymin, xmax, ymax) from F.CrtYd, else pads + 0.25 mm."""
     path = PRETTY / f"{fp_name}.kicad_mod"
     if not path.exists():
-        return (12.0, 12.0)
+        return (-6.0, -6.0, 6.0, 6.0)
     text = path.read_text(encoding="utf-8")
-    half_w = half_h = 0.0
-    for layer in ("F.CrtYd", "F.Fab", "F.SilkS"):
-        m = re.search(
-            rf'\(fp_rect\s*\(start\s+([-\d.]+)\s+([-\d.]+)\)\s*\(end\s+([-\d.]+)\s+([-\d.]+)\)[\s\S]*?layer "{layer}"',
-            text,
-        )
-        if m:
-            x0, y0, x1, y1 = map(float, m.groups())
-            half_w = max(half_w, abs(x0), abs(x1), abs(x1 - x0) / 2)
-            half_h = max(half_h, abs(y0), abs(y1), abs(y1 - y0) / 2)
-            break
-    m = re.search(r"\(fp_circle.*?\(end\s+([-\d.]+)", text, re.S)
+    m = re.search(
+        r'\(fp_rect\s*\(start\s+([-\d.]+)\s+([-\d.]+)\)\s*\(end\s+([-\d.]+)\s+([-\d.]+)\)[\s\S]*?layer "F\.CrtYd"',
+        text,
+    )
     if m:
-        r = abs(float(m.group(1)))
-        half_w = max(half_w, r)
-        half_h = max(half_h, r)
-    # Pads often stick past silk (axial diodes, etc.)
+        x0, y0, x1, y1 = map(float, m.groups())
+        return (min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1))
+    xs: list[float] = []
+    ys: list[float] = []
     for pm in re.finditer(
         r'\(pad\s+"[^"]+"\s+\w+\s+\w+\s*\(at\s+([-\d.]+)\s+([-\d.]+)',
         text,
@@ -620,17 +768,25 @@ def courtyard_size(fp_name: str) -> tuple[float, float]:
         px, py = float(pm.group(1)), float(pm.group(2))
         chunk = text[pm.start() : pm.start() + 280]
         sm = re.search(r"\(size\s+([-\d.]+)\s+([-\d.]+)\)", chunk)
-        if sm:
-            sx, sy = float(sm.group(1)) / 2, float(sm.group(2)) / 2
-        else:
-            sx = sy = 0.9
-        half_w = max(half_w, abs(px) + sx)
-        half_h = max(half_h, abs(py) + sy)
-    if half_w < 0.5 or half_h < 0.5:
+        sx = float(sm.group(1)) / 2 if sm else 0.9
+        sy = float(sm.group(2)) / 2 if sm else 0.9
+        xs += [px - sx, px + sx]
+        ys += [py - sy, py + sy]
+    if not xs:
+        return (-6.0, -6.0, 6.0, 6.0)
+    mrg = 0.25
+    return (min(xs) - mrg, min(ys) - mrg, max(xs) + mrg, max(ys) + mrg)
+
+
+def courtyard_size(fp_name: str) -> tuple[float, float]:
+    """Return (width, height) packing AABB from true courtyard/pad extents + margin."""
+    x0, y0, x1, y1 = footprint_aabb(fp_name)
+    w, h = x1 - x0, y1 - y0
+    if w < 0.5 or h < 0.5:
         return (12.0, 12.0)
-    # Extra packing margin so bodies/silk don't look glued
-    pad = 0.5
-    return (2 * half_w + pad, 2 * half_h + pad)
+    # Small packing clearance beyond body (not 2× abs() inflate)
+    pad = 0.25
+    return (w + pad, h + pad)
 
 
 def inject_nets_into_mod(mod_text: str, pad_nets: dict[str, str], net_ids: dict[str, int]) -> str:
@@ -707,40 +863,48 @@ def build_parts() -> list[Part]:
         return Part(ref, fp, value, cluster, w, h, rot, pad_nets=pad_nets or {}, board_only=board_only)
 
     gpio_net = {
-        TMC_GPIO["STEP"]: "/STEP",
-        TMC_GPIO["DIR"]: "/DIR",
-        TMC_GPIO["EN"]: "/EN_TMC",
-        BUP_GPIO: "/BUP",
-        TM1637_GPIO["CLK"]: "/TM_CLK",
-        TM1637_GPIO["DIO"]: "/TM_DIO",
-        KEYPAD_GPIO["ROW0"]: "/KEY_R0",
-        KEYPAD_GPIO["ROW1"]: "/KEY_R1",
-        KEYPAD_GPIO["ROW2"]: "/KEY_R2",
-        KEYPAD_GPIO["ROW3"]: "/KEY_R3",
-        KEYPAD_GPIO["COL0"]: "/KEY_C0",
-        KEYPAD_GPIO["COL1"]: "/KEY_C1",
-        KEYPAD_GPIO["COL2"]: "/KEY_C2",
-        KEYPAD_GPIO["COL3"]: "/KEY_C3",
-        0: "/IO0",  # boot strap
-        2: "/IO2",  # boot strap pull-up
+        TMC_PINS["STEP"]: "/STEP",
+        TMC_PINS["DIR"]: "/DIR",
+        TMC_PINS["EN"]: "/EN_TMC",
+        TMC2_PINS["STEP"]: "/STEP2",
+        TMC2_PINS["DIR"]: "/DIR2",
+        TMC2_PINS["EN"]: "/EN_TMC2",
+        BUP_PIN: "/BUP",
+        IN2_PIN: "/IN2",
+        IN3_PIN: "/IN3",
+        PWR_PINS["PWM1"]: "/PWM_OUT1",
+        PWR_PINS["PWM2"]: "/PWM_OUT2",
+        PWR_PINS["EN"]: "/PWR_EN",
+        PWR_PINS["DIR"]: "/PWR_DIR",
+        PWR_PINS["FAULT"]: "/PWR_FAULT",
+        VIB_PINS["CTRL"]: "/VIB_CTRL",
+        VIB_PINS["FAULT"]: "/VIB_FAULT",
+        TM1637_PINS["CLK"]: "/TM_CLK",
+        TM1637_PINS["DIO"]: "/TM_DIO",
+        KEYPAD_PINS["ROW0"]: "/KEY_R0",
+        KEYPAD_PINS["ROW1"]: "/KEY_R1",
+        KEYPAD_PINS["ROW2"]: "/KEY_R2",
+        KEYPAD_PINS["ROW3"]: "/KEY_R3",
+        KEYPAD_PINS["COL0"]: "/KEY_C0",
+        KEYPAD_PINS["COL1"]: "/KEY_C1",
+        KEYPAD_PINS["COL2"]: "/KEY_C2",
+        KEYPAD_PINS["COL3"]: "/KEY_C3",
+        USART1_PINS["TX"]: "/UART_TX",
+        USART1_PINS["RX"]: "/UART_RX",
+        SWD_PINS["SWDIO"]: "/SWDIO",
+        SWD_PINS["SWCLK"]: "/SWCLK",
+        SWD_PINS["SWO"]: "/SWO",
+        "NRST": "/NRST",
+        "VBAT": "+3V3",
+        "VREF+": "+3V3",
+        "VDD": "+3V3",
+        "VSS": "GND",
     }
 
     u1_nets: dict[str, str] = {}
-    for num, name in WROOM_LEFT + WROOM_RIGHT:
-        if name == "GND":
-            u1_nets[str(num)] = "GND"
-        elif name == "3V3":
-            u1_nets[str(num)] = "+3V3"
-        elif name == "EN":
-            u1_nets[str(num)] = "/EN"
-        elif name == "TXD0":
-            u1_nets[str(num)] = "/UART_TX"
-        elif name == "RXD0":
-            u1_nets[str(num)] = "/UART_RX"
-        elif name.startswith("IO") and name[2:].isdigit():
-            g = int(name[2:])
-            if g in gpio_net:
-                u1_nets[str(num)] = gpio_net[g]
+    for num, name in LQFP48_PINS:
+        if name in gpio_net:
+            u1_nets[str(num)] = gpio_net[name]
 
     parts = [
         P("H1", "MountingHole_M3", "M3", "MOUNT", board_only=True),
@@ -750,12 +914,11 @@ def build_parts() -> list[Part]:
         P("J_USB", "USB_MicroB", "USB_MicroB", "MCU", {
             "1": "+5V", "2": "/USB_DM", "3": "/USB_DP", "5": "GND", "MH1": "GND", "MH2": "GND",
         }),
-        # CH340C: TXD→ESP RX, RXD←ESP TX; XI/XO crystal; DTR/RTS auto-program
+        # CH340C UART bridge (no DTR/RTS auto-boot — STM32 uses SWD / BOOT0)
         P("U5", "CH340C", "CH340C", "MCU", {
             "1": "GND", "2": "/UART_RX", "3": "/UART_TX", "4": "+3V3",
             "5": "/USB_DP", "6": "/USB_DM",
             "7": "/CH340_XI", "8": "/CH340_XO",
-            "10": "/DTR", "15": "/RTS",
             "16": "+5V",
         }),
         P("Y1", "Crystal_SMD_3225", "12MHz", "MCU", {
@@ -763,25 +926,33 @@ def build_parts() -> list[Part]:
         }),
         P("C_XI", "C_0805", "22p", "MCU", {"1": "/CH340_XI", "2": "GND"}),
         P("C_XO", "C_0805", "22p", "MCU", {"1": "/CH340_XO", "2": "GND"}),
-        P("C52", "C_0805_100n", "100n", "MCU", {"1": "+3V3", "2": "GND"}),  # CH340 V3
-        P("C53", "C_0805_100n", "100n", "MCU", {"1": "+5V", "2": "GND"}),   # CH340 VCC
-        # Auto-program NodeMCU: DTR→10k→Q1→IO0, RTS→10k→Q2→EN; also C couple for edge assist
-        P("R_DTR", "R_0805_10k", "10k", "MCU", {"1": "/DTR", "2": "/Q_BOOT_B"}),
-        P("R_RTS", "R_0805_10k", "10k", "MCU", {"1": "/RTS", "2": "/Q_EN_B"}),
-        P("C_DTR", "C_0805_100n", "100n", "MCU", {"1": "/DTR", "2": "/IO0"}),
-        P("C_RTS", "C_0805_100n", "100n", "MCU", {"1": "/RTS", "2": "/EN"}),
-        P("Q1", "S8050_SOT23", "S8050", "MCU", {"1": "/Q_BOOT_B", "2": "GND", "3": "/IO0"}),
-        P("Q2", "S8050_SOT23", "S8050", "MCU", {"1": "/Q_EN_B", "2": "GND", "3": "/EN"}),
-        P("R_EN", "R_0805_10k", "10k", "MCU", {"1": "+3V3", "2": "/EN"}),
-        P("R_IO0", "R_0805_10k", "10k", "MCU", {"1": "+3V3", "2": "/IO0"}),
-        P("R_IO2", "R_0805_10k", "10k", "MCU", {"1": "+3V3", "2": "/IO2"}),
-        P("SW_BOOT", "SW_Push_6mm", "BOOT", "MCU", {
-            "1": "/IO0", "2": "/IO0", "3": "GND", "4": "GND",
+        P("C52", "C_0805_100n", "100n", "MCU", {"1": "+3V3", "2": "GND"}),
+        P("C53", "C_0805_100n", "100n", "MCU", {"1": "+5V", "2": "GND"}),
+        P("U1", "STM32G030C8T6_LQFP48", "STM32G030C8T6", "MCU", u1_nets),
+        P("C_MCU", "C_0805_100n", "100n", "MCU", {"1": "+3V3", "2": "GND"}),
+        P("C_MCU2", "C_0805", "1u", "MCU", {"1": "+3V3", "2": "GND"}),
+        P("R_NRST", "R_0805_10k", "10k", "MCU", {"1": "+3V3", "2": "/NRST"}),
+        P("C_NRST", "C_0805_100n", "100n", "MCU", {"1": "/NRST", "2": "GND"}),
+        P("R_BOOT", "R_0805_10k", "10k", "MCU", {"1": "/SWCLK", "2": "GND"}),  # BOOT0 + SWCLK PD
+        P("R_SWDIO", "R_0805_10k", "10k", "MCU", {"1": "+3V3", "2": "/SWDIO"}),  # SWDIO PU
+        P("SW_BOOT", "SW_Push_6mm", "BOOT0", "MCU", {
+            "1": "/SWCLK", "2": "/SWCLK", "3": "+3V3", "4": "+3V3",
         }),
-        P("SW_EN", "SW_Push_6mm", "EN", "MCU", {
-            "1": "/EN", "2": "/EN", "3": "GND", "4": "GND",
+        P("SW_NRST", "SW_Push_6mm", "NRST", "MCU", {
+            "1": "/NRST", "2": "/NRST", "3": "GND", "4": "GND",
         }),
-        P("U1", "ESP32_WROOM_32", "WROOM-32", "MCU", u1_nets, rot=180),
+        # ARM CoreSight-10 / Cortex Debug (1.27mm): VTREF SWDIO GND SWCLK GND SWO KEY TDI GND nSRST
+        P("J_DBG", "Cortex_Debug_10", "CortexDbg", "MCU", {
+            "1": "+3V3",
+            "2": "/SWDIO",
+            "3": "GND",
+            "4": "/SWCLK",
+            "5": "GND",
+            "6": "/SWO",
+            "8": "GND",  # TDI unused in SWD — tie GND (safe)
+            "9": "GND",
+            "10": "/NRST",
+        }),
         P("U6", "AMS1117_SOT223", "AMS1117-3.3", "MCU", {
             "1": "GND", "2": "+3V3", "3": "+5V", "TAB": "+3V3",
         }),
@@ -807,22 +978,40 @@ def build_parts() -> list[Part]:
         P("C10", "CP_SMD_D6.3x5.8", "47u/50V", "POWER", {"1": "+24V_SNS", "2": "GND"}),
         P("C11", "C_0805_100n", "100n", "POWER", {"1": "+24V_SNS", "2": "GND"}),
         P("C21", "CP_SMD_D6.3x5.8", "220u/50V", "POWER", {"1": "+24V", "2": "GND"}),
-        # Motor VM behind PTC so motor short can isolate without killing MCU rail
+        # Motor VM: U3 on MOT1, U4 on MOT2 (separate PTC for future dual NEMA17)
         P("PTC_MOT", "PTC_1812", "1.1A", "TMC", {"1": "+24V", "2": "+24V_MOT"}),
         P("C20", "CP_SMD_D8x10", "470u/50V", "TMC", {"1": "+24V_MOT", "2": "GND"}),
         P("C24", "C_0805_100n", "100n", "TMC", {"1": "+24V_MOT", "2": "GND"}),
+        P("PTC_MOT2", "PTC_1812", "1.1A", "TMC", {"1": "+24V", "2": "+24V_MOT2"}),
+        P("C20B", "CP_SMD_D6.3x5.8", "220u/50V", "TMC", {"1": "+24V_MOT2", "2": "GND"}),
+        P("C24B", "C_0805_100n", "100n", "TMC", {"1": "+24V_MOT2", "2": "GND"}),
         P("C5", "CP_SMD_D6.3x5.8", "100u/16V", "MCU", {"1": "+5V", "2": "GND"}),
         P("C51", "C_0805_100n", "100n", "MCU", {"1": "+5V", "2": "GND"}),
-        P("D5", "Diode_SMB_TVS", "SMBJ5.0A", "MCU", {"1": "GND", "2": "+5V"}),  # +5V clamp
+        P("D5", "Diode_SMB_TVS", "SMBJ5.0A", "MCU", {"1": "GND", "2": "+5V"}),
         P("C3", "CP_SMD_D6.3x5.8", "47u/10V", "MCU", {"1": "+3V3", "2": "GND"}),
         P("C31", "C_0805_100n", "100n", "MCU", {"1": "+3V3", "2": "GND"}),
-        P("U3", "TMC2209_StepStick", "TMC_SOCK", "TMC", {
+        # U3 = motor 1 (feed/count); U4 = motor 2 (anti-jam / future) — sockets only
+        P("U3", "TMC2209_StepStick", "TMC1", "TMC", {
             "1": "/EN_TMC", "7": "/STEP", "8": "/DIR",
             "9": "+24V_MOT", "10": "GND",
             "11": "/MotA2", "12": "/MotA1", "13": "/MotB1", "14": "/MotB2",
             "15": "+3V3", "16": "GND",
-        }, rot=270),
+        }, rot=0),
         P("R2", "R_0805_10k", "10k", "TMC", {"1": "+3V3", "2": "/EN_TMC"}),
+        # Board-edge motor jacks (field wiring) — same phase nets as U3/U4 Mot pads
+        P("J_MOT1", "Mot_XH_04_Socket", "MOT1", "TMC", {
+            "1": "/MotA2", "2": "/MotA1", "3": "/MotB1", "4": "/MotB2",
+        }),
+        P("U4", "TMC2209_StepStick", "TMC2", "TMC", {
+            "1": "/EN_TMC2", "7": "/STEP2", "8": "/DIR2",
+            "9": "+24V_MOT2", "10": "GND",
+            "11": "/Mot2A2", "12": "/Mot2A1", "13": "/Mot2B1", "14": "/Mot2B2",
+            "15": "+3V3", "16": "GND",
+        }, rot=0),
+        P("R2B", "R_0805_10k", "10k", "TMC", {"1": "+3V3", "2": "/EN_TMC2"}),
+        P("J_MOT2", "Mot_XH_04_Socket", "MOT2", "TMC", {
+            "1": "/Mot2A2", "2": "/Mot2A1", "3": "/Mot2B1", "4": "/Mot2B2",
+        }),
         P("U7", "TM1637_SOP20", "TM1637", "HMI", {
             "1": "/TM_G1", "2": "/TM_G2", "3": "/TM_G3",
             "7": "/TM_SA", "8": "/TM_SB", "9": "/TM_SC", "10": "/TM_SD",
@@ -838,6 +1027,7 @@ def build_parts() -> list[Part]:
             "1": "/KEY_R0", "2": "/KEY_R1", "3": "/KEY_R2", "4": "/KEY_R3",
             "5": "/KEY_C0", "6": "/KEY_C1", "7": "/KEY_C2", "8": "/KEY_C3",
         }),
+        # Count sensors (install ONE of J14/J15)
         P("J14", "JST_XH_04_Socket", "BUP_U", "OPTO", {
             "1": "+24V_SNS", "2": "GND", "3": "/OPTO_IN_BUP",
         }),
@@ -851,6 +1041,38 @@ def build_parts() -> list[Part]:
         P("R48", "R_0805_10k", "10k", "OPTO", {"1": "+3V3", "2": "/BUP"}),
         P("R1", "R_0805_4k7", "4k7", "OPTO", {"1": "+24V_SNS", "2": "/OPTO_IN_BUP"}),
         P("C26", "C_0805_100n", "100n", "OPTO", {"1": "+24V_SNS", "2": "GND"}),
+        # Spare field inputs (jam / hopper / gate) — NPN OC 12–24V
+        P("J_IN2", "JST_XH_03_Socket", "IN2", "OPTO", {
+            "1": "+24V_SNS", "2": "GND", "3": "/OPTO_IN2",
+        }),
+        P("U45", "PC817_SOP4", "PC817", "OPTO", {
+            "1": "/OPTO_IN2", "2": "GND", "3": "GND", "4": "/IN2",
+        }),
+        P("R45", "R_0805_2k2", "2k2", "OPTO", {"1": "+24V_SNS", "2": "/OPTO_IN2"}),
+        P("R49", "R_0805_10k", "10k", "OPTO", {"1": "+3V3", "2": "/IN2"}),
+        P("J_IN3", "JST_XH_03_Socket", "IN3", "OPTO", {
+            "1": "+24V_SNS", "2": "GND", "3": "/OPTO_IN3",
+        }),
+        P("U46", "PC817_SOP4", "PC817", "OPTO", {
+            "1": "/OPTO_IN3", "2": "GND", "3": "GND", "4": "/IN3",
+        }),
+        P("R46", "R_0805_2k2", "2k2", "OPTO", {"1": "+24V_SNS", "2": "/OPTO_IN3"}),
+        P("R50", "R_0805_10k", "10k", "OPTO", {"1": "+3V3", "2": "/IN3"}),
+        # Pluggable 24V power (MOSFET/H-bridge/DC vib) — socket only
+        P("U_PWR", "PowerMod_2CH_Sock", "PWR_MOD", "PWR", {
+            "1": "+24V", "2": "+24V",
+            "3": "GND", "4": "GND",
+            "5": "+3V3", "6": "/PWR_FAULT",
+            "7": "/PWM_OUT1", "8": "/PWM_OUT2",
+            "9": "/PWR_EN", "10": "/PWR_DIR",
+            "11": "GND", "12": "GND",
+        }),
+        P("R_PWR_FLT", "R_0805_10k", "10k", "PWR", {"1": "+3V3", "2": "/PWR_FAULT"}),
+        # Pluggable AC vibratory SSR control — socket only
+        P("U_VIB", "VibAC_Sock", "VIB_SSR", "PWR", {
+            "1": "+24V", "2": "GND", "3": "/VIB_CTRL", "4": "/VIB_FAULT",
+        }),
+        P("R_VIB_FLT", "R_0805_10k", "10k", "PWR", {"1": "+3V3", "2": "/VIB_FAULT"}),
     ]
     return parts
 
@@ -858,15 +1080,8 @@ def build_parts() -> list[Part]:
 
 
 def antenna_keepout(u1: Part) -> tuple[float, float, float, float]:
-    """World AABB in front of WROOM antenna (rot=180 -> tip north/top), to board margin."""
-    tip_x = u1.x
-    tip_y = u1.y - ANT_TIP
-    return (
-        tip_x - ANT_HALF_W,
-        OY + MARGIN - 0.5,
-        tip_x + ANT_HALF_W,
-        tip_y,
-    )
+    """Legacy stub — no RF keepout for STM32 (returns empty box at U1)."""
+    return (u1.x, u1.y, u1.x, u1.y)
 
 
 def rects_overlap(
@@ -888,6 +1103,7 @@ def pack_parts(parts: list[Part], seed: int = 42) -> dict:
         ox=OX,
         oy=OY,
         margin=MARGIN,
+        jack_margin=JACK_MARGIN,
         gap=GAP,
         ant_tip=ANT_TIP,
         ant_clear=ANT_CLEAR,
@@ -947,17 +1163,33 @@ NETS = {
     42: "/TM_SE",
     43: "/TM_SF",
     44: "/TM_SG",
-    45: "/EN",
-    46: "/IO0",
-    47: "/IO2",
-    48: "/DTR",
-    49: "/RTS",
+    45: "/NRST",
+    46: "/SWDIO",
+    47: "/SWCLK",
+    48: "/SWO",
     50: "/CH340_XI",
     51: "/CH340_XO",
-    52: "/Q_BOOT_B",
-    53: "/Q_EN_B",
     54: "+24V_MOT",
     55: "+24V_SNS_PRE",
+    56: "/STEP2",
+    57: "/DIR2",
+    58: "/EN_TMC2",
+    59: "/Mot2A2",
+    60: "/Mot2A1",
+    61: "/Mot2B1",
+    62: "/Mot2B2",
+    63: "+24V_MOT2",
+    64: "/IN2",
+    65: "/OPTO_IN2",
+    66: "/IN3",
+    67: "/OPTO_IN3",
+    68: "/PWM_OUT1",
+    69: "/PWM_OUT2",
+    70: "/PWR_EN",
+    71: "/PWR_DIR",
+    72: "/PWR_FAULT",
+    73: "/VIB_CTRL",
+    74: "/VIB_FAULT",
 }
 
 
@@ -1156,29 +1388,13 @@ def emit_pcb_v2(parts: list[Part]) -> None:
     a('\t\t(layer "Edge.Cuts")')
     a(f'\t\t(uuid "{uid()}")')
     a("\t)")
-    a(f'\t(gr_text "{BOARD_W:.0f}x{BOARD_H:.0f} placement-only — ANT keepout north of U1; J1 west"')
+    a(f'\t(gr_text "{BOARD_W:.0f}x{BOARD_H:.0f} DIN | field jacks N/S only | W/E=rail"')
     a(f"\t\t(at {OX + 4} {OY + 3.5} 0)")
     a('\t\t(layer "Cmts.User")')
     a("\t\t(effects (font (size 0.9 0.9) (thickness 0.12)) (justify left))")
     a(f'\t\t(uuid "{uid()}")')
     a("\t)")
-    _u1 = next(p for p in parts if p.ref == "U1")
-    _kx0, _ky0, _kx1, _ky1 = antenna_keepout(_u1)
-    a("\t(gr_rect")
-    a(f"\t\t(start {_kx0:.3f} {_ky0:.3f})")
-    a(f"\t\t(end {_kx1:.3f} {_ky1:.3f})")
-    a("\t\t(stroke (width 0.2) (type dash))")
-    a("\t\t(fill none)")
-    a('\t\t(layer "Eco1.User")')
-    a(f'\t\t(uuid "{uid()}")')
-    a("\t)")
-    a('\t(gr_text "ANT KEEPOUT"')
-    a(f"\t\t(at {(_kx0+_kx1)/2:.3f} {(_ky0+_ky1)/2:.3f} 0)")
-    a('\t\t(layer "Eco1.User")')
-    a("\t\t(effects (font (size 0.8 0.8) (thickness 0.1)))")
-    a(f'\t\t(uuid "{uid()}")')
-    a("\t)")
-    a('\t(gr_text "J_DISP=7SEG ext | J_KEY=keypad ext | J14/J15 fit ONE"')
+    a('\t(gr_text "N: SNS/KEY/DISP | S: J1 MOT USB DBG | no side jacks"')
     a(f"\t\t(at {OX + 4} {OY + BOARD_H - 3.5} 0)")
     a('\t\t(layer "Cmts.User")')
     a("\t\t(effects (font (size 0.75 0.75) (thickness 0.1)) (justify left))")
@@ -1214,27 +1430,28 @@ def emit_pcb_v2(parts: list[Part]) -> None:
         else:
             a(f"\t\t(attr {attr})")
 
-        # courtyard box from sizes
-        hw, hh = p.w / 2, p.h / 2
-        # if rotated 90/270, courtyard_size already swapped w/h for packing,
-        # but local courtyard in footprint is unrotated — use unrotated from file
-        uw, uh = courtyard_size(p.fp)
+        # Courtyard / silk from true local AABB (not packing-size centered on origin)
+        ax0, ay0, ax1, ay1 = footprint_aabb(p.fp)
         a("\t\t(fp_rect")
-        a(f"\t\t\t(start {-uw / 2:.3f} {-uh / 2:.3f})")
-        a(f"\t\t\t(end {uw / 2:.3f} {uh / 2:.3f})")
+        a(f"\t\t\t(start {ax0:.3f} {ay0:.3f})")
+        a(f"\t\t\t(end {ax1:.3f} {ay1:.3f})")
         a("\t\t\t(stroke (width 0.05) (type solid))")
         a("\t\t\t(fill none)")
         a('\t\t\t(layer "F.CrtYd")')
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
-        a("\t\t(fp_rect")
-        a(f"\t\t\t(start {-uw / 2:.3f} {-uh / 2:.3f})")
-        a(f"\t\t\t(end {uw / 2:.3f} {uh / 2:.3f})")
-        a("\t\t\t(stroke (width 0.12) (type solid))")
-        a("\t\t\t(fill none)")
-        a('\t\t\t(layer "F.SilkS")')
-        a(f'\t\t\t(uuid "{uid()}")')
-        a("\t\t)")
+        # Silk inset 0.15 mm so outline hugs body, not packing clearance
+        sx0, sy0 = ax0 + 0.15, ay0 + 0.15
+        sx1, sy1 = ax1 - 0.15, ay1 - 0.15
+        if sx1 > sx0 and sy1 > sy0:
+            a("\t\t(fp_rect")
+            a(f"\t\t\t(start {sx0:.3f} {sy0:.3f})")
+            a(f"\t\t\t(end {sx1:.3f} {sy1:.3f})")
+            a("\t\t\t(stroke (width 0.12) (type solid))")
+            a("\t\t\t(fill none)")
+            a('\t\t\t(layer "F.SilkS")')
+            a(f'\t\t\t(uuid "{uid()}")')
+            a("\t\t)")
 
         for m in re.finditer(
             r'\(pad\s+"([^"]+)"\s+(\w+)\s+(\w+)(?:\s*\n\s*|\s+)\(at\s+([-\d.]+)\s+([-\d.]+)(?:\s+([-\d.]+))?\)',
@@ -1281,12 +1498,11 @@ def emit_pcb_v2(parts: list[Part]) -> None:
 
 def main() -> None:
     global BOARD_W, BOARD_H
-    best: tuple[float, list[Part], dict] | None = None
-    # Prefer smallest clean board; denser pack after GAP/MARGIN tighten
-    for size in (90.0, 95.0, 100.0, 105.0, 110.0, 115.0, 120.0, 130.0):
-        BOARD_W = BOARD_H = size
+    best: tuple[tuple[float, float], list] | None = None
+    for bw, bh in BOARD_CANDIDATES:
+        BOARD_W, BOARD_H = bw, bh
         found = None
-        for seed in (42, 7, 99, 123):
+        for seed in (42, 7, 99, 123, 256, 512):
             parts = build_parts()
             metrics = pack_parts(parts, seed=seed)
             clean = (
@@ -1295,50 +1511,37 @@ def main() -> None:
                 and metrics.get("warns", 0) == 0
             )
             print(
-                f"  try {size:.0f} seed={seed}: overlaps={metrics['overlaps']} "
+                f"  try {bw:.0f}x{bh:.0f} seed={seed}: overlaps={metrics['overlaps']} "
                 f"ant={metrics['ant_hits']} warns={metrics.get('warns', 0)}"
             )
             if clean:
-                found = (size, parts, metrics)
+                found = ((bw, bh), parts)
                 break
         if found:
             best = found
             break
     if best is None:
-        BOARD_W = BOARD_H = 150.0
+        BOARD_W, BOARD_H = 150.0, 130.0
         parts = build_parts()
         metrics = pack_parts(parts, seed=42)
         print(
             f"FALLBACK {BOARD_W:.0f}x{BOARD_H:.0f} "
             f"overlaps={metrics['overlaps']} ant={metrics['ant_hits']} warns={metrics.get('warns')}"
         )
+        best_parts = parts
     else:
-        BOARD_W = BOARD_H = best[0]
-        parts, metrics = best[1], best[2]
+        BOARD_W, BOARD_H = best[0]
+        best_parts = best[1]
         print(f"Selected board {BOARD_W:.0f}x{BOARD_H:.0f} mm")
-    emit_pcb_v2(parts)
-    mov = [p for p in parts if not p.board_only]
-    u1 = next(p for p in mov if p.ref == "U1")
-    kx0, ky0, kx1, ky1 = antenna_keepout(u1)
+    emit_pcb_v2(best_parts)
+    mov = [p for p in best_parts if not p.board_only]
     ov = 0
     for i, a in enumerate(mov):
         for b in mov[i + 1 :]:
             if abs(a.x - b.x) < (a.w + b.w) / 2 + GAP and abs(a.y - b.y) < (a.h + b.h) / 2 + GAP:
                 ov += 1
                 print(f"  overlap {a.ref}/{b.ref}")
-    ant = 0
-    for pt in mov:
-        if pt.ref == "U1":
-            continue
-        px0, py0, px1, py1 = part_aabb(pt)
-        # same expanded keepout as placer (gap clearance)
-        if rects_overlap(
-            px0, py0, px1, py1,
-            kx0 - GAP, ky0 - GAP, kx1 + GAP, ky1 + GAP,
-        ):
-            ant += 1
-            print(f"  ANT keepout hit {pt.ref}")
-    print(f"Done. size={BOARD_W:.0f}x{BOARD_H:.0f} overlaps={ov} ant_hits={ant} gap={GAP}")
+    print(f"Done. size={BOARD_W:.0f}x{BOARD_H:.0f} overlaps={ov} gap={GAP}")
 
 
 if __name__ == "__main__":

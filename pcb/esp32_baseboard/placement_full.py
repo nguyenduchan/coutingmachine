@@ -1,18 +1,13 @@
 #!/usr/bin/env python3
 """Full PCB placement engine for the compact carrier.
 
-Pipeline (matches EDA guide):
-  1) Graph partition / min-cut (FM refine on net graph)
-  2) Analytical quadratic wirelength (Jacobi on weighted Laplacian)
-  3) Force-directed springs (net attract + courtyard repel + antenna)
-  4) Genetic / evolutionary refine (XY + 90° rotation)
-  5) Simulated annealing (XY + rotation, Metropolis cooling)
-  6) Legalization (push + grid)
+DIN-rail layout guide (N/S edge jacks, W/E = clip sides):
+  SOUTH (bottom): 24V power + motor jacks + drivers / buck
+  MID:            optocoupler isolation wall
+  NORTH (top):    sensors + keypad + display + MCU 3V3
 
-U1 (WROOM) stays fixed: rot=180, antenna north/top keepout.
-J1 (24V) stays fixed: left/west edge, rot=90 (parallel to that edge).
-J_USB stays fixed: south edge, rot=0 (mouth outward, axis ⊥ edge).
-Inlet chain locked: J1 → D3 → F1 (west edge, fuse out south); all post-fuse 24V loads south/east of F1.
+Pipeline: min-cut → quadratic → force → GA → SA → legalize.
+Locked: inlet chain, edge jacks, U1, USB, TMC near MOT jacks.
 """
 
 from __future__ import annotations
@@ -25,41 +20,57 @@ from typing import Callable, Sequence
 
 WEAK_NETS = frozenset({
     "GND", "+24V", "+24V_RAW", "+24V_PRE", "+24V_SNS", "+24V_SNS_PRE",
-    "+24V_MOT", "+5V", "+3V3",
+    "+24V_MOT", "+24V_MOT2", "+5V", "+3V3",
 })
 
-# Parts on these nets must stay near J1 (24V inlet) — but loads only AFTER fuse
 RAIL_24_NETS = frozenset({
-    "+24V", "+24V_RAW", "+24V_PRE", "+24V_SNS", "+24V_SNS_PRE", "+24V_MOT",
+    "+24V", "+24V_RAW", "+24V_PRE", "+24V_SNS", "+24V_SNS_PRE", "+24V_MOT", "+24V_MOT2",
 })
 POST_FUSE_NETS = frozenset({
-    "+24V", "+24V_SNS", "+24V_SNS_PRE", "+24V_MOT",
-})  # protected rails (after F1)
+    "+24V", "+24V_SNS", "+24V_SNS_PRE", "+24V_MOT", "+24V_MOT2",
+})
 PRE_FUSE_REFS = frozenset({"J1", "D3", "F1"})
 
+# Soft prefs for non-locked parts (edge jacks are hard-pinned)
 EDGE_PREF = {
-    "SW_BOOT": ("S", 5.0),
-    "SW_EN": ("S", 5.0),
-    # 24V loads hug west edge near J1
-    "U3": ("W", 7.0),
-    "PTC_MOT": ("W", 5.5),
-    "PTC_SNS": ("W", 5.0),
-    "J14": ("W", 6.0),
-    "J15": ("W", 6.0),
-    "J_DISP": ("S", 7.0),
-    "J_KEY": ("S", 6.0),
+    "SW_BOOT": ("N", 4.0),
+    "SW_NRST": ("N", 4.0),
+    "J_DBG": ("N", 6.5),
+    "U3": ("S", 7.5),
+    "U4": ("S", 7.5),
+    "U_PWR": ("S", 6.0),
+    "U_VIB": ("S", 5.5),
+    "PTC_MOT": ("S", 5.0),
+    "PTC_MOT2": ("S", 5.0),
+    "PTC_SNS": ("S", 4.0),
 }
 
-# Spatial bins — POWER/TMC/OPTO packed on west near J1; U1 owns north strip
+# Y fractions: N=top(low Y) 3V3 | mid OPTO | S=bottom(high Y) 24V
 REGION_BOX = {
-    "MCU": (0.35, 0.28, 0.75, 0.65),
-    "POWER": (0.04, 0.28, 0.42, 0.72),
-    "TMC": (0.04, 0.45, 0.48, 0.88),
-    "OPTO": (0.04, 0.32, 0.40, 0.62),
-    "HMI": (0.40, 0.55, 0.96, 0.96),
+    "MCU": (0.45, 0.04, 0.92, 0.38),
+    "HMI": (0.04, 0.04, 0.55, 0.36),
+    "OPTO": (0.04, 0.32, 0.55, 0.55),
+    "POWER": (0.04, 0.50, 0.45, 0.92),
+    "TMC": (0.30, 0.48, 0.78, 0.92),
+    "PWR": (0.70, 0.48, 0.96, 0.88),
 }
 
-REGION_ORDER = ("POWER", "TMC", "OPTO", "MCU", "HMI")
+REGION_ORDER = ("POWER", "TMC", "OPTO", "PWR", "MCU", "HMI")
+
+LOCKED_REFS = frozenset({
+    "U1", "J1", "J_USB", "D3", "F1",
+    "J_MOT1", "J_MOT2", "U3", "U4",
+    "J14", "J15", "J_IN2", "J_IN3", "J_KEY", "J_DISP",
+    "J_DBG",
+})
+
+# External field connectors — may sit on N/S board edges.
+# Everything else must keep ≥ INNER courtyard clearance from Edge.Cuts.
+EDGE_JACK_REFS = frozenset({
+    "J1", "J_MOT1", "J_MOT2",
+    "J14", "J15", "J_IN2", "J_IN3",
+    "J_KEY", "J_DISP", "J_USB", "J_DBG",
+})
 
 
 @dataclass
@@ -68,7 +79,8 @@ class PlaceCfg:
     board_h: float
     ox: float
     oy: float
-    margin: float
+    margin: float  # non-jack ≥ this from Edge.Cuts
+    jack_margin: float  # field jacks may be closer
     gap: float
     ant_tip: float
     ant_clear: float
@@ -88,31 +100,46 @@ def _rects_overlap(a, b) -> bool:
 
 def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
     rng = random.Random(seed)
+    # Inner keep-in for non-jacks (≥ margin from Edge.Cuts)
     ix0, iy0 = cfg.ox + cfg.margin, cfg.oy + cfg.margin
     ix1, iy1 = cfg.ox + cfg.board_w - cfg.margin, cfg.oy + cfg.board_h - cfg.margin
+    # Field jacks may hug N/S edges
+    jx0, jy0 = cfg.ox + cfg.jack_margin, cfg.oy + cfg.jack_margin
+    jx1, jy1 = cfg.ox + cfg.board_w - cfg.jack_margin, cfg.oy + cfg.board_h - cfg.jack_margin
     by_ref = {p.ref: p for p in parts}
 
-    by_ref["H1"].x, by_ref["H1"].y = cfg.ox + 3.5, cfg.oy + 3.5
-    by_ref["H2"].x, by_ref["H2"].y = cfg.ox + cfg.board_w - 3.5, cfg.oy + 3.5
-    by_ref["H3"].x, by_ref["H3"].y = cfg.ox + 3.5, cfg.oy + cfg.board_h - 3.5
-    by_ref["H4"].x, by_ref["H4"].y = cfg.ox + cfg.board_w - 3.5, cfg.oy + cfg.board_h - 3.5
+    hole = max(cfg.margin + 0.5, 4.5)
+    by_ref["H1"].x, by_ref["H1"].y = cfg.ox + hole, cfg.oy + hole
+    by_ref["H2"].x, by_ref["H2"].y = cfg.ox + cfg.board_w - hole, cfg.oy + hole
+    by_ref["H3"].x, by_ref["H3"].y = cfg.ox + hole, cfg.oy + cfg.board_h - hole
+    by_ref["H4"].x, by_ref["H4"].y = cfg.ox + cfg.board_w - hole, cfg.oy + cfg.board_h - hole
 
     movable = [p for p in parts if not p.board_only]
     u1 = by_ref["U1"]
     others = []
 
     def set_rot(p, rot: float) -> None:
-        """Apply rotation; update courtyard w/h. U1/J1/J_USB/D3/F1 locked."""
+        """Apply rotation; update courtyard w/h. Locked edge parts keep guide angles."""
         if p is u1:
-            rot = 180.0
+            rot = 0.0
         elif p.ref == "J1":
-            rot = 90.0
+            rot = 0.0  # south edge, pads || edge
         elif p.ref == "J_USB":
-            rot = 0.0  # local +Y = mouth → world south (outward)
+            rot = 180.0  # mouth north outward
         elif p.ref == "D3":
-            rot = 0.0  # anode west → cathode east (RAW→PRE)
+            rot = 0.0
         elif p.ref == "F1":
-            rot = 90.0  # pad1 PRE north, pad2 +24V south (along west edge)
+            rot = 0.0  # pad1 west PRE, pad2 east +24V
+        elif p.ref in (
+            "J_MOT1", "J_MOT2", "J14", "J15", "J_IN2", "J_IN3",
+            "J_KEY", "J_DISP", "J_DBG",
+        ):
+            # Native pad row is local +Y → rot 90/270 = pin row || N/S edge (ngang)
+            rot = 90.0
+        elif p.ref in ("U3", "U4"):
+            rot = 0.0
+        elif p.ref in ("SW_BOOT", "SW_NRST"):
+            rot = 0.0
         rot = float(int(rot) % 360)
         if rot not in (0.0, 90.0, 180.0, 270.0):
             rot = 0.0
@@ -124,8 +151,12 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             p.w, p.h = uw, uh
 
     def clamp(p) -> None:
-        p.x = min(max(p.x, ix0 + p.w / 2), ix1 - p.w / 2)
-        p.y = min(max(p.y, iy0 + p.h / 2), iy1 - p.h / 2)
+        if p.ref in EDGE_JACK_REFS:
+            x0, y0, x1, y1 = jx0, jy0, jx1, jy1
+        else:
+            x0, y0, x1, y1 = ix0, iy0, ix1, iy1
+        p.x = min(max(p.x, x0 + p.w / 2), x1 - p.w / 2)
+        p.y = min(max(p.y, y0 + p.h / 2), y1 - p.h / 2)
 
     def overlaps(a, b) -> bool:
         return (
@@ -154,8 +185,8 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
         oy = min_dy - abs(dy)
         eps = 0.05
         # Never move locked edge/inlet parts — always shove the other body
-        a_fixed = a.ref in ("U1", "J1", "J_USB", "D3", "F1")
-        b_fixed = b.ref in ("U1", "J1", "J_USB", "D3", "F1")
+        a_fixed = a.ref in LOCKED_REFS
+        b_fixed = b.ref in LOCKED_REFS
 
         def _push_x(target, sgn, push):
             target.x += push * sgn
@@ -194,7 +225,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
         return True
 
     def antenna_ko():
-        """Keepout in front of antenna tip (north), strip to top board edge."""
+        """RF keepout (disabled when ant_half_w==0 for STM32)."""
         tip_x = u1.x
         tip_y = u1.y - cfg.ant_tip
         return (
@@ -206,7 +237,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
 
     def in_keepout(p) -> float:
         """Overlap depth vs keepout expanded by gap (parts must clear, not kiss)."""
-        if p is u1:
+        if p is u1 or cfg.ant_half_w <= 0.0:
             return 0.0
         kx0, ky0, kx1, ky1 = antenna_ko()
         g = cfg.gap
@@ -239,50 +270,39 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             clamp(p)
 
     def pin_j1() -> None:
-        """24V terminal: west/left edge, pins parallel to that edge (rot=90)."""
-        set_rot(j1, 90.0)
-        j1.x = ix0 + j1.w / 2
-        # Below antenna keepout / U1 north strip
-        _kx0, _ky0, _kx1, ky1 = antenna_ko()
-        ymin = max(iy0 + j1.h / 2, ky1 + j1.h / 2 + 2.0, u1.y + u1.h / 2 + cfg.gap)
-        ymax = iy1 - j1.h / 2
-        if j1.y < ymin or j1.y > ymax:
-            j1.y = min(max(u1.y + 0.28 * cfg.board_h, ymin), ymax)
-        j1.y = min(max(j1.y, ymin), ymax)
+        """24V terminal: south-west corner on field-jack margin."""
+        set_rot(j1, 0.0)
+        j1.y = jy1 - j1.h / 2
+        j1.x = jx0 + j1.w / 2 + 1.0
         clamp(j1)
 
     def pin_j_usb() -> None:
-        """USB Micro-B: flush south Edge.Cuts, mouth +Y outward (rot=0)."""
-        set_rot(usb, 0.0)
-        # Footprint: mouth at local +Y (silk OUT), pads at −Y (inboard).
-        # CrtYd end y=+4.0 → south face on Edge.Cuts.
-        south_ext = 4.0
-        usb.y = cfg.oy + cfg.board_h - south_ext
-        usb.x = cfg.ox + 0.72 * cfg.board_w
-        usb.x = min(max(usb.x, ix0 + usb.w / 2), ix1 - usb.w / 2)
+        """USB Micro-B: flush north; final X set in pin_edge_jacks."""
+        set_rot(usb, 180.0)
+        usb.y = jy0 + usb.h / 2
+        usb.x = cfg.ox + 0.88 * cfg.board_w
+        clamp(usb)
 
     def pin_inlet_chain() -> None:
-        """J1 → D3 → F1 along west: fuse vertical, +24V out toward south."""
+        """J1 on south edge; D3/F1 inland (≥4 mm from Edge.Cuts)."""
         pin_j1()
         chain_gap = cfg.gap + 0.5
         set_rot(d3, 0.0)
         d3.x = j1.x + j1.w / 2 + chain_gap + d3.w / 2
-        d3.y = j1.y
-        d3.y = min(max(d3.y, iy0 + d3.h / 2), iy1 - d3.h / 2)
-        # F1 rot=90: tall on west; clear below J1/D3 courtyards
-        set_rot(f1, 90.0)
-        f1.x = ix0 + f1.w / 2
-        y_clear = max(j1.y + j1.h / 2, d3.y + d3.h / 2) + chain_gap
-        f1.y = y_clear + f1.h / 2
-        f1.y = min(max(f1.y, iy0 + f1.h / 2), iy1 - f1.h / 2)
-
-    def fuse_out_y() -> float:
-        """World Y of F1 pad2 (+24V) with rot=90 (local +11.25 → +Y)."""
-        return f1.y + 11.25
+        d3.y = min(j1.y - j1.h / 2 - chain_gap - d3.h / 2, iy1 - d3.h / 2)
+        clamp(d3)
+        set_rot(f1, 0.0)
+        f1.y = iy1 - f1.h / 2
+        f1.x = max(d3.x + d3.w / 2, j1.x + j1.w / 2) + chain_gap + f1.w / 2
+        clamp(f1)
 
     def fuse_out_x() -> float:
-        """West-strip east face — loads stay east of inlet column."""
-        return max(f1.x + f1.w / 2, d3.x + d3.w / 2, j1.x + j1.w / 2)
+        """World X of F1 pad2 (+24V) with rot=0 (local +11.25 → +X)."""
+        return f1.x + 11.25
+
+    def fuse_out_y() -> float:
+        """North face of fuse — post-fuse loads stay clear of inlet."""
+        return f1.y - f1.h / 2
 
     def is_post_fuse_load(p) -> bool:
         if p.ref in PRE_FUSE_REFS:
@@ -290,49 +310,91 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
         return any(n in POST_FUSE_NETS for n in (p.pad_nets or {}).values())
 
     def enforce_post_fuse() -> None:
-        """Keep +24V loads out of pre-fuse inlet pocket (west of column AND north of fuse out).
-
-        Allowed: east of inlet column, or south of fuse output (or both).
-        """
-        ymin = fuse_out_y() + cfg.gap
+        """Keep +24V loads out of pre-fuse pocket (west of F1 on south band)."""
         xmin = fuse_out_x() + cfg.gap
         for p in others:
             if not is_post_fuse_load(p):
                 continue
-            left = p.x - p.w / 2
-            top = p.y - p.h / 2
-            in_pocket = left < xmin and top < ymin
-            if in_pocket:
-                # Prefer push east (beside fuse) — denser than forcing everything south
+            if p.x + p.w / 2 < xmin and p.y > fuse_out_y() - 2.0:
                 p.x = xmin + p.w / 2
-                if p.y - p.h / 2 < ymin and p.x - p.w / 2 < xmin:
-                    p.y = ymin + p.h / 2
             clamp(p)
             eject_keepout(p)
+
+    def pin_edge_jacks() -> None:
+        """All field connectors on N or S only; pin rows || edge (rot 90)."""
+        edge_gap = cfg.gap + 0.75
+        # South: power + motors only (Mot pad-row along edge)
+        u3w = cfg.courtyard_size("TMC2209_StepStick")[0]
+        f1p = by_ref["F1"]
+        # Clear full F1 body (not just pad2) so U3 under Mot cannot kiss fuse
+        x = f1p.x + f1p.w / 2 + edge_gap
+        for ref in ("J_MOT1", "J_MOT2"):
+            p = by_ref[ref]
+            set_rot(p, 90.0)
+            p.y = jy1 - p.h / 2
+            mot_pitch = max(p.w, u3w) + cfg.gap + 1.0
+            p.x = x + max(p.w, u3w) / 2
+            clamp(p)
+            x = p.x - max(p.w, u3w) / 2 + mot_pitch
+        for uref, jref in (("U3", "J_MOT1"), ("U4", "J_MOT2")):
+            u = by_ref[uref]
+            j = by_ref[jref]
+            set_rot(u, 0.0)
+            u.x = j.x
+            u.y = j.y - j.h / 2 - edge_gap - u.h / 2
+            clamp(u)
+        # North: tight cluster SNS→KEY→DISP→DBG→USB (ngang)
+        # cfg.gap+0.15 avoids float "exact-gap" false overlaps in placer
+        n_gap = cfg.gap + 0.15
+        x = jx0 + 0.5
+        north_order = ("J14", "J_IN2", "J_KEY", "J_DISP", "J_DBG", "J_USB")
+        for ref in north_order:
+            p = by_ref[ref]
+            set_rot(p, 180.0 if ref == "J_USB" else 90.0)
+            p.y = jy0 + p.h / 2
+            p.x = x + p.w / 2
+            clamp(p)
+            x = p.x + p.w / 2 + n_gap
+        # Alternates inland, tight under parents
+        for child, parent in (("J15", "J14"), ("J_IN3", "J_IN2")):
+            c, p = by_ref[child], by_ref[parent]
+            set_rot(c, 90.0)
+            c.x = p.x
+            c.y = p.y + p.h / 2 + n_gap + c.h / 2
+            clamp(c)
+        # SW_BOOT / SW_NRST: seeded once elsewhere (movable); do not re-pin here
 
     def pin_locked_edges() -> None:
         pin_inlet_chain()
         pin_j_usb()
+        pin_edge_jacks()
         enforce_post_fuse()
 
-    # --- pin U1 + inlet J1→D3→F1 + J_USB ---
-    set_rot(u1, 180.0)
-    u1.y = cfg.oy + cfg.margin + cfg.ant_clear + cfg.ant_tip
-    u1.x = cfg.ox + 0.55 * cfg.board_w
+    # --- pin U1 below north jack strip (MCU / 3V3), east half ---
+    set_rot(u1, 0.0)
+    u1.x = cfg.ox + 0.62 * cfg.board_w
+    u1.y = cfg.oy + 0.36 * cfg.board_h
     clamp(u1)
 
     j1 = by_ref["J1"]
     d3 = by_ref["D3"]
     f1 = by_ref["F1"]
     usb = by_ref["J_USB"]
-    locked_refs = {"U1", "J1", "J_USB", "D3", "F1"}
+    locked_refs = set(LOCKED_REFS)
     others = [p for p in movable if p.ref not in locked_refs]
 
     def is_locked(p) -> bool:
         return p.ref in locked_refs
 
-    j1.y = u1.y + u1.h / 2 + cfg.gap + j1.h / 2 + 1.0  # tight under U1; F1 hangs south
     pin_locked_edges()
+
+    # Seed tact switches inland near USB (movable)
+    for i, sref in enumerate(("SW_BOOT", "SW_NRST")):
+        sw = by_ref[sref]
+        set_rot(sw, 0.0)
+        sw.x = usb.x - (i + 0.5) * (sw.w + cfg.gap + 0.75)
+        sw.y = usb.y + usb.h / 2 + cfg.gap + 8.0 + sw.h / 2
+        clamp(sw)
 
     # --- net graph ---
     def net_weight(net: str) -> float:
@@ -452,19 +514,21 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             reverse=True,
         )
         x0, y0, x1, y1 = box
-        if rname in ("POWER", "TMC", "OPTO"):
-            # pack beside/below fuse (east of inlet OR south of fuse out)
+        if rname in ("POWER", "TMC", "PWR"):
+            # pack in south 24V band, east of fuse
             x = max(x0 + 1.0, fuse_out_x() + cfg.gap)
-            y = max(y0 + 1.0, j1.y - 6.0)
+            y = max(y0 + 1.0, fuse_out_y() + cfg.gap)
+        elif rname == "OPTO":
+            x, y = x0 + 1.0, y0 + 1.0
         else:
             x, y = x0 + 1.0, y0 + 1.0
         row_h = 0.0
         for p in group:
             if x + p.w / 2 > x1 - 1.0:
                 x = (
-                    x0 + 1.0
-                    if rname not in ("POWER", "TMC", "OPTO")
-                    else max(x0 + 1.0, fuse_out_x() + cfg.gap)
+                    max(x0 + 1.0, fuse_out_x() + cfg.gap)
+                    if rname in ("POWER", "TMC", "PWR")
+                    else x0 + 1.0
                 )
                 y += row_h + cfg.gap
                 row_h = 0.0
@@ -472,8 +536,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             p.y = min(max(y + p.h / 2, y0 + p.h / 2), y1 - p.h / 2)
             if is_post_fuse_load(p):
                 xmin = fuse_out_x() + cfg.gap
-                ymin = fuse_out_y() + cfg.gap
-                if p.x - p.w / 2 < xmin and p.y - p.h / 2 < ymin:
+                if p.x + p.w / 2 < xmin and p.y > fuse_out_y() - 2.0:
                     p.x = xmin + p.w / 2
             clamp(p)
             eject_keepout(p)
@@ -496,17 +559,14 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
         if side == "N":
             return (p.x, iy0 + p.h / 2, 0.4 * s / 10)
         if side == "S":
-            return (p.x, iy1 - p.h / 2, 0.4 * s / 10)
+            return (p.x, iy1 - p.h / 2, 0.45 * s / 10)
         if side == "W":
-            # hug west post-fuse: east of inlet, may sit beside F1
-            tx = fuse_out_x() + cfg.gap + p.w / 2 + 1.0
-            ty = max(p.y, j1.y)
-            return (tx, ty, 0.4 * s / 10)
+            return (ix0 + p.w / 2, p.y, 0.3 * s / 10)
         if side == "E":
             return (ix1 - p.w / 2, p.y, 0.4 * s / 10)
         return None
 
-    for _ in range(80):
+    for _ in range(40):
         new_xy: dict[str, tuple[float, float]] = {}
         for p in others:
             num_x = num_y = den = 0.0
@@ -550,7 +610,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             fy += (y1 - p.h / 2 - p.y) * 0.12
         return fx, fy
 
-    for _ in range(280):
+    for _ in range(30):
         force = {id(p): [0.0, 0.0] for p in movable}
         for a, b, w in edge_list:
             dx, dy = b.x - a.x, b.y - a.y
@@ -592,10 +652,10 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
                 fx += 1.2 * kd + 0.8
             # Pull post-fuse 24V loads east of inlet (beside fuse preferred)
             if is_post_fuse_load(p):
-                tx = fuse_out_x() + 12.0
-                ty = 0.5 * (j1.y + fuse_out_y())
+                tx = fuse_out_x() + 14.0
+                ty = iy1 - 18.0
                 fx += 0.12 * (tx - p.x)
-                fy += 0.08 * (ty - p.y)
+                fy += 0.10 * (ty - p.y)
             p.x += fx + cx
             p.y += fy + cy
             clamp(p)
@@ -621,7 +681,13 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
         return sum(in_keepout(p) ** 2 for p in others) * 500.0
 
     def j1_edge_cost() -> float:
-        return 50.0 * abs(j1.x - (ix0 + j1.w / 2)) + 20.0 * (0.0 if abs(j1.rot - 90.0) < 0.1 else 100.0)
+        target_y = jy1 - j1.h / 2
+        target_x = jx0 + j1.w / 2 + 1.0
+        return (
+            40.0 * abs(j1.y - target_y)
+            + 30.0 * abs(j1.x - target_x)
+            + (0.0 if abs(j1.rot) < 0.1 else 100.0)
+        )
 
     def partition_cost() -> float:
         s = 0.0
@@ -648,29 +714,23 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             elif side == "S":
                 s += w * abs(p.y - (iy1 - p.h / 2))
             elif side == "W":
-                target_x = fuse_out_x() + cfg.gap + p.w / 2 + 1.0
-                target_y = max(iy0 + p.h / 2, j1.y)
-                s += w * (abs(p.x - target_x) + 0.5 * abs(p.y - target_y))
+                s += w * abs(p.x - (ix0 + p.w / 2))
             elif side == "E":
                 s += w * abs(p.x - (ix1 - p.w / 2))
         return s
 
     def rail_24_cost() -> float:
-        """Penalize post-fuse loads inside pre-fuse inlet pocket."""
+        """Penalize post-fuse loads inside pre-fuse south-west pocket."""
         s = 0.0
         xmin = fuse_out_x() + cfg.gap
-        ymin = fuse_out_y() + cfg.gap
-        tx = xmin + 10.0
-        ty = 0.5 * (j1.y + fuse_out_y())
+        tx = xmin + 12.0
+        ty = iy1 - 20.0
         for p in others:
             if not is_post_fuse_load(p):
                 continue
-            left = p.x - p.w / 2
-            top = p.y - p.h / 2
-            if left < xmin and top < ymin:
-                s += 100.0 * ((xmin - left) ** 2 + (ymin - top) ** 2)
-            s += abs(p.x - tx) + 0.5 * abs(p.y - ty)
-        return s
+            if p.x + p.w / 2 < xmin and p.y > fuse_out_y() - 2.0:
+                s += 100.0 * (xmin - (p.x + p.w / 2)) ** 2
+            s += abs(p.x - tx) + 0.4 * abs(p.y - ty)
         return s
 
     def total_cost() -> float:
@@ -698,7 +758,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
     # =====================================================================
     # 4) Genetic / evolutionary
     # =====================================================================
-    pop_n, gens = 12, 14
+    pop_n, gens = 6, 5
     population: list[tuple[list[tuple[float, float, float]], float]] = []
     base = snapshot()
     population.append((base, total_cost()))
@@ -751,7 +811,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
     # =====================================================================
     cost = best_cost
     T0, T1 = 30.0, 0.04
-    steps = 2200
+    steps = 200
     for step in range(steps):
         T = T0 * (T1 / T0) ** (step / max(steps - 1, 1))
         p = rng.choice(others)
@@ -784,7 +844,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
     # =====================================================================
     # 6) Legalization — separate courtyards until gap clear
     # =====================================================================
-    for _ in range(800):
+    for _ in range(120):
         moved = False
         for p in others:
             if in_keepout(p) > 0:
@@ -803,7 +863,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             break
 
     def try_place(p) -> bool:
-        step = 1.0
+        step = 3.0
         y = iy0 + p.h / 2
         while y <= iy1 - p.h / 2 + 1e-9:
             x = ix0 + p.w / 2
@@ -824,7 +884,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
         return False
 
     warns = 0
-    for _pass in range(4):
+    for _pass in range(2):
         offenders = [
             p
             for p in others
@@ -834,10 +894,10 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             break
         for p in sorted(offenders, key=lambda q: q.w * q.h, reverse=True):
             if not try_place(p):
-                if _pass == 3:
+                if _pass == 1:
                     print(f"  WARN: {p.ref} still overlaps/keepout")
                     warns += 1
-        for __ in range(1000):
+        for __ in range(80):
             moved = False
             for i, a in enumerate(movable):
                 for b in movable[i + 1 :]:
@@ -854,9 +914,9 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
         eject_keepout(p)
     pin_locked_edges()
 
-    # Soft pull post-fuse 24V loads toward east of inlet (beside fuse)
-    tx = fuse_out_x() + 12.0
-    ty = 0.5 * (j1.y + fuse_out_y())
+    # Soft pull post-fuse 24V loads toward south band east of fuse
+    tx = fuse_out_x() + 14.0
+    ty = iy1 - 20.0
     for _ in range(80):
         moved = False
         for p in others:
@@ -876,7 +936,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             break
 
     # Final courtyard separation (soft-pull can leave parts at gap edge)
-    for _ in range(1200):
+    for _ in range(200):
         moved = False
         for i, a in enumerate(movable):
             for b in movable[i + 1 :]:
