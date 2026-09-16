@@ -1,7 +1,7 @@
 # ESP32 Baseboard → STM32G030 carrier — BOM (2026-09-15)
 
 SoT mua hàng / ước giá.  
-**PCB SoT:** `python gen_compact_carrier.py` → board **185×120 mm** (`esp32_baseboard.kicad_pcb`) — giắc field chỉ N/S; W/E để gài DIN.  
+**PCB SoT:** `python gen_compact_carrier.py` → board **180×120 mm** (`esp32_baseboard.kicad_pcb`) — giắc field chỉ N/S; W/E để gài DIN.  
 **Pinmap:** `stm32_pinmap.py` · **Verify:** `python verify_compact.py`
 
 > **CHƯA MUA gì.**  
@@ -9,7 +9,7 @@ SoT mua hàng / ước giá.
 > Nạp: **USB (CH340)** + nút **BOOT0 / NRST** — **không** giắc J_DBG (lot nhỏ).  
 > **Layout DIN (bắt buộc):**  
 > - **Cạnh dưới (S):** `J1` 24V → `J_MOT1`/`J_MOT2` (XH-4) + đế TMC/**U_PWR1+U_PWR2** — **không** kéo motor từ giắc sẵn trên module.  
-> - **Cạnh trên (N):** cảm biến đếm → IN → keypad → display (gần MCU) · USB · debug.  
+> - **Cạnh trên (N):** cảm biến đếm → IN → keypad → TM1637 (gần MCU) · USB · debug.  
 > - **Trái/phải:** không giắc field (DIN). Linh kiện không phải giắc ngoài: **cách Edge.Cuts ≥4 mm**.  
 > - **Giắc N/S:** hàng chân **song song cạnh** (rot 90° / ngang) — không đặt dọc.  
 > - **Giữa:** opto cách ly · **Trên lòng:** MCU 3V3 · **Dưới lòng:** 24V/buck/driver.  
@@ -55,7 +55,7 @@ Nạp UART: giữ **BOOT0** (`PA14`/`SWCLK`) + `SW_BOOT` / `SW_NRST` · `R_BOOT`
 
 | | |
 |--|--|
-| Kích thước | **185×120 mm** (auto-grow nếu courtyard gap &lt;2.5 mm; tối đa 300 mm) |
+| Kích thước | **180×120 mm** (auto-grow nếu giắc N/S khe &lt;5 mm; tối đa 300 mm) |
 | Generator | `gen_compact_carrier.py` (placement + nets, **no copper**) |
 | MCU | **STM32G030C8T6** LQFP48 SMT |
 | Hàn tay sau | **Chỉ hàn giắc/đế khi SKU cần** (pad đủ trên PCB). Luôn: J1, F1, J_USB, SW_*, J_DISP; tùy hạng: MOT/TMC/PWR/VIB/SNS/KEY/IN |
@@ -65,7 +65,7 @@ Nạp UART: giữ **BOOT0** (`PA14`/`SWCLK`) + `SW_BOOT` / `SW_NRST` · `R_BOOT`
 
 ### Bản đồ giắc IN/OUT (cạnh board)
 
-**Cạnh trên (N) — W→E, một hàng, khe hàn ≥2.5 mm (KEY/DISP/USB ≥3 mm):**
+**Cạnh trên (N) — W→E, một hàng, khe giữa giắc ≥5 mm (cắm 2 phích không chạm):**
 
 | # | Ref | Loại | Hướng | Pinout ngắn |
 |---|-----|------|-------|-------------|
@@ -97,7 +97,7 @@ Nạp UART: giữ **BOOT0** (`PA14`/`SWCLK`) + `SW_BOOT` / `SW_NRST` · `R_BOOT`
 **Trên board (không ra cạnh — không phải giắc field):** `F1` đế cầu chì · `SW_BOOT`/`SW_NRST` **cạnh J_USB** (phía trong) · linh kiện SMT.
 
 > Kích thước vật lý dọc cạnh (ước): XH-2 ~4.5 mm · XH-3 ~7 mm · XH-4 ~9.5 mm · KEY 1×8 ~19 mm · USB ~7 mm · **TMC đế ~20 mm** · PowerMod 1×6 ~15 mm · Vib 1×4 ~9 mm. Hàng S cần board rộng (~130–160 mm).  
-> **Linh kiện SMT** nằm lòng board, cách hàng giắc N/S ≥2.5 mm; **mọi courtyard cách nhau ≥2.5 mm** (không chạm / sát mép).
+> **Linh kiện SMT** nằm lòng board, cách hàng giắc N/S ≥2.5 mm; SMT courtyard ≥2.5 mm. **Giắc N/S cách nhau ≥5 mm** để hai phích cắm không chạm.
 
 ## A) SMT dán sẵn
 

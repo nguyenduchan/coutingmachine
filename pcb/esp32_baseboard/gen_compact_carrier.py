@@ -52,6 +52,7 @@ from placement_full import (
     NORTH_EDGE_JACKS,
     SOUTH_EDGE_JACKS,
 )
+from placement_saved import SAVED_BOARD_H, SAVED_BOARD_W, SAVED_POS
 
 ROOT = Path(__file__).resolve().parent
 PRETTY = ROOT / "libraries" / "ESP32_Carrier.pretty"
@@ -59,21 +60,21 @@ PCB = ROOT / "esp32_baseboard.kicad_pcb"
 
 # Commercial outline: 160×110 fits IP65 180×130 / 200×150 and cabinet backplates.
 # Not a 9TE slim DIN housing (those are ~151×82). L/R = DIN-clip / box-wall keep.
-COMMERCIAL_W = 165.0
-COMMERCIAL_H = 110.0
-# True: ignore live XY (needed when outline/keep change). False: min-disp vs PCB.
+COMMERCIAL_W = 180.0
+COMMERCIAL_H = 120.0
+# True: ignore live XY (needed when outline/keep/jack-pack change). False: min-disp vs PCB.
 FRESH_PACK = False
 BOARD_W = COMMERCIAL_W
 BOARD_H = COMMERCIAL_H
 TARGET_BOARD_MM = 100.0
 # Prefer commercial 160×110; grow if courtyard cannot clear.
 BOARD_CANDIDATES = (
+    (180.0, 120.0),
+    (185.0, 120.0),
     (165.0, 110.0),
     (170.0, 110.0),
     (170.0, 115.0),
     (175.0, 115.0),
-    (180.0, 120.0),
-    (185.0, 120.0),
 )
 BOARD_MAX_MM = 300.0  # hard cap while auto-growing
 BOARD_GROW_STEP_MM = 10.0
@@ -82,7 +83,8 @@ MARGIN = 8.0  # electronics ≥8 mm from left/right (DIN clip / box wall / duct)
 JACK_SIDE_KEEP = 6.0  # field jacks ≥6 mm from L/R (inner corner radius)
 JACK_MARGIN = 1.0  # field edge jacks may sit near N/S edges (panel cutouts)
 GAP = 2.5  # min clear space between ALL courtyards (mm)
-JACK_PACK = GAP  # field jacks use the same courtyard gap — no kiss / too-close
+# Edge jacks: extra gap so two mating plugs do not hit (XH housing + finger)
+JACK_PACK = 5.0
 JACK_ROW_SEP = 3.0  # nearest AABB edge vs horizontal lines through jack courtyards
 
 # No RF antenna (STM32). Keepout disabled (zeros) — PlaceCfg still accepts fields.
@@ -400,8 +402,11 @@ def attach_board_3d_models() -> None:
         "USB_MicroB": [_kicad_model(
             "Connector_USB.3dshapes/USB_Micro-B_Molex_47346-0001.step",
         )],
+        # Official PinSocket: pin 1 at origin, pins along +Y, rotate 0.
+        # Footprint rotation already carries the STEP; extra rz=180 walked the
+        # housing off the pad row in pcbnew 3D / kicad-cli render.
         "PinHeader_1x08_Keypad": [_kicad_model(
-            "Connector_PinHeader_2.54mm.3dshapes/PinHeader_1x08_P2.54mm_Vertical.step",
+            "Connector_PinSocket_2.54mm.3dshapes/PinSocket_1x08_P2.54mm_Vertical.step",
         )],
         "PowerMod_1CH_Sock": [_kicad_model(
             "Connector_PinSocket_2.54mm.3dshapes/PinSocket_1x06_P2.54mm_Vertical.step",
@@ -411,7 +416,7 @@ def attach_board_3d_models() -> None:
         )],
         "SW_Push_6mm": [_kicad_model(
             "Button_Switch_THT.3dshapes/SW_PUSH_6mm.step",
-            ox=-3.25, oy=-2.25,
+            ox=-3.25, oy=2.25,
         )],
         "STM32G030C8T6_LQFP48": [_kicad_model(
             "Package_QFP.3dshapes/LQFP-48_7x7mm_P0.5mm.step",
@@ -420,14 +425,15 @@ def attach_board_3d_models() -> None:
             "Fuse.3dshapes/Fuseholder_Cylinder-5x20mm_Schurter_0031_8201_Horizontal_Open.step",
             ox=-11.25,
         )],
+        # Pin 1 at PCB (−7.62, −8.89). KiCad 3D offset Y is inverted vs footprint Y.
         "TMC2209_StepStick": [
             _kicad_model(
                 "Connector_PinSocket_2.54mm.3dshapes/PinSocket_1x08_P2.54mm_Vertical.step",
-                ox=-7.62, oy=-8.89,
+                ox=-7.62, oy=8.89,
             ),
             _kicad_model(
                 "Connector_PinSocket_2.54mm.3dshapes/PinSocket_1x08_P2.54mm_Vertical.step",
-                ox=7.62, oy=-8.89,
+                ox=7.62, oy=8.89,
             ),
         ],
         # Passives / ICs — origin at body center (same as our pads)
@@ -490,9 +496,9 @@ def ensure_extra_footprints() -> None:
     write("USB_MicroB", make_usb_microb(), force=True)
     write("PinHeader_1x08_Keypad", make_keypad_kk8(), force=True)
     write("PowerMod_1CH_Sock", make_female_1xn(
-        "PowerMod_1CH_Sock", 6, "1x6 2.54 female — MOSFET 1CH module", "FET 1CH"), force=True)
+        "PowerMod_1CH_Sock", 6, "1x6 2.54 female — MOSFET 1CH module", "MOSFET"), force=True)
     write("VibAC_Sock", make_female_1xn(
-        "VibAC_Sock", 4, "1x4 2.54 female — SSR vibratory module", "U_VIB"), force=True)
+        "VibAC_Sock", 4, "1x4 2.54 female — SSR vibratory module", "SSR"), force=True)
 
     # STM32G030C8T6 — LQFP48 7×7 mm, 0.5 mm pitch (KiCad LQFP-48_7x7mm_P0.5mm)
     pads = []
@@ -1101,6 +1107,40 @@ class Part:
     aabb_local: tuple[float, float, float, float] = (-6.0, -6.0, 6.0, 6.0)
 
 
+# Real names on F.SilkS. Refs (U3, J14, C10…) stay in the file for nets/BOM but are hidden.
+SILK_NAME = {
+    "U1": "STM32G030",
+    "U2": "MP1584",
+    "U5": "CH340",
+    "U6": "AMS1117",
+    "U3": "TMC2209",
+    "U4": "TMC2209",
+    "U_PWR1": "MOSFET",
+    "U_PWR2": "MOSFET",
+    "U_VIB": "SSR",
+    "J1": "24V IN",
+    "J_USB": "USB",
+    "J_MOT1": "MOT1",
+    "J_MOT2": "MOT2",
+    "J_DISP": "TM1637",
+    "J_KEY": "KEYPAD",
+    "J14": "BUP",
+    "J15": "FIBER",
+    "J_IN2": "IN2",
+    "J_IN3": "IN3",
+    "J_CNT5": "CNT 5V",
+    "J_P24N": "+24V",
+    "J_P5N": "+5V",
+    "J_P24S": "+24V",
+    "SW_BOOT": "BOOT",
+    "SW_NRST": "RST",
+}
+# Generator tags — not real module names.
+HIDE_FP_TEXT = frozenset({
+    "THAY TMC2209", "NEMA=Mot pins", "FET 1CH", "U_VIB", "DBG",
+})
+
+
 def build_parts() -> list[Part]:
     ensure_extra_footprints()
 
@@ -1166,7 +1206,7 @@ def build_parts() -> list[Part]:
         P("H2", "MountingHole_M3", "M3", "MOUNT", board_only=True),
         P("H3", "MountingHole_M3", "M3", "MOUNT", board_only=True),
         P("H4", "MountingHole_M3", "M3", "MOUNT", board_only=True),
-        P("J_USB", "USB_MicroB", "USB_MicroB", "MCU", {
+        P("J_USB", "USB_MicroB", "USB", "MCU", {
             "1": "+5V", "2": "/USB_DM", "3": "/USB_DP", "5": "GND", "MH1": "GND", "MH2": "GND",
         }),
         # CH340C UART bridge (no DTR/RTS auto-boot — STM32 uses SWD / BOOT0)
@@ -1183,7 +1223,7 @@ def build_parts() -> list[Part]:
         P("C_XO", "C_0805", "22p", "MCU", {"1": "/CH340_XO", "2": "GND"}),
         P("C52", "C_0805_100n", "100n", "MCU", {"1": "+3V3", "2": "GND"}),
         P("C53", "C_0805_100n", "100n", "MCU", {"1": "+5V", "2": "GND"}),
-        P("U1", "STM32G030C8T6_LQFP48", "STM32G030C8T6", "MCU", u1_nets),
+        P("U1", "STM32G030C8T6_LQFP48", "STM32G030", "MCU", u1_nets),
         P("C_MCU", "C_0805_100n", "100n", "MCU", {"1": "+3V3", "2": "GND"}),
         P("C_MCU2", "C_0805", "1u", "MCU", {"1": "+3V3", "2": "GND"}),
         P("R_NRST", "R_0805_10k", "10k", "MCU", {"1": "+3V3", "2": "/NRST"}),
@@ -1234,7 +1274,7 @@ def build_parts() -> list[Part]:
         P("C3", "CP_SMD_D6.3x5.8", "47u/10V", "MCU", {"1": "+3V3", "2": "GND"}),
         P("C31", "C_0805_100n", "100n", "MCU", {"1": "+3V3", "2": "GND"}),
         # U3 = motor 1 (feed/count); U4 = motor 2 (anti-jam / future) — sockets only
-        P("U3", "TMC2209_StepStick", "TMC1", "TMC", {
+        P("U3", "TMC2209_StepStick", "TMC2209", "TMC", {
             "1": "/EN_TMC", "7": "/STEP", "8": "/DIR",
             "9": "+24V_MOT", "10": "GND",
             "11": "/MotA2", "12": "/MotA1", "13": "/MotB1", "14": "/MotB2",
@@ -1245,7 +1285,7 @@ def build_parts() -> list[Part]:
         P("J_MOT1", "Mot_XH_04_Socket", "MOT1", "TMC", {
             "1": "/MotA2", "2": "/MotA1", "3": "/MotB1", "4": "/MotB2",
         }),
-        P("U4", "TMC2209_StepStick", "TMC2", "TMC", {
+        P("U4", "TMC2209_StepStick", "TMC2209", "TMC", {
             "1": "/EN_TMC2", "7": "/STEP2", "8": "/DIR2",
             "9": "+24V_MOT2", "10": "GND",
             "11": "/Mot2A2", "12": "/Mot2A1", "13": "/Mot2B1", "14": "/Mot2B2",
@@ -1256,10 +1296,10 @@ def build_parts() -> list[Part]:
             "1": "/Mot2A2", "2": "/Mot2A1", "3": "/Mot2B1", "4": "/Mot2B2",
         }),
         # External TM1637 4-digit module (driver on module) — CLK DIO +5V GND
-        P("J_DISP", "Disp_XH_04_Socket", "TM1637_MOD", "HMI", {
+        P("J_DISP", "Disp_XH_04_Socket", "TM1637", "HMI", {
             "1": "/TM_CLK", "2": "/TM_DIO", "3": "+5V", "4": "GND",
         }),
-        P("J_KEY", "PinHeader_1x08_Keypad", "KEYPAD_EXT", "HMI", {
+        P("J_KEY", "PinHeader_1x08_Keypad", "KEYPAD", "HMI", {
             "1": "/KEY_R0", "2": "/KEY_R1", "3": "/KEY_R2", "4": "/KEY_R3",
             "5": "/KEY_C0", "6": "/KEY_C1", "7": "/KEY_C2", "8": "/KEY_C3",
         }),
@@ -1315,17 +1355,17 @@ def build_parts() -> list[Part]:
             "1": "+24V", "2": "GND",
         }),
         # One pluggable MOSFET module per 24V channel
-        P("U_PWR1", "PowerMod_1CH_Sock", "FET1", "PWR", {
+        P("U_PWR1", "PowerMod_1CH_Sock", "MOSFET", "PWR", {
             "1": "+24V", "2": "GND", "3": "+3V3",
             "4": "/PWM_OUT1", "5": "/PWR_EN1", "6": "/PWR_FAULT",
         }),
-        P("U_PWR2", "PowerMod_1CH_Sock", "FET2", "PWR", {
+        P("U_PWR2", "PowerMod_1CH_Sock", "MOSFET", "PWR", {
             "1": "+24V", "2": "GND", "3": "+3V3",
             "4": "/PWM_OUT2", "5": "/PWR_EN2", "6": "/PWR_FAULT",
         }),
         P("R_PWR_FLT", "R_0805_10k", "10k", "PWR", {"1": "+3V3", "2": "/PWR_FAULT"}),
         # Pluggable AC vibratory SSR control — socket only
-        P("U_VIB", "VibAC_Sock", "VIB_SSR", "PWR", {
+        P("U_VIB", "VibAC_Sock", "SSR", "PWR", {
             "1": "+24V", "2": "GND", "3": "/VIB_CTRL", "4": "/VIB_FAULT",
         }),
         P("R_VIB_FLT", "R_0805_10k", "10k", "PWR", {"1": "+3V3", "2": "/VIB_FAULT"}),
@@ -1373,7 +1413,9 @@ def pack_parts(parts: list[Part], seed: int = 42, anchors: dict | None = None) -
 
 
 def load_pcb_anchors() -> tuple[dict[str, tuple[float, float, float]], float, float] | None:
-    """Read current footprint (x,y,rot) and Edge.Cuts size from the live PCB."""
+    """Hand-tuned poses from placement_saved.py; fall back to parsing the PCB."""
+    if SAVED_POS:
+        return dict(SAVED_POS), float(SAVED_BOARD_W), float(SAVED_BOARD_H)
     if not PCB.exists():
         return None
     text = PCB.read_text(encoding="utf-8")
@@ -1727,16 +1769,15 @@ def emit_pcb_v2(parts: list[Part]) -> None:
         a('\t\t(property "Reference" "' + p.ref + '"')
         a("\t\t\t(at 0 -1.5 0)")
         a('\t\t\t(layer "F.SilkS")')
-        if p.board_only:
-            a("\t\t\t(hide yes)")
+        a("\t\t\t(hide yes)")
         a("\t\t\t(effects (font (size 0.8 0.8) (thickness 0.12)))")
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
+        silk = SILK_NAME.get(p.ref, "")
         a('\t\t(property "Value" "' + p.value + '"')
         a("\t\t\t(at 0 1.5 0)")
         a('\t\t\t(layer "F.Fab")')
-        if p.board_only:
-            a("\t\t\t(hide yes)")
+        a("\t\t\t(hide yes)")
         a("\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)))")
         a(f'\t\t\t(uuid "{uid()}")')
         a("\t\t)")
@@ -1747,17 +1788,37 @@ def emit_pcb_v2(parts: list[Part]) -> None:
         else:
             a(f"\t\t(attr {attr})")
 
+        copied_silk = False
         # Physical housing / silk / courtyard / 3D models from the library
         for g in extract_sexpr_blocks(
             raw, ("fp_rect", "fp_line", "fp_poly", "fp_circle", "fp_arc", "fp_text", "model")
         ):
             if "(property" in g:
                 continue
+            if g.lstrip().startswith("(fp_text"):
+                um = re.search(r'\(fp_text user "([^"]*)"', g)
+                if um and um.group(1) in HIDE_FP_TEXT:
+                    continue
+                if um and silk and um.group(1) == silk:
+                    copied_silk = True
             is_model = g.lstrip().startswith("(model")
             if not is_model and "(uuid" not in g:
                 g = g[:-1] + f'\n\t\t(uuid "{uid()}")\n\t)'
             for lg in g.strip().splitlines():
                 a("\t\t" + lg.lstrip())
+
+        if silk and not copied_silk:
+            if "TMC2209" in p.fp:
+                sx, sy = 0.0, 13.6
+            else:
+                x0, y0, x1, y1 = p.aabb_local
+                sx, sy = (x0 + x1) / 2.0, y0 - 1.15
+            a(f'\t\t(fp_text user "{silk}"')
+            a(f"\t\t\t(at {sx:.2f} {sy:.2f} 0)")
+            a('\t\t\t(layer "F.SilkS")')
+            a("\t\t\t(effects (font (size 0.7 0.7) (thickness 0.1)))")
+            a(f'\t\t\t(uuid "{uid()}")')
+            a("\t\t)")
 
         for m in re.finditer(
             r'\(pad\s+"([^"]+)"\s+(\w+)\s+(\w+)(?:\s*\n\s*|\s+)\(at\s+([-\d.]+)\s+([-\d.]+)(?:\s+([-\d.]+))?\)',
@@ -1850,8 +1911,8 @@ def main() -> None:
         anchors, bw, bh = loaded
         BOARD_W, BOARD_H = COMMERCIAL_W, COMMERCIAL_H
         print(
-            f"Min-disp place from live PCB ({len(anchors)} parts, "
-            f"was {bw:.0f}x{bh:.0f} → commercial {BOARD_W:.0f}x{BOARD_H:.0f} mm)"
+            f"Min-disp place from placement_saved.py ({len(anchors)} parts, "
+            f"{bw:.0f}x{bh:.0f} mm)"
         )
         parts = build_parts()
         metrics = pack_parts(parts, seed=42, anchors=anchors)
@@ -1869,6 +1930,22 @@ def main() -> None:
             print(f"Done. size={BOARD_W:.0f}x{BOARD_H:.0f} overlaps=0 gap={GAP} jack_pack={JACK_PACK}")
             return
         print("  min-disp still overlapping — fresh pack on commercial outline")
+        BOARD_W, BOARD_H = COMMERCIAL_W, COMMERCIAL_H
+        parts = build_parts()
+        metrics = pack_parts(parts, seed=42)
+        print(
+            f"  commercial fresh: overlaps={metrics['overlaps']} ant={metrics['ant_hits']} "
+            f"warns={metrics.get('warns', 0)}"
+        )
+        if (
+            metrics["overlaps"] == 0
+            and metrics["ant_hits"] == 0
+            and metrics.get("warns", 0) == 0
+        ):
+            print(f"Selected board {BOARD_W:.0f}x{BOARD_H:.0f} mm (commercial fresh)")
+            emit_pcb_v2(parts)
+            print(f"Done. size={BOARD_W:.0f}x{BOARD_H:.0f} overlaps=0 gap={GAP} jack_pack={JACK_PACK}")
+            return
 
     best: tuple[tuple[float, float], list, dict] | None = None
     seeds = (42, 7)

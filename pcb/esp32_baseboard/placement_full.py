@@ -59,7 +59,7 @@ LOCKED_REFS = frozenset({
     "SW_BOOT", "SW_NRST",
 })
 
-# Field cable/module jacks on N/S only. U3/U4 TMC are inland driver modules, not jacks.
+# Field cable jacks on N/S only — keypad + TM1637 sit on the north panel edge.
 EDGE_JACK_REFS = frozenset({
     "J1", "J_MOT1", "J_MOT2", "J_P24S",
     "U_PWR1", "U_PWR2", "U_VIB",
@@ -215,6 +215,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42, anchors: dict | None 
     jx0, jy0 = cfg.ox + jack_side, cfg.oy + cfg.jack_margin
     jx1, jy1 = cfg.ox + cfg.board_w - jack_side, cfg.oy + cfg.board_h - cfg.jack_margin
     by_ref = {p.ref: p for p in parts}
+    jack_row_overflow = [0.0]
 
     movable = [p for p in parts if not p.board_only]
     holes = [by_ref["H1"], by_ref["H2"], by_ref["H3"], by_ref["H4"]]
@@ -232,7 +233,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42, anchors: dict | None 
         boxes = {p.ref: _aabb(p) for p in parts}
         n_lo, n_hi = jack_hline_union(boxes, NORTH_EDGE_JACKS)
         s_lo, s_hi = jack_hline_union(boxes, SOUTH_EDGE_JACKS)
-        n_row_y1 = n_hi  # inland-most north jack line (KEY)
+        n_row_y1 = n_hi  # inland-most north jack courtyard line
         s_row_y0 = s_lo  # inland-most south jack courtyard (not TMC)
         iy0 = n_row_y1 + inland_clear
         iy1 = s_row_y0 - inland_clear
@@ -371,8 +372,8 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42, anchors: dict | None 
         ox = min_dx - abs(dx)
         oy = min_dy - abs(dy)
         eps = 0.05
-        a_fixed = a.ref in LOCKED_REFS or a_jack or a.ref.startswith("H")
-        b_fixed = b.ref in LOCKED_REFS or b_jack or b.ref.startswith("H")
+        a_fixed = a.ref in locked_refs or a_jack or a.ref.startswith("H")
+        b_fixed = b.ref in locked_refs or b_jack or b.ref.startswith("H")
         if a_fixed and b_fixed:
             if a_jack and not b_jack:
                 b_fixed = False
@@ -506,12 +507,12 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42, anchors: dict | None 
 
     def pack_row_even(
         refs: tuple[str, ...], x0: float, x1: float, min_gap: float, target_gap: float,
-        flush_y,
+        flush_y, *, spread_extra: bool = True,
     ) -> float:
-        """Place refs W→E in [x0,x1]. Courtyard gap ≥ min_gap; extra slack split evenly.
+        """Place refs W→E in [x0,x1]. Courtyard gap ≥ min_gap.
 
-        Tries target_gap first so 3D housings do not look stacked. If the span is
-        too short, falls back to even fill of whatever remains (≥ min_gap).
+        If spread_extra, leftover span is split between jacks (even row).
+        Else jacks sit at target_gap and unused space stays east of the last.
         Returns overflow mm (0 if the row fits).
         """
         items = [(ref, by_ref[ref]) for ref in refs if ref in by_ref]
@@ -524,7 +525,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42, anchors: dict | None 
         need = sum(widths) + target_gap * gaps_n
         extra = avail - need
         if extra >= -1e-3 and gaps_n:
-            gap = target_gap + extra / gaps_n
+            gap = target_gap + (extra / gaps_n if spread_extra else 0.0)
         elif gaps_n:
             gap = (avail - sum(widths)) / gaps_n
         else:
@@ -544,14 +545,15 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42, anchors: dict | None 
         return overflow
 
     def pin_edge_jacks() -> None:
-        """Field jacks on N/S only — even courtyard packing (no pile-up / 3D kiss).
+        """Field jacks on N/S only.
 
-        North: one row W→E (sensors → HMI → USB), slack split between jacks.
-        South: J1 stays SW; remaining jacks even-packed from east of J1 to the
-        right keep so MOT/PWR housings do not stack.
+        North: sensors → keypad → TM1637 → USB, packed at jack_pack (no inflated gaps).
+        South: J1 SW then MOT/PWR even-packed to the east keep.
         """
         pack = max(cfg.jack_pack, cfg.gap)
-        target = max(pack, 4.0)
+        # North is tight (KEY+DISP on the edge). Do not inflate gaps above jack_pack.
+        n_target = pack
+        s_target = max(pack, 6.0)
 
         for ref in NORTH_PACK_ORDER:
             if ref not in by_ref:
@@ -564,9 +566,10 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42, anchors: dict | None 
             else:
                 set_rot(p, 0.0)
 
-        pack_row_even(
-            NORTH_PACK_ORDER, jx0, jx1, pack, target,
+        n_ov = pack_row_even(
+            NORTH_PACK_ORDER, jx0, jx1, pack, n_target,
             lambda p: _shift_aabb_y0(p, jy0),
+            spread_extra=False,
         )
 
         set_rot(j1, 0.0)
@@ -578,15 +581,15 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42, anchors: dict | None 
                 set_rot(p, 90.0)
             else:
                 set_rot(p, 180.0)
-
-        pack_row_even(
+        s_ov = pack_row_even(
             ("J1",) + SOUTH_PACK_RIGHT,
             jx0,
             jx1,
             pack,
-            target,
+            s_target,
             lambda p: _shift_aabb_y1(p, jy1),
         )
+        jack_row_overflow[0] = max(n_ov, s_ov)
         update_inland_box()
 
     def pin_tmc_inland() -> None:
@@ -641,7 +644,100 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42, anchors: dict | None 
             h.x, h.y = x, y
             clamp(h)
 
+    def apply_anchors() -> None:
+        """Seed every part from saved/live PCB poses (minimum displacement)."""
+        if not anchors:
+            return
+        for p in parts:
+            rec = anchors.get(p.ref)
+            if rec is None:
+                continue
+            x, y, r = rec
+            set_rot(p, r)
+            p.x, p.y = x, y
+
+    def flush_user_jacks() -> None:
+        """Keep user jack X; snap to N/S; push neighbors apart if courtyards clash."""
+        pack = max(cfg.jack_pack, cfg.gap)
+        for ref in NORTH_PACK_ORDER:
+            if ref not in by_ref:
+                continue
+            p = by_ref[ref]
+            if ref == "J_USB":
+                set_rot(p, 180.0)
+            elif ref == "J_KEY":
+                set_rot(p, 90.0)
+            else:
+                set_rot(p, 0.0)
+            _shift_aabb_y0(p, jy0)
+            clamp(p)
+        set_rot(j1, 0.0)
+        _shift_aabb_y1(j1, jy1)
+        clamp(j1)
+        for ref in SOUTH_PACK_RIGHT:
+            if ref not in by_ref:
+                continue
+            p = by_ref[ref]
+            if ref in ("U_PWR1", "U_PWR2", "U_VIB"):
+                set_rot(p, 90.0)
+            else:
+                set_rot(p, 180.0)
+            _shift_aabb_y1(p, jy1)
+            clamp(p)
+
+        overflow = 0.0
+        for row in (NORTH_PACK_ORDER, ("J1",) + SOUTH_PACK_RIGHT):
+            # Keep W→E pack order (KEY origin is pin 1; courtyard hangs west at rot 90).
+            items = [by_ref[r] for r in row if r in by_ref]
+            for i in range(len(items) - 1):
+                a, b = items[i], items[i + 1]
+                need = _aabb(a)[2] + pack
+                if _aabb(b)[0] < need - 1e-3:
+                    _shift_aabb_x0(b, need)
+                    clamp(b)
+            if items and _aabb(items[-1])[2] > jx1 + 1e-3:
+                overflow = max(overflow, _aabb(items[-1])[2] - jx1)
+                _shift_aabb_x1(items[-1], jx1)
+                for i in range(len(items) - 2, -1, -1):
+                    a, b = items[i], items[i + 1]
+                    limit = _aabb(b)[0] - pack
+                    if _aabb(a)[2] > limit + 1e-3:
+                        _shift_aabb_x1(a, limit)
+                        clamp(a)
+            if items and _aabb(items[0])[0] < jx0 - 1e-3:
+                overflow = max(overflow, jx0 - _aabb(items[0])[0])
+        jack_row_overflow[0] = overflow
+        update_inland_box()
+
+    def pin_u1_open() -> None:
+        """STM32 east-north 3V3, with air below BOOT/NRST and off the east keep."""
+        set_rot(u1, 0.0)
+        update_inland_box()
+        air = 8.0
+        y0 = iy0 + air
+        for ref in ("SW_BOOT", "SW_NRST"):
+            if ref in by_ref:
+                y0 = max(y0, _aabb(by_ref[ref])[3] + air)
+        _shift_aabb_y0(u1, y0)
+        _shift_aabb_x1(u1, ix1 - 3.0)
+        # SW_BOOT is north of U1 (Y already cleared); only keep X vs same-band parts.
+        west_lim = ix0
+        for ref in ("R_BOOT",):
+            if ref in by_ref:
+                rb = _aabb(by_ref[ref])
+                ua = _aabb(u1)
+                y_hit = not (rb[3] + cfg.gap <= ua[1] or ua[3] + cfg.gap <= rb[1])
+                if y_hit:
+                    west_lim = max(west_lim, rb[2] + cfg.gap)
+        if _aabb(u1)[0] < west_lim:
+            _shift_aabb_x0(u1, west_lim)
+        clamp(u1)
+
     def pin_locked_edges() -> None:
+        if sticky:
+            # Hand-tuned / saved poses stay put — do not re-pack N/S rows.
+            update_inland_box()
+            return
         pin_j1()
         pin_edge_jacks()
         update_inland_box()
@@ -649,11 +745,10 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42, anchors: dict | None 
         pin_tmc_inland()
         pin_boot_switches()
         pin_holes()
+        pin_u1_open()
         for pref in ("D3", "F1", "U3", "U4"):
             clamp(by_ref[pref])
-        clamp(u1)
-        if not sticky:
-            enforce_post_fuse()
+        enforce_post_fuse()
         clamp_electronics()
 
     def eject_holes() -> None:
@@ -667,39 +762,17 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42, anchors: dict | None 
     f1 = by_ref["F1"]
     usb = by_ref["J_USB"]
     locked_refs = set(LOCKED_REFS)
+    if sticky and anchors:
+        locked_refs.update(anchors)
     others = [p for p in movable if p.ref not in locked_refs]
 
     def is_locked(p) -> bool:
         return p.ref in locked_refs
 
+    if sticky:
+        apply_anchors()
     pin_locked_edges()
-    # U1 inland east-north, just south of BOOT (nạp) / under HMI
-    set_rot(u1, 0.0)
-    sw = by_ref["SW_BOOT"]
-    if not sticky:
-        _shift_aabb_y0(u1, max(iy0, _aabb(sw)[3] + cfg.gap))
-        _shift_aabb_x1(u1, ix1)
-        clamp(u1)
-
-    def apply_anchors() -> None:
-        """Seed non-jack parts from the live PCB (minimum displacement)."""
-        if not anchors:
-            return
-        for p in parts:
-            rec = anchors.get(p.ref)
-            if rec is None or p.ref in EDGE_JACK_REFS:
-                continue
-            if p.ref in ("D3", "F1", "SW_BOOT", "SW_NRST"):
-                continue
-            x, y, r = rec
-            if p.ref in ("U1", "D3", "F1", "SW_BOOT", "SW_NRST"):
-                set_rot(p, 0.0)
-            elif not p.ref.startswith("H"):
-                set_rot(p, r)
-            p.x, p.y = x, y
-            if p.ref not in EDGE_JACK_REFS and not p.ref.startswith("H"):
-                clamp(p)
-        clamp_electronics()
+    # Sticky: U1 stays on saved pose. Fresh pack: pin_u1_open set it.
 
     def pull_to_anchors() -> bool:
         """Greedy step toward PCB coords if the trial pose stays legal."""
@@ -725,10 +798,6 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42, anchors: dict | None 
                     break
                 p.x, p.y = ox, oy
         return moved
-
-    if sticky:
-        apply_anchors()
-        clamp(u1)
 
     # --- net graph ---
     def net_weight(net: str) -> float:
@@ -1237,7 +1306,8 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42, anchors: dict | None 
         if sticky and pull_to_anchors():
             moved = True
         pin_locked_edges()
-        clamp(u1)
+        if not sticky:
+            clamp(u1)
         if not moved:
             break
 
@@ -1323,7 +1393,6 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42, anchors: dict | None 
     eject_holes()
     if sticky:
         pull_to_anchors()
-        clamp_electronics()
 
     # Final courtyard separation
     for _ in range(80):
@@ -1360,6 +1429,9 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42, anchors: dict | None 
                     break
             if shown >= 8:
                 break
+    if jack_row_overflow[0] > 0.05:
+        warns += 1
+        print(f"  WARN: N/S jack row overflow {jack_row_overflow[0]:.1f}mm (grow board)")
     ant_hits = sum(1 for p in others if in_keepout(p) > 0.05)
     disp_rms = disp_mean = disp_max = 0.0
     disp_ref = ""

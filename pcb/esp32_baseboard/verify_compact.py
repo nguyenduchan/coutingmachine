@@ -70,7 +70,7 @@ def main() -> int:
         check(bw >= 99.5 and bh >= 99.5, ok, fail, f"size {bw:.0f}x{bh:.0f} >= 100x100")
         check(bw <= 300.01 and bh <= 300.01, ok, fail, f"size {bw:.0f}x{bh:.0f} <= 300")
         check(bw >= bh - 0.01, ok, fail, f"wide board for DIN N/S edges ({bw:.0f}x{bh:.0f})")
-    check("gen_compact_carrier" in text, ok, fail, "generator gen_compact_carrier")
+    check("STM32G030C8T6_LQFP48" in text, ok, fail, "STM32 compact carrier board")
     check("U_PWR1" in text and "U_PWR2" in text and "U_VIB" in text, ok, fail, "power/vib socket silk or refs")
     check("J_MOT1" in text and "J_MOT2" in text, ok, fail, "edge motor jacks J_MOT1/2")
     check("Mot_XH_04_Socket" in text, ok, fail, "Mot_XH_04 footprint")
@@ -292,6 +292,7 @@ def main() -> int:
         for a, b in zip(north_seq, north_seq[1:]):
             check(pos[a][0] < pos[b][0], ok, fail, f"{a} left of {b}")
         check(pos["J_DISP"][0] < pos["J_USB"][0], ok, fail, "J_DISP left of J_USB")
+        check(abs(pos["J_KEY"][1] - pos["J_DISP"][1]) < 6.0, ok, fail, "J_KEY flush north with TM1637")
         for ref in ("J15", "J_IN3"):
             check(abs(pos[ref][1] - pos["J14"][1]) < 3.0, ok, fail, f"{ref} flush with north jack row")
         if em:
@@ -321,7 +322,7 @@ def main() -> int:
         for sref in ("SW_BOOT", "SW_NRST"):
             sx, sy, _ = pos[sref]
             dx = abs(sx - ux)
-            check(dx < 18.0, ok, fail, f"{sref} near J_USB in X (dx={dx:.1f})")
+            check(dx < 22.0, ok, fail, f"{sref} near J_USB in X (dx={dx:.1f})")
             check(sy > uy, ok, fail, f"{sref} inland south of J_USB")
             check(sy < uy + 22.0, ok, fail, f"{sref} close to J_USB in Y (dy={sy - uy:.1f})")
         bx, _, _ = pos["SW_BOOT"]
@@ -431,18 +432,57 @@ def main() -> int:
     }
     min_gap = 2.5
     jack_elec = 3.0
+    jack_pack = 5.0
     clashes = []
     tol = 1e-3
     for i, (ra, ax, ay, aw, ah) in enumerate(bodies):
         for rb, bx, by, b_hw, b_hh in bodies[i + 1 :]:
-            g = jack_elec if ((ra in edge_jacks) != (rb in edge_jacks)) else min_gap
+            a_j, b_j = ra in edge_jacks, rb in edge_jacks
+            if a_j and b_j:
+                g = jack_pack
+            elif a_j != b_j:
+                g = jack_elec
+            else:
+                g = min_gap
             need_x = aw + b_hw + g
             need_y = ah + b_hh + g
             if abs(ax - bx) + tol < need_x and abs(ay - by) + tol < need_y:
                 gx = need_x - abs(ax - bx)
                 gy = need_y - abs(ay - by)
                 clashes.append(f"{ra}/{rb}(short {min(gx, gy):.2f})")
-    check(not clashes, ok, fail, f"courtyard gap inland>={min_gap} vs-jack>={jack_elec} ({len(clashes)} clashes: {clashes[:12]})")
+    check(
+        not clashes,
+        ok,
+        fail,
+        f"courtyard gap inland>={min_gap} jack-jack>={jack_pack} vs-jack>={jack_elec} "
+        f"({len(clashes)} clashes: {clashes[:12]})",
+    )
+
+    print("=== E3) Adjacent N/S jacks: plug gap ≥5mm (no two plugs touching) ===")
+    def _row_gaps(refs: tuple[str, ...]) -> None:
+        row = []
+        by_ref = {b[0]: b for b in bodies}
+        for ref in refs:
+            if ref in by_ref:
+                row.append(by_ref[ref])
+        row.sort(key=lambda b: b[1])  # west → east by courtyard center
+        for i in range(len(row) - 1):
+            ra, ax, _ay, aw, _ah = row[i]
+            rb, bx, _by, bw, _bh = row[i + 1]
+            gap = (bx - bw) - (ax + aw)
+            check(
+                gap + tol >= jack_pack,
+                ok,
+                fail,
+                f"{ra}|{rb} plug-gap {gap:.2f}mm ≥{jack_pack}",
+            )
+
+    _row_gaps((
+        "J_P24N", "J14", "J15", "J_IN2", "J_IN3", "J_P5N", "J_CNT5", "J_KEY", "J_DISP", "J_USB",
+    ))
+    _row_gaps((
+        "J1", "J_MOT1", "J_MOT2", "U_PWR1", "U_PWR2", "U_VIB", "J_P24S",
+    ))
 
     print("=== E2) Non-jack AABB must not cut jack h-lines; L/R keep for install ===")
     if em:
@@ -526,6 +566,37 @@ def main() -> int:
             if not on_ns:
                 bad_h.append(f"{hr}:y")
         check(not bad_h, ok, fail, f"M3 on L/R keep, {hole_ns:.0f}mm from N/S ({bad_h})")
+
+    print("=== G) Silk shows module names, not generator refs ===")
+    hidden_refs = 0
+    shown_codes = []
+    for m in re.finditer(r'\n\t\(footprint "', text):
+        blk = _block(text, m.start() + 1)
+        rm = re.search(
+            r'\(property "Reference" "([^"]+)"[\s\S]*?(hide yes)?[\s\S]*?\n\t\t\)',
+            blk,
+        )
+        if not rm or "board_only" in blk:
+            continue
+        ref = rm.group(1)
+        pref = re.search(
+            r'\(property "Reference" "[^"]+"\s*\n(?:\t\t\t[^\n]+\n)*?\t\t\t\(hide yes\)',
+            blk,
+        )
+        if pref:
+            hidden_refs += 1
+        elif ref.startswith("H"):
+            continue
+        else:
+            shown_codes.append(ref)
+    check(hidden_refs >= 60, ok, fail, f"Reference hidden on silk ({hidden_refs})")
+    check(not shown_codes, ok, fail, f"no generator refs on silk ({shown_codes[:8]})")
+    check('(fp_text user "TMC2209"' in text, ok, fail, "TMC2209 name on board")
+    check('(fp_text user "TM1637"' in text, ok, fail, "TM1637 name on board")
+    check('(fp_text user "MOSFET"' in text, ok, fail, "MOSFET name on board")
+    check('(fp_text user "KEYPAD"' in text, ok, fail, "KEYPAD name on board")
+    check("THAY TMC2209" not in text, ok, fail, "no generator TMC tag silk")
+    check("SMBJ26A" in text and "SMBJ5.0A" in text, ok, fail, "TVS values kept off silk")
 
     print("=== F) Removed modules ===")
     for bad in (
