@@ -38,14 +38,14 @@ EDGE_PREF = {
     "PTC_SNS": ("S", 3.0),
 }
 
-# Y fractions: fill mid board (OPTO wall) — avoid empty center
+# Fractions of the *inland* box (not full board) — dense, little empty mid.
 REGION_BOX = {
-    "MCU": (0.40, 0.14, 0.94, 0.50),
-    "HMI": (0.06, 0.14, 0.48, 0.42),
-    "OPTO": (0.10, 0.28, 0.75, 0.64),
-    "POWER": (0.06, 0.48, 0.48, 0.84),
-    "TMC": (0.30, 0.48, 0.82, 0.84),  # leftover TMC passives only (sockets on S edge)
-    "PWR": (0.52, 0.38, 0.94, 0.78),
+    "MCU": (0.42, 0.00, 1.00, 0.55),
+    "HMI": (0.42, 0.00, 1.00, 0.42),
+    "OPTO": (0.00, 0.00, 0.62, 0.58),
+    "POWER": (0.00, 0.38, 0.55, 1.00),
+    "TMC": (0.25, 0.42, 0.82, 1.00),
+    "PWR": (0.52, 0.42, 1.00, 1.00),
 }
 
 REGION_ORDER = ("POWER", "TMC", "OPTO", "PWR", "MCU", "HMI")
@@ -59,10 +59,10 @@ LOCKED_REFS = frozenset({
     "SW_BOOT", "SW_NRST",
 })
 
-# All sockets/jacks that mate to external modules/cables → N/S edges only.
+# Field cable/module jacks on N/S only. U3/U4 TMC are inland driver modules, not jacks.
 EDGE_JACK_REFS = frozenset({
     "J1", "J_MOT1", "J_MOT2", "J_P24S",
-    "U3", "U4", "U_PWR1", "U_PWR2", "U_VIB",
+    "U_PWR1", "U_PWR2", "U_VIB",
     "J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_P24N", "J_P5N",
     "J_KEY", "J_DISP", "J_USB",
 })
@@ -72,9 +72,61 @@ NORTH_EDGE_JACKS = frozenset({
     "J_KEY", "J_DISP", "J_USB",
 })
 SOUTH_EDGE_JACKS = frozenset({
-    "J1", "J_MOT1", "U3", "J_MOT2", "U4",
+    "J1", "J_MOT1", "J_MOT2",
     "U_PWR1", "U_PWR2", "U_VIB", "J_P24S",
 })
+SOUTH_PACK_RIGHT = (
+    "J_MOT1", "J_MOT2",
+    "U_PWR1", "U_PWR2", "U_VIB",
+    "J_P24S",
+)
+NORTH_PACK_ORDER = (
+    "J_P24N", "J14", "J15", "J_IN2", "J_IN3",
+    "J_P5N", "J_CNT5", "J_KEY", "J_DISP", "J_USB",
+)
+HOLE_REFS = frozenset({"H1", "H2", "H3", "H4"})
+HOLE_INSET = 4.5  # M3 center from L/R Edge.Cuts (courtyard r=3.5)
+HOLE_NS_INSET = 20.0  # M3 center from N/S edges — inland of jack housings
+XH_EDGE_REFS = frozenset({
+    "J_P24N", "J14", "J15", "J_IN2", "J_IN3", "J_P5N", "J_CNT5", "J_DISP",
+    "J_MOT1", "J_MOT2", "J_P24S",
+})
+
+
+def pair_courtyard_gap(a_ref: str, b_ref: str, default: float, jack_pack: float) -> float:
+    """Courtyard gap: jack↔jack = jack_pack; electronics↔jack ≥3 mm; else default."""
+    a_j = a_ref in EDGE_JACK_REFS
+    b_j = b_ref in EDGE_JACK_REFS
+    if a_j != b_j:
+        return max(default, 3.0)
+    if a_j and b_j:
+        return max(jack_pack, default)
+    return default
+
+
+def jack_hline_union(
+    aabbs: dict[str, tuple[float, float, float, float]], refs: frozenset
+) -> tuple[float, float]:
+    """Union of jack courtyard Y. Every y in [lo, hi] is a horizontal line through a jack."""
+    lo, hi = 1e9, -1e9
+    n = 0
+    for ref in refs:
+        box = aabbs.get(ref)
+        if box is None:
+            continue
+        lo = min(lo, box[1])
+        hi = max(hi, box[3])
+        n += 1
+    if n == 0:
+        return (0.0, 0.0)
+    return (lo, hi)
+
+
+def dist_aabb_to_hline(ay0: float, ay1: float, y_line: float) -> float:
+    """Distance from nearest box edge to a horizontal line. 0 if the line cuts the box."""
+    if ay0 <= y_line <= ay1:
+        return 0.0
+    return min(abs(ay0 - y_line), abs(ay1 - y_line))
 
 
 @dataclass
@@ -83,8 +135,11 @@ class PlaceCfg:
     board_h: float
     ox: float
     oy: float
-    margin: float  # non-jack ≥ this from Edge.Cuts (also inland of jack strips)
-    jack_margin: float  # field jacks may be closer
+    margin: float  # non-jack ≥ this from left/right Edge.Cuts
+    jack_margin: float  # field jacks may be closer to N/S
+    jack_side_keep: float  # field jacks ≥ this from L/R (box corners / DIN clip)
+    jack_pack: float  # courtyard gap between adjacent N/S field jacks
+    jack_row_sep: float  # electronics AABB vs full-width jack-row band
     gap: float
     ant_tip: float
     ant_clear: float
@@ -92,8 +147,50 @@ class PlaceCfg:
     courtyard_size: Callable[[str], tuple[float, float]]
 
 
+def _rot_local(x: float, y: float, rot: float) -> tuple[float, float]:
+    r = int(rot) % 360
+    if r == 90:
+        return -y, x
+    if r == 180:
+        return -x, -y
+    if r == 270:
+        return y, -x
+    return x, y
+
+
 def _aabb(p) -> tuple[float, float, float, float]:
-    return (p.x - p.w / 2, p.y - p.h / 2, p.x + p.w / 2, p.y + p.h / 2)
+    """World AABB of the footprint courtyard. Origin (p.x, p.y) is KiCad (0,0)."""
+    loc = getattr(p, "aabb_local", None)
+    if not loc:
+        return (p.x - p.w / 2, p.y - p.h / 2, p.x + p.w / 2, p.y + p.h / 2)
+    x0, y0, x1, y1 = loc
+    xs: list[float] = []
+    ys: list[float] = []
+    for x, y in ((x0, y0), (x0, y1), (x1, y0), (x1, y1)):
+        rx, ry = _rot_local(x, y, p.rot)
+        xs.append(p.x + rx)
+        ys.append(p.y + ry)
+    return (min(xs), min(ys), max(xs), max(ys))
+
+
+def _shift_aabb_x0(p, x0: float) -> None:
+    ax0, _, _, _ = _aabb(p)
+    p.x += x0 - ax0
+
+
+def _shift_aabb_y0(p, y0: float) -> None:
+    _, ay0, _, _ = _aabb(p)
+    p.y += y0 - ay0
+
+
+def _shift_aabb_y1(p, y1: float) -> None:
+    _, _, _, ay1 = _aabb(p)
+    p.y += y1 - ay1
+
+
+def _shift_aabb_x1(p, x1: float) -> None:
+    _, _, ax1, _ = _aabb(p)
+    p.x += x1 - ax1
 
 
 def _rects_overlap(a, b) -> bool:
@@ -102,49 +199,43 @@ def _rects_overlap(a, b) -> bool:
     return not (ax1 <= bx0 or bx1 <= ax0 or ay1 <= by0 or by1 <= ay0)
 
 
-def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
+def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42, anchors: dict | None = None) -> dict:
     rng = random.Random(seed)
-    # Inner keep-in for non-jacks (≥ margin from Edge.Cuts)
+    sticky = bool(anchors)
+    print(
+        f"  packing {cfg.board_w:.0f}x{cfg.board_h:.0f}"
+        f"{' (min-disp vs PCB)' if sticky else ''} …",
+        flush=True,
+    )
+    # Inner keep-in for non-jacks (≥ margin from L/R Edge.Cuts)
     ix0, iy0 = cfg.ox + cfg.margin, cfg.oy + cfg.margin
     ix1, iy1 = cfg.ox + cfg.board_w - cfg.margin, cfg.oy + cfg.board_h - cfg.margin
-    # Field jacks may hug N/S edges
-    jx0, jy0 = cfg.ox + cfg.jack_margin, cfg.oy + cfg.jack_margin
-    jx1, jy1 = cfg.ox + cfg.board_w - cfg.jack_margin, cfg.oy + cfg.board_h - cfg.jack_margin
+    # Field jacks hug N/S; inset from L/R so box walls / DIN clips do not hit housings
+    jack_side = max(cfg.jack_margin, getattr(cfg, "jack_side_keep", 6.0))
+    jx0, jy0 = cfg.ox + jack_side, cfg.oy + cfg.jack_margin
+    jx1, jy1 = cfg.ox + cfg.board_w - jack_side, cfg.oy + cfg.board_h - cfg.jack_margin
     by_ref = {p.ref: p for p in parts}
 
-    hole = max(cfg.margin + 0.5, 4.5)
-    by_ref["H1"].x, by_ref["H1"].y = cfg.ox + hole, cfg.oy + hole
-    by_ref["H2"].x, by_ref["H2"].y = cfg.ox + cfg.board_w - hole, cfg.oy + hole
-    by_ref["H3"].x, by_ref["H3"].y = cfg.ox + hole, cfg.oy + cfg.board_h - hole
-    by_ref["H4"].x, by_ref["H4"].y = cfg.ox + cfg.board_w - hole, cfg.oy + cfg.board_h - hole
-
     movable = [p for p in parts if not p.board_only]
+    holes = [by_ref["H1"], by_ref["H2"], by_ref["H3"], by_ref["H4"]]
     u1 = by_ref["U1"]
     others = []
-    # Inland box (updated after edge jacks placed — clears N/S jack rows)
-    inland_clear = max(cfg.gap, 2.5)
+    # Jack-row lines = every horizontal line that cuts a jack courtyard (union of Y).
+    # Electronics AABB must not cut those lines; nearest box edge ≥ jack_row_sep.
+    inland_clear = max(cfg.gap, getattr(cfg, "jack_row_sep", 3.0), 3.0)
+    n_row_y1 = cfg.oy
+    s_row_y0 = cfg.oy + cfg.board_h
 
     def update_inland_box() -> None:
-        """Non-jack parts must sit south of north jack row and north of south jack row."""
-        nonlocal iy0, iy1
-        iy0 = cfg.oy + cfg.margin
-        iy1 = cfg.oy + cfg.board_h - cfg.margin
-        n_bottom = []
-        for ref in NORTH_EDGE_JACKS:
-            if ref not in by_ref:
-                continue
-            p = by_ref[ref]
-            n_bottom.append(p.y + p.h / 2)
-        s_top = []
-        for ref in SOUTH_EDGE_JACKS:
-            if ref not in by_ref:
-                continue
-            p = by_ref[ref]
-            s_top.append(p.y - p.h / 2)
-        if n_bottom:
-            iy0 = max(iy0, max(n_bottom) + inland_clear)
-        if s_top:
-            iy1 = min(iy1, min(s_top) - inland_clear)
+        """Keep-in: ≥margin from L/R, and ≥jack_row_sep from N/S jack-row h-lines."""
+        nonlocal iy0, iy1, n_row_y1, s_row_y0
+        boxes = {p.ref: _aabb(p) for p in parts}
+        n_lo, n_hi = jack_hline_union(boxes, NORTH_EDGE_JACKS)
+        s_lo, s_hi = jack_hline_union(boxes, SOUTH_EDGE_JACKS)
+        n_row_y1 = n_hi  # inland-most north jack line (KEY)
+        s_row_y0 = s_lo  # inland-most south jack courtyard (not TMC)
+        iy0 = n_row_y1 + inland_clear
+        iy1 = s_row_y0 - inland_clear
 
     def set_rot(p, rot: float) -> None:
         """Apply rotation; update courtyard w/h. Locked edge parts keep guide angles."""
@@ -158,16 +249,15 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             rot = 0.0
         elif p.ref == "F1":
             rot = 0.0  # pad1 west PRE, pad2 east +24V
-        elif p.ref in (
-            "J_MOT1", "J_MOT2", "J_P24S",
-            "J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_P24N", "J_P5N",
-            "J_KEY", "J_DISP",
-            "U_PWR1", "U_PWR2", "U_VIB",
-        ):
+        elif p.ref in XH_EDGE_REFS:
+            # Pads along local +X; extra housing toward +Y.
+            # North: rot 0 (body inland). South: rot 180 (body inland).
+            rot = 180.0 if p.ref in SOUTH_EDGE_JACKS else 0.0
+        elif p.ref in ("J_KEY", "U_PWR1", "U_PWR2", "U_VIB"):
             # Native pad row is local +Y → rot 90 = pin row || N/S edge
             rot = 90.0
         elif p.ref in ("U3", "U4"):
-            rot = 0.0  # square StepStick; flush south edge
+            rot = 0.0  # square StepStick inland (not a field jack)
         elif p.ref in ("SW_BOOT", "SW_NRST"):
             rot = 0.0
         rot = float(int(rot) % 360)
@@ -181,46 +271,113 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             p.w, p.h = uw, uh
 
     def clamp(p) -> None:
-        if p.ref in EDGE_JACK_REFS:
+        if p.ref in HOLE_REFS:
+            # Holes live in the L/R keep strips — only stay inside Edge.Cuts.
+            x0, y0 = cfg.ox + 0.4, cfg.oy + 0.4
+            x1, y1 = cfg.ox + cfg.board_w - 0.4, cfg.oy + cfg.board_h - 0.4
+        elif p.ref in EDGE_JACK_REFS:
             x0, y0, x1, y1 = jx0, jy0, jx1, jy1
         else:
-            # All electronics inland — never share N/S jack rows
+            # Electronics: ≥ margin from L/R, ≥ jack_row_sep from N/S jack-row lines
             x0, y0, x1, y1 = ix0, iy0, ix1, iy1
-        p.x = min(max(p.x, x0 + p.w / 2), x1 - p.w / 2)
-        p.y = min(max(p.y, y0 + p.h / 2), y1 - p.h / 2)
+        ax0, ay0, ax1, ay1 = _aabb(p)
+        if ax0 < x0:
+            p.x += x0 - ax0
+        if ay0 < y0:
+            p.y += y0 - ay0
+        if ax1 > x1:
+            p.x += x1 - ax1
+        if ay1 > y1:
+            p.y += y1 - ay1
+
+    def clamp_electronics() -> None:
+        """Every non-jack AABB stays inside the inland rectangle (out of jack rows)."""
+        update_inland_box()
+        for p in parts:
+            if p.ref in EDGE_JACK_REFS or p.ref in HOLE_REFS:
+                continue
+            clamp(p)
+
+    def _need(a, b) -> float:
+        return pair_courtyard_gap(a.ref, b.ref, cfg.gap, cfg.jack_pack)
 
     def overlaps(a, b) -> bool:
         # tol: treat exact gap contact as clear (float edge)
         tol = 1e-3
+        g = _need(a, b)
+        ax0, ay0, ax1, ay1 = _aabb(a)
+        bx0, by0, bx1, by1 = _aabb(b)
         return (
-            abs(a.x - b.x) + tol < (a.w + b.w) / 2 + cfg.gap
-            and abs(a.y - b.y) + tol < (a.h + b.h) / 2 + cfg.gap
+            ax1 + g - tol > bx0
+            and bx1 + g - tol > ax0
+            and ay1 + g - tol > by0
+            and by1 + g - tol > ay0
         )
 
     def overlap_depth(a, b) -> float:
         tol = 1e-3
-        ox = (a.w + b.w) / 2 + cfg.gap - abs(a.x - b.x) - tol
-        oy = (a.h + b.h) / 2 + cfg.gap - abs(a.y - b.y) - tol
+        g = _need(a, b)
+        ax0, ay0, ax1, ay1 = _aabb(a)
+        bx0, by0, bx1, by1 = _aabb(b)
+
+        def shortfall(a0, a1, b0, b1) -> float:
+            if a1 <= b0:
+                dist = b0 - a1
+            elif b1 <= a0:
+                dist = a0 - b1
+            else:
+                dist = -(min(a1, b1) - max(a0, b0))
+            return g - dist - tol
+
+        ox = shortfall(ax0, ax1, bx0, bx1)
+        oy = shortfall(ay0, ay1, by0, by1)
         if ox <= 0 or oy <= 0:
             return 0.0
         return min(ox, oy)
 
     def separate_pair(a, b) -> bool:
         """Push apart so AABB + gap no longer overlap. Returns True if moved."""
+        a_jack = a.ref in EDGE_JACK_REFS
+        b_jack = b.ref in EDGE_JACK_REFS
+        if a_jack != b_jack and a.ref not in HOLE_REFS and b.ref not in HOLE_REFS:
+            elec = b if a_jack else a
+            ea = _aabb(elec)
+            moved = False
+            if dist_aabb_to_hline(ea[1], ea[3], n_row_y1) < inland_clear:
+                elec.y += (n_row_y1 + inland_clear) - ea[1]
+                clamp(elec)
+                moved = True
+            ea = _aabb(elec)
+            if dist_aabb_to_hline(ea[1], ea[3], s_row_y0) < inland_clear:
+                elec.y += (s_row_y0 - inland_clear) - ea[3]
+                clamp(elec)
+                moved = True
+            if moved:
+                return True
         d = overlap_depth(a, b)
         if d <= 0:
             return False
-        dx, dy = b.x - a.x, b.y - a.y
+        ac = _aabb(a)
+        bc = _aabb(b)
+        dx = (bc[0] + bc[2]) / 2 - (ac[0] + ac[2]) / 2
+        dy = (bc[1] + bc[3]) / 2 - (ac[1] + ac[3]) / 2
         if abs(dx) < 1e-9 and abs(dy) < 1e-9:
             dx, dy = 1.0, 0.0
-        min_dx = (a.w + b.w) / 2 + cfg.gap
-        min_dy = (a.h + b.h) / 2 + cfg.gap
+        ax0, ay0, ax1, ay1 = ac
+        bx0, by0, bx1, by1 = bc
+        g = _need(a, b)
+        min_dx = (ax1 - ax0 + bx1 - bx0) / 2 + g
+        min_dy = (ay1 - ay0 + by1 - by0) / 2 + g
         ox = min_dx - abs(dx)
         oy = min_dy - abs(dy)
         eps = 0.05
-        # Never move locked edge/inlet parts — always shove the other body
-        a_fixed = a.ref in LOCKED_REFS
-        b_fixed = b.ref in LOCKED_REFS
+        a_fixed = a.ref in LOCKED_REFS or a_jack or a.ref.startswith("H")
+        b_fixed = b.ref in LOCKED_REFS or b_jack or b.ref.startswith("H")
+        if a_fixed and b_fixed:
+            if a_jack and not b_jack:
+                b_fixed = False
+            elif b_jack and not a_jack:
+                a_fixed = False
 
         def _push_x(target, sgn, push):
             target.x += push * sgn
@@ -306,28 +463,21 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
     def pin_j1() -> None:
         """24V terminal: south-west corner on field-jack margin."""
         set_rot(j1, 0.0)
-        j1.y = jy1 - j1.h / 2
-        j1.x = jx0 + j1.w / 2 + 1.0
+        _shift_aabb_y1(j1, jy1)
+        _shift_aabb_x0(j1, jx0)
         clamp(j1)
 
-    def pin_j_usb() -> None:
-        """USB Micro-B: flush north; final X set in pin_edge_jacks."""
-        set_rot(usb, 180.0)
-        usb.y = jy0 + usb.h / 2
-        usb.x = cfg.ox + 0.88 * cfg.board_w
-        clamp(usb)
-
-    def pin_inlet_chain() -> None:
-        """J1 on south edge; D3/F1 inland (≥4 mm from Edge.Cuts)."""
-        pin_j1()
-        chain_gap = cfg.gap + 0.5
+    def pin_inlet_inland() -> None:
+        """D3/F1 inland of J1, ≥3 mm from jack-row line and from nearby jack courtyards."""
+        chain_gap = max(cfg.gap, inland_clear)
         set_rot(d3, 0.0)
-        d3.x = j1.x + j1.w / 2 + chain_gap + d3.w / 2
-        d3.y = min(j1.y - j1.h / 2 - chain_gap - d3.h / 2, iy1 - d3.h / 2)
+        y1 = min(iy1, _aabb(j1)[1] - chain_gap)
+        _shift_aabb_x0(d3, _aabb(j1)[2] + chain_gap)
+        _shift_aabb_y1(d3, y1)
         clamp(d3)
         set_rot(f1, 0.0)
-        f1.y = iy1 - f1.h / 2
-        f1.x = max(d3.x + d3.w / 2, j1.x + j1.w / 2) + chain_gap + f1.w / 2
+        _shift_aabb_x0(f1, _aabb(d3)[2] + chain_gap)
+        _shift_aabb_y1(f1, y1)
         clamp(f1)
 
     def fuse_out_x() -> float:
@@ -354,103 +504,163 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             clamp(p)
             eject_keepout(p)
 
-    def pin_edge_jacks() -> None:
-        """All external sockets/jacks on N or S only.
+    def pack_row_even(
+        refs: tuple[str, ...], x0: float, x1: float, min_gap: float, target_gap: float,
+        flush_y,
+    ) -> float:
+        """Place refs W→E in [x0,x1]. Courtyard gap ≥ min_gap; extra slack split evenly.
 
-        North = sensors + HMI + USB (cable jacks).
-        South = 24V inlet + Mot + TMC socks + MOSFET/SSR socks + aux P24.
+        Tries target_gap first so 3D housings do not look stacked. If the span is
+        too short, falls back to even fill of whatever remains (≥ min_gap).
+        Returns overflow mm (0 if the row fits).
         """
-        solder_clear = max(2.5, cfg.gap)
-        solder_clear_large = max(3.0, cfg.gap + 0.5)
-        edge_gap = max(cfg.gap + 0.75, solder_clear)
+        items = [(ref, by_ref[ref]) for ref in refs if ref in by_ref]
+        n = len(items)
+        if n == 0:
+            return 0.0
+        widths = [_aabb(p)[2] - _aabb(p)[0] for _, p in items]
+        gaps_n = max(n - 1, 0)
+        avail = x1 - x0
+        need = sum(widths) + target_gap * gaps_n
+        extra = avail - need
+        if extra >= -1e-3 and gaps_n:
+            gap = target_gap + extra / gaps_n
+        elif gaps_n:
+            gap = (avail - sum(widths)) / gaps_n
+        else:
+            gap = target_gap
+        overflow = 0.0
+        if gap < min_gap - 1e-3:
+            overflow = (min_gap - gap) * gaps_n
+            gap = min_gap
+        x = x0
+        for (_ref, p), _w in zip(items, widths):
+            flush_y(p)
+            _shift_aabb_x0(p, x)
+            x = _aabb(p)[2] + gap
+        last = items[-1][1]
+        if _aabb(last)[2] > x1 + 1e-3:
+            overflow = max(overflow, _aabb(last)[2] - x1)
+        return overflow
 
-        # --- South W→E: east of F1 body (clear of fuse courtyard) ---
-        j1p = by_ref["J1"]
-        f1p = by_ref["F1"]
-        x = max(j1p.x + j1p.w / 2, f1p.x + f1p.w / 2) + solder_clear
-        south_order = (
-            "J_MOT1", "U3",
-            "J_MOT2", "U4",
-            "U_PWR1", "U_PWR2", "U_VIB",
-            "J_P24S",
-        )
-        for ref in south_order:
+    def pin_edge_jacks() -> None:
+        """Field jacks on N/S only — even courtyard packing (no pile-up / 3D kiss).
+
+        North: one row W→E (sensors → HMI → USB), slack split between jacks.
+        South: J1 stays SW; remaining jacks even-packed from east of J1 to the
+        right keep so MOT/PWR housings do not stack.
+        """
+        pack = max(cfg.jack_pack, cfg.gap)
+        target = max(pack, 4.0)
+
+        for ref in NORTH_PACK_ORDER:
             if ref not in by_ref:
                 continue
             p = by_ref[ref]
-            if ref in ("U3", "U4"):
-                set_rot(p, 0.0)
-            else:
+            if ref == "J_USB":
+                set_rot(p, 180.0)
+            elif ref == "J_KEY":
                 set_rot(p, 90.0)
-            p.y = jy1 - p.h / 2
-            clear = solder_clear_large if ref in ("U3", "U4", "U_PWR1", "U_PWR2") else solder_clear
-            # Keep sequence spacing — do not clamp-X (would stack overlaps)
-            p.x = x + p.w / 2
-            x = p.x + p.w / 2 + clear + 0.05
+            else:
+                set_rot(p, 0.0)
 
-        # --- North: all I/O plugs in one row (W→E) ---
-        north_order = (
-            "J_P24N",
-            "J14",
-            "J15",
-            "J_IN2",
-            "J_IN3",
-            "J_P5N",
-            "J_CNT5",
-            "J_KEY",
-            "J_DISP",
-            "J_USB",
+        pack_row_even(
+            NORTH_PACK_ORDER, jx0, jx1, pack, target,
+            lambda p: _shift_aabb_y0(p, jy0),
         )
-        x = jx0 + 0.5
-        for ref in north_order:
+
+        set_rot(j1, 0.0)
+        for ref in SOUTH_PACK_RIGHT:
+            if ref not in by_ref:
+                continue
             p = by_ref[ref]
-            set_rot(p, 180.0 if ref == "J_USB" else 90.0)
-            p.y = jy0 + p.h / 2
-            clear = solder_clear_large if ref in ("J_KEY", "J_USB", "J_DISP") else solder_clear
-            p.x = x + p.w / 2
-            x = p.x + p.w / 2 + clear + 0.05
+            if ref in ("U_PWR1", "U_PWR2", "U_VIB"):
+                set_rot(p, 90.0)
+            else:
+                set_rot(p, 180.0)
+
+        pack_row_even(
+            ("J1",) + SOUTH_PACK_RIGHT,
+            jx0,
+            jx1,
+            pack,
+            target,
+            lambda p: _shift_aabb_y1(p, jy1),
+        )
         update_inland_box()
 
+    def pin_tmc_inland() -> None:
+        """U3/U4 StepStick modules sit inland, not in the field-jack row."""
+        gap = max(cfg.gap, inland_clear)
+        u3, u4 = by_ref["U3"], by_ref["U4"]
+        set_rot(u3, 0.0)
+        set_rot(u4, 0.0)
+        _shift_aabb_y1(u3, iy1)
+        _shift_aabb_y1(u4, iy1)
+        mot1 = _aabb(by_ref["J_MOT1"])
+        _shift_aabb_x0(u3, max(_aabb(f1)[2] + gap, mot1[0]))
+        clamp(u3)
+        _shift_aabb_x0(u4, _aabb(u3)[2] + gap)
+        _shift_aabb_y1(u4, iy1)
+        clamp(u4)
+
     def pin_boot_switches() -> None:
-        """SW_BOOT + SW_NRST locked just inland of J_USB (nạp USB)."""
+        """SW_BOOT + SW_NRST inland of J_USB, fully inside the east keep."""
         usb = by_ref["J_USB"]
-        gap = max(cfg.gap, 2.5)
+        gap = max(cfg.gap, inland_clear)
         boots = ("SW_BOOT", "SW_NRST")
-        # Measure after rot
         for sref in boots:
             set_rot(by_ref[sref], 0.0)
         sw0 = by_ref["SW_BOOT"]
-        pitch = sw0.w + gap
-        pair_w = 2 * sw0.w + gap
-        x_left = usb.x - pair_w / 2 + sw0.w / 2
-        # Immediately south of USB / north jack strip
-        y = max(iy0 + sw0.h / 2, usb.y + usb.h / 2 + gap + sw0.h / 2 + 0.1)
-        for i, sref in enumerate(boots):
-            sw = by_ref[sref]
-            set_rot(sw, 0.0)
-            sw.x = x_left + i * pitch
-            sw.y = y
-            clamp(sw)
+        sw1 = by_ref["SW_NRST"]
+        y0 = iy0
+        for ref in NORTH_EDGE_JACKS:
+            if ref in by_ref:
+                y0 = max(y0, _aabb(by_ref[ref])[3] + inland_clear)
+        usb_box = _aabb(usb)
+        # NRST at the east face of USB; BOOT west of NRST — never clamp-stack on ix1.
+        _shift_aabb_y0(sw1, y0)
+        _shift_aabb_x1(sw1, min(ix1, usb_box[2]))
+        _shift_aabb_y0(sw0, y0)
+        _shift_aabb_x1(sw0, _aabb(sw1)[0] - gap)
+
+    def pin_holes() -> None:
+        """M3 on L/R keep strips — DIN clips / box side bosses, not in N/S jack rows."""
+        hx0 = cfg.ox + HOLE_INSET
+        hx1 = cfg.ox + cfg.board_w - HOLE_INSET
+        hy0 = cfg.oy + HOLE_NS_INSET
+        hy1 = cfg.oy + cfg.board_h - HOLE_NS_INSET
+        spots = {
+            "H1": (hx0, hy0),
+            "H2": (hx1, hy0),
+            "H3": (hx0, hy1),
+            "H4": (hx1, hy1),
+        }
+        for href, (x, y) in spots.items():
+            h = by_ref[href]
+            h.x, h.y = x, y
+            clamp(h)
 
     def pin_locked_edges() -> None:
-        pin_inlet_chain()
-        pin_j_usb()
+        pin_j1()
         pin_edge_jacks()
         update_inland_box()
+        pin_inlet_inland()
+        pin_tmc_inland()
         pin_boot_switches()
-        for pref in ("D3", "F1"):
+        pin_holes()
+        for pref in ("D3", "F1", "U3", "U4"):
             clamp(by_ref[pref])
         clamp(u1)
-        enforce_post_fuse()
-        for p in movable:
-            if p.ref not in EDGE_JACK_REFS:
-                clamp(p)
+        if not sticky:
+            enforce_post_fuse()
+        clamp_electronics()
 
-    # --- pin U1 below north jack strip (MCU / 3V3), east half ---
-    set_rot(u1, 0.0)
-    u1.x = cfg.ox + 0.62 * cfg.board_w
-    u1.y = cfg.oy + 0.36 * cfg.board_h
-    clamp(u1)
+    def eject_holes() -> None:
+        for p in others:
+            for h in holes:
+                separate_pair(h, p)
+            clamp(p)
 
     j1 = by_ref["J1"]
     d3 = by_ref["D3"]
@@ -463,6 +673,62 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
         return p.ref in locked_refs
 
     pin_locked_edges()
+    # U1 inland east-north, just south of BOOT (nạp) / under HMI
+    set_rot(u1, 0.0)
+    sw = by_ref["SW_BOOT"]
+    if not sticky:
+        _shift_aabb_y0(u1, max(iy0, _aabb(sw)[3] + cfg.gap))
+        _shift_aabb_x1(u1, ix1)
+        clamp(u1)
+
+    def apply_anchors() -> None:
+        """Seed non-jack parts from the live PCB (minimum displacement)."""
+        if not anchors:
+            return
+        for p in parts:
+            rec = anchors.get(p.ref)
+            if rec is None or p.ref in EDGE_JACK_REFS:
+                continue
+            if p.ref in ("D3", "F1", "SW_BOOT", "SW_NRST"):
+                continue
+            x, y, r = rec
+            if p.ref in ("U1", "D3", "F1", "SW_BOOT", "SW_NRST"):
+                set_rot(p, 0.0)
+            elif not p.ref.startswith("H"):
+                set_rot(p, r)
+            p.x, p.y = x, y
+            if p.ref not in EDGE_JACK_REFS and not p.ref.startswith("H"):
+                clamp(p)
+        clamp_electronics()
+
+    def pull_to_anchors() -> bool:
+        """Greedy step toward PCB coords if the trial pose stays legal."""
+        if not anchors:
+            return False
+        moved = False
+        for p in others:
+            rec = anchors.get(p.ref)
+            if rec is None:
+                continue
+            ax, ay, _ = rec
+            for k in (1.0, 0.5, 0.25, 0.12, 0.05):
+                ox, oy = p.x, p.y
+                p.x = ox + k * (ax - ox)
+                p.y = oy + k * (ay - oy)
+                clamp(p)
+                eject_keepout(p)
+                ok = in_keepout(p) <= 0 and all(
+                    q is p or not overlaps(p, q) for q in movable + holes
+                )
+                if ok and abs(p.x - ox) + abs(p.y - oy) > 0.02:
+                    moved = True
+                    break
+                p.x, p.y = ox, oy
+        return moved
+
+    if sticky:
+        apply_anchors()
+        clamp(u1)
 
     # --- net graph ---
     def net_weight(net: str) -> float:
@@ -511,13 +777,75 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             edge_list.append((a, by_ref[bref], w))
 
     def region_box(name: str) -> tuple[float, float, float, float]:
+        """Map cluster fractions onto the inland keep-in (jack rows excluded)."""
         x0, y0, x1, y1 = REGION_BOX[name]
         return (
-            cfg.ox + x0 * cfg.board_w,
-            cfg.oy + y0 * cfg.board_h,
-            cfg.ox + x1 * cfg.board_w,
-            cfg.oy + y1 * cfg.board_h,
+            ix0 + x0 * (ix1 - ix0),
+            iy0 + y0 * (iy1 - iy0),
+            ix0 + x1 * (ix1 - ix0),
+            iy0 + y1 * (iy1 - iy0),
         )
+
+    def shelf_pack(group: list, bx0: float, by0: float, bx1: float, by1: float) -> None:
+        """Left-to-right, top-to-bottom pack using real courtyard AABB."""
+        x, y = bx0, by0
+        row_h = 0.0
+        for p in group:
+            ax0, ay0, ax1, ay1 = _aabb(p)
+            w, h = ax1 - ax0, ay1 - ay0
+            if x > bx0 + 0.01 and x + w > bx1:
+                x = bx0
+                y += row_h + cfg.gap
+                row_h = 0.0
+            _shift_aabb_x0(p, x)
+            _shift_aabb_y0(p, y)
+            clamp(p)
+            ax0, ay0, ax1, ay1 = _aabb(p)
+            x = ax1 + cfg.gap
+            row_h = max(row_h, ay1 - ay0)
+
+    def compact_inland() -> None:
+        """Shelf-pack inland clusters into non-overlapping bands, skipping locked bodies."""
+        def fits(p) -> bool:
+            return all(q is p or not overlaps(p, q) for q in movable + holes)
+
+        def pack_group(group: list, bx0: float, by0: float, bx1: float, by1: float) -> None:
+            step = 1.5
+            for p in group:
+                placed = False
+                y = by0
+                while not placed and y < by1:
+                    x = bx0
+                    while not placed and x < bx1:
+                        _shift_aabb_x0(p, x)
+                        _shift_aabb_y0(p, y)
+                        clamp(p)
+                        if fits(p):
+                            placed = True
+                            break
+                        x += step
+                    y += step
+                if not placed:
+                    clamp(p)
+
+        mx = 0.50 * (ix0 + ix1)
+        my = 0.48 * (iy0 + iy1)
+        bands = (
+            ("OPTO", ix0, iy0, mx + 4.0, my),
+            ("MCU", mx - 4.0, iy0, ix1, my),
+            ("HMI", mx - 4.0, iy0, ix1, my),
+            ("POWER", ix0, my - 4.0, mx, iy1),
+            ("TMC", mx - 10.0, my - 4.0, mx + 18.0, iy1),
+            ("PWR", mx + 8.0, my - 4.0, ix1, iy1),
+        )
+        for rname, bx0, by0, bx1, by1 in bands:
+            group = sorted(
+                [p for p in others if part_of.get(p.ref, p.cluster) == rname],
+                key=lambda q: q.w * q.h,
+                reverse=True,
+            )
+            if group:
+                pack_group(group, bx0, by0, bx1, by1)
 
     def uses_24v(p) -> bool:
         return any(n in RAIL_24_NETS for n in (p.pad_nets or {}).values())
@@ -571,51 +899,19 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             if not improved:
                 break
 
-    fm_refine()
+    if not sticky:
+        fm_refine()
 
-    # seed place: pack into region boxes; OPTO starts at mid-board center
-    for rname in REGION_ORDER:
-        box = region_box(rname)
-        group = sorted(
-            [p for p in others if part_of[p.ref] == rname],
-            key=lambda q: q.w * q.h,
-            reverse=True,
-        )
-        x0, y0, x1, y1 = box
-        if rname in ("POWER", "TMC"):
-            x = max(x0 + 1.0, fuse_out_x() + cfg.gap)
-            y = max(y0 + 1.0, fuse_out_y() + cfg.gap)
-        elif rname == "PWR":
-            # MOSFET/SSR sockets — mid-south, fill center-east
-            x = x0 + 0.15 * (x1 - x0)
-            y = y0 + 0.20 * (y1 - y0)
-        elif rname == "OPTO":
-            # Isolation wall through board mid
-            x = x0 + 0.20 * (x1 - x0)
-            y = y0 + 0.25 * (y1 - y0)
-        else:
-            x, y = x0 + 1.0, y0 + 1.0
-        row_h = 0.0
-        for p in group:
-            if x + p.w / 2 > x1 - 1.0:
-                if rname in ("POWER", "TMC"):
-                    x = max(x0 + 1.0, fuse_out_x() + cfg.gap)
-                elif rname in ("OPTO", "PWR"):
-                    x = x0 + 0.15 * (x1 - x0)
-                else:
-                    x = x0 + 1.0
-                y += row_h + cfg.gap
-                row_h = 0.0
-            p.x = min(max(x + p.w / 2, x0 + p.w / 2), x1 - p.w / 2)
-            p.y = min(max(y + p.h / 2, y0 + p.h / 2), y1 - p.h / 2)
+        # seed place: dense shelf inside each inland cluster band
+        compact_inland()
+        for p in others:
             if is_post_fuse_load(p):
                 xmin = fuse_out_x() + cfg.gap
-                if p.x + p.w / 2 < xmin and p.y > fuse_out_y() - 2.0:
-                    p.x = xmin + p.w / 2
+                ax0, ay0, ax1, ay1 = _aabb(p)
+                if ax1 < xmin and ay1 > fuse_out_y() - 2.0:
+                    _shift_aabb_x0(p, xmin)
             clamp(p)
             eject_keepout(p)
-            x += p.w + cfg.gap
-            row_h = max(row_h, p.h)
 
     # =====================================================================
     # 2) Analytical / quadratic wirelength (Jacobi on spring equilibrium)
@@ -640,7 +936,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             return (ix1 - p.w / 2, p.y, 0.4 * s / 10)
         return None
 
-    for _ in range(40):
+    for _ in range(0 if sticky else 40):
         new_xy: dict[str, tuple[float, float]] = {}
         for p in others:
             num_x = num_y = den = 0.0
@@ -682,26 +978,16 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
             fy += (y0 + p.h / 2 - p.y) * 0.12
         elif p.y > y1 - p.h / 2:
             fy += (y1 - p.h / 2 - p.y) * 0.12
-        # Fill empty mid: OPTO → board center; PWR → mid-south
+        # Keep clusters in their inland bands (no pull toward empty board center)
         rname = part_of.get(p.ref, "MCU")
-        if rname == "OPTO":
-            mx = cfg.ox + 0.42 * cfg.board_w
-            my = cfg.oy + 0.48 * cfg.board_h
-            fx += 0.08 * (mx - p.x)
-            fy += 0.08 * (my - p.y)
-        elif rname == "PWR":
-            mx = cfg.ox + 0.70 * cfg.board_w
-            my = cfg.oy + 0.55 * cfg.board_h
-            fx += 0.06 * (mx - p.x)
-            fy += 0.06 * (my - p.y)
-        elif rname == "MCU":
-            mx = cfg.ox + 0.68 * cfg.board_w
-            my = cfg.oy + 0.36 * cfg.board_h
-            fx += 0.04 * (mx - p.x)
-            fy += 0.04 * (my - p.y)
+        box = region_box(rname)
+        mx = 0.5 * (box[0] + box[2])
+        my = 0.5 * (box[1] + box[3])
+        fx += 0.10 * (mx - p.x)
+        fy += 0.10 * (my - p.y)
         return fx, fy
 
-    for _ in range(30):
+    for _ in range(0 if sticky else 30):
         force = {id(p): [0.0, 0.0] for p in movable}
         for a, b, w in edge_list:
             dx, dy = b.x - a.x, b.y - a.y
@@ -849,7 +1135,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
     # =====================================================================
     # 4) Genetic / evolutionary
     # =====================================================================
-    pop_n, gens = 6, 5
+    pop_n, gens = 1, 0
     population: list[tuple[list[tuple[float, float, float]], float]] = []
     base = snapshot()
     population.append((base, total_cost()))
@@ -902,7 +1188,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
     # =====================================================================
     cost = best_cost
     T0, T1 = 30.0, 0.04
-    steps = 200
+    steps = 0 if sticky else 0
     for step in range(steps):
         T = T0 * (T1 / T0) ** (step / max(steps - 1, 1))
         p = rng.choice(others)
@@ -935,7 +1221,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
     # =====================================================================
     # 6) Legalization — separate courtyards until gap clear
     # =====================================================================
-    for _ in range(200):
+    for _ in range(60):
         moved = False
         for p in others:
             if in_keepout(p) > 0:
@@ -948,6 +1234,8 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
         for p in others:
             clamp(p)
             eject_keepout(p)
+        if sticky and pull_to_anchors():
+            moved = True
         pin_locked_edges()
         clamp(u1)
         if not moved:
@@ -975,7 +1263,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
         return False
 
     warns = 0
-    for _pass in range(2):
+    for _pass in range(0 if sticky else 2):
         offenders = [
             p
             for p in others
@@ -998,17 +1286,19 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
                 clamp(p)
                 eject_keepout(p)
             pin_locked_edges()
+            clamp_electronics()
             if not moved:
                 break
 
     for p in others:
         eject_keepout(p)
     pin_locked_edges()
+    clamp_electronics()
 
     # Soft pull post-fuse 24V loads toward south band east of fuse
     tx = fuse_out_x() + 14.0
     ty = iy1 - 20.0
-    for _ in range(80):
+    for _ in range(0 if sticky else 40):
         moved = False
         for p in others:
             if not is_post_fuse_load(p):
@@ -1026,8 +1316,17 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
         if not moved:
             break
 
-    # Final courtyard separation (soft-pull can leave parts at gap edge)
-    for _ in range(200):
+    if not sticky:
+        compact_inland()
+        pin_locked_edges()
+        clamp(u1)
+    eject_holes()
+    if sticky:
+        pull_to_anchors()
+        clamp_electronics()
+
+    # Final courtyard separation
+    for _ in range(80):
         moved = False
         for i, a in enumerate(movable):
             for b in movable[i + 1 :]:
@@ -1036,8 +1335,11 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
         for p in others:
             clamp(p)
             eject_keepout(p)
+        eject_holes()
+        if sticky and pull_to_anchors():
+            moved = True
         pin_locked_edges()
-        clamp(u1)
+        clamp_electronics()
         if not moved:
             break
 
@@ -1046,7 +1348,37 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
     )
     if overlaps_n > 0:
         warns += overlaps_n
+        shown = 0
+        for i, a in enumerate(movable):
+            for b in movable[i + 1 :]:
+                if not overlaps(a, b):
+                    continue
+                d = overlap_depth(a, b)
+                print(f"  overlap {a.ref}/{b.ref} depth={d:.2f}", flush=True)
+                shown += 1
+                if shown >= 8:
+                    break
+            if shown >= 8:
+                break
     ant_hits = sum(1 for p in others if in_keepout(p) > 0.05)
+    disp_rms = disp_mean = disp_max = 0.0
+    disp_ref = ""
+    if sticky and anchors:
+        ds = []
+        for p in movable:
+            rec = anchors.get(p.ref)
+            if rec is None:
+                continue
+            d = math.hypot(p.x - rec[0], p.y - rec[1])
+            ds.append((d, p.ref))
+        if ds:
+            disp_rms = (sum(d * d for d, _ in ds) / len(ds)) ** 0.5
+            disp_mean = sum(d for d, _ in ds) / len(ds)
+            disp_max, disp_ref = max(ds)
+            print(
+                f"  min-disp vs PCB: rms={disp_rms:.2f} mean={disp_mean:.2f} "
+                f"max={disp_max:.2f}mm ({disp_ref})"
+            )
     metrics = {
         "overlaps": overlaps_n,
         "ant_hits": ant_hits,
@@ -1057,11 +1389,14 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42) -> dict:
         "keepout": antenna_ko(),
         "partition": dict(part_of),
         "gap": cfg.gap,
+        "disp_rms": disp_rms,
+        "disp_max": disp_max,
     }
+    tag = "min-disp" if sticky else "mincut+quad+force+GA+SA"
     print(
         f"Placement {cfg.board_w:.0f}x{cfg.board_h:.0f}: parts={len(movable)} "
         f"overlaps={overlaps_n} ant_hits={ant_hits} warns={warns} "
         f"cost={best_cost:.1f} cut={metrics['cut']:.1f} gap={cfg.gap} "
-        f"[mincut+quad+force+GA+SA]"
+        f"[{tag}]"
     )
     return metrics

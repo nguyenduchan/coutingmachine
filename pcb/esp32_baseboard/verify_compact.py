@@ -246,9 +246,14 @@ def main() -> int:
         check(abs(fr) < 0.1, ok, fail, f"F1 rot=0 E-W ({fr})")
         check(fy > y0 + 0.55 * bh, ok, fail, f"F1 in south band (y={fy:.1f})")
         fuse_out_x = fx + 11.25
+        edge_ok = {
+            "J1", "D3", "F1",
+            "J_MOT1", "J_MOT2", "U3", "U4",
+            "U_PWR1", "U_PWR2", "U_VIB", "J_P24S",
+        }
         bad = []
         for ref, nets in pads.items():
-            if ref in ("J1", "D3", "F1"):
+            if ref in edge_ok:
                 continue
             if not any(n in ("+24V", "+24V_SNS", "+24V_SNS_PRE", "+24V_MOT", "+24V_MOT2") for n in nets.values()):
                 continue
@@ -264,27 +269,35 @@ def main() -> int:
             continue
         check("+24V_RAW" not in vals and "+24V_PRE" not in vals, ok, fail, f"{ref} not on pre-fuse nets")
 
-    print("=== D2c) Edge jack zones (S=MOT/TMC/PWR, N=SNS/HMI) ===")
+    print("=== D2c) Edge jack zones (S=MOT/PWR, N=SNS/HMI; TMC inland) ===")
     if em and all(r in pos for r in ("J_MOT1", "J_MOT2", "J_P24S", "U3", "U4", "U_PWR1", "U_PWR2", "U_VIB", "J14", "J_CNT5", "J_P24N", "J_P5N", "J_KEY", "J_DISP")):
         x0, y0, x1, y1 = map(float, em.groups())
         mid_y = y0 + 0.5 * bh
-        for ref in ("J_MOT1", "J_MOT2", "J_P24S", "U3", "U4", "U_PWR1", "U_PWR2", "U_VIB"):
+        for ref in ("J_MOT1", "J_MOT2", "J_P24S", "U_PWR1", "U_PWR2", "U_VIB"):
             _mx, my, _ = pos[ref]
             check(my > mid_y, ok, fail, f"{ref} south half (y={my:.1f})")
+        for ref in ("U3", "U4"):
+            _tx, ty, _ = pos[ref]
+            check(ty > mid_y, ok, fail, f"{ref} TMC south inland band (y={ty:.1f})")
         for ref in ("J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_P24N", "J_P5N", "J_KEY", "J_DISP"):
             if ref not in pos:
                 continue
             _nx, ny, _ = pos[ref]
             check(ny < mid_y, ok, fail, f"{ref} north half (y={ny:.1f})")
-        south_seq = ("J_MOT1", "U3", "J_MOT2", "U4", "U_PWR1", "U_PWR2", "U_VIB", "J_P24S")
+        south_seq = ("J_MOT1", "J_MOT2", "U_PWR1", "U_PWR2", "U_VIB", "J_P24S")
         for a, b in zip(south_seq, south_seq[1:]):
             check(pos[a][0] < pos[b][0], ok, fail, f"{a} left of {b}")
+        check(pos["U3"][0] < pos["U4"][0], ok, fail, "U3 left of U4")
         north_seq = ("J_P24N", "J14", "J15", "J_IN2", "J_IN3", "J_P5N", "J_CNT5", "J_KEY", "J_DISP")
         for a, b in zip(north_seq, north_seq[1:]):
             check(pos[a][0] < pos[b][0], ok, fail, f"{a} left of {b}")
         check(pos["J_DISP"][0] < pos["J_USB"][0], ok, fail, "J_DISP left of J_USB")
         for ref in ("J15", "J_IN3"):
             check(abs(pos[ref][1] - pos["J14"][1]) < 3.0, ok, fail, f"{ref} flush with north jack row")
+        if em:
+            x0, y0, x1, y1 = map(float, em.groups())
+            check(pos["J1"][0] < pos["J_MOT1"][0], ok, fail, "J1 west of motor/IO cluster")
+            check(pos["J_P24S"][0] > x0 + 0.55 * bw, ok, fail, f"J_P24S on south-east (x={pos['J_P24S'][0]:.1f})")
 
     print("=== D3) J_USB flush north edge (with HMI) ===")
     for m in re.finditer(r'\n\t\(footprint "', text):
@@ -318,15 +331,15 @@ def main() -> int:
     print("=== D3b) Field jacks only on north/south edges ===")
     field_edge = (
         "J1", "J_MOT1", "J_MOT2", "J_P24S",
-        "U3", "U4", "U_PWR1", "U_PWR2", "U_VIB",
+        "U_PWR1", "U_PWR2", "U_VIB",
         "J_P24N", "J14", "J15", "J_IN2", "J_IN3", "J_P5N", "J_CNT5",
         "J_KEY", "J_DISP", "J_USB",
     )
     field_all = field_edge
     if em:
         x0, y0, x1, y1 = map(float, em.groups())
-        n_lim = y0 + 0.28 * bh  # deeper south strip (TMC ~20mm)
-        s_lim = y1 - 0.28 * bh
+        n_lim = y0 + 0.22 * bh
+        s_lim = y1 - 0.22 * bh
         side_band = 14.0
         mid_lo = y0 + 0.32 * bh
         mid_hi = y1 - 0.32 * bh
@@ -347,15 +360,15 @@ def main() -> int:
             check(not (near_side and in_mid_y), ok, fail, f"{ref} not mounted on left/right sides")
 
     print("=== D3c) Field jacks pin-row || N/S edge (ngang, not dọc) ===")
-    # Native pad-row along local Y → must be rot 90/270 on N/S edges
-    row_along_y = {
-        "J_MOT1", "J_MOT2", "J_P24S",
-        "J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_P24N", "J_P5N",
-        "J_KEY", "J_DISP",
-        "U_PWR1", "U_PWR2", "U_VIB",
+    # Pads along local Y → rot 90/270. Pads along local X (XH, USB, J1, TMC) → 0/180.
+    row_along_y = {"J_KEY", "U_PWR1", "U_PWR2", "U_VIB"}
+    row_along_x = {
+        "J1": (0.0,), "J_USB": (180.0,),
+        "J_P24N": (0.0,), "J14": (0.0,), "J15": (0.0,),
+        "J_IN2": (0.0,), "J_IN3": (0.0,), "J_P5N": (0.0,),
+        "J_CNT5": (0.0,), "J_DISP": (0.0,),
+        "J_MOT1": (180.0,), "J_MOT2": (180.0,), "J_P24S": (180.0,),
     }
-    # Native pad-row along local X (already ngang at 0/180) or square StepStick
-    row_along_x = {"J1": (0.0,), "J_USB": (180.0,), "U3": (0.0,), "U4": (0.0,)}
     if em:
         for ref in row_along_y:
             if ref not in pos:
@@ -369,7 +382,24 @@ def main() -> int:
             _, _, r = pos[ref]
             check(any(abs(r - a) < 1 for a in allowed), ok, fail, f"{ref} rot ngang ({r})")
 
-    print("=== E) Courtyard clearance (gap >= 2.5mm) ===")
+    print("=== E) Courtyard clearance (electronics↔jack ≥3mm, else ≥2.5mm) ===")
+
+    def world_crt(cx, cy, rot, sx0, sy0, sx1, sy1):
+        xs, ys = [], []
+        r = int(round(rot)) % 360
+        for x, y in ((sx0, sy0), (sx0, sy1), (sx1, sy0), (sx1, sy1)):
+            if r == 90:
+                rx, ry = -y, x
+            elif r == 180:
+                rx, ry = -x, -y
+            elif r == 270:
+                rx, ry = y, -x
+            else:
+                rx, ry = x, y
+            xs.append(cx + rx)
+            ys.append(cy + ry)
+        return min(xs), min(ys), max(xs), max(ys)
+
     bodies: list[tuple[str, float, float, float, float]] = []
     for m in re.finditer(r'\n\t\(footprint "', text):
         blk = _block(text, m.start() + 1)
@@ -387,66 +417,115 @@ def main() -> int:
         )
         if crt:
             sx0, sy0, sx1, sy1 = map(float, crt.groups())
-            hw, hh = abs(sx1 - sx0) / 2, abs(sy1 - sy0) / 2
+            ax0, ay0, ax1, ay1 = world_crt(cx, cy, rot, sx0, sy0, sx1, sy1)
+            hw, hh = (ax1 - ax0) / 2, (ay1 - ay0) / 2
+            cx, cy = (ax0 + ax1) / 2, (ay0 + ay1) / 2
         else:
             hw, hh = 4.0, 4.0
-        if abs(rot - 90) < 1 or abs(rot - 270) < 1:
-            hw, hh = hh, hw
         bodies.append((ref_m.group(1), cx, cy, hw, hh))
+    edge_jacks = {
+        "J1", "J_MOT1", "J_MOT2", "J_P24S",
+        "U_PWR1", "U_PWR2", "U_VIB",
+        "J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_P24N", "J_P5N",
+        "J_KEY", "J_DISP", "J_USB",
+    }
     min_gap = 2.5
+    jack_elec = 3.0
     clashes = []
     tol = 1e-3
     for i, (ra, ax, ay, aw, ah) in enumerate(bodies):
         for rb, bx, by, b_hw, b_hh in bodies[i + 1 :]:
-            need_x = aw + b_hw + min_gap
-            need_y = ah + b_hh + min_gap
+            g = jack_elec if ((ra in edge_jacks) != (rb in edge_jacks)) else min_gap
+            need_x = aw + b_hw + g
+            need_y = ah + b_hh + g
             if abs(ax - bx) + tol < need_x and abs(ay - by) + tol < need_y:
                 gx = need_x - abs(ax - bx)
                 gy = need_y - abs(ay - by)
                 clashes.append(f"{ra}/{rb}(short {min(gx, gy):.2f})")
-    check(not clashes, ok, fail, f"courtyard gap>={min_gap}mm ({len(clashes)} clashes: {clashes[:12]})")
+    check(not clashes, ok, fail, f"courtyard gap inland>={min_gap} vs-jack>={jack_elec} ({len(clashes)} clashes: {clashes[:12]})")
 
-    print("=== E2) Non-jack parts inland of jack rows (≥2.5mm clear) ===")
-    edge_jacks = {
-        "J1", "J_MOT1", "J_MOT2", "J_P24S",
-        "U3", "U4", "U_PWR1", "U_PWR2", "U_VIB",
-        "J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_P24N", "J_P5N",
-        "J_KEY", "J_DISP", "J_USB",
-    }
+    print("=== E2) Non-jack AABB must not cut jack h-lines; L/R keep for install ===")
     if em:
         x0, y0, x1, y1 = map(float, em.groups())
-        need_edge = 4.0
+        need_edge = 8.0
+        jack_side = 6.0
+        hole_inset = 4.5
+        hole_ns = 20.0
         bad_m = []
         for ref, cx, cy, hw, hh in bodies:
             if ref in edge_jacks or ref.startswith("H"):
                 continue
-            d = min(cx - hw - x0, x1 - (cx + hw), cy - hh - y0, y1 - (cy + hh))
+            d = min(cx - hw - x0, x1 - (cx + hw))
             if d < need_edge - 0.05:
                 bad_m.append(f"{ref}:{d:.2f}")
-        check(not bad_m, ok, fail, f"non-jack edge clear≥{need_edge}mm ({bad_m[:12]})")
+        check(not bad_m, ok, fail, f"non-jack left/right clear≥{need_edge}mm ({bad_m[:12]})")
+        bad_js = []
+        for ref, cx, cy, hw, hh in bodies:
+            if ref not in edge_jacks:
+                continue
+            d = min(cx - hw - x0, x1 - (cx + hw))
+            if d < jack_side - 0.05:
+                bad_js.append(f"{ref}:{d:.2f}")
+        check(not bad_js, ok, fail, f"jacks left/right clear≥{jack_side}mm ({bad_js[:12]})")
         n_jacks = [b for b in bodies if b[0] in (
             "J_P24N", "J14", "J15", "J_IN2", "J_IN3", "J_P5N", "J_CNT5", "J_KEY", "J_DISP", "J_USB",
         )]
         s_jacks = [b for b in bodies if b[0] in (
-            "J1", "J_MOT1", "J_MOT2", "J_P24S", "U3", "U4", "U_PWR1", "U_PWR2", "U_VIB",
+            "J1", "J_MOT1", "J_MOT2", "J_P24S", "U_PWR1", "U_PWR2", "U_VIB",
         )]
-        clear = 2.5
+        row_sep = 3.0
+        hole_aabb = []
+        for m in re.finditer(r'\n\t\(footprint "', text):
+            blk = _block(text, m.start() + 1)
+            ref_m = re.search(r'\(property "Reference" "([^"]+)"', blk)
+            at = re.search(r"\(at\s+([\d.-]+)\s+([\d.-]+)(?:\s+([\d.-]+))?\)", blk)
+            if not ref_m or not at or not ref_m.group(1).startswith("H"):
+                continue
+            hx, hy = float(at.group(1)), float(at.group(2))
+            hole_aabb.append((ref_m.group(1), hx, hy, 3.5, 3.5))
+        extra = list(bodies) + hole_aabb
         bad_row = []
         if n_jacks:
-            n_bottom = max(cy + hh for _, _, cy, _, hh in n_jacks)
-            for ref, cx, cy, hw, hh in bodies:
-                if ref in edge_jacks or ref.startswith("H"):
+            n_line = max(cy + hh for _, _, cy, _, hh in n_jacks)
+            for ref, cx, cy, hw, hh in extra:
+                if ref in edge_jacks:
                     continue
-                if cy - hh < n_bottom + clear - 0.05:
+                top, bot = cy - hh, cy + hh
+                if top <= n_line <= bot:
+                    bad_row.append(f"{ref}:N-cut")
+                elif min(abs(top - n_line), abs(bot - n_line)) < row_sep - 0.05:
                     bad_row.append(f"{ref}:N")
         if s_jacks:
-            s_top = min(cy - hh for _, _, cy, _, hh in s_jacks)
-            for ref, cx, cy, hw, hh in bodies:
-                if ref in edge_jacks or ref.startswith("H"):
+            s_line = min(cy - hh for _, _, cy, _, hh in s_jacks)
+            for ref, cx, cy, hw, hh in extra:
+                if ref in edge_jacks:
                     continue
-                if cy + hh > s_top - clear + 0.05:
+                top, bot = cy - hh, cy + hh
+                if top <= s_line <= bot:
+                    bad_row.append(f"{ref}:S-cut")
+                elif min(abs(top - s_line), abs(bot - s_line)) < row_sep - 0.05:
                     bad_row.append(f"{ref}:S")
-        check(not bad_row, ok, fail, f"non-jack inland of jack rows ({bad_row[:16]})")
+        check(not bad_row, ok, fail, f"AABB ≥{row_sep}mm from jack h-lines, no cut ({bad_row[:16]})")
+        hole_clash = []
+        for hr, hx, hy, hw, hh in hole_aabb:
+            for jr, jx, jy, jw, jh in bodies:
+                if jr not in edge_jacks:
+                    continue
+                g = 2.5
+                if abs(hx - jx) + 1e-3 < hw + jw + g and abs(hy - jy) + 1e-3 < hh + jh + g:
+                    hole_clash.append(f"{hr}/{jr}")
+        check(not hole_clash, ok, fail, f"M3 holes clear of jacks ({hole_clash[:8]})")
+        bad_h = []
+        for hr, hx, hy, hw, hh in hole_aabb:
+            dL, dR = hx - x0, x1 - hx
+            on_side = min(dL, dR) <= hole_inset + 0.6
+            dN, dS = hy - y0, y1 - hy
+            on_ns = abs(min(dN, dS) - hole_ns) < 1.0
+            if not on_side:
+                bad_h.append(f"{hr}:not-LR")
+            if not on_ns:
+                bad_h.append(f"{hr}:y")
+        check(not bad_h, ok, fail, f"M3 on L/R keep, {hole_ns:.0f}mm from N/S ({bad_h})")
 
     print("=== F) Removed modules ===")
     for bad in (

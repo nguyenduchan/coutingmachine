@@ -21,6 +21,23 @@ def _block(text: str, start: int) -> str:
         i += 1
 
 
+def _world_crt(cx, cy, rot, sx0, sy0, sx1, sy1):
+    xs, ys = [], []
+    r = int(round(rot)) % 360
+    for x, y in ((sx0, sy0), (sx0, sy1), (sx1, sy0), (sx1, sy1)):
+        if r == 90:
+            rx, ry = -y, x
+        elif r == 180:
+            rx, ry = -x, -y
+        elif r == 270:
+            rx, ry = y, -x
+        else:
+            rx, ry = x, y
+        xs.append(cx + rx)
+        ys.append(cy + ry)
+    return min(xs), min(ys), max(xs), max(ys)
+
+
 def bodies(text: str):
     out = []
     for m in re.finditer(r'\n\t\(footprint "', text):
@@ -39,11 +56,11 @@ def bodies(text: str):
         )
         if crt:
             sx0, sy0, sx1, sy1 = map(float, crt.groups())
-            hw, hh = abs(sx1 - sx0) / 2, abs(sy1 - sy0) / 2
+            ax0, ay0, ax1, ay1 = _world_crt(cx, cy, rot, sx0, sy0, sx1, sy1)
+            hw, hh = (ax1 - ax0) / 2, (ay1 - ay0) / 2
+            cx, cy = (ax0 + ax1) / 2, (ay0 + ay1) / 2
         else:
             hw, hh = 4.0, 4.0
-        if abs(rot - 90) < 1 or abs(rot - 270) < 1:
-            hw, hh = hh, hw
         out.append((rm.group(1), cx, cy, hw, hh))
     return out
 

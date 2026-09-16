@@ -24,6 +24,7 @@ import random
 import re
 import uuid
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
 
 from stm32_pinmap import (
@@ -42,31 +43,47 @@ from stm32_pinmap import (
     VIB_PINS,
 )
 
-from placement_full import PlaceCfg, pack_parts as _pack_parts_full
+from placement_full import (
+    PlaceCfg,
+    pack_parts as _pack_parts_full,
+    _aabb,
+    pair_courtyard_gap,
+    jack_hline_union,
+    NORTH_EDGE_JACKS,
+    SOUTH_EDGE_JACKS,
+)
 
 ROOT = Path(__file__).resolve().parent
 PRETTY = ROOT / "libraries" / "ESP32_Carrier.pretty"
 PCB = ROOT / "esp32_baseboard.kicad_pcb"
 
-# DIN vertical: clips on left/right; prefer wide board (long N/S edges for jacks)
-BOARD_W = 160.0
-BOARD_H = 115.0
+# Commercial outline: 160×110 fits IP65 180×130 / 200×150 and cabinet backplates.
+# Not a 9TE slim DIN housing (those are ~151×82). L/R = DIN-clip / box-wall keep.
+COMMERCIAL_W = 165.0
+COMMERCIAL_H = 110.0
+# True: ignore live XY (needed when outline/keep change). False: min-disp vs PCB.
+FRESH_PACK = False
+BOARD_W = COMMERCIAL_W
+BOARD_H = COMMERCIAL_H
 TARGET_BOARD_MM = 100.0
-# Prefer smallest that packs with GAP; auto-grow if courtyard cannot clear.
+# Prefer commercial 160×110; grow if courtyard cannot clear.
 BOARD_CANDIDATES = (
+    (165.0, 110.0),
+    (170.0, 110.0),
+    (170.0, 115.0),
+    (175.0, 115.0),
+    (180.0, 120.0),
     (185.0, 120.0),
-    (190.0, 120.0),
-    (190.0, 125.0),
-    (195.0, 125.0),
-    (200.0, 130.0),
-    (200.0, 140.0),
 )
 BOARD_MAX_MM = 300.0  # hard cap while auto-growing
 BOARD_GROW_STEP_MM = 10.0
 OX, OY = 50.0, 50.0  # Edge.Cuts origin
-MARGIN = 4.0  # non-jack parts: ≥4 mm from Edge.Cuts
-JACK_MARGIN = 1.0  # field edge jacks may sit near N/S edges
-GAP = 2.5  # min clear space between courtyards (mm) — no kiss / too-close
+MARGIN = 8.0  # electronics ≥8 mm from left/right (DIN clip / box wall / duct)
+JACK_SIDE_KEEP = 6.0  # field jacks ≥6 mm from L/R (inner corner radius)
+JACK_MARGIN = 1.0  # field edge jacks may sit near N/S edges (panel cutouts)
+GAP = 2.5  # min clear space between ALL courtyards (mm)
+JACK_PACK = GAP  # field jacks use the same courtyard gap — no kiss / too-close
+JACK_ROW_SEP = 3.0  # nearest AABB edge vs horizontal lines through jack courtyards
 
 # No RF antenna (STM32). Keepout disabled (zeros) — PlaceCfg still accepts fields.
 ANT_TIP = 0.0
@@ -79,8 +96,375 @@ def uid() -> str:
 
 
 # ---------------------------------------------------------------------------
-# Footprint helpers
+# Footprint helpers — physical connector housings (JST XH B*B-XH-A, KF301, USB)
 # ---------------------------------------------------------------------------
+
+XH_PITCH = 2.50  # JST XH
+K3D = "${KICAD10_3DMODEL_DIR}"
+
+
+def _kicad_model(rel: str, ox: float = 0.0, oy: float = 0.0, oz: float = 0.0, rz: float = 0.0) -> str:
+    """KiCad 10 STEP from the system 3dmodels folder (visible in 3D viewer)."""
+    return (
+        f'\t(model "{K3D}/{rel}"\n'
+        f"\t\t(offset (xyz {ox:g} {oy:g} {oz:g}))\n"
+        f"\t\t(scale (xyz 1 1 1))\n"
+        f"\t\t(rotate (xyz 0 0 {rz:g})))"
+    )
+
+
+def _xh_step(n: int) -> str:
+    return (
+        f"Connector_JST.3dshapes/JST_XH_B{n}B-XH-A_1x{n:02d}_P2.50mm_Vertical.step"
+    )
+
+
+def _fp_poly(pts: list[tuple[float, float]], layer: str, width: float) -> str:
+    xy = " ".join(f"(xy {x:.2f} {y:.2f})" for x, y in pts)
+    return (
+        f"\t(fp_poly\n"
+        f"\t\t(pts {xy})\n"
+        f"\t\t(stroke (width {width}) (type solid))\n"
+        f"\t\t(fill none)\n"
+        f'\t\t(layer "{layer}"))'
+    )
+
+
+def _fp_rect(x0: float, y0: float, x1: float, y1: float, layer: str, width: float) -> str:
+    return (
+        f"\t(fp_rect (start {x0:.2f} {y0:.2f}) (end {x1:.2f} {y1:.2f})\n"
+        f"\t\t(stroke (width {width}) (type solid)) (fill none) (layer \"{layer}\"))"
+    )
+
+
+def _fp_line(x0: float, y0: float, x1: float, y1: float, layer: str, width: float) -> str:
+    return (
+        f"\t(fp_line (start {x0:.2f} {y0:.2f}) (end {x1:.2f} {y1:.2f})\n"
+        f"\t\t(stroke (width {width}) (type solid)) (layer \"{layer}\"))"
+    )
+
+
+def make_xh_bxa_socket(
+    n: int,
+    name: str,
+    descr: str,
+    labels: list[str] | None = None,
+) -> str:
+    """JST XH top-entry B*B-XH-A — same top-view as KiCad Connector_JST.
+
+    Pads along +X (pin 1 at origin), pitch 2.50 mm.
+    Housing 5.75 mm in Y (−2.35 … +3.40) × 2.5·(n−1)+4.9 mm in X.
+    3D STEP uses rotate 0 so the body follows the pins (no extra 90°).
+    """
+    last = (n - 1) * XH_PITCH
+    fab_x0, fab_x1 = -2.45, last + 2.45
+    fab_y0, fab_y1 = -2.35, 3.40
+    crt_x0, crt_x1 = -2.95, last + 2.95
+    crt_y0, crt_y1 = -2.85, 3.90
+    silk_x0, silk_x1 = -2.56, last + 2.56
+    silk_y0, silk_y1 = -2.46, 3.51
+    lines = [
+        f'(footprint "{name}"',
+        '\t(version 20240108)',
+        '\t(generator "gen_compact_carrier.py")',
+        '\t(layer "F.Cu")',
+        f'\t(descr "{descr}")',
+        '\t(tags "JST XH BXB-XH-A 2.50mm physical housing")',
+        '\t(attr through_hole)',
+        _fp_rect(crt_x0, crt_y0, crt_x1, crt_y1, "F.CrtYd", 0.05),
+        _fp_rect(fab_x0, fab_y0, fab_x1, fab_y1, "F.Fab", 0.10),
+        _fp_rect(silk_x0, silk_y0, silk_x1, silk_y1, "F.SilkS", 0.12),
+        # Pin-1 mark on −Y wall (edge side when north rot=0)
+        _fp_line(-0.63, fab_y0, 0.00, fab_y0 + 1.00, "F.Fab", 0.10),
+        _fp_line(0.00, fab_y0 + 1.00, 0.63, fab_y0, "F.Fab", 0.10),
+        _fp_line(-0.75, silk_y0 - 0.12, 0.75, silk_y0 - 0.12, "F.SilkS", 0.12),
+    ]
+    if labels:
+        for i, lab in enumerate(labels):
+            x = i * XH_PITCH
+            lines.append(
+                f'\t(fp_text user "{lab}" (at {x:.2f} {fab_y1 + 1.15:.2f} 0) (layer "F.SilkS")\n'
+                f'\t\t(effects (font (size 0.55 0.55) (thickness 0.08))))'
+            )
+    for i in range(n):
+        x = i * XH_PITCH
+        shape = "rect" if i == 0 else "circle"
+        lines.append(
+            f'\t(pad "{i + 1}" thru_hole {shape} (at {x:.1f} 0) '
+            f'(size 1.7 1.95) (drill 0.95) (layers "*.Cu" "*.Mask"))'
+        )
+    lines.append(")")
+    return "\n".join(lines) + "\n"
+
+
+def make_kf301_2p() -> str:
+    """Degson/KF301-5.0-2P screw terminal — 10×10 mm body, pitch 5.0, screws on top."""
+    # Pads at (±2.5, 0); body 10.0 × 10.0; wire entry +Y (south edge when rot=0).
+    x0, x1, y0, y1 = -5.00, 5.00, -4.00, 6.00
+    mrg = 0.50
+    return f'''
+(footprint "TerminalBlock_2P_5.0mm"
+	(version 20240108)
+	(generator "gen_compact_carrier.py")
+	(layer "F.Cu")
+	(descr "KF301/DG128 5.0mm 2P screw terminal — 10x10 mm body")
+	(tags "KF301 5.0mm screw terminal 24V")
+	(attr through_hole)
+{_fp_rect(x0 - mrg, y0 - mrg, x1 + mrg, y1 + mrg, "F.CrtYd", 0.05)}
+{_fp_rect(x0, y0, x1, y1, "F.Fab", 0.10)}
+{_fp_rect(x0, y0, x1, y1, "F.SilkS", 0.12)}
+	(fp_circle (center -2.50 0.00) (end -0.70 0.00)
+		(stroke (width 0.12) (type solid)) (fill none) (layer "F.Fab"))
+	(fp_circle (center 2.50 0.00) (end 4.30 0.00)
+		(stroke (width 0.12) (type solid)) (fill none) (layer "F.Fab"))
+	(fp_circle (center -2.50 0.00) (end -0.70 0.00)
+		(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
+	(fp_circle (center 2.50 0.00) (end 4.30 0.00)
+		(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
+{_fp_line(x0 + 0.6, y1, x1 - 0.6, y1, "F.SilkS", 0.18)}
+{_fp_line(-4.2, y1, -2.5, y1 + 1.4, "F.SilkS", 0.15)}
+{_fp_line(-2.5, y1 + 1.4, -0.8, y1, "F.SilkS", 0.15)}
+	(fp_text user "+" (at -2.50 -2.60 0) (layer "F.SilkS")
+		(effects (font (size 1.1 1.1) (thickness 0.16))))
+	(fp_text user "-" (at 2.50 -2.60 0) (layer "F.SilkS")
+		(effects (font (size 1.1 1.1) (thickness 0.16))))
+	(pad "1" thru_hole rect (at -2.5 0) (size 2.8 2.8) (drill 1.5) (layers "*.Cu" "*.Mask"))
+	(pad "2" thru_hole circle (at 2.5 0) (size 2.8 2.8) (drill 1.5) (layers "*.Cu" "*.Mask"))
+)
+'''.strip() + "\n"
+
+
+def make_usb_microb() -> str:
+    """USB Micro-B SMT R/A — Molex 47346-0001 top view (KiCad Connector_USB).
+
+    Shell 7.50 × 5.00 mm; courtyard 9.40 × 6.50 mm; mouth at local +Y (board edge).
+    3D STEP offset 0 — body matches pads/courtyard.
+    """
+    return f'''
+(footprint "USB_MicroB"
+	(version 20240108)
+	(generator "gen_compact_carrier.py")
+	(layer "F.Cu")
+	(descr "USB Micro-B SMT R/A Molex 47346-0001 — shell 7.5x5.0 mouth +Y")
+	(attr smd)
+{_fp_rect(-4.70, -2.65, 4.70, 3.85, "F.CrtYd", 0.05)}
+{_fp_rect(-3.75, -1.65, 3.75, 3.35, "F.Fab", 0.10)}
+{_fp_rect(-3.75, -1.65, 3.75, 3.35, "F.SilkS", 0.12)}
+{_fp_rect(-1.35, 2.65, 1.35, 3.35, "F.Fab", 0.08)}
+	(fp_text user "USB" (at 0 -2.20 0) (layer "F.SilkS")
+		(effects (font (size 0.6 0.6) (thickness 0.1))))
+	(pad "1" smd rect (at -1.30 -1.46) (size 0.45 1.38) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "2" smd rect (at -0.65 -1.46) (size 0.45 1.38) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "3" smd rect (at 0.00 -1.46) (size 0.45 1.38) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "4" smd rect (at 0.65 -1.46) (size 0.45 1.38) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "5" smd rect (at 1.30 -1.46) (size 0.45 1.38) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "MH1" smd rect (at -3.375 1.20) (size 1.65 1.30) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "MH2" smd rect (at 3.375 1.20) (size 1.65 1.30) (layers "F.Cu" "F.Paste" "F.Mask"))
+)
+'''.strip() + "\n"
+
+
+def make_keypad_kk8() -> str:
+    """Molex KK 254 8P friction-lock header — 6.35 × 22.86 mm housing."""
+    last = 7 * 2.54
+    y0, y1 = -2.54, last + 2.54
+    x0, x1 = -2.54, 3.81
+    lock = [
+        (x1, y0 + 4.0),
+        (x1 + 1.15, y0 + 6.5),
+        (x1 + 1.15, y1 - 6.5),
+        (x1, y1 - 4.0),
+    ]
+    mrg = 0.50
+    return f'''
+(footprint "PinHeader_1x08_Keypad"
+	(version 20240108)
+	(generator "gen_compact_carrier.py")
+	(layer "F.Cu")
+	(descr "Molex KK 254 1x8 friction-lock — 6.35x22.86 mm housing")
+	(attr through_hole)
+{_fp_rect(x0 - mrg, y0 - mrg, x1 + 1.15 + mrg, y1 + mrg, "F.CrtYd", 0.05)}
+{_fp_rect(x0, y0, x1, y1, "F.Fab", 0.10)}
+{_fp_rect(x0, y0, x1, y1, "F.SilkS", 0.12)}
+{_fp_poly(lock, "F.Fab", 0.10)}
+{_fp_poly(lock, "F.SilkS", 0.12)}
+	(fp_text user "KEYPAD" (at 0 {y0 - 1.3:.2f} 0) (layer "F.SilkS")
+		(effects (font (size 0.6 0.6) (thickness 0.1))))
+	(pad "1" thru_hole rect (at 0 0) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
+	(pad "2" thru_hole circle (at 0 2.54) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
+	(pad "3" thru_hole circle (at 0 5.08) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
+	(pad "4" thru_hole circle (at 0 7.62) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
+	(pad "5" thru_hole circle (at 0 10.16) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
+	(pad "6" thru_hole circle (at 0 12.7) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
+	(pad "7" thru_hole circle (at 0 15.24) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
+	(pad "8" thru_hole circle (at 0 17.78) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
+)
+'''.strip() + "\n"
+
+
+def make_female_1xn(name: str, n: int, descr: str, silk: str) -> str:
+    """2.54 mm female socket housing (module header)."""
+    last = (n - 1) * 2.54
+    y0, y1 = -1.27, last + 1.27
+    x0, x1 = -1.27, 1.27
+    mrg = 0.50
+    pads = []
+    for i in range(n):
+        y = i * 2.54
+        shape = "rect" if i == 0 else "circle"
+        pads.append(
+            f'\t(pad "{i + 1}" thru_hole {shape} (at 0 {y:.2f}) '
+            f'(size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))'
+        )
+    return f'''
+(footprint "{name}"
+	(version 20240108)
+	(generator "gen_compact_carrier.py")
+	(layer "F.Cu")
+	(descr "{descr}")
+	(attr through_hole)
+{_fp_rect(x0 - mrg, y0 - mrg, x1 + mrg, y1 + mrg, "F.CrtYd", 0.05)}
+{_fp_rect(x0, y0, x1, y1, "F.Fab", 0.10)}
+{_fp_rect(x0, y0, x1, y1, "F.SilkS", 0.12)}
+	(fp_text user "{silk}" (at 0 {y0 - 1.15:.2f} 0) (layer "F.SilkS")
+		(effects (font (size 0.55 0.55) (thickness 0.08))))
+{chr(10).join(pads)}
+)
+'''.strip() + "\n"
+
+
+def extract_sexpr_blocks(text: str, names: tuple[str, ...]) -> list[str]:
+    """Top-level-in-file (name ...) blocks with balanced parens."""
+    blocks: list[str] = []
+    i = 0
+    while i < len(text):
+        found_pos = None
+        for name in names:
+            token = f"({name}"
+            p = text.find(token, i)
+            if p < 0:
+                continue
+            nxt = p + len(token)
+            if nxt < len(text) and (text[nxt].isalnum() or text[nxt] == "_"):
+                continue
+            if found_pos is None or p < found_pos:
+                found_pos = p
+        if found_pos is None:
+            break
+        depth = 0
+        for j in range(found_pos, len(text)):
+            if text[j] == "(":
+                depth += 1
+            elif text[j] == ")":
+                depth -= 1
+                if depth == 0:
+                    blocks.append(text[found_pos : j + 1])
+                    i = j + 1
+                    break
+        else:
+            break
+    return blocks
+
+
+def set_fp_models(fp_name: str, models: list[str]) -> None:
+    """Replace (model ...) blocks on a library footprint."""
+    path = PRETTY / f"{fp_name}.kicad_mod"
+    if not path.exists() or not models:
+        return
+    text = path.read_text(encoding="utf-8")
+    for blk in extract_sexpr_blocks(text, ("model",)):
+        text = text.replace(blk, "", 1)
+    text = re.sub(r"\n{3,}", "\n\n", text).rstrip()
+    if not text.endswith(")"):
+        return
+    text = text[:-1].rstrip() + "\n" + "\n".join(models) + "\n)\n"
+    path.write_text(text, encoding="utf-8")
+
+
+def attach_board_3d_models() -> None:
+    """Bind KiCad system STEP models so pcbnew 3D viewer shows packages."""
+    xh90 = 0.0  # official XH STEP already has pads along +X (matches our pins)
+    r0805 = _kicad_model("Resistor_SMD.3dshapes/R_0805_2012Metric.step")
+    c0805 = _kicad_model("Capacitor_SMD.3dshapes/C_0805_2012Metric.step")
+    models: dict[str, list[str]] = {
+        "JST_XH_02_Socket": [_kicad_model(_xh_step(2), rz=xh90)],
+        "JST_XH_03_Socket": [_kicad_model(_xh_step(3), rz=xh90)],
+        "JST_XH_04_Socket": [_kicad_model(_xh_step(4), rz=xh90)],
+        "Mot_XH_04_Socket": [_kicad_model(_xh_step(4), rz=xh90)],
+        "Disp_XH_04_Socket": [_kicad_model(_xh_step(4), rz=xh90)],
+        "TerminalBlock_2P_5.0mm": [_kicad_model(
+            "TerminalBlock_Phoenix.3dshapes/"
+            "TerminalBlock_Phoenix_MKDS-1,5-2_1x02_P5.00mm_Horizontal.step",
+            ox=-2.5,
+        )],
+        "USB_MicroB": [_kicad_model(
+            "Connector_USB.3dshapes/USB_Micro-B_Molex_47346-0001.step",
+        )],
+        "PinHeader_1x08_Keypad": [_kicad_model(
+            "Connector_PinHeader_2.54mm.3dshapes/PinHeader_1x08_P2.54mm_Vertical.step",
+        )],
+        "PowerMod_1CH_Sock": [_kicad_model(
+            "Connector_PinSocket_2.54mm.3dshapes/PinSocket_1x06_P2.54mm_Vertical.step",
+        )],
+        "VibAC_Sock": [_kicad_model(
+            "Connector_PinSocket_2.54mm.3dshapes/PinSocket_1x04_P2.54mm_Vertical.step",
+        )],
+        "SW_Push_6mm": [_kicad_model(
+            "Button_Switch_THT.3dshapes/SW_PUSH_6mm.step",
+            ox=-3.25, oy=-2.25,
+        )],
+        "STM32G030C8T6_LQFP48": [_kicad_model(
+            "Package_QFP.3dshapes/LQFP-48_7x7mm_P0.5mm.step",
+        )],
+        "Fuse_Holder_5x20_Open": [_kicad_model(
+            "Fuse.3dshapes/Fuseholder_Cylinder-5x20mm_Schurter_0031_8201_Horizontal_Open.step",
+            ox=-11.25,
+        )],
+        "TMC2209_StepStick": [
+            _kicad_model(
+                "Connector_PinSocket_2.54mm.3dshapes/PinSocket_1x08_P2.54mm_Vertical.step",
+                ox=-7.62, oy=-8.89,
+            ),
+            _kicad_model(
+                "Connector_PinSocket_2.54mm.3dshapes/PinSocket_1x08_P2.54mm_Vertical.step",
+                ox=7.62, oy=-8.89,
+            ),
+        ],
+        # Passives / ICs — origin at body center (same as our pads)
+        "C_0805": [c0805],
+        "C_0805_100n": [c0805],
+        "R_0805_10k": [r0805],
+        "R_0805_4k7": [r0805],
+        "R_0805_2k2": [r0805],
+        "R_0805_1k": [r0805],
+        "R_1206_22R": [_kicad_model("Resistor_SMD.3dshapes/R_1206_3216Metric.step")],
+        "PTC_1812": [_kicad_model("Resistor_SMD.3dshapes/R_1812_4532Metric.step")],
+        "Diode_SMA": [_kicad_model("Diode_SMD.3dshapes/D_SMA.step")],
+        "Diode_SMB_TVS": [_kicad_model("Diode_SMD.3dshapes/D_SMB.step")],
+        "Crystal_SMD_3225": [_kicad_model(
+            "Crystal.3dshapes/Crystal_SMD_3225-4Pin_3.2x2.5mm.step",
+        )],
+        "CP_SMD_D6.3x5.8": [_kicad_model("Capacitor_SMD.3dshapes/CP_Elec_6.3x5.8.step")],
+        "CP_SMD_D8x10": [_kicad_model("Capacitor_SMD.3dshapes/CP_Elec_8x10.step")],
+        "L_SMD_6x6": [_kicad_model("Inductor_SMD.3dshapes/L_Sunlord_SWPA6040S.step")],
+        "CH340C": [_kicad_model("Package_SO.3dshapes/SOIC-16_3.9x9.9mm_P1.27mm.step")],
+        # Official KiCad SOT-223: pins −X, tab +X, pad1 = (−3.15, −2.3)
+        "AMS1117_SOT223": [_kicad_model(
+            "Package_TO_SOT_SMD.3dshapes/SOT-223.step",
+        )],
+        "MP1584EN_SOT23-8": [_kicad_model(
+            "Package_TO_SOT_SMD.3dshapes/SOT-23-8.step",
+        )],
+        "PC817_SOP4": [_kicad_model(
+            "Package_SO.3dshapes/SO-4_4.4x3.6mm_P2.54mm.step",
+        )],
+        "S8050_SOT23": [_kicad_model(
+            "Package_TO_SOT_SMD.3dshapes/SOT-23.step",
+        )],
+    }
+    for name, mods in models.items():
+        set_fp_models(name, mods)
+
 
 def ensure_extra_footprints() -> None:
     """Create any missing .kicad_mod used by this board."""
@@ -91,34 +475,51 @@ def ensure_extra_footprints() -> None:
         if force or not p.exists():
             p.write_text(body.strip() + "\n", encoding="utf-8")
 
-    # STM32G030C8T6 — LQFP48 7×7 mm, 0.5 mm pitch (KiCad Y↓; pin1 top-left, CCW)
+    # Field jacks — physical housing outlines (force so packing uses real body)
+    write("JST_XH_02_Socket", make_xh_bxa_socket(
+        2, "JST_XH_02_Socket", "JST XH B2B-XH-A 2P — 7.4x5.75 mm housing", ["1", "2"]), force=True)
+    write("JST_XH_03_Socket", make_xh_bxa_socket(
+        3, "JST_XH_03_Socket", "JST XH B3B-XH-A 3P — 9.9x5.75 mm housing", ["1", "2", "3"]), force=True)
+    write("JST_XH_04_Socket", make_xh_bxa_socket(
+        4, "JST_XH_04_Socket", "JST XH B4B-XH-A 4P — 12.4x5.75 mm housing", ["1", "2", "3", "4"]), force=True)
+    write("Mot_XH_04_Socket", make_xh_bxa_socket(
+        4, "Mot_XH_04_Socket", "JST XH 4P motor — A2 A1 B1 B2", ["A2", "A1", "B1", "B2"]), force=True)
+    write("Disp_XH_04_Socket", make_xh_bxa_socket(
+        4, "Disp_XH_04_Socket", "JST XH 4P TM1637 — CLK DIO 5V GND", ["CLK", "DIO", "5V", "GND"]), force=True)
+    write("TerminalBlock_2P_5.0mm", make_kf301_2p(), force=True)
+    write("USB_MicroB", make_usb_microb(), force=True)
+    write("PinHeader_1x08_Keypad", make_keypad_kk8(), force=True)
+    write("PowerMod_1CH_Sock", make_female_1xn(
+        "PowerMod_1CH_Sock", 6, "1x6 2.54 female — MOSFET 1CH module", "FET 1CH"), force=True)
+    write("VibAC_Sock", make_female_1xn(
+        "VibAC_Sock", 4, "1x4 2.54 female — SSR vibratory module", "U_VIB"), force=True)
+
+    # STM32G030C8T6 — LQFP48 7×7 mm, 0.5 mm pitch (KiCad LQFP-48_7x7mm_P0.5mm)
     pads = []
-    pitch, reach = 0.5, 4.0
+    pitch, reach = 0.5, 4.1625
     half = 11 * pitch / 2  # 2.75
     for n in range(1, 13):  # left 1..12
         y = -half + (n - 1) * pitch
-        shape = "rect" if n == 1 else "roundrect"
-        rr = ' (roundrect_rratio 0.25)' if shape == "roundrect" else ""
         pads.append(
-            f'\t(pad "{n}" smd {shape} (at {-reach} {y:.3f}) (size 1.2 0.3)'
-            f'\n\t\t(layers "F.Cu" "F.Paste" "F.Mask"){rr})'
+            f'\t(pad "{n}" smd roundrect (at {-reach} {y:.4f}) (size 1.475 0.3)'
+            f'\n\t\t(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))'
         )
     for n in range(13, 25):  # bottom 13..24
         x = -half + (n - 13) * pitch
         pads.append(
-            f'\t(pad "{n}" smd roundrect (at {x:.3f} {reach}) (size 0.3 1.2)'
+            f'\t(pad "{n}" smd roundrect (at {x:.4f} {reach}) (size 0.3 1.475)'
             f'\n\t\t(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))'
         )
     for n in range(25, 37):  # right 25..36 (bottom→top ⇒ y decreasing)
         y = half - (n - 25) * pitch
         pads.append(
-            f'\t(pad "{n}" smd roundrect (at {reach} {y:.3f}) (size 1.2 0.3)'
+            f'\t(pad "{n}" smd roundrect (at {reach} {y:.4f}) (size 1.475 0.3)'
             f'\n\t\t(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))'
         )
     for n in range(37, 49):  # top 37..48 (right→left ⇒ x decreasing)
         x = half - (n - 37) * pitch
         pads.append(
-            f'\t(pad "{n}" smd roundrect (at {x:.3f} {-reach}) (size 0.3 1.2)'
+            f'\t(pad "{n}" smd roundrect (at {x:.4f} {-reach}) (size 0.3 1.475)'
             f'\n\t\t(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))'
         )
     write(
@@ -131,7 +532,7 @@ def ensure_extra_footprints() -> None:
 \t(descr "STM32G030C8T6 LQFP-48 7x7mm P0.5mm")
 \t(tags "STM32 G030 LQFP48")
 \t(attr smd)
-\t(fp_rect (start -4.5 -4.5) (end 4.5 4.5)
+\t(fp_rect (start -5.2 -5.2) (end 5.2 5.2)
 \t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
 \t(fp_rect (start -3.5 -3.5) (end 3.5 3.5)
 \t\t(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
@@ -177,86 +578,6 @@ def ensure_extra_footprints() -> None:
         force=True,
     )
 
-    # One MOSFET module socket per 24V out (1x6 @2.54)
-    write(
-        "PowerMod_1CH_Sock",
-        """
-(footprint "PowerMod_1CH_Sock"
-	(version 20240108)
-	(generator "gen_compact_carrier.py")
-	(layer "F.Cu")
-	(descr "1x6 — single-channel 24V MOSFET module socket (no FET on carrier)")
-	(attr through_hole)
-	(fp_rect (start -1.2 -1.1) (end 1.2 13.9)
-		(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
-	(fp_rect (start -1.0 -0.9) (end 1.0 13.7)
-		(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
-	(fp_text user "FET 1CH" (at 0 -1.7 0) (layer "F.SilkS")
-		(effects (font (size 0.6 0.6) (thickness 0.1))))
-	(pad "1" thru_hole rect (at 0 0) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
-	(pad "2" thru_hole circle (at 0 2.54) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
-	(pad "3" thru_hole circle (at 0 5.08) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
-	(pad "4" thru_hole circle (at 0 7.62) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
-	(pad "5" thru_hole circle (at 0 10.16) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
-	(pad "6" thru_hole circle (at 0 12.7) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
-)
-""",
-        force=True,
-    )
-    write(
-        "VibAC_Sock",
-        """
-(footprint "VibAC_Sock"
-\t(version 20240108)
-\t(generator "gen_compact_carrier.py")
-\t(layer "F.Cu")
-\t(descr "1x4 — SSR/AC vibratory module control socket")
-\t(attr through_hole)
-\t(fp_rect (start -1.2 -1.1) (end 1.2 8.7)
-\t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
-\t(fp_text user "U_VIB" (at 0 -1.8 0) (layer "F.SilkS")
-\t\t(effects (font (size 0.65 0.65) (thickness 0.1))))
-\t(pad "1" thru_hole rect (at 0 0) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
-\t(pad "2" thru_hole circle (at 0 2.54) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
-\t(pad "3" thru_hole circle (at 0 5.08) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
-\t(pad "4" thru_hole circle (at 0 7.62) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
-)
-""",
-        force=True,
-    )
-    write(
-        "Mot_XH_04_Socket",
-        """
-(footprint "Mot_XH_04_Socket"
-	(version 20240108)
-	(generator "gen_compact_carrier.py")
-	(layer "F.Cu")
-	(descr "JST-XH 4P keyed — NEMA17 phases A2 A1 B1 B2 on board edge")
-	(tags "JST XH motor keyed")
-	(attr through_hole)
-	(fp_rect (start -2.9 -1.0) (end 2.9 8.5)
-		(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
-	(fp_rect (start -2.7 -0.8) (end 2.7 8.3)
-		(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
-	(fp_text user "MOT" (at 0 -1.6 0) (layer "F.SilkS")
-		(effects (font (size 0.7 0.7) (thickness 0.1))))
-	(fp_text user "A2" (at 3.3 0.0 0) (layer "F.SilkS")
-		(effects (font (size 0.55 0.55) (thickness 0.08)) (justify left)))
-	(pad "1" thru_hole rect (at 0 0.0) (size 1.6 1.6) (drill 0.9) (layers "*.Cu" "*.Mask"))
-	(fp_text user "A1" (at 3.3 2.5 0) (layer "F.SilkS")
-		(effects (font (size 0.55 0.55) (thickness 0.08)) (justify left)))
-	(pad "2" thru_hole circle (at 0 2.5) (size 1.6 1.6) (drill 0.9) (layers "*.Cu" "*.Mask"))
-	(fp_text user "B1" (at 3.3 5.0 0) (layer "F.SilkS")
-		(effects (font (size 0.55 0.55) (thickness 0.08)) (justify left)))
-	(pad "3" thru_hole circle (at 0 5.0) (size 1.6 1.6) (drill 0.9) (layers "*.Cu" "*.Mask"))
-	(fp_text user "B2" (at 3.3 7.5 0) (layer "F.SilkS")
-		(effects (font (size 0.55 0.55) (thickness 0.08)) (justify left)))
-	(pad "4" thru_hole circle (at 0 7.5) (size 1.6 1.6) (drill 0.9) (layers "*.Cu" "*.Mask"))
-)
-""",
-        force=True,
-    )
-
     write(
         "CH340C",
         """
@@ -266,115 +587,24 @@ def ensure_extra_footprints() -> None:
 \t(layer "F.Cu")
 \t(descr "CH340C SOP-16")
 \t(attr smd)
-\t(fp_rect (start -5.2 -5.2) (end 5.2 5.2)
+\t(fp_rect (start -3.7 -5.4) (end 3.7 5.4)
 \t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
-\t(pad "1" smd rect (at -4.7 4.445) (size 1.5 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "2" smd rect (at -4.7 3.175) (size 1.5 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "3" smd rect (at -4.7 1.905) (size 1.5 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "4" smd rect (at -4.7 0.635) (size 1.5 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "5" smd rect (at -4.7 -0.635) (size 1.5 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "6" smd rect (at -4.7 -1.905) (size 1.5 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "7" smd rect (at -4.7 -3.175) (size 1.5 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "8" smd rect (at -4.7 -4.445) (size 1.5 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "9" smd rect (at 4.7 -4.445) (size 1.5 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "10" smd rect (at 4.7 -3.175) (size 1.5 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "11" smd rect (at 4.7 -1.905) (size 1.5 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "12" smd rect (at 4.7 -0.635) (size 1.5 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "13" smd rect (at 4.7 0.635) (size 1.5 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "14" smd rect (at 4.7 1.905) (size 1.5 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "15" smd rect (at 4.7 3.175) (size 1.5 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "16" smd rect (at 4.7 4.445) (size 1.5 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
-)
-""",
-    )
-
-    # USB Micro-B SMT right-angle: MOUTH at local +Y (overhangs south edge with rot=0);
-    # signal pads at local −Y (toward board interior). Cable plugs from outside.
-    write(
-        "USB_MicroB",
-        """
-(footprint "USB_MicroB"
-\t(version 20240108)
-\t(generator "gen_compact_carrier.py")
-\t(layer "F.Cu")
-\t(descr "USB Micro-B SMT R/A — mouth +Y (edge), pads -Y (inboard)")
-\t(attr smd)
-\t(fp_rect (start -3.5 -3.3) (end 3.5 3.6)
-\t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
-\t(fp_rect (start -3.2 -2.4) (end 3.2 2.6)
-\t\t(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
-\t(fp_line (start -2.2 3.5) (end 2.2 3.5)
-\t\t(stroke (width 0.15) (type solid)) (layer "F.SilkS"))
-\t(fp_line (start -2.2 3.5) (end -2.2 2.8)
-\t\t(stroke (width 0.15) (type solid)) (layer "F.SilkS"))
-\t(fp_line (start 2.2 3.5) (end 2.2 2.8)
-\t\t(stroke (width 0.15) (type solid)) (layer "F.SilkS"))
-\t(fp_text user "OUT" (at 0 4.4 0) (layer "F.SilkS")
-\t\t(effects (font (size 0.6 0.6) (thickness 0.1))))
-\t(pad "1" smd rect (at -1.30 -2.50) (size 0.40 1.45) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "2" smd rect (at -0.65 -2.50) (size 0.40 1.45) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "3" smd rect (at 0.00 -2.50) (size 0.40 1.45) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "4" smd rect (at 0.65 -2.50) (size 0.40 1.45) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "5" smd rect (at 1.30 -2.50) (size 0.40 1.45) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "MH1" smd rect (at -2.90 0.20) (size 1.50 2.20) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "MH2" smd rect (at 2.90 0.20) (size 1.50 2.20) (layers "F.Cu" "F.Paste" "F.Mask"))
-)
-""",
-        force=True,
-    )
-
-    write(
-        "PinHeader_1x08_Keypad",
-        """
-(footprint "PinHeader_1x08_Keypad"
-\t(version 20240108)
-\t(generator "gen_compact_carrier.py")
-\t(layer "F.Cu")
-\t(descr "1x8 keypad header")
-\t(attr through_hole)
-\t(fp_rect (start -1.2 -1.1) (end 1.2 18.9)
-\t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
-\t(pad "1" thru_hole rect (at 0 0) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
-\t(pad "2" thru_hole circle (at 0 2.54) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
-\t(pad "3" thru_hole circle (at 0 5.08) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
-\t(pad "4" thru_hole circle (at 0 7.62) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
-\t(pad "5" thru_hole circle (at 0 10.16) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
-\t(pad "6" thru_hole circle (at 0 12.7) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
-\t(pad "7" thru_hole circle (at 0 15.24) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
-\t(pad "8" thru_hole circle (at 0 17.78) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))
-)
-""",
-        force=True,
-    )
-
-    write(
-        "Disp_XH_04_Socket",
-        """
-(footprint "Disp_XH_04_Socket"
-	(version 20240108)
-	(generator "gen_compact_carrier.py")
-	(layer "F.Cu")
-	(descr "JST-XH 4P — TM1637 module CLK DIO +5V GND")
-	(tags "JST XH TM1637 display keyed")
-	(attr through_hole)
-	(fp_rect (start -2.9 -1.0) (end 2.9 8.5)
-		(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
-	(fp_rect (start -2.7 -0.8) (end 2.7 8.3)
-		(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
-	(fp_text user "DISP" (at 0 -1.6 0) (layer "F.SilkS")
-		(effects (font (size 0.7 0.7) (thickness 0.1))))
-	(fp_text user "CLK" (at 3.3 0.0 0) (layer "F.SilkS")
-		(effects (font (size 0.55 0.55) (thickness 0.08)) (justify left)))
-	(pad "1" thru_hole rect (at 0 0.0) (size 1.6 1.6) (drill 0.9) (layers "*.Cu" "*.Mask"))
-	(fp_text user "DIO" (at 3.3 2.5 0) (layer "F.SilkS")
-		(effects (font (size 0.55 0.55) (thickness 0.08)) (justify left)))
-	(pad "2" thru_hole circle (at 0 2.5) (size 1.6 1.6) (drill 0.9) (layers "*.Cu" "*.Mask"))
-	(fp_text user "5V" (at 3.3 5.0 0) (layer "F.SilkS")
-		(effects (font (size 0.55 0.55) (thickness 0.08)) (justify left)))
-	(pad "3" thru_hole circle (at 0 5.0) (size 1.6 1.6) (drill 0.9) (layers "*.Cu" "*.Mask"))
-	(fp_text user "GND" (at 3.3 7.5 0) (layer "F.SilkS")
-		(effects (font (size 0.55 0.55) (thickness 0.08)) (justify left)))
-	(pad "4" thru_hole circle (at 0 7.5) (size 1.6 1.6) (drill 0.9) (layers "*.Cu" "*.Mask"))
+\t(pad "1" smd rect (at -2.475 -4.445) (size 1.95 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "2" smd rect (at -2.475 -3.175) (size 1.95 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "3" smd rect (at -2.475 -1.905) (size 1.95 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "4" smd rect (at -2.475 -0.635) (size 1.95 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "5" smd rect (at -2.475 0.635) (size 1.95 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "6" smd rect (at -2.475 1.905) (size 1.95 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "7" smd rect (at -2.475 3.175) (size 1.95 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "8" smd rect (at -2.475 4.445) (size 1.95 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "9" smd rect (at 2.475 4.445) (size 1.95 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "10" smd rect (at 2.475 3.175) (size 1.95 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "11" smd rect (at 2.475 1.905) (size 1.95 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "12" smd rect (at 2.475 0.635) (size 1.95 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "13" smd rect (at 2.475 -0.635) (size 1.95 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "14" smd rect (at 2.475 -1.905) (size 1.95 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "15" smd rect (at 2.475 -3.175) (size 1.95 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "16" smd rect (at 2.475 -4.445) (size 1.95 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
 )
 """,
         force=True,
@@ -407,14 +637,15 @@ def ensure_extra_footprints() -> None:
 \t(layer "F.Cu")
 \t(descr "AMS1117-3.3 SOT-223")
 \t(attr smd)
-\t(fp_rect (start -3.7 -3.7) (end 3.7 4.5)
+\t(fp_rect (start -4.5 -3.4) (end 4.5 3.4)
 \t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
-\t(pad "1" smd rect (at -2.3 -2.15) (size 1.5 1.8) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "2" smd rect (at 0 -2.15) (size 1.5 1.8) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "3" smd rect (at 2.3 -2.15) (size 1.5 1.8) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "TAB" smd rect (at 0 2.9) (size 3.6 2.2) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "1" smd rect (at -3.15 -2.3) (size 2.0 1.5) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "2" smd rect (at -3.15 0) (size 2.0 1.5) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "3" smd rect (at -3.15 2.3) (size 2.0 1.5) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "TAB" smd rect (at 3.15 0) (size 2.0 3.8) (layers "F.Cu" "F.Paste" "F.Mask"))
 )
 """,
+        force=True,
     )
 
     # Discrete MP1584EN (SOT-23-8) — NOT the Shopee module
@@ -428,16 +659,16 @@ def ensure_extra_footprints() -> None:
 \t(layer "F.Cu")
 \t(descr "MP1584EN discrete buck SOT-23-8")
 \t(attr smd)
-\t(fp_rect (start -2.2 -2.0) (end 2.2 2.0)
+\t(fp_rect (start -2.0 -1.6) (end 2.0 1.6)
 \t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
-\t(pad "1" smd rect (at -2.45 1.905) (size 1.0 0.5) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "2" smd rect (at -2.45 0.635) (size 1.0 0.5) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "3" smd rect (at -2.45 -0.635) (size 1.0 0.5) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "4" smd rect (at -2.45 -1.905) (size 1.0 0.5) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "5" smd rect (at 2.45 -1.905) (size 1.0 0.5) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "6" smd rect (at 2.45 -0.635) (size 1.0 0.5) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "7" smd rect (at 2.45 0.635) (size 1.0 0.5) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t	(pad "8" smd rect (at 2.45 1.905) (size 1.0 0.5) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "1" smd rect (at -1.1375 -0.975) (size 1.325 0.5) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "2" smd rect (at -1.1375 -0.325) (size 1.325 0.5) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "3" smd rect (at -1.1375 0.325) (size 1.325 0.5) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "4" smd rect (at -1.1375 0.975) (size 1.325 0.5) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "5" smd rect (at 1.1375 0.975) (size 1.325 0.5) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "6" smd rect (at 1.1375 0.325) (size 1.325 0.5) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "7" smd rect (at 1.1375 -0.325) (size 1.325 0.5) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "8" smd rect (at 1.1375 -0.975) (size 1.325 0.5) (layers "F.Cu" "F.Paste" "F.Mask"))
 )
 """,
         force=True,
@@ -451,10 +682,10 @@ def ensure_extra_footprints() -> None:
 \t(layer "F.Cu")
 \t(descr "Power inductor ~6x6mm 10uH")
 \t(attr smd)
-\t(fp_rect (start -3.2 -3.2) (end 3.2 3.2)
+\t(fp_rect (start -3.5 -3.5) (end 3.5 3.5)
 \t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
-\t(pad "1" smd rect (at -2.8 0) (size 1.5 2.5) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t	(pad "2" smd rect (at 2.8 0) (size 1.5 2.5) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "1" smd rect (at -2.25 0) (size 1.7 5.7) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "2" smd rect (at 2.25 0) (size 1.7 5.7) (layers "F.Cu" "F.Paste" "F.Mask"))
 )
 """,
         force=True,
@@ -553,8 +784,8 @@ def ensure_extra_footprints() -> None:
 		(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
 	(fp_line (start 1.4 -1.1) (end 1.4 1.1)
 		(stroke (width 0.12) (type solid)) (layer "F.SilkS"))
-	(pad "1" smd rect (at -2.0 0) (size 1.5 1.8) (layers "F.Cu" "F.Paste" "F.Mask"))
-	(pad "2" smd rect (at 2.0 0) (size 1.5 1.8) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "1" smd rect (at -2.0 0) (size 2.5 1.8) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "2" smd rect (at 2.0 0) (size 2.5 1.8) (layers "F.Cu" "F.Paste" "F.Mask"))
 )
 """,
         force=True,
@@ -568,12 +799,12 @@ def ensure_extra_footprints() -> None:
 	(layer "F.Cu")
 	(descr "SMB / DO-214AA TVS SMBJ26A")
 	(attr smd)
-	(fp_rect (start -3.2 -2.0) (end 3.2 2.0)
+	(fp_rect (start -3.6 -1.8) (end 3.6 1.8)
 		(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
 	(fp_line (start 1.6 -1.3) (end 1.6 1.3)
 		(stroke (width 0.12) (type solid)) (layer "F.SilkS"))
-	(pad "1" smd rect (at -2.3 0) (size 1.8 2.2) (layers "F.Cu" "F.Paste" "F.Mask"))
-	(pad "2" smd rect (at 2.3 0) (size 1.8 2.2) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "1" smd rect (at -2.15 0) (size 2.5 2.3) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "2" smd rect (at 2.15 0) (size 2.5 2.3) (layers "F.Cu" "F.Paste" "F.Mask"))
 )
 """,
         force=True,
@@ -587,12 +818,12 @@ def ensure_extra_footprints() -> None:
 	(layer "F.Cu")
 	(descr "SMD electrolytic ~6.3x5.8mm (47u-220u)")
 	(attr smd)
-	(fp_rect (start -3.8 -3.8) (end 3.8 3.8)
+	(fp_rect (start -4.6 -3.8) (end 4.6 3.8)
 		(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
 	(fp_circle (center 0 0) (end 3.15 0)
 		(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
-	(pad "1" smd rect (at -2.2 0) (size 1.8 3.5) (layers "F.Cu" "F.Paste" "F.Mask"))
-	(pad "2" smd rect (at 2.2 0) (size 1.8 3.5) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "1" smd rect (at -2.7 0) (size 3.5 1.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "2" smd rect (at 2.7 0) (size 3.5 1.6) (layers "F.Cu" "F.Paste" "F.Mask"))
 )
 """,
         force=True,
@@ -610,8 +841,8 @@ def ensure_extra_footprints() -> None:
 		(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
 	(fp_circle (center 0 0) (end 4.0 0)
 		(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
-	(pad "1" smd rect (at -2.8 0) (size 2.2 4.5) (layers "F.Cu" "F.Paste" "F.Mask"))
-	(pad "2" smd rect (at 2.8 0) (size 2.2 4.5) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "1" smd rect (at -3.25 0) (size 3.5 2.5) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "2" smd rect (at 3.25 0) (size 3.5 2.5) (layers "F.Cu" "F.Paste" "F.Mask"))
 )
 """,
         force=True,
@@ -625,12 +856,12 @@ def ensure_extra_footprints() -> None:
 	(layer "F.Cu")
 	(descr "PC817 / EL817 optocoupler SOP-4")
 	(attr smd)
-	(fp_rect (start -3.2 -2.8) (end 3.2 2.8)
+	(fp_rect (start -4.4 -2.2) (end 4.4 2.2)
 		(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
-	(pad "1" smd rect (at -2.3 1.27) (size 1.2 0.7) (layers "F.Cu" "F.Paste" "F.Mask"))
-	(pad "2" smd rect (at -2.3 -1.27) (size 1.2 0.7) (layers "F.Cu" "F.Paste" "F.Mask"))
-	(pad "3" smd rect (at 2.3 -1.27) (size 1.2 0.7) (layers "F.Cu" "F.Paste" "F.Mask"))
-	(pad "4" smd rect (at 2.3 1.27) (size 1.2 0.7) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "1" smd rect (at -3.15 -1.27) (size 2.0 0.64) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "2" smd rect (at -3.15 1.27) (size 2.0 0.64) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "3" smd rect (at 3.15 1.27) (size 2.0 0.64) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "4" smd rect (at 3.15 -1.27) (size 2.0 0.64) (layers "F.Cu" "F.Paste" "F.Mask"))
 )
 """,
         force=True,
@@ -645,13 +876,13 @@ def ensure_extra_footprints() -> None:
 \t(layer "F.Cu")
 \t(descr "NPN S8050 SOT-23")
 \t(attr smd)
-\t(fp_rect (start -1.7 -1.65) (end 1.7 1.8)
+\t(fp_rect (start -2.0 -1.6) (end 2.0 1.6)
 \t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
 \t(fp_line (start -0.7 -1.0) (end 0.7 -1.0)
 \t\t(stroke (width 0.12) (type solid)) (layer "F.SilkS"))
-\t(pad "1" smd rect (at -1.05 -1.0) (size 0.7 0.8) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "2" smd rect (at 1.05 -1.0) (size 0.7 0.8) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "3" smd rect (at 0.0 1.1) (size 0.7 0.8) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "1" smd rect (at -0.9375 -0.95) (size 1.475 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "2" smd rect (at -0.9375 0.95) (size 1.475 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "3" smd rect (at 0.9375 0) (size 1.475 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
 )
 """,
         force=True,
@@ -670,10 +901,10 @@ def ensure_extra_footprints() -> None:
 \t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
 \t(fp_rect (start -1.6 -1.25) (end 1.6 1.25)
 \t\t(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
-\t(pad "1" smd rect (at -1.1 0.75) (size 1.0 0.9) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "2" smd rect (at 1.1 0.75) (size 1.0 0.9) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "3" smd rect (at 1.1 -0.75) (size 1.0 0.9) (layers "F.Cu" "F.Paste" "F.Mask"))
-\t(pad "4" smd rect (at -1.1 -0.75) (size 1.0 0.9) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "1" smd rect (at -1.1 0.85) (size 1.4 1.2) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "2" smd rect (at 1.1 0.85) (size 1.4 1.2) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "3" smd rect (at 1.1 -0.85) (size 1.4 1.2) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "4" smd rect (at -1.1 -0.85) (size 1.4 1.2) (layers "F.Cu" "F.Paste" "F.Mask"))
 )
 """,
         force=True,
@@ -688,16 +919,16 @@ def ensure_extra_footprints() -> None:
 \t(layer "F.Cu")
 \t(descr "Tactile switch 6x6mm THT")
 \t(attr through_hole)
-\t(fp_rect (start -3.5 -3.5) (end 3.5 3.5)
+\t(fp_rect (start -4.5 -3.5) (end 4.5 3.5)
 \t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
 \t(fp_rect (start -3.0 -3.0) (end 3.0 3.0)
 \t\t(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
 \t(fp_circle (center 0 0) (end 1.2 0)
 \t\t(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
-\t(pad "1" thru_hole circle (at -2.25 -1.5) (size 1.5 1.5) (drill 0.9) (layers "*.Cu" "*.Mask"))
-\t(pad "2" thru_hole circle (at 2.25 -1.5) (size 1.5 1.5) (drill 0.9) (layers "*.Cu" "*.Mask"))
-\t(pad "3" thru_hole circle (at 2.25 1.5) (size 1.5 1.5) (drill 0.9) (layers "*.Cu" "*.Mask"))
-\t	(pad "4" thru_hole circle (at -2.25 1.5) (size 1.5 1.5) (drill 0.9) (layers "*.Cu" "*.Mask"))
+\t(pad "1" thru_hole circle (at -3.25 -2.25) (size 1.5 1.5) (drill 0.9) (layers "*.Cu" "*.Mask"))
+\t(pad "2" thru_hole circle (at 3.25 -2.25) (size 1.5 1.5) (drill 0.9) (layers "*.Cu" "*.Mask"))
+\t(pad "3" thru_hole circle (at 3.25 2.25) (size 1.5 1.5) (drill 0.9) (layers "*.Cu" "*.Mask"))
+\t(pad "4" thru_hole circle (at -3.25 2.25) (size 1.5 1.5) (drill 0.9) (layers "*.Cu" "*.Mask"))
 )
 """,
         force=True,
@@ -745,10 +976,12 @@ def ensure_extra_footprints() -> None:
 """,
         force=True,
     )
+    attach_board_3d_models()
 
 
+@lru_cache(maxsize=None)
 def footprint_aabb(fp_name: str) -> tuple[float, float, float, float]:
-    """Local-coord AABB (xmin, ymin, xmax, ymax) from F.CrtYd, else pads + 0.25 mm."""
+    """Local AABB = F.CrtYd (top-down body), else pads + 0.25 mm."""
     path = PRETTY / f"{fp_name}.kicad_mod"
     if not path.exists():
         return (-6.0, -6.0, 6.0, 6.0)
@@ -760,6 +993,14 @@ def footprint_aabb(fp_name: str) -> tuple[float, float, float, float]:
     if m:
         x0, y0, x1, y1 = map(float, m.groups())
         return (min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1))
+    circ = re.search(
+        r'\(fp_circle\s*\(center\s+([-\d.]+)\s+([-\d.]+)\)\s*\(end\s+([-\d.]+)\s+([-\d.]+)\)[\s\S]*?layer "F\.CrtYd"',
+        text,
+    )
+    if circ:
+        cx, cy, ex, ey = map(float, circ.groups())
+        rad = ((ex - cx) ** 2 + (ey - cy) ** 2) ** 0.5
+        return (cx - rad, cy - rad, cx + rad, cy + rad)
     xs: list[float] = []
     ys: list[float] = []
     for pm in re.finditer(
@@ -779,15 +1020,20 @@ def footprint_aabb(fp_name: str) -> tuple[float, float, float, float]:
     return (min(xs) - mrg, min(ys) - mrg, max(xs) + mrg, max(ys) + mrg)
 
 
+def courtyard_aabb(fp_name: str) -> tuple[float, float, float, float]:
+    """Local courtyard AABB used for packing (CrtYd + 0.125 mm per side)."""
+    x0, y0, x1, y1 = footprint_aabb(fp_name)
+    pad = 0.125
+    return (x0 - pad, y0 - pad, x1 + pad, y1 + pad)
+
+
 def courtyard_size(fp_name: str) -> tuple[float, float]:
     """Return (width, height) packing AABB from true courtyard/pad extents + margin."""
-    x0, y0, x1, y1 = footprint_aabb(fp_name)
+    x0, y0, x1, y1 = courtyard_aabb(fp_name)
     w, h = x1 - x0, y1 - y0
     if w < 0.5 or h < 0.5:
         return (12.0, 12.0)
-    # Packing AABB ≈ body; GAP alone enforces clearance (no kiss)
-    pad = 0.25
-    return (w + pad, h + pad)
+    return (w, h)
 
 
 def inject_nets_into_mod(mod_text: str, pad_nets: dict[str, str], net_ids: dict[str, int]) -> str:
@@ -852,16 +1098,24 @@ class Part:
     y: float = 0.0
     pad_nets: dict[str, str] = field(default_factory=dict)
     board_only: bool = False
+    aabb_local: tuple[float, float, float, float] = (-6.0, -6.0, 6.0, 6.0)
 
 
 def build_parts() -> list[Part]:
     ensure_extra_footprints()
 
     def P(ref, fp, value, cluster, pad_nets=None, rot=0.0, board_only=False):
-        w, h = courtyard_size(fp)
+        loc = courtyard_aabb(fp)
+        w, h = loc[2] - loc[0], loc[3] - loc[1]
+        if w < 0.5 or h < 0.5:
+            w, h = 12.0, 12.0
+            loc = (-6.0, -6.0, 6.0, 6.0)
         if rot in (90, 270):
             w, h = h, w
-        return Part(ref, fp, value, cluster, w, h, rot, pad_nets=pad_nets or {}, board_only=board_only)
+        return Part(
+            ref, fp, value, cluster, w, h, rot,
+            pad_nets=pad_nets or {}, board_only=board_only, aabb_local=loc,
+        )
 
     gpio_net = {
         TMC_PINS["STEP"]: "/STEP",
@@ -1097,8 +1351,8 @@ def part_aabb(p: Part) -> tuple[float, float, float, float]:
     return (p.x - p.w / 2, p.y - p.h / 2, p.x + p.w / 2, p.y + p.h / 2)
 
 
-def pack_parts(parts: list[Part], seed: int = 42) -> dict:
-    """Full EDA-style placer: min-cut + quadratic + force + GA + SA."""
+def pack_parts(parts: list[Part], seed: int = 42, anchors: dict | None = None) -> dict:
+    """Place parts. With anchors: keep PCB poses, min-displacement legalize."""
     cfg = PlaceCfg(
         board_w=BOARD_W,
         board_h=BOARD_H,
@@ -1106,13 +1360,64 @@ def pack_parts(parts: list[Part], seed: int = 42) -> dict:
         oy=OY,
         margin=MARGIN,
         jack_margin=JACK_MARGIN,
+        jack_side_keep=JACK_SIDE_KEEP,
+        jack_pack=JACK_PACK,
+        jack_row_sep=JACK_ROW_SEP,
         gap=GAP,
         ant_tip=ANT_TIP,
         ant_clear=ANT_CLEAR,
         ant_half_w=ANT_HALF_W,
         courtyard_size=courtyard_size,
     )
-    return _pack_parts_full(parts, cfg, seed=seed)
+    return _pack_parts_full(parts, cfg, seed=seed, anchors=anchors)
+
+
+def load_pcb_anchors() -> tuple[dict[str, tuple[float, float, float]], float, float] | None:
+    """Read current footprint (x,y,rot) and Edge.Cuts size from the live PCB."""
+    if not PCB.exists():
+        return None
+    text = PCB.read_text(encoding="utf-8")
+    em = re.search(
+        r"\(gr_rect\s*\(start\s+([\d.-]+)\s+([\d.-]+)\)\s*\(end\s+([\d.-]+)\s+([\d.-]+)\)"
+        r"[\s\S]*?Edge\.Cuts",
+        text,
+    )
+    if not em:
+        return None
+    x0, y0, x1, y1 = map(float, em.groups())
+    bw, bh = x1 - x0, y1 - y0
+    anchors: dict[str, tuple[float, float, float]] = {}
+    i = 0
+    while True:
+        p = text.find("(footprint ", i)
+        if p < 0:
+            break
+        d = 0
+        end = None
+        for j in range(p, len(text)):
+            if text[j] == "(":
+                d += 1
+            elif text[j] == ")":
+                d -= 1
+                if d == 0:
+                    end = j
+                    break
+        if end is None:
+            break
+        blk = text[p : end + 1]
+        i = end + 1
+        ref_m = re.search(r'\(property "Reference" "([^"]+)"', blk)
+        at = re.search(r"\(at\s+([\d.-]+)\s+([\d.-]+)(?:\s+([\d.-]+))?\)", blk)
+        if not ref_m or not at:
+            continue
+        anchors[ref_m.group(1)] = (
+            float(at.group(1)),
+            float(at.group(2)),
+            float(at.group(3) or 0),
+        )
+    if len(anchors) < 8:
+        return None
+    return anchors, bw, bh
 
 
 # ---------------------------------------------------------------------------
@@ -1381,13 +1686,32 @@ def emit_pcb_v2(parts: list[Part]) -> None:
     a('\t\t(layer "Edge.Cuts")')
     a(f'\t\t(uuid "{uid()}")')
     a("\t)")
-    a(f'\t(gr_text "{BOARD_W:.0f}x{BOARD_H:.0f} DIN | field jacks N/S only | W/E=rail"')
+    boxes = {p.ref: _aabb(p) for p in parts}
+    _n_lo, n_hi = jack_hline_union(boxes, NORTH_EDGE_JACKS)
+    s_lo, _s_hi = jack_hline_union(boxes, SOUTH_EDGE_JACKS)
+    for y in (n_hi, s_lo):
+        a("\t(gr_line")
+        a(f"\t\t(start {OX:.4f} {y:.4f})")
+        a(f"\t\t(end {OX + BOARD_W:.4f} {y:.4f})")
+        a("\t\t(stroke (width 0.2) (type dash))")
+        a('\t\t(layer "Dwgs.User")')
+        a(f'\t\t(uuid "{uid()}")')
+        a("\t)")
+    for x in (OX + MARGIN, OX + BOARD_W - MARGIN):
+        a("\t(gr_line")
+        a(f"\t\t(start {x:.4f} {OY:.4f})")
+        a(f"\t\t(end {x:.4f} {OY + BOARD_H:.4f})")
+        a("\t\t(stroke (width 0.2) (type dash))")
+        a('\t\t(layer "Dwgs.User")')
+        a(f'\t\t(uuid "{uid()}")')
+        a("\t)")
+    a(f'\t(gr_text "{BOARD_W:.0f}x{BOARD_H:.0f} | L/R {MARGIN:.0f}mm DIN/clip | box 180x130 / 200x150"')
     a(f"\t\t(at {OX + 4} {OY + 3.5} 0)")
     a('\t\t(layer "Cmts.User")')
     a("\t\t(effects (font (size 0.9 0.9) (thickness 0.12)) (justify left))")
     a(f'\t\t(uuid "{uid()}")')
     a("\t)")
-    a('\t(gr_text "N: SNS/HMI/USB | S: J1 MOT1 U3 MOT2 U4 PWR1 PWR2 VIB P24"')
+    a('\t(gr_text "N: SNS/HMI/USB | S: J1 MOT1 MOT2 PWR1 PWR2 VIB P24 | TMC inland"')
     a(f"\t\t(at {OX + 4} {OY + BOARD_H - 3.5} 0)")
     a('\t\t(layer "Cmts.User")')
     a("\t\t(effects (font (size 0.75 0.75) (thickness 0.1)) (justify left))")
@@ -1423,28 +1747,17 @@ def emit_pcb_v2(parts: list[Part]) -> None:
         else:
             a(f"\t\t(attr {attr})")
 
-        # Courtyard / silk from true local AABB (not packing-size centered on origin)
-        ax0, ay0, ax1, ay1 = footprint_aabb(p.fp)
-        a("\t\t(fp_rect")
-        a(f"\t\t\t(start {ax0:.3f} {ay0:.3f})")
-        a(f"\t\t\t(end {ax1:.3f} {ay1:.3f})")
-        a("\t\t\t(stroke (width 0.05) (type solid))")
-        a("\t\t\t(fill none)")
-        a('\t\t\t(layer "F.CrtYd")')
-        a(f'\t\t\t(uuid "{uid()}")')
-        a("\t\t)")
-        # Silk inset 0.15 mm so outline hugs body, not packing clearance
-        sx0, sy0 = ax0 + 0.15, ay0 + 0.15
-        sx1, sy1 = ax1 - 0.15, ay1 - 0.15
-        if sx1 > sx0 and sy1 > sy0:
-            a("\t\t(fp_rect")
-            a(f"\t\t\t(start {sx0:.3f} {sy0:.3f})")
-            a(f"\t\t\t(end {sx1:.3f} {sy1:.3f})")
-            a("\t\t\t(stroke (width 0.12) (type solid))")
-            a("\t\t\t(fill none)")
-            a('\t\t\t(layer "F.SilkS")')
-            a(f'\t\t\t(uuid "{uid()}")')
-            a("\t\t)")
+        # Physical housing / silk / courtyard / 3D models from the library
+        for g in extract_sexpr_blocks(
+            raw, ("fp_rect", "fp_line", "fp_poly", "fp_circle", "fp_arc", "fp_text", "model")
+        ):
+            if "(property" in g:
+                continue
+            is_model = g.lstrip().startswith("(model")
+            if not is_model and "(uuid" not in g:
+                g = g[:-1] + f'\n\t\t(uuid "{uid()}")\n\t)'
+            for lg in g.strip().splitlines():
+                a("\t\t" + lg.lstrip())
 
         for m in re.finditer(
             r'\(pad\s+"([^"]+)"\s+(\w+)\s+(\w+)(?:\s*\n\s*|\s+)\(at\s+([-\d.]+)\s+([-\d.]+)(?:\s+([-\d.]+))?\)',
@@ -1525,8 +1838,40 @@ def iter_board_sizes():
 
 def main() -> None:
     global BOARD_W, BOARD_H
+    loaded = load_pcb_anchors()
+    size_changed = True
+    if loaded:
+        _anchors, live_w, live_h = loaded
+        size_changed = (
+            abs(live_w - COMMERCIAL_W) > 0.5 or abs(live_h - COMMERCIAL_H) > 0.5
+        )
+    # Fresh pack when adopting 8 mm L/R keep (sticky from 155/failed 160 leaves overlaps).
+    if loaded and not size_changed and not FRESH_PACK:
+        anchors, bw, bh = loaded
+        BOARD_W, BOARD_H = COMMERCIAL_W, COMMERCIAL_H
+        print(
+            f"Min-disp place from live PCB ({len(anchors)} parts, "
+            f"was {bw:.0f}x{bh:.0f} → commercial {BOARD_W:.0f}x{BOARD_H:.0f} mm)"
+        )
+        parts = build_parts()
+        metrics = pack_parts(parts, seed=42, anchors=anchors)
+        print(
+            f"  min-disp: overlaps={metrics['overlaps']} ant={metrics['ant_hits']} "
+            f"warns={metrics.get('warns', 0)} rms={metrics.get('disp_rms', 0):.2f}mm"
+        )
+        if (
+            metrics["overlaps"] == 0
+            and metrics["ant_hits"] == 0
+            and metrics.get("warns", 0) == 0
+        ):
+            print(f"Selected board {BOARD_W:.0f}x{BOARD_H:.0f} mm (commercial L/R keep)")
+            emit_pcb_v2(parts)
+            print(f"Done. size={BOARD_W:.0f}x{BOARD_H:.0f} overlaps=0 gap={GAP} jack_pack={JACK_PACK}")
+            return
+        print("  min-disp still overlapping — fresh pack on commercial outline")
+
     best: tuple[tuple[float, float], list, dict] | None = None
-    seeds = (42, 7, 99, 123, 256, 512, 777, 1024)
+    seeds = (42, 7)
     for bw, bh in iter_board_sizes():
         BOARD_W, BOARD_H = bw, bh
         size_clean = False
@@ -1572,16 +1917,21 @@ def main() -> None:
     tol = 1e-3
     for i, a in enumerate(mov):
         for b in mov[i + 1 :]:
+            ax0, ay0, ax1, ay1 = _aabb(a)
+            bx0, by0, bx1, by1 = _aabb(b)
+            g = pair_courtyard_gap(a.ref, b.ref, GAP, JACK_PACK)
             if (
-                abs(a.x - b.x) + tol < (a.w + b.w) / 2 + GAP
-                and abs(a.y - b.y) + tol < (a.h + b.h) / 2 + GAP
+                ax1 + g - tol > bx0
+                and bx1 + g - tol > ax0
+                and ay1 + g - tol > by0
+                and by1 + g - tol > ay0
             ):
                 ov += 1
                 print(f"  overlap {a.ref}/{b.ref}")
-    print(f"Done. size={BOARD_W:.0f}x{BOARD_H:.0f} overlaps={ov} gap={GAP}")
+    print(f"Done. size={BOARD_W:.0f}x{BOARD_H:.0f} overlaps={ov} gap={GAP} jack_pack={JACK_PACK}")
     if ov > 0:
         raise SystemExit(
-            f"placement still has {ov} courtyard overlaps (gap={GAP}); "
+            f"placement still has {ov} courtyard overlaps (gap={GAP}, jack_pack={JACK_PACK}); "
             f"raise BOARD_MAX_MM or fix locked edge row"
         )
 
