@@ -414,9 +414,11 @@ def attach_board_3d_models() -> None:
         "VibAC_Sock": [_kicad_model(
             "Connector_PinSocket_2.54mm.3dshapes/PinSocket_1x04_P2.54mm_Vertical.step",
         )],
-        "SW_Push_6mm": [_kicad_model(
-            "Button_Switch_THT.3dshapes/SW_PUSH_6mm.step",
-            ox=-3.25, oy=2.25,
+        "SW_Push_6mm_SMD": [_kicad_model(
+            "Button_Switch_SMD.3dshapes/SW_SPST_PTS645.step",
+        )],
+        "Fuse_2410": [_kicad_model(
+            "Fuse.3dshapes/Fuse_2410_6125Metric.step",
         )],
         "STM32G030C8T6_LQFP48": [_kicad_model(
             "Package_QFP.3dshapes/LQFP-48_7x7mm_P0.5mm.step",
@@ -443,6 +445,7 @@ def attach_board_3d_models() -> None:
         "R_0805_4k7": [r0805],
         "R_0805_2k2": [r0805],
         "R_0805_1k": [r0805],
+        "R_0805_100k": [r0805],
         "R_1206_22R": [_kicad_model("Resistor_SMD.3dshapes/R_1206_3216Metric.step")],
         "PTC_1812": [_kicad_model("Resistor_SMD.3dshapes/R_1812_4532Metric.step")],
         "Diode_SMA": [_kicad_model("Diode_SMD.3dshapes/D_SMA.step")],
@@ -451,6 +454,7 @@ def attach_board_3d_models() -> None:
             "Crystal.3dshapes/Crystal_SMD_3225-4Pin_3.2x2.5mm.step",
         )],
         "CP_SMD_D6.3x5.8": [_kicad_model("Capacitor_SMD.3dshapes/CP_Elec_6.3x5.8.step")],
+        "CP_SMD_D6.3x8": [_kicad_model("Capacitor_SMD.3dshapes/CP_Elec_6.3x7.7.step")],
         "CP_SMD_D8x10": [_kicad_model("Capacitor_SMD.3dshapes/CP_Elec_8x10.step")],
         "L_SMD_6x6": [_kicad_model("Inductor_SMD.3dshapes/L_Sunlord_SWPA6040S.step")],
         "CH340C": [_kicad_model("Package_SO.3dshapes/SOIC-16_3.9x9.9mm_P1.27mm.step")],
@@ -460,6 +464,9 @@ def attach_board_3d_models() -> None:
         )],
         "MP1584EN_SOT23-8": [_kicad_model(
             "Package_TO_SOT_SMD.3dshapes/SOT-23-8.step",
+        )],
+        "MP1584EN_SOIC-8-EP": [_kicad_model(
+            "Package_SO.3dshapes/SOIC-8-1EP_3.9x4.9mm_P1.27mm_EP2.29x3mm.step",
         )],
         "PC817_SOP4": [_kicad_model(
             "Package_SO.3dshapes/SO-4_4.4x3.6mm_P2.54mm.step",
@@ -616,7 +623,8 @@ def ensure_extra_footprints() -> None:
         force=True,
     )
 
-    for name, val in (("R_0805_4k7", "4k7"), ("R_0805_10k", "10k"), ("R_0805_2k2", "2k2"), ("R_0805_1k", "1k")):
+    for name, val in (("R_0805_4k7", "4k7"), ("R_0805_10k", "10k"), ("R_0805_2k2", "2k2"),
+                      ("R_0805_1k", "1k"), ("R_0805_100k", "100k")):
         write(
             name,
             f"""
@@ -654,8 +662,47 @@ def ensure_extra_footprints() -> None:
         force=True,
     )
 
-    # Discrete MP1584EN (SOT-23-8) — NOT the Shopee module
-    # Pinout MP1584: 1=SW 2=EN 3=COMP 4=FB 5=GND 6=IN 7=NC 8=BS
+    # Genuine MPS MP1584EN is SOIC-8-EP (not SOT-23-8 clones).
+    # Pinout: 1=SW 2=EN 3=COMP 4=FB 5=GND 6=FREQ 7=VIN 8=BST 9=EP(GND)
+    # EN abs max 6V — leave floating (internal pull-up enables). Do not tie to 24V.
+    write(
+        "MP1584EN_SOIC-8-EP",
+        """
+(footprint "MP1584EN_SOIC-8-EP"
+\t(version 20240108)
+\t(generator "gen_compact_carrier.py")
+\t(layer "F.Cu")
+\t(descr "MPS MP1584EN SOIC-8-EP: 1=SW 2=EN 3=COMP 4=FB 5=GND 6=FREQ 7=VIN 8=BST 9=EP")
+\t(tags "MP1584EN SOIC-8 MPS")
+\t(attr smd)
+\t(fp_rect (start -3.7 -2.7) (end 3.7 2.7)
+\t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
+\t(fp_rect (start -2.0 -2.45) (end 2.0 2.45)
+\t\t(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
+\t(fp_circle (center -2.3 -2.15) (end -2.05 -2.15)
+\t\t(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
+\t(pad "1" smd roundrect (at -2.475 -1.905) (size 1.95 0.6)
+\t\t(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))
+\t(pad "2" smd roundrect (at -2.475 -0.635) (size 1.95 0.6)
+\t\t(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))
+\t(pad "3" smd roundrect (at -2.475 0.635) (size 1.95 0.6)
+\t\t(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))
+\t(pad "4" smd roundrect (at -2.475 1.905) (size 1.95 0.6)
+\t\t(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))
+\t(pad "5" smd roundrect (at 2.475 1.905) (size 1.95 0.6)
+\t\t(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))
+\t(pad "6" smd roundrect (at 2.475 0.635) (size 1.95 0.6)
+\t\t(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))
+\t(pad "7" smd roundrect (at 2.475 -0.635) (size 1.95 0.6)
+\t\t(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))
+\t(pad "8" smd roundrect (at 2.475 -1.905) (size 1.95 0.6)
+\t\t(layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25))
+\t(pad "9" smd rect (at 0 0) (size 2.29 3)
+\t\t(layers "F.Cu" "F.Mask"))
+)
+""",
+        force=True,
+    )
     write(
         "MP1584EN_SOT23-8",
         """
@@ -828,6 +875,27 @@ def ensure_extra_footprints() -> None:
 		(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
 	(fp_circle (center 0 0) (end 3.15 0)
 		(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
+	(pad "1" smd rect (at -2.7 0) (size 3.5 1.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "2" smd rect (at 2.7 0) (size 3.5 1.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+)
+""",
+        force=True,
+    )
+    write(
+        "CP_SMD_D6.3x8",
+        """
+(footprint "CP_SMD_D6.3x8"
+	(version 20240108)
+	(generator "gen_compact_carrier.py")
+	(layer "F.Cu")
+	(descr "SMD aluminum electrolytic 6.3x8mm (Rubycon TZV 47u/50V)")
+	(attr smd)
+	(fp_rect (start -4.6 -3.8) (end 4.6 3.8)
+		(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
+	(fp_circle (center 0 0) (end 3.15 0)
+		(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))
+	(fp_line (start -3.4 -1.2) (end -3.4 1.2)
+		(stroke (width 0.12) (type solid)) (layer "F.SilkS"))
 	(pad "1" smd rect (at -2.7 0) (size 3.5 1.6) (layers "F.Cu" "F.Paste" "F.Mask"))
 	(pad "2" smd rect (at 2.7 0) (size 3.5 1.6) (layers "F.Cu" "F.Paste" "F.Mask"))
 )
@@ -1211,11 +1279,12 @@ def build_parts() -> list[Part]:
         }),
         # CH340C UART bridge (no DTR/RTS auto-boot — STM32 uses SWD / BOOT0)
         P("U5", "CH340C", "CH340C", "MCU", {
-            "1": "GND", "2": "/UART_RX", "3": "/UART_TX", "4": "+3V3",
+            "1": "GND", "2": "/UART_RX", "3": "/UART_TX", "4": "/CH340_V3",
             "5": "/USB_DP", "6": "/USB_DM",
             "7": "/CH340_XI", "8": "/CH340_XO",
             "16": "+5V",
         }),
+        P("C_V3", "C_0805_100n", "100n", "MCU", {"1": "/CH340_V3", "2": "GND"}),
         P("Y1", "Crystal_SMD_3225", "12MHz", "MCU", {
             "1": "/CH340_XI", "3": "/CH340_XO", "2": "GND", "4": "GND",
         }),
@@ -1230,10 +1299,10 @@ def build_parts() -> list[Part]:
         P("C_NRST", "C_0805_100n", "100n", "MCU", {"1": "/NRST", "2": "GND"}),
         P("R_BOOT", "R_0805_10k", "10k", "MCU", {"1": "/SWCLK", "2": "GND"}),  # BOOT0 + SWCLK PD
         P("R_SWDIO", "R_0805_10k", "10k", "MCU", {"1": "+3V3", "2": "/SWDIO"}),  # SWDIO PU
-        P("SW_BOOT", "SW_Push_6mm", "BOOT0", "MCU", {
+        P("SW_BOOT", "SW_Push_6mm_SMD", "BOOT0", "MCU", {
             "1": "/SWCLK", "2": "/SWCLK", "3": "+3V3", "4": "+3V3",
         }),
-        P("SW_NRST", "SW_Push_6mm", "NRST", "MCU", {
+        P("SW_NRST", "SW_Push_6mm_SMD", "NRST", "MCU", {
             "1": "/NRST", "2": "/NRST", "3": "GND", "4": "GND",
         }),
         P("U6", "AMS1117_SOT223", "AMS1117-3.3", "MCU", {
@@ -1242,15 +1311,16 @@ def build_parts() -> list[Part]:
         P("J1", "TerminalBlock_2P_5.0mm", "24V_IN", "POWER", {"1": "+24V_RAW", "2": "GND"}),
         # Input protect: reverse (D3) → T2A fuse → TVS clamp (loads after F1 only)
         P("D3", "Diode_SMA", "SS54", "POWER", {"1": "+24V_RAW", "2": "+24V_PRE"}),
-        P("F1", "Fuse_Holder_5x20_Open", "T2A", "POWER", {"1": "+24V_PRE", "2": "+24V"}, rot=90),
+        P("F1", "Fuse_2410", "T2A", "POWER", {"1": "+24V_PRE", "2": "+24V"}, rot=90),
         P("D1", "Diode_SMB_TVS", "SMBJ26A", "POWER", {"1": "GND", "2": "+24V"}),  # A=GND K=+24V
-        # Discrete buck 24V→5V: U2 + L1 + D4 + Rfb + Cbst
-        P("U2", "MP1584EN_SOT23-8", "MP1584EN", "POWER", {
-            "1": "/BUCK_SW", "2": "+24V", "3": "/BUCK_COMP", "4": "/BUCK_FB",
-            "5": "GND", "6": "+24V", "8": "/BUCK_BS",
+        # Discrete buck 24V→5V: genuine MP1584EN SOIC-8-EP + L1 + D4 + Rfb + Cbst + Rfreq
+        P("U2", "MP1584EN_SOIC-8-EP", "MP1584EN", "POWER", {
+            "1": "/BUCK_SW", "3": "/BUCK_COMP", "4": "/BUCK_FB",
+            "5": "GND", "6": "/BUCK_FREQ", "7": "+24V", "8": "/BUCK_BS", "9": "GND",
         }),
+        P("R_FREQ", "R_0805_100k", "100k", "POWER", {"1": "/BUCK_FREQ", "2": "GND"}),
         P("L1", "L_SMD_6x6", "10uH", "POWER", {"1": "/BUCK_SW", "2": "+5V"}),
-        P("D4", "Diode_SMA", "SS34", "POWER", {"1": "GND", "2": "/BUCK_SW"}),
+        P("D4", "Diode_SMA", "SS54", "POWER", {"1": "GND", "2": "/BUCK_SW"}),
         P("Rfb1", "R_0805_4k7", "52k3", "POWER", {"1": "+5V", "2": "/BUCK_FB"}),
         P("Rfb2", "R_0805_10k", "10k", "POWER", {"1": "/BUCK_FB", "2": "GND"}),
         P("Cbst", "C_0805", "10n", "POWER", {"1": "/BUCK_BS", "2": "/BUCK_SW"}),
@@ -1258,20 +1328,20 @@ def build_parts() -> list[Part]:
         # SNS branch: PTC then series R (short at J14/J15 trips PTC_SNS, not whole board)
         P("PTC_SNS", "PTC_1812", "0.2A", "POWER", {"1": "+24V", "2": "+24V_SNS_PRE"}),
         P("R10", "R_1206_22R", "22R", "POWER", {"1": "+24V_SNS_PRE", "2": "+24V_SNS"}),
-        P("C10", "CP_SMD_D6.3x5.8", "47u/50V", "POWER", {"1": "+24V_SNS", "2": "GND"}),
+        P("C10", "CP_SMD_D6.3x8", "47u/50V", "POWER", {"1": "+24V_SNS", "2": "GND"}),
         P("C11", "C_0805_100n", "100n", "POWER", {"1": "+24V_SNS", "2": "GND"}),
-        P("C21", "CP_SMD_D6.3x5.8", "220u/50V", "POWER", {"1": "+24V", "2": "GND"}),
+        P("C21", "CP_SMD_D6.3x8", "47u/50V", "POWER", {"1": "+24V", "2": "GND"}),
         # Motor VM: U3 on MOT1, U4 on MOT2 (separate PTC for future dual NEMA17)
         P("PTC_MOT", "PTC_1812", "1.1A", "TMC", {"1": "+24V", "2": "+24V_MOT"}),
-        P("C20", "CP_SMD_D8x10", "470u/50V", "TMC", {"1": "+24V_MOT", "2": "GND"}),
+        P("C20", "CP_SMD_D8x10", "220u/50V", "TMC", {"1": "+24V_MOT", "2": "GND"}),
         P("C24", "C_0805_100n", "100n", "TMC", {"1": "+24V_MOT", "2": "GND"}),
         P("PTC_MOT2", "PTC_1812", "1.1A", "TMC", {"1": "+24V", "2": "+24V_MOT2"}),
-        P("C20B", "CP_SMD_D6.3x5.8", "220u/50V", "TMC", {"1": "+24V_MOT2", "2": "GND"}),
+        P("C20B", "CP_SMD_D6.3x8", "47u/50V", "TMC", {"1": "+24V_MOT2", "2": "GND"}),
         P("C24B", "C_0805_100n", "100n", "TMC", {"1": "+24V_MOT2", "2": "GND"}),
         P("C5", "CP_SMD_D6.3x5.8", "100u/16V", "MCU", {"1": "+5V", "2": "GND"}),
         P("C51", "C_0805_100n", "100n", "MCU", {"1": "+5V", "2": "GND"}),
         P("D5", "Diode_SMB_TVS", "SMBJ5.0A", "MCU", {"1": "GND", "2": "+5V"}),
-        P("C3", "CP_SMD_D6.3x5.8", "47u/10V", "MCU", {"1": "+3V3", "2": "GND"}),
+        P("C3", "CP_SMD_D6.3x8", "47u/50V", "MCU", {"1": "+3V3", "2": "GND"}),
         P("C31", "C_0805_100n", "100n", "MCU", {"1": "+3V3", "2": "GND"}),
         # U3 = motor 1 (feed/count); U4 = motor 2 (anti-jam / future) — sockets only
         P("U3", "TMC2209_StepStick", "TMC2209", "TMC", {
@@ -1364,6 +1434,16 @@ def build_parts() -> list[Part]:
             "4": "/PWM_OUT2", "5": "/PWR_EN2", "6": "/PWR_FAULT",
         }),
         P("R_PWR_FLT", "R_0805_10k", "10k", "PWR", {"1": "+3V3", "2": "/PWR_FAULT"}),
+        # P4.5 / P9 fail-safe: Hi-Z MCU boot must leave MOSFET/SSR/TMC STEP-DIR OFF
+        P("R_PD_PWM1", "R_0805_10k", "10k", "PWR", {"1": "/PWM_OUT1", "2": "GND"}),
+        P("R_PD_PWM2", "R_0805_10k", "10k", "PWR", {"1": "/PWM_OUT2", "2": "GND"}),
+        P("R_PD_EN1", "R_0805_10k", "10k", "PWR", {"1": "/PWR_EN1", "2": "GND"}),
+        P("R_PD_EN2", "R_0805_10k", "10k", "PWR", {"1": "/PWR_EN2", "2": "GND"}),
+        P("R_PD_VIB", "R_0805_10k", "10k", "PWR", {"1": "/VIB_CTRL", "2": "GND"}),
+        P("R_PD_STEP", "R_0805_10k", "10k", "TMC", {"1": "/STEP", "2": "GND"}),
+        P("R_PD_DIR", "R_0805_10k", "10k", "TMC", {"1": "/DIR", "2": "GND"}),
+        P("R_PD_STEP2", "R_0805_10k", "10k", "TMC", {"1": "/STEP2", "2": "GND"}),
+        P("R_PD_DIR2", "R_0805_10k", "10k", "TMC", {"1": "/DIR2", "2": "GND"}),
         # Pluggable AC vibratory SSR control — socket only
         P("U_VIB", "VibAC_Sock", "SSR", "PWR", {
             "1": "+24V", "2": "GND", "3": "/VIB_CTRL", "4": "/VIB_FAULT",
@@ -1502,6 +1582,7 @@ NETS = {
     32: "/BUCK_FB",
     33: "/BUCK_BS",
     34: "/BUCK_COMP",
+    35: "/BUCK_FREQ",
     45: "/NRST",
     46: "/SWDIO",
     47: "/SWCLK",
@@ -1530,6 +1611,7 @@ NETS = {
     74: "/VIB_FAULT",
     79: "/CNT5",
     80: "/OPTO_IN_5V",
+    81: "/CH340_V3",
 }
 
 
@@ -1821,7 +1903,7 @@ def emit_pcb_v2(parts: list[Part]) -> None:
             a("\t\t)")
 
         for m in re.finditer(
-            r'\(pad\s+"([^"]+)"\s+(\w+)\s+(\w+)(?:\s*\n\s*|\s+)\(at\s+([-\d.]+)\s+([-\d.]+)(?:\s+([-\d.]+))?\)',
+            r'\(pad\s+"([^"]*)"\s+(\w+)\s+(\w+)(?:\s*\n\s*|\s+)\(at\s+([-\d.]+)\s+([-\d.]+)(?:\s+([-\d.]+))?\)',
             raw,
         ):
             pnum, ptype, shape, lx, ly = m.group(1), m.group(2), m.group(3), float(m.group(4)), float(m.group(5))

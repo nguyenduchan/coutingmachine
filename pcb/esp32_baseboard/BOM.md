@@ -1,11 +1,13 @@
-# ESP32 Baseboard → STM32G030 carrier — BOM (2026-09-15)
+# ESP32 Baseboard → STM32G030 carrier — BOM (2026-09-17)
 
 SoT mua hàng / ước giá.  
 **PCB SoT:** `python gen_compact_carrier.py` → board **180×120 mm** (`esp32_baseboard.kicad_pcb`) — giắc field chỉ N/S; W/E để gài DIN.  
-**Pinmap:** `stm32_pinmap.py` · **Verify:** `python verify_compact.py`
+**Pinmap:** `stm32_pinmap.py` · **Verify (fab):** `python verify_pre_fab.py`
 
 > **CHƯA MUA gì.**  
 > **MCU: STM32G030C8T6** (LQFP48).  
+> **LCSC SMT:** `jlc_lcsc.csv` (`python verify_jlc_bom.py`). P9: `R_PD_*` 10k + `C_V3` 100n.  
+> **Chưa upload JLC:** DRC còn net hở + U2 footprint SOT-23-8 vs MP1584EN SOIC-8-EP.  
 > Nạp: **USB (CH340)** + nút **BOOT0 / NRST** — **không** giắc J_DBG (lot nhỏ).  
 > **Layout DIN (bắt buộc):**  
 > - **Cạnh dưới (S):** `J1` 24V → `J_MOT1`/`J_MOT2` (XH-4) + đế TMC/**U_PWR1+U_PWR2** — **không** kéo motor từ giắc sẵn trên module.  
@@ -23,7 +25,7 @@ SoT mua hàng / ước giá.
 `J1 → D3(SS54 SMA) → F1(T2A) → +24V ← D1(SMBJ26A)`  
 Motor1: `+24V → PTC_MOT 1.1A → +24V_MOT → U3`  
 Motor2: `+24V → PTC_MOT2 1.1A → +24V_MOT2 → U4`  
-SNS: `+24V → PTC_SNS 0.2A → R10 22Ω → +24V_SNS` → J14/J15/J_IN2/J_IN3  
+SNS: `+24V → PTC_SNS 0.1A (Bourns 60V) → R10 22Ω → +24V_SNS` → J14/J15/J_IN2/J_IN3  
 Logic: `+24V → U2 → +5V ← D5(SMBJ5.0A) → U6 → +3V3 → U1`
 
 **MCU / debug:**  
@@ -99,21 +101,40 @@ Nạp UART: giữ **BOOT0** (`PA14`/`SWCLK`) + `SW_BOOT` / `SW_NRST` · `R_BOOT`
 > Kích thước vật lý dọc cạnh (ước): XH-2 ~4.5 mm · XH-3 ~7 mm · XH-4 ~9.5 mm · KEY 1×8 ~19 mm · USB ~7 mm · **TMC đế ~20 mm** · PowerMod 1×6 ~15 mm · Vib 1×4 ~9 mm. Hàng S cần board rộng (~130–160 mm).  
 > **Linh kiện SMT** nằm lòng board, cách hàng giắc N/S ≥2.5 mm; SMT courtyard ≥2.5 mm. **Giắc N/S cách nhau ≥5 mm** để hai phích cắm không chạm.
 
-## A) SMT dán sẵn
+## A) SMT dán sẵn (kho JLCPCB)
 
-| Ref | Value / package | SL |
-|-----|-----------------|----|
-| **U1** | **STM32G030C8T6** LQFP48 | 1 |
-| U2 | MP1584EN SOT-23-8 | 1 |
-| U5 | CH340C SOP-16 | 1 |
-| U6 | AMS1117-3.3 SOT-223 | 1 |
-| U44 / U45 / U46 / **U47** | PC817 SOP-4 (count24 / IN2 / IN3 / **count5V**) | 1 mỗi |
-| PTC_MOT / PTC_MOT2 / PTC_SNS | 1812 1.1A / 1.1A / 0.2A | 1 mỗi |
-| J_USB | USB Micro-B SMT | 1 |
-| C_MCU / C_MCU2 | 100n / 1µ @+3V3 gần U1 | 1 mỗi |
-| R_NRST / C_NRST | 10k / 100n | 1 mỗi |
-| R_BOOT / R_SWDIO | 10k PD BOOT0 · 10k PU SWDIO | 1 mỗi |
-| Rfb / Cbst / Cc + R/C bulk | như trước (24V/5V/3V3) | — |
+Map LCSC: `jlc_lcsc.csv` — **chỉ hãng kho LCSC** (ST/MPS/WCH/Omron/Molex/Littelfuse/Bourns/Rubycon/Panasonic/Samsung/Yageo/Sunlord/Lite-On/LGE). Tụ hóa nhôm 105°C.
+
+| Ref | Mã JLC | Hãng / MPN | Ghi chú 3 năm |
+|-----|--------|------------|----------------|
+| U1 | C529329 | ST STM32G030C8T6 | Industrial −40…85°C |
+| U2 | C15051 | **MPS MP1584EN-LF-Z SOIC-8-EP** | Giữ MPS 1.5 MHz. Clone rẻ 100–220 kHz không dùng. PCB **SOT-23-8** |
+| U5 | C84681 | WCH CH340C | Listing rẻ hơn C7464026 |
+| U6 | C6186 | AMS AMS1117-3.3 | Basic, hãng AMS (Mỹ) |
+| U44–U47 | C114603 | Lite-On LTV-817S-TA1-D | Thay PC817 no-name |
+| Y1 | C9002 | YXC 12 MHz 3225 −40…85 | Basic; aging ~3 ppm/năm |
+| J_USB | C132560 | Molex 473460001 | Micro-B SMT 5+2 vỏ |
+| SW_BOOT/NRST | C271750 | Omron B3FS-1000P | Chính hãng Omron 6×6 (rẻ hơn Panasonic) |
+| L1 | C87982 | Sunlord SWPA6040S100MT | 10 µH 2.45 A 6×6 |
+| D1 | C315992 | Littelfuse SMBJ26A | 26 V / 42.1 V / 600 W SMB |
+| D5 | C83333 | Littelfuse SMBJ5.0A | 5 V / 9.2 V / 600 W SMB |
+| D3/D4 | C2903855 | LGE SS54 SMA | ON/Vishay SS54 là SMC |
+| PTC_MOT/MOT2 | C142747 | Littelfuse 1812L110/33MR | **33 V** 1.1 A |
+| PTC_SNS | C12430 | Bourns MF-MSMF010-2 | **60 V** 0.1 A (BOM 0.2 A) |
+| C3/C10/C20B/C21 | C88734 | Rubycon 47 µ/50 V 6.3 | Nhôm JP 105°C 2000 h |
+| C5 | C110164 | Rubycon 100 µ/16 V 6.3 | |
+| C20 | C178595 | Panasonic 220 µ/50 V Ø8 | 5000 h@105°C |
+| 100 n 0805 | C1711 | Samsung X7R 50 V | |
+| C_MCU2 1 µ | C28323 | Samsung X7R 50 V | |
+| Cbst 10 n | C1710 | Samsung X7R 50 V Basic | |
+| Cc 3n3 | C107149 | YAGEO X7R 50 V 0805 | Murata C0G đắt hơn |
+| C_XI/XO 22 p | C1804 | Samsung C0G 50 V Basic | |
+| 10 k / 4k7 / 1 k / 2k2 | C17414 / C17673 / C17513 / C17520 | UNI-ROYAL 0805 1% Basic | gồm `R_PD_*` P4.5 |
+| C_V3 | C1711 | Samsung 100 n X7R | CH340 V3, không đấu AMS1117 |
+| Rfb1 52k3 | C17740 | UNI-ROYAL 0805 1% | Chia 5 V với Rfb2 |
+| R10 22 R | C17958 | UNI-ROYAL 1206 1% 250 mW | |
+
+Giắc/đế THT (J1, F1 5×20, XH, header TMC…) = DNP — không có trong file LCSC SMT.
 
 ## B) Hàn tay sau — **chỉ hàn khi cần**
 
@@ -124,7 +145,7 @@ PCB layout đủ mọi footprint. Mua/hàn theo SKU; ô trống = **DNP** (khôn
 | J1 | Terminal 2P 5.0 | **Luôn** (24V IN) |
 | F1 | Đế 5×20 + ống **T2A** | **Luôn** |
 | J_USB | (SMT sẵn) | — |
-| SW_BOOT / SW_NRST | Tact 6×6 | **Luôn** (nạp USB) |
+| SW_BOOT / SW_NRST | (SMT Omron sẵn) | — |
 | **J_DISP** | `Disp_XH_04` | **Luôn** (TM1637) |
 | J_KEY | 1×8 | Có keypad (thường cả 3 hạng) |
 | U3 · **J_MOT1** | Đế StepStick + XH-4 | Có motor 1 (trung/đắt; rẻ nếu có đĩa) |
@@ -146,7 +167,7 @@ PCB layout đủ mọi footprint. Mua/hàn theo SKU; ô trống = **DNP** (khôn
 | **J_P5N** | +5V | GND | Cạnh trên, trước J_CNT5 |
 | **J_P24S** | +24V | GND | Cạnh dưới, cạnh U_PWR / motor |
 
-> Dùng cấp LED phát / module ngoài khi tín hiệu đi giắc I/O riêng. `+24V_SNS` có PTC 0.2 A; `+24V` sau F1.
+> Dùng cấp LED phát / module ngoài khi tín hiệu đi giắc I/O riêng. `+24V_SNS` có PTC 0.1 A / 60 V; `+24V` sau F1.
 
 ### Pinout J_DISP (XH-4) — module TM1637
 
@@ -197,44 +218,38 @@ PCB layout đủ mọi footprint. Mua/hàn theo SKU; ô trống = **DNP** (khôn
 
 TMC2209 · NEMA17 · **module TM1637 4 số** (~13–20k) · keypad · BUP **hoặc** fiber · PSU LRS-*-24 — như trước.
 
-## D) Ước giá (1 board mid, VND · 2026-09)
+## D) Giá linh kiện trên 1 board (kho JLCPCB · 2026-09-17)
 
-**Chính sách:** JLC/PCBA **chỉ SMT mục A**. **Đế cắm + giắc + nút (mục B) tự mua + hàn tay** — không gửi nhà máy dán.
+**Chỉ linh kiện** — chưa PCB, chưa phí dán, chưa ship, chưa VAT. FX **26.000 VND/USD**.  
+Nguồn: API JLCPCB 17/09/2026. Chỉ linh kiện **chính hãng kho LCSC** (không Shou Han / Honor / Brightking / MDD TVS).
 
-Giả định: lot **5 tấm**, PCB **110×100** 2L HASL, ship amort, mua linh kiện VN/LCSC mid.
+### 1) SMT mục A — mỗi board
 
-### 1) Nhà máy (PCBA SMT)
+| Lô đặt | USD | VND | Ghi chú giá bậc |
+|--------|-----|-----|-----------------|
+| 1 | **~9.1** | **~237k** | Chính hãng; Omron/Rubycon giữ giá giữa |
+| 5 | **~8.9** | **~231k** | |
+| 10 | **~8.3** | **~216k** | |
+| 100 | **~7.0** | **~182k** | |
 
-| Hạng mục | Low–High / tấm | Mid | Ghi chú |
-|----------|----------------|-----|---------|
-| **PCB trần** 2L 110×100 | 25–55k | **~35k** | >100×100 → mất promo $2/5; ~$15–25/5 + ship |
-| **Linh kiện SMT (A)** | 75–110k | **~95k** | MCU 15–25 · buck/USB/CH340/opto/PTC/TVS/R/C (không U7) |
-| **Phí dán SMT** | 70–140k | **~100k** | setup + place amort 5; ~50–70 điểm SMT |
-| **Cộng PCBA (A)** | **≈180–300k** | **~235k** | board ra lò, **chưa** đế/giắc |
+So với no-name: USB Molex, TVS/PTC Littelfuse, C20 Panasonic. Giữ Omron + Rubycon (vẫn chính hãng, rẻ hơn Panasonic nút/tụ 47 µ). U2 vẫn MPS 1.5 MHz.
 
-### 2) Hàn tay sau (mục B) — đế & giắc
+### 2) THT mục B — full giắc/đế (mua kho JLC, hàn tay)
 
-| Nhóm | SL | Mid / tấm | Ghi chú |
-|------|-----|-----------|---------|
-| Đế StepStick U3/U4 | 2 | **20–30k** | 2× female 2.54 (16 chân/module) |
-| Đế U_PWR1/2 1×6 | 2 | **6–12k** | |
-| Đế U_VIB 1×4 | 1 | **2–4k** | |
-| J1 terminal 2P + F1 đế 5×20 | 1+1 | **10–18k** | + ống T2A ~3–5k |
-| J_MOT1/2 XH-4 | 2 | **10–16k** | |
-| JST đếm/IN (J14/15/IN2/IN3) | 4 | **12–20k** | |
-| J_KEY 1×8 + J_DISP XH-4 | 2 | **4–8k** | |
+Ước **~$1.48 / ~38k**: J1 C8465 $0.13 · XH 2/3/4P LAILAN · header cái BOOMELE 2×8 / 1×6 / 1×4 · J_KEY 1×8 · đế+ống F1 5×20 (~$0.33, không khớp mã chính xác). Generic, không phải JST/Molex. Mua lẻ VN vẫn **~65–110k** (mid **~85k**).
 
-| SW_BOOT / SW_NRST | 2 | **2–4k** | |
-| **Cộng hàn tay (B) đủ hết** | | **≈65–110k** | mid **~85k** — chỉ khi hàn **full**; SKU thực tế ít hơn (xem E3) |
+### 3) Tổng linh kiện 1 board (A SMT + B THT full)
 
-### 3) Tổng 1 board (SMT A + hàn B)
+| Lô | SMT A | THT B (lẻ JLC) | **Cộng** |
+|----|-------|----------------|----------|
+| 1 | 237k | 38k | **~275k** |
+| 5 | 231k | 38k | **~269k** |
+| 10 | 216k | 38k | **~254k** |
+| 100 | 182k | ~35k | **~217k** |
 
-| | Mid | Ghi chú |
-|--|-----|---------|
-| PCBA SMT (A) | **~235k** | luôn đủ |
-| Hàn tay B **full** | **~85k** | mọi giắc |
-| Hàn tay B **theo SKU** | **~40–110k** | rẻ/trung/đắt |
-| **Board rẻ / trung / đắt** | **≈275 / 310 / 330k** | A + B thực tế |
+Chưa gồm module TMC / MOSFET / SSR / TM1637 / cảm biến / PSU.
+
+Chi tiết dòng: `out/jlc_part_cost.json`.
 
 ### 4) Module cắm thêm (không tính vào board trần)
 
@@ -257,7 +272,7 @@ PSU 24 V, NEMA, cảm biến, keypad = **field**, ngoài ước giá board.
 
 | # | Ngoại vi | Giắc / đế | Đơn giá mid | Dải lẻ |
 |---|----------|-----------|-------------|--------|
-| 1 | **Board** SMT A + hàn B theo SKU | — | **275 / 310 / 330k** | rẻ / trung / đắt |
+| 1 | **Board** linh kiện A SMT + B THT full | — | **~275k** | lot 1; SMT ~237k + THT ~38k (chưa PCB/dán) |
 | 2 | **TMC2209** StepStick | U3 / U4 | **100k** | 80–150k |
 | 3 | **NEMA17** 42 + dây pha | J_MOT1/2 | **110k** | 90–180k |
 | 4 | **MOSFET module 1CH** 24V out | U_PWR1/2 | **60k** | 40–100k |
@@ -282,7 +297,7 @@ PSU 24 V, NEMA, cảm biến, keypad = **field**, ngoài ước giá board.
 
 | # | Hạng mục | **Rẻ** | **Trung** | **Đắt** |
 |---|----------|--------|-----------|---------|
-| 1 | Board A+B theo SKU | **275k** | **310k** | **330k** |
+| 1 | Board linh kiện A+B | **~275k** | **~269k** | **~275k** |
 | 2 | TMC2209 | **0** | **1×100k** | **2×200k** |
 | 3 | NEMA17 | **0** | **1×110k** | **2×220k** |
 | 4 | MOSFET 1CH | **1×60k** (van/stop) | **2×120k** | **2×120k** |
@@ -298,7 +313,7 @@ PSU 24 V, NEMA, cảm biến, keypad = **field**, ngoài ước giá board.
 | 16 | Cáp XH bộ | 20k | 25k | 35k |
 | 17 | Cầu chì dự phòng | 5k | 5k | 5k |
 | 18 | Cáp USB | 15k | 15k | 15k |
-| | **Cộng điện mid** | **≈680k** | **≈1.27tr** | **≈1.96tr** |
+| | **Cộng điện mid** | **≈740k** | **≈1.33tr** | **≈1.97tr** |
 | | **Dải ước** | **0.50–0.90tr** | **1.0–1.7tr** | **1.6–2.7tr** |
 
 ### E3) Giắc **hàn theo hạng** (DNP phần còn lại)
@@ -323,6 +338,6 @@ PSU 24 V, NEMA, cảm biến, keypad = **field**, ngoài ước giá board.
 ### E4) Ghi chú
 
 - **Chưa gồm** khung, máng rung cơ, đĩa chia, tủ, DIN rail, nhãn — thường **+0.5–3tr** tùy cơ khí.  
-- Lot board ≥50: SMT A **~180–250k** → mỗi hạng điện **−50–100k**.  
+- Lot board ≥50: SMT A **~228k** linh kiện (lô 100) + PCB/dán riêng → mỗi hạng điện **không** còn ~95k SMT.  
 - Rẻ có thể thêm U3+J_MOT1+TMC+NEMA (+~210k) nếu cần đĩa quay.  
 - Pad trống không hàn: phủ sơn / để vậy — không ảnh hưởng điện nếu firmware không dùng kênh đó.

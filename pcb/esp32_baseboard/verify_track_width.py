@@ -30,28 +30,44 @@ COPPER_OZ = 1
 DELTA_T_C = 10.0
 
 # Worst-case current (A) and optional minimum width override (mm).
-# +12V budget matches 0.70 mm FR/maze width (~1.85 A @ 10 °C — burst stall OK).
+# 24 V inlet fused T2A; motor VM/coils behind 1.1 A PTC; SNS 0.2 A PTC.
 NET_CURRENT_A = {
-    "+12V": 1.8,
-    "+12V_RAW": 1.8,
-    "GND": 1.8,
-    "+5V": 1.0,
-    "+3V3": 0.5,
-    "+12V_SNS": 0.05,
-    "MotA1": 1.0,
-    "MotA2": 1.0,
-    "MotB1": 1.0,
-    "MotB2": 1.0,
-    "BLW_RET": 0.6,
+    "+24V": 2.0,
+    "+24V_RAW": 2.0,
+    "+24V_PRE": 2.0,
+    "+24V_MOT": 1.1,
+    "+24V_MOT2": 1.1,
+    "GND": 2.0,
+    "+5V": 1.5,
+    "+3V3": 0.8,
+    "+24V_SNS": 0.2,
+    "+24V_SNS_PRE": 0.2,
+    "/MotA1": 1.1,
+    "/MotA2": 1.1,
+    "/MotB1": 1.1,
+    "/MotB2": 1.1,
+    "/Mot2A1": 1.1,
+    "/Mot2A2": 1.1,
+    "/Mot2B1": 1.1,
+    "/Mot2B2": 1.1,
 }
 NET_MIN_WIDTH_MM = {
-    "MotA1": 0.34,
-    "MotA2": 0.34,
-    "MotB1": 0.34,
-    "MotB2": 0.34,
-    "+12V": 1.00,
-    "+12V_RAW": 1.00,
-    "GND": 1.00,
+    "+24V": 1.00,
+    "+24V_RAW": 1.00,
+    "+24V_PRE": 1.00,
+    "GND": 0.50,
+    "+24V_MOT": 0.50,
+    "+24V_MOT2": 0.50,
+    "+5V": 0.50,
+    "+3V3": 0.35,
+    "/MotA1": 0.50,
+    "/MotA2": 0.50,
+    "/MotB1": 0.50,
+    "/MotB2": 0.50,
+    "/Mot2A1": 0.50,
+    "/Mot2A2": 0.50,
+    "/Mot2B1": 0.50,
+    "/Mot2B2": 0.50,
 }
 for _ax in (1, 2, 3):
     for _ph in "ABCD":

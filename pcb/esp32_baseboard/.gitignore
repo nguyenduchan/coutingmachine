@@ -34,10 +34,15 @@ _l298n_sch.txt
 _cluster_balance.json
 
 # Generated preview/export/routing-tool output directories
+out/
 out_preview/
 out_freerouting/
 modules/out_freerouting/
 _595mod_scrape/
+
+# Bundled JDK for FreeRouting (large, downloadable separately)
+tools/jre*/
+tools/jre*.zip
 
 # Scratch snapshots / one-off test projects (superseded, not the fab source)
 _ok_220x160.kicad_pcb

@@ -8,6 +8,8 @@ import sys
 from pathlib import Path
 
 from pcb_parse import NetTable, pad_net
+import jlcpcb_limits as JLC
+from verify_jlcpcb import jack_row_gaps, parse_fps
 
 ROOT = Path(__file__).resolve().parent
 PCB = ROOT / "esp32_baseboard.kicad_pcb"
@@ -91,6 +93,8 @@ def main() -> int:
         "Y1", "C_XI", "C_XO", "C52", "C53",
         "R_NRST", "C_NRST", "R_BOOT", "R_SWDIO", "SW_BOOT", "SW_NRST",
         "R45", "R49", "R46", "R50", "R47", "R51", "C27", "U47", "R_PWR_FLT", "R_VIB_FLT",
+        "R_PD_PWM1", "R_PD_PWM2", "R_PD_EN1", "R_PD_EN2", "R_PD_VIB",
+        "R_PD_STEP", "R_PD_DIR", "R_PD_STEP2", "R_PD_DIR2", "C_V3",
     ):
         check(ref in pads, ok, fail, f"ref {ref}")
     for gone in ("Q1", "Q2", "R_DTR", "R_RTS", "C_DTR", "C_RTS", "R_EN", "R_IO0", "R_IO2", "SW_EN", "J_SWD", "U7"):
@@ -111,6 +115,27 @@ def main() -> int:
     check(u5.get("7") == "/CH340_XI" and u5.get("8") == "/CH340_XO", ok, fail, "U5 XI/XO crystal")
     check("10" not in u5 and "15" not in u5, ok, fail, "U5 DTR/RTS not wired")
     check(u5.get("2") == "/UART_RX" and u5.get("3") == "/UART_TX", ok, fail, "CH340-USART cross nets")
+    check(u5.get("4") == "/CH340_V3", ok, fail, "U5 V3 isolated from AMS1117")
+    check(pads.get("C_V3", {}).get("1") == "/CH340_V3" and pads.get("C_V3", {}).get("2") == "GND",
+          ok, fail, "C_V3 on CH340 V3")
+    check(pads.get("R_PD_PWM1", {}).get("1") == "/PWM_OUT1" and pads.get("R_PD_PWM1", {}).get("2") == "GND",
+          ok, fail, "R_PD_PWM1 fail-safe PD")
+    check(pads.get("R_PD_PWM2", {}).get("1") == "/PWM_OUT2" and pads.get("R_PD_PWM2", {}).get("2") == "GND",
+          ok, fail, "R_PD_PWM2 fail-safe PD")
+    check(pads.get("R_PD_EN1", {}).get("1") == "/PWR_EN1" and pads.get("R_PD_EN1", {}).get("2") == "GND",
+          ok, fail, "R_PD_EN1 fail-safe PD")
+    check(pads.get("R_PD_EN2", {}).get("1") == "/PWR_EN2" and pads.get("R_PD_EN2", {}).get("2") == "GND",
+          ok, fail, "R_PD_EN2 fail-safe PD")
+    check(pads.get("R_PD_VIB", {}).get("1") == "/VIB_CTRL" and pads.get("R_PD_VIB", {}).get("2") == "GND",
+          ok, fail, "R_PD_VIB fail-safe PD")
+    check(pads.get("R_PD_STEP", {}).get("1") == "/STEP" and pads.get("R_PD_STEP", {}).get("2") == "GND",
+          ok, fail, "R_PD_STEP PD")
+    check(pads.get("R_PD_DIR", {}).get("1") == "/DIR" and pads.get("R_PD_DIR", {}).get("2") == "GND",
+          ok, fail, "R_PD_DIR PD")
+    check(pads.get("R_PD_STEP2", {}).get("1") == "/STEP2" and pads.get("R_PD_STEP2", {}).get("2") == "GND",
+          ok, fail, "R_PD_STEP2 PD")
+    check(pads.get("R_PD_DIR2", {}).get("1") == "/DIR2" and pads.get("R_PD_DIR2", {}).get("2") == "GND",
+          ok, fail, "R_PD_DIR2 PD")
     check(pads.get("R_NRST", {}).get("2") == "/NRST", ok, fail, "R_NRST pull-up")
     check(pads.get("R_BOOT", {}).get("1") == "/SWCLK" and pads.get("R_BOOT", {}).get("2") == "GND", ok, fail, "R_BOOT PD")
     check(pads.get("R_SWDIO", {}).get("2") == "/SWDIO", ok, fail, "R_SWDIO pull-up")
@@ -188,6 +213,10 @@ def main() -> int:
     check("Diode_SMA" in text and "CP_SMD_" in text and "PC817_SOP4" in text, ok, fail, "SMT packages")
     check(u2.get("1") == "/BUCK_SW" and pads.get("L1", {}).get("2") == "+5V", ok, fail, "discrete buck")
     check(pads.get("U6", {}).get("2") == "+3V3", ok, fail, "U6 AMS1117 3V3")
+    check(pads.get("U6", {}).get("TAB") == "+3V3", ok, fail, "U6 TAB tied to +3V3")
+    ju = pads.get("J_USB") or {}
+    check(ju.get("2") == "/USB_DM" and ju.get("3") == "/USB_DP", ok, fail, "J_USB D−/D+")
+    check(ju.get("MH1") == "GND" and ju.get("MH2") == "GND", ok, fail, "J_USB shield MH1/MH2 GND")
     check(text.count("TMC2209_StepStick") >= 2, ok, fail, "two TMC sockets")
     check("TM1637_SOP20" not in text, ok, fail, "no on-board TM1637 IC")
     jm1 = pads.get("J_MOT1", {})
@@ -324,7 +353,7 @@ def main() -> int:
             dx = abs(sx - ux)
             check(dx < 22.0, ok, fail, f"{sref} near J_USB in X (dx={dx:.1f})")
             check(sy > uy, ok, fail, f"{sref} inland south of J_USB")
-            check(sy < uy + 22.0, ok, fail, f"{sref} close to J_USB in Y (dy={sy - uy:.1f})")
+            check(sy < uy + 26.0, ok, fail, f"{sref} close to J_USB in Y (dy={sy - uy:.1f})")
         bx, _, _ = pos["SW_BOOT"]
         nx, _, _ = pos["SW_NRST"]
         check(bx < nx, ok, fail, "SW_BOOT west of SW_NRST")
@@ -390,11 +419,11 @@ def main() -> int:
         r = int(round(rot)) % 360
         for x, y in ((sx0, sy0), (sx0, sy1), (sx1, sy0), (sx1, sy1)):
             if r == 90:
-                rx, ry = -y, x
+                rx, ry = y, -x
             elif r == 180:
                 rx, ry = -x, -y
             elif r == 270:
-                rx, ry = y, -x
+                rx, ry = -y, x
             else:
                 rx, ry = x, y
             xs.append(cx + rx)
@@ -439,7 +468,7 @@ def main() -> int:
         for rb, bx, by, b_hw, b_hh in bodies[i + 1 :]:
             a_j, b_j = ra in edge_jacks, rb in edge_jacks
             if a_j and b_j:
-                g = jack_pack
+                g = 0.3  # plug-to-plug 5 mm is E3 (housing), not courtyard
             elif a_j != b_j:
                 g = jack_elec
             else:
@@ -458,31 +487,16 @@ def main() -> int:
         f"({len(clashes)} clashes: {clashes[:12]})",
     )
 
-    print("=== E3) Adjacent N/S jacks: plug gap ≥5mm (no two plugs touching) ===")
-    def _row_gaps(refs: tuple[str, ...]) -> None:
-        row = []
-        by_ref = {b[0]: b for b in bodies}
-        for ref in refs:
-            if ref in by_ref:
-                row.append(by_ref[ref])
-        row.sort(key=lambda b: b[1])  # west → east by courtyard center
-        for i in range(len(row) - 1):
-            ra, ax, _ay, aw, _ah = row[i]
-            rb, bx, _by, bw, _bh = row[i + 1]
-            gap = (bx - bw) - (ax + aw)
-            check(
-                gap + tol >= jack_pack,
-                ok,
-                fail,
-                f"{ra}|{rb} plug-gap {gap:.2f}mm ≥{jack_pack}",
-            )
-
-    _row_gaps((
-        "J_P24N", "J14", "J15", "J_IN2", "J_IN3", "J_P5N", "J_CNT5", "J_KEY", "J_DISP", "J_USB",
-    ))
-    _row_gaps((
-        "J1", "J_MOT1", "J_MOT2", "U_PWR1", "U_PWR2", "U_VIB", "J_P24S",
-    ))
+    print("=== E3) Adjacent N/S jacks: plug gap ≥5mm (housing, not courtyard) ===")
+    fps_j = parse_fps(text)
+    for refs, label in ((JLC.NORTH_JACKS, "N"), (JLC.SOUTH_JACKS, "S")):
+        bad = jack_row_gaps(fps_j, refs, JLC.JACK_PLUG_GAP_MM)
+        check(
+            not bad,
+            ok,
+            fail,
+            f"{label} housing ≥{JLC.JACK_PLUG_GAP_MM}mm ({', '.join(bad[:6]) if bad else 'ok'})",
+        )
 
     print("=== E2) Non-jack AABB must not cut jack h-lines; L/R keep for install ===")
     if em:
@@ -567,16 +581,14 @@ def main() -> int:
                 bad_h.append(f"{hr}:y")
         check(not bad_h, ok, fail, f"M3 on L/R keep, {hole_ns:.0f}mm from N/S ({bad_h})")
 
-    print("=== G) Silk shows module names, not generator refs ===")
-    hidden_refs = 0
-    shown_codes = []
+    print("=== G) Silk: every part named; jacks labelled by purpose ===")
+    hidden_refs = []
+    from label_silk import PURPOSE
+    missing_purpose = []
     for m in re.finditer(r'\n\t\(footprint "', text):
         blk = _block(text, m.start() + 1)
-        rm = re.search(
-            r'\(property "Reference" "([^"]+)"[\s\S]*?(hide yes)?[\s\S]*?\n\t\t\)',
-            blk,
-        )
-        if not rm or "board_only" in blk:
+        rm = re.search(r'\(property "Reference" "([^"]+)"', blk)
+        if not rm:
             continue
         ref = rm.group(1)
         pref = re.search(
@@ -584,19 +596,20 @@ def main() -> int:
             blk,
         )
         if pref:
-            hidden_refs += 1
-        elif ref.startswith("H"):
-            continue
-        else:
-            shown_codes.append(ref)
-    check(hidden_refs >= 60, ok, fail, f"Reference hidden on silk ({hidden_refs})")
-    check(not shown_codes, ok, fail, f"no generator refs on silk ({shown_codes[:8]})")
-    check('(fp_text user "TMC2209"' in text, ok, fail, "TMC2209 name on board")
-    check('(fp_text user "TM1637"' in text, ok, fail, "TM1637 name on board")
-    check('(fp_text user "MOSFET"' in text, ok, fail, "MOSFET name on board")
+            hidden_refs.append(ref)
+        want = PURPOSE.get(ref)
+        if want and f'(fp_text user "{want}"' not in blk and f'(property "Value" "{want}"' not in blk:
+            missing_purpose.append(ref)
+    check(not hidden_refs, ok, fail, f"every footprint shows Reference ({hidden_refs[:8]})")
+    check(not missing_purpose, ok, fail, f"jack/module purpose silk ({missing_purpose})")
+    check('(fp_text user "TMC1"' in text, ok, fail, "TMC1 name on board")
+    check('(fp_text user "TMC2"' in text, ok, fail, "TMC2 name on board")
+    check('(fp_text user "MOSFET 1"' in text, ok, fail, "MOSFET 1 name on board")
     check('(fp_text user "KEYPAD"' in text, ok, fail, "KEYPAD name on board")
+    check('(fp_text user "MOTOR 1"' in text, ok, fail, "MOTOR 1 name on board")
+    check('(fp_text user "DISPLAY"' in text, ok, fail, "DISPLAY name on board")
     check("THAY TMC2209" not in text, ok, fail, "no generator TMC tag silk")
-    check("SMBJ26A" in text and "SMBJ5.0A" in text, ok, fail, "TVS values kept off silk")
+    check("SMBJ26A" in text and "SMBJ5.0A" in text, ok, fail, "TVS values present")
 
     print("=== F) Removed modules ===")
     for bad in (

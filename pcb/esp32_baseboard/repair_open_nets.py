@@ -8,14 +8,14 @@ from maze_router import repair_open_pcb
 
 ROOT = Path(__file__).resolve().parent
 PCB = ROOT / "esp32_baseboard.kicad_pcb"
-OX, OY = 35.0, 30.0
-BW, BH = 190.0, 160.0
+OX, OY = 50.0, 50.0
+BW, BH = 180.0, 120.0
 
 
 def main() -> None:
     text = PCB.read_text(encoding="utf-8")
     total = 0
-    for rnd in range(1, 6):
+    for rnd in range(1, 3):
         text, result = repair_open_pcb(
             text, OX, OY, BW, BH, grid=0.55, uid_fn=lambda: str(uuid.uuid4())
         )

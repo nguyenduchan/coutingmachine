@@ -1,0 +1,15 @@
+(footprint "R_0805_100k"
+	(version 20240108)
+	(generator "gen_compact_carrier.py")
+	(layer "F.Cu")
+	(descr "0805 100k MP1584EN Rfreq (~0.9 MHz)")
+	(attr smd)
+	(fp_rect (start -1.1 -0.7) (end 1.1 0.7)
+		(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
+	(pad "1" smd rect (at -0.95 0) (size 0.7 1.2) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "2" smd rect (at 0.95 0) (size 0.7 1.2) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(model "${KICAD10_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0805_2012Metric.step"
+		(offset (xyz 0 0 0))
+		(scale (xyz 1 1 1))
+		(rotate (xyz 0 0 0)))
+)

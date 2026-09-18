@@ -1,20 +1,10 @@
 #!/usr/bin/env python3
-"""Generate the schematic from the PCB's own pad->net table.
+"""Do NOT run this to overwrite the schematic.
 
-Why this direction: both files come out of gen_power_carrier.py, but the
-schematic half drew its wires and labels at hardcoded coordinates that drifted
-away from the symbol pin geometry, so labels landed on the wrong pins. KiCad's
-schematic-parity check found J2 pin 3 wired to /EN on the schematic while the
-board has /MotB1 there -- 122 conflicts of that kind.
-
-The board side is the one that is independently verified: verify_connectivity.py
-checks all 172 connections against s3_pinmap.py. So the schematic is rebuilt
-from it, with a global label on every pin carrying the exact net name that pad
-has. Parity then holds by construction instead of by careful drawing.
-
-Components whose footprint has no symbol in the library (capacitors, diodes,
-the PTC fuse, the buzzer and MOSFET jacks) get a generic N-pin box generated
-here, so the pin count always matches the footprint.
+esp32_baseboard.kicad_sch is the source of truth. The PCB must match it
+(verify_fab.py). This script exists only as an emergency rebuild: pass
+--from-pcb, and generic symbols use the footprint's real pad names (MH1, TAB)
+so pin numbers cannot drift from the board.
 """
 from __future__ import annotations
 
@@ -113,9 +103,10 @@ def parse_symbols(text: str) -> dict[str, dict]:
     return syms
 
 
-def generic_symbol(name: str, fp: str, npins: int):
-    """A plain box with N pins, for parts the library has no symbol for."""
-    h = max(2, npins) * GRID
+def generic_symbol(name: str, fp: str, pad_names: list[str]):
+    """A plain box whose pin numbers match the footprint pads (MH1, TAB, …)."""
+    npins = max(2, len(pad_names))
+    h = npins * GRID
     lines = [
         f'\t\t(symbol "{name}"',
         "\t\t\t(pin_numbers (hide no))",
@@ -134,22 +125,28 @@ def generic_symbol(name: str, fp: str, npins: int):
         f'\t\t\t(symbol "{name}_1_1"',
     ]
     pins: dict[str, tuple[float, float]] = {}
-    for i in range(npins):
+    for i, num in enumerate(pad_names):
         py = h / 2 - GRID / 2 - i * GRID
         lines += [
             "\t\t\t\t(pin passive line",
             f"\t\t\t\t\t(at -5.08 {py} 0)",
             "\t\t\t\t\t(length 2.54)",
-            f'\t\t\t\t\t(name "P{i + 1}" (effects (font (size 1.27 1.27))))',
-            f'\t\t\t\t\t(number "{i + 1}" (effects (font (size 1.27 1.27))))',
+            f'\t\t\t\t\t(name "{num}" (effects (font (size 1.27 1.27))))',
+            f'\t\t\t\t\t(number "{num}" (effects (font (size 1.27 1.27))))',
             "\t\t\t\t)",
         ]
-        pins[str(i + 1)] = (-5.08, py)
+        pins[num] = (-5.08, py)
     lines += ["\t\t\t)", "\t\t)"]
     return "\n".join(lines), pins
 
 
 def main() -> int:
+    import sys
+    if "--from-pcb" not in sys.argv:
+        print("Refusing: schematic is the source of truth.")
+        print("PCB must match esp32_baseboard.kicad_sch (verify_fab.py).")
+        print("Pass --from-pcb only to intentionally rebuild SCH from the board.")
+        return 1
     sheet_uuid = uid()
     pcb_text = PCB.read_text(encoding="utf-8")
     comps = parse_footprints(pcb_text)
@@ -163,15 +160,12 @@ def main() -> int:
         if sym is None:
             sym = "GEN_" + re.sub(r"\W", "_", fp_short)
             if sym not in used:
-                body, pins = generic_symbol(sym, c["fp"], len(c["pads"]))
+                body, pins = generic_symbol(sym, c["fp"], list(c["pads"]))
                 body = body.replace(
                     f'(symbol "{sym}"', f'(symbol "ESP32_Carrier:{sym}"', 1
                 )
-                # generic_symbol names its pins "P<n>"; an empty names dict
-                # here made the board say unconnected-(J25-Pad13-Pad13) while
-                # the schematic said unconnected-(J25-P13-Pad13) -> net_conflict
                 used[sym] = {"pins": pins,
-                             "names": {n: f"P{n}" for n in pins},
+                             "names": {n: n for n in pins},
                              "body": body}
         elif sym not in used:
             # lib_symbols entries must carry the library prefix, or the symbol

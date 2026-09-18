@@ -1,15 +1,15 @@
 """2-layer grid A* maze autorouter for the ESP32 carrier PCB.
 
-User policy:
-  - Traces may meander on F.Cu and B.Cu freely (H+V on either face).
-  - NO extra drill holes: never emit routing vias. Layer change only at
-    existing thru-hole pads (headers / modules) which already pierce both faces.
+PCB_REVIEW A0 / A8:
+  - Prefer B.Cu for buses. F.Cu is short pad→via fan-out only.
+  - Through-hole vias F.Cu↔B.Cu (drill 0.4 / pad 0.8). No blind/buried.
 """
 
 from __future__ import annotations
 
 import heapq
 import math
+import os
 import random
 import re
 from collections import defaultdict, deque
@@ -34,19 +34,21 @@ DEFAULT_HALF_TRACK = 0.15
 # without breaking A6: grid pitch - TRACE_CLEARANCE_MM, minus a hair.
 # Bus lanes must be at least a grid pitch apart or the occupancy grid cannot
 # distinguish them; 0.7 also clears the widest A6 separation (0.65).
-EDGE_CLEARANCE_MM = 0.5  # KiCad board-setup copper-to-edge
+EDGE_CLEARANCE_MM = 2.0  # copper (track/via) to Edge.Cuts
+VIA_PAD_GAP_MM = 1.0  # via copper to any component pad copper
 LANE_MIN_SEP = 0.7
 # A hair of margin so a track that lands exactly on the A7 limit reads as
 # outside it rather than as a violation by a rounding error.
 KEEPOUT_EPS_MM = 0.02
 VIA_DRILL = 0.4
 VIA_SIZE = 0.8
-# A via is the escape hatch, not a routing tool: priced at ~70 grid steps so
-# the search only buys one when there is no same-layer way round at all.
-VIA_COST = 70.0
+# A0: pad → via → B.Cu is cheaper than a long F.Cu bus. Blind/buried never.
+VIA_COST = float(os.environ.get("MAZE_VIA_COST", "8"))
+# Extra cost per F.Cu grid step so leftover repair stays on B.Cu.
+F_STEP_PENALTY = float(os.environ.get("MAZE_F_PENALTY", "0.45"))
 MAX_SIGNAL_WIDTH = 0.34
 BOOST_SCALE = 0.35  # how far a failed net moves up the order on the next pass
-QUICK_EXPAND = 20000  # first-fit A* budget; phase 2 searches the whole grid
+QUICK_EXPAND = int(os.environ.get("MAZE_QUICK_EXPAND", "20000"))
 STUB_PROBE_EXTRA_MM = 0.02  # extra probe radius on the off-grid pad stubs
 THIN_HALF_TRACK = 0.15
 WIDE_HALF_TRACK = 0.35
@@ -56,8 +58,8 @@ WIDE_HALF_TRACK = 0.35
 # does not (0.48 mm fits inside one 0.55 mm pitch). Marking every track at
 # 0.14 let a 0.7 mm rail sit one pitch from a signal and overlap its copper.
 MAZE_CLEARANCE_MM = 0.29
-ROUTE_ATTEMPTS = 8  # full routing passes, each promoting the previous losers
-RIPUP_ROUNDS = 4  # neighbourhood rip-up rounds after each pass
+ROUTE_ATTEMPTS = int(os.environ.get("MAZE_PASSES", "8"))  # full routing passes
+RIPUP_ROUNDS = int(os.environ.get("MAZE_RIPUP", "0"))
 RIPUP_MARGIN_MM = 4.0  # grows per round: how far around a failed edge to clear
 
 POWER_NET_NAMES = frozenset(
@@ -82,6 +84,7 @@ class Pad:
     radius: float = 0.95
     ref: str = ""
     drill: float = 1.0
+    thru: bool = False
 
 
 @dataclass
@@ -161,8 +164,7 @@ def parse_hole_sites(pcb_text: str) -> list[tuple[float, float, float, int]]:
         if not at:
             continue
         fx, fy = float(at.group(1)), float(at.group(2))
-        rot = math.radians(float(at.group(3) or 0))
-        c, s = math.cos(rot), math.sin(rot)
+        frot = float(at.group(3) or 0.0)
         for chunk in _pad_chunks(block):
             if not re.match(r'\(pad\s+"[^"]*"\s+(?:thru_hole|np_thru_hole)\s+\w+', chunk):
                 continue
@@ -175,14 +177,9 @@ def parse_hole_sites(pcb_text: str) -> list[tuple[float, float, float, int]]:
             sx, sy = float(zm.group(1)), float(zm.group(2))
             drill = float(dm.group(1))
             net, _nname = pad_net(chunk, table)
-            wx = fx + lx * c - ly * s
-            wy = fy + lx * s + ly * c
-            # A7 is measured from the pad's copper, not the drill: a 1.7 mm
-            # annulus around a 1.0 mm hole is 0.35 mm wider on every side.
-            # _check_signal_routing.py uses max(size, drill), so match it or the
-            # router happily lays copper the gate then rejects.
+            wx, wy = _rot_xy(lx, ly, frot)
             d = max(sx, sy, drill if drill > 0.05 else 0.0)
-            sites.append((wx, wy, d, net))
+            sites.append((fx + wx, fy + wy, d, net))
     return sites
 
 
@@ -230,11 +227,14 @@ def parse_pads(pcb_text: str) -> list[Pad]:
             sx, sy = float(am2.group(4)), float(am2.group(5))
             if net <= 0:
                 continue
+            kind_m = re.match(r'\(pad\s+"[^"]*"\s+(\w+)', chunk)
+            kind = kind_m.group(1) if kind_m else "smd"
+            thru = kind in ("thru_hole", "np_thru_hole")
             dm = re.search(r"\(drill\s+([\d.-]+)\)", chunk)
-            drill = float(dm.group(1)) if dm else max(sx, sy) * 0.55
+            drill = float(dm.group(1)) if (thru and dm) else 0.0
             wx, wy = _rot_xy(lx, ly, frot)
             rad = 0.45 * max(sx, sy)
-            pads.append(Pad(fx + wx, fy + wy, net, nname, rad, ref=ref, drill=drill))
+            pads.append(Pad(fx + wx, fy + wy, net, nname, rad, ref=ref, drill=drill, thru=thru))
     return pads
 
 
@@ -275,6 +275,7 @@ class MazeRouter:
         self.y0 = y0
         self.grid = grid
         self.clearance = clearance
+        self.pad_xy: list[tuple[float, float, float]] = []  # x, y, radius
         self.nx = max(2, int(math.ceil(width / grid)) + 1)
         self.ny = max(2, int(math.ceil(height / grid)) + 1)
         self.occ: list[dict[int, int]] = [{}, {}]
@@ -402,10 +403,13 @@ class MazeRouter:
         return False
 
     def add_pad(self, pad: Pad) -> None:
-        # Thru-hole: both layers owned by net (natural layer bridge at pin)
-        for li in (0, 1):
+        # SMD lives on F.Cu only. Marking B.Cu too blocked the only detour face.
+        layers = (LAYER_F, LAYER_B) if pad.thru else (LAYER_F,)
+        for li in layers:
             self._mark_disk(li, pad.x, pad.y, pad.radius, pad.net, extra=0.02)
-        self.pad_cells.setdefault(self._key(*self._cell(pad.x, pad.y)), set()).add(pad.net)
+        if pad.thru:
+            self.pad_cells.setdefault(self._key(*self._cell(pad.x, pad.y)), set()).add(pad.net)
+        self.pad_xy.append((pad.x, pad.y, pad.radius))
 
     def add_existing_via(self, x: float, y: float, net: int, size: float = 0.9) -> None:
         return  # unused — no vias
@@ -487,6 +491,15 @@ class MazeRouter:
         """
         return self._xy(*self._cell(x, y))
 
+    def _endpoint_layers(self, x: float, y: float, net: int, layers: tuple[int, ...]) -> tuple[int, ...]:
+        """SMD pads only exist on F.Cu — do not start/end a path on B.Cu there."""
+        ix, iy = self._cell(x, y)
+        if net in self.pad_cells.get(self._key(ix, iy), ()):
+            return layers
+        if LAYER_F in layers:
+            return (LAYER_F,)
+        return layers
+
     def _can_pin_hop(self, ix: int, iy: int, net: int) -> bool:
         """Layer change only on a real thru-hole pad (or via) of this net.
 
@@ -512,7 +525,12 @@ class MazeRouter:
         # zero-length segment as trivially clear and would wave every site
         # through.
         cx, cy = self._xy(ix, iy)
-        r = VIA_SIZE * 0.5 + HOLE_EXTRA_MM + TRACE_CLEARANCE_MM + WIDE_HALF_TRACK
+        via_r = VIA_SIZE * 0.5
+        need_pad = via_r + VIA_PAD_GAP_MM
+        for px, py, pr in self.pad_xy:
+            if (cx - px) ** 2 + (cy - py) ** 2 < (need_pad + pr) ** 2:
+                return False
+        r = via_r + TRACE_CLEARANCE_MM + 0.05
         ix0, iy0 = self._cell(cx - r, cy - r)
         ix1, iy1 = self._cell(cx + r, cy + r)
         r2 = r * r
@@ -585,12 +603,13 @@ class MazeRouter:
         if not goals:
             return None
         layers = (prefer_layer,) if not both_layers else (LAYER_F, LAYER_B)
-        for ly in layers:
+        start_layers = self._endpoint_layers(x1, y1, net, layers)
+        for ly in start_layers:
             self._claim(ly, *self._cell(x1, y1), net)
 
         half_w = width * 0.5
         starts: list[tuple[int, int, int]] = []
-        for ly in layers:
+        for ly in start_layers:
             for sx, sy, sl in self._escape_points(x1, y1, net, ly):
                 gx0, gy0 = self._xy(sx, sy)
                 if self._stub_clear(x1, y1, gx0, gy0, sl, net, half_w):
@@ -659,7 +678,8 @@ class MazeRouter:
                     if (pdx, pdy) != (dx, dy):
                         turn = 0.12
                 nxt = (nx_, ny_, ly)
-                ng = gscore[cur] + 1.0 + turn
+                face = F_STEP_PENALTY if ly == LAYER_F else 0.0
+                ng = gscore[cur] + 1.0 + turn + face
                 if ng < gscore.get(nxt, 1e18):
                     gscore[nxt] = ng
                     came[nxt] = cur
@@ -709,14 +729,17 @@ class MazeRouter:
         both_layers: bool = True,
         max_expand: int | None = None,
     ) -> tuple[list[Seg], list[Via]] | None:
-        """A* on F/B. Layer hops only at existing thru-hole pads (no new drills)."""
+        """A* on F/B. Prefer B.Cu (A0). Through vias F↔B when allow_via."""
         layers = (prefer_layer,) if not both_layers else (LAYER_F, LAYER_B)
-        for ly in layers:
+        el1 = self._endpoint_layers(x1, y1, net, layers)
+        el2 = self._endpoint_layers(x2, y2, net, layers)
+        for ly in el1:
             self._claim(ly, *self._cell(x1, y1), net)
+        for ly in el2:
             self._claim(ly, *self._cell(x2, y2), net)
 
         goals: set[tuple[int, int, int]] = set()
-        for ly in layers:
+        for ly in el2:
             goals.update(self._escape_points(x2, y2, net, ly))
         return self.find_path_to_cells(
             x1,
@@ -900,6 +923,15 @@ class CopperIndex:
         return not any(self.conflicts(sg, name) for sg in segs)
 
 
+def _index_pad_copper(router: MazeRouter, pads: list[Pad]) -> None:
+    """Put pads in CopperIndex so path_ok rejects tracks through foreign pads."""
+    for p in pads:
+        w = max(p.radius * 2.0, 0.45)
+        layers = LAYERS if p.thru else ("F.Cu",)
+        for layer in layers:
+            router.copper.add(Seg(p.x, p.y, p.x, p.y, layer, p.net, w), p.name)
+
+
 def _stub_legs(xa, ya, xb, yb) -> list[tuple[float, float, float, float]]:
     """Ortho legs joining a pad centre to a grid cell (L-shaped when needed)."""
     if abs(xa - xb) < 1e-9 and abs(ya - yb) < 1e-9:
@@ -939,19 +971,23 @@ def _mst_edges(pads: list[Pad]) -> list[tuple[Pad, Pad]]:
 
 
 def net_width(net: int, name: str) -> float:
-    if name in ("+12V", "+12V_RAW", "GND") or net in (1, 2, 57):
-        return 0.7
-    if name in ("+5V", "+3V3", "+12V", "+12V_SNS", "/BLW_RET") or net in (
-        3,
-        4,
-        46,
-        56,
-        61,
-    ):
-        return 0.45
-    if name.startswith("BYJ") or name.startswith("/Mot") or name.startswith("Mot"):
-        # 28BYJ phases ~40 mA — signal-ish; NEMA Mot* still MAX_SIGNAL_WIDTH
-        return MAX_SIGNAL_WIDTH if "Mot" in name else 0.30
+    """IPC-2221 1 oz, 10 °C: width must carry the net's fused / PTC current."""
+    if name in ("+24V", "+24V_RAW", "+24V_PRE"):
+        return 1.00  # F1 T2A → ~2.5 A @ 1.0 mm
+    if name == "GND":
+        return 1.00  # return of fused 24 V inlet
+    if name in ("+24V_MOT", "+24V_MOT2"):
+        return 0.50  # PTC 1.1 A; 0.50 mm ≈ 1.5 A (TMC pin pitch forbids 0.70)
+    if name in ("+5V",):
+        return 0.50  # MP1584 / USB+display ~1.5 A
+    if name in ("+3V3",):
+        return 0.35  # AMS1117 ≤ 0.8 A; 0.35 mm ≈ 1.15 A
+    if name in ("+24V_SNS", "+24V_SNS_PRE", "+24V_SNS_PRE"):
+        return 0.25  # PTC 0.2 A
+    if name.startswith("/Mot") or name.startswith("Mot"):
+        return 0.50  # coil = same 1.1 A PTC budget
+    if name.startswith("BYJ"):
+        return 0.30
     return 0.28
 
 
@@ -1059,13 +1095,17 @@ def build_router_from_pcb(
     clearance: float = MAZE_CLEARANCE_MM,
     hole_sites: list[tuple[float, float, float, int]] | None = None,
     vias: list[tuple[float, float, int, float]] | None = None,
+    rect_keepouts: list[tuple[float, float, float, float]] | None = None,
 ) -> MazeRouter:
     router = MazeRouter(x0, y0, board_w, board_h, grid=grid, clearance=clearance)
     if hole_sites:
         router.add_hole_sites(hole_sites)
     for p in pads:
         router.add_pad(p)
+    _index_pad_copper(router, pads)
     router.add_edge_keepout(EDGE_CLEARANCE_MM + WIDE_HALF_TRACK)
+    for box in rect_keepouts or []:
+        router.add_rect_keepout(box[0], box[1], box[2], box[3])
     # Vias placed by the maze are drilled holes like any other: later bus and
     # repair lanes have to respect their copper and their A7 keepout.
     for vx, vy, vnet, _vsize in vias or []:
@@ -1251,7 +1291,7 @@ def _try_simple_l(
 ) -> tuple[list[Seg], list[Via]] | None:
     """Fast H-V or V-H on each layer (no A*)."""
     half = w * 0.5
-    for layer in (LAYER_B, LAYER_F):
+    for layer in (LAYER_F, LAYER_B):
         lname = LAYERS[layer]
         for mx, my in ((b.x, a.y), (a.x, b.y)):
             if not _ortho_clear(router, layer, a.x, a.y, mx, my, net, half):
@@ -1278,14 +1318,16 @@ def _try_quick_maze(
     for layer in (prefer, 1 - prefer):
         snap = router.snapshot()
         path = router.find_path(
-            a.x, a.y, b.x, b.y, net, w, prefer_layer=layer, both_layers=False
+            a.x, a.y, b.x, b.y, net, w, prefer_layer=layer, both_layers=False,
+            max_expand=QUICK_EXPAND,
         )
         if path is not None:
             return path
         router.restore(snap)
     snap = router.snapshot()
     path = router.find_path(
-        a.x, a.y, b.x, b.y, net, w, prefer_layer=prefer, both_layers=True
+        a.x, a.y, b.x, b.y, net, w, prefer_layer=prefer, both_layers=True,
+        max_expand=QUICK_EXPAND, allow_via=True,
     )
     if path is not None:
         return path
@@ -1336,6 +1378,7 @@ def _try_route_to_component(
                 goals,
                 prefer_layer=ly,
                 both_layers=True,
+                allow_via=True,
             )
             if path is not None:
                 return path
@@ -1377,8 +1420,6 @@ def _repair_open_nets(
             continue
         name = uniq[0].name
         w = net_width(net, name)
-        if name in ("+12V", "+12V_RAW", "GND") or net in (1, 2, 57):
-            w = min(w, 0.35)
 
         groups = _copper_pad_groups(uniq, segs_by_net.get(net, []))
         if len(groups) <= 1:
@@ -1386,7 +1427,7 @@ def _repair_open_nets(
 
         groups.sort(key=lambda g: -len(g))
         main_grp = groups[0]
-        print(f"  repair net {net} {name}: {len(groups)} islands")
+        print(f"  repair net {net} {name}: {len(groups)} islands", flush=True)
         for grp in groups[1:]:
             j = grp[0]
             pad = uniq[j]
@@ -1396,30 +1437,57 @@ def _repair_open_nets(
                 key=lambda q: (pad.x - q.x) ** 2 + (pad.y - q.y) ** 2,
             )
             path = None
-            for tw in (w, 0.22, 0.18, 0.15):
-                path = _try_simple_l(router, pad, target, net, tw)
-                if path:
+            prefer = _prefer_signal_layer(net, name)
+            expand = int(os.environ.get("MAZE_EXPAND", "40000"))
+            for tw in (min(w, 0.28), 0.22, 0.18):
+                cand = _try_simple_l(router, pad, target, net, tw)
+                if cand and router.copper.path_ok(cand[0], name):
+                    path = cand
                     break
-                path = _try_bus_route(router, pad, target, net, tw)
-                if path:
+                cand = _try_quick_maze(router, pad, target, net, tw, name)
+                if cand and router.copper.path_ok(cand[0], name):
+                    path = cand
                     break
-                path = _try_quick_maze(router, pad, target, net, tw, net_name=name)
-                if path:
-                    break
-                segs = _try_lane_route(
-                    router, pad, target, net, tw, x0, y0, board_w, board_h, name=name
+                snap = router.snapshot()
+                cand = router.find_path(
+                    pad.x, pad.y, target.x, target.y, net, tw,
+                    prefer_layer=prefer, both_layers=True,
+                    max_expand=expand,
+                    allow_via=True,
                 )
-                if segs:
-                    path = (segs, [])
+                if cand and router.copper.path_ok(cand[0], name):
+                    path = cand
                     break
+                router.restore(snap)
+            if path is None and os.environ.get("MAZE_LEFTOVER", "1") == "1":
+                snap = router.snapshot()
+                cand = router.find_path(
+                    pad.x, pad.y, target.x, target.y, net, 0.20,
+                    prefer_layer=prefer, both_layers=True,
+                    max_expand=int(os.environ.get("MAZE_LEFTOVER_EXPAND", "50000")),
+                    allow_via=os.environ.get("MAZE_LEFTOVER_VIA", "1") == "1",
+                )
+                if cand and router.copper.path_ok(cand[0], name):
+                    path = cand
+                    print(
+                        f"    leftover {name}: {len(cand[0])} segs {len(cand[1])} via(s)",
+                        flush=True,
+                    )
+                else:
+                    router.restore(snap)
             if path is None:
                 result.failed.append(
                     (net, name, (pad.x, pad.y), (target.x, target.y))
                 )
                 continue
-            segs, _ = path
+            segs, vias = path
             result.segments.extend(segs)
+            result.vias.extend(vias or [])
             _apply_segments(router, segs)
+            for v in vias or []:
+                router.mark_via(v.x, v.y, v.net)
+            for sg in segs:
+                router.copper.add(sg, name)
             segs_by_net[net].extend(segs)
             main_grp.extend(grp)
             n_fixed += 1
@@ -1437,17 +1505,8 @@ def _segments_strict_clear(router: MazeRouter, segs: list[Seg], net: int) -> boo
 
 
 def _prefer_signal_layer(net: int, name: str) -> int:
-    if is_power_net(name):
-        return LAYER_B
-    if name.startswith("/TFT") or name.startswith("/T_") or name.startswith("/ENC"):
-        return LAYER_F
-    if name.startswith("/OPTO"):
-        return LAYER_B
-    if name.startswith("/MotA") or name.startswith("/MotB") or name.startswith("MotA") or name.startswith("MotB"):
-        return LAYER_B
-    if name.startswith("BYJ") or name.startswith("SR_Q") or name in ("SER", "SRCLK", "RCLK", "OE_595", "QH_U10"):
-        return LAYER_B
-    return LAYER_F if (net % 2 == 0) else LAYER_B
+    """A0: buses on B.Cu. SMD still starts on F (endpoint layers) then via."""
+    return LAYER_B
 
 
 def _try_lane_route(
@@ -1584,9 +1643,10 @@ def _try_route(
     # Phase 2 — full search before falling back to fixed bus shapes. Detours
     # round the socket cost far more than the quick budget allows, and giving
     # up here is what left those nets for the crude fallbacks below.
+    PHASE2 = int(os.environ.get("MAZE_EXPAND", "45000"))
     for layer, both in ((prefer, True), (alt, True), (prefer, False), (alt, False)):
         for tw in widths:
-            path = astar(tw, layer, both, None)
+            path = astar(tw, layer, both, PHASE2, via=True)
             if path is not None:
                 return path
 
@@ -1611,13 +1671,15 @@ def _try_route(
     ]:
         snap = router.snapshot()
         p1 = router.find_path(
-            a.x, a.y, mx, my, net, 0.22, prefer_layer=prefer, both_layers=True
+            a.x, a.y, mx, my, net, 0.22, prefer_layer=prefer, both_layers=True,
+            max_expand=PHASE2, allow_via=True,
         )
         if p1 is None:
             router.restore(snap)
             continue
         p2 = router.find_path(
-            mx, my, b.x, b.y, net, 0.22, prefer_layer=prefer, both_layers=True
+            mx, my, b.x, b.y, net, 0.22, prefer_layer=prefer, both_layers=True,
+            max_expand=PHASE2, allow_via=True,
         )
         if p2 is None:
             router.restore(snap)
@@ -1645,13 +1707,15 @@ def _try_route(
                 continue
             snap = router.snapshot()
             p1 = router.find_path(
-                a.x, a.y, c.x, c.y, net, 0.22, prefer_layer=prefer, both_layers=True
+                a.x, a.y, c.x, c.y, net, 0.22, prefer_layer=prefer, both_layers=True,
+                max_expand=PHASE2, allow_via=True,
             )
             if p1 is None:
                 router.restore(snap)
                 continue
             p2 = router.find_path(
-                c.x, c.y, b.x, b.y, net, 0.22, prefer_layer=prefer, both_layers=True
+                c.x, c.y, b.x, b.y, net, 0.22, prefer_layer=prefer, both_layers=True,
+                max_expand=PHASE2, allow_via=True,
             )
             if p2 is None:
                 router.restore(snap)
@@ -1683,6 +1747,7 @@ def autoroute_pads(
     grid: float = 0.55,
     keepouts: list[tuple[float, float, float]] | None = None,
     hole_sites: list[tuple[float, float, float, int]] | None = None,
+    rect_keepouts: list[tuple[float, float, float, float]] | None = None,
 ) -> RouteResult:
     by_net: dict[int, list[Pad]] = defaultdict(list)
     for p in pads:
@@ -1696,7 +1761,10 @@ def autoroute_pads(
             r.add_hole_sites(hole_sites)
         for p in pads:
             r.add_pad(p)
+        _index_pad_copper(r, pads)
         r.add_edge_keepout(EDGE_CLEARANCE_MM + WIDE_HALF_TRACK)
+        for box in rect_keepouts or []:
+            r.add_rect_keepout(box[0], box[1], box[2], box[3])
         for v in keep_vias or []:
             r.mark_via(v.x, v.y, v.net)
         for s in keep_segs:
@@ -1712,6 +1780,11 @@ def autoroute_pads(
         if len(uniq) < 2:
             continue
         name = uniq[0].name
+        if name in {
+            "GND", "+3V3", "+5V", "+24V", "+24V_PRE", "+24V_RAW",
+            "+24V_SNS", "+24V_SNS_PRE", "+24V_MOT", "+24V_MOT2",
+        }:
+            continue
         pri = route_priority(net, name)
         for a, b in _mst_edges(uniq):
             dist = math.hypot(a.x - b.x, a.y - b.y)
@@ -1729,20 +1802,35 @@ def autoroute_pads(
         n = 0
         ordered = _order_jobs(jobs, boost, attempt)
         for i, (_pri, _dist, net, name, a, b, uniq) in enumerate(ordered, 1):
-            if i % 40 == 0:
-                print(f"  … routed {n}/{i} edges, failed {len(failed_out)}")
+            if i % 10 == 0:
+                print(f"  … routed {n}/{i} edges, failed {len(failed_out)}", flush=True)
             w = net_width(net, name)
-            path = _try_route(
-                r, a, b, net, w, x0, y0, board_w, board_h, bridges=uniq, net_name=name
-            )
-            if path is None:
+            snap = r.snapshot()
+            if os.environ.get("MAZE_QUICK") == "1":
+                path = _try_simple_l(r, a, b, net, min(w, 0.28))
+                if path is None:
+                    path = r.find_path(
+                        a.x, a.y, b.x, b.y, net, min(w, 0.28),
+                        prefer_layer=_prefer_signal_layer(net, name),
+                        both_layers=True, max_expand=int(os.environ.get("MAZE_EXPAND", "25000")),
+                        allow_via=True,
+                    )
+            else:
+                path = _try_route(
+                    r, a, b, net, w, x0, y0, board_w, board_h, bridges=uniq, net_name=name
+                )
+            if path is None or not r.copper.path_ok(path[0], name):
+                r.restore(snap)
                 failed_out.append((net, name, (a.x, a.y), (b.x, b.y)))
                 continue
             segs, vias = path
+            _apply_segments(r, segs)
+            for v in vias or []:
+                r.mark_via(v.x, v.y, v.net)
             for sg in segs:
                 r.copper.add(sg, name)
             segs_out.extend(segs)
-            vias_out.extend(vias)
+            vias_out.extend(vias or [])
             n += 1
         return segs_out, vias_out, failed_out, n
 
@@ -2051,7 +2139,7 @@ def _bus_via_x(
     bus_x: float,
     net: int,
     w: float,
-    layer: int = LAYER_B,
+    layer: int = LAYER_F,
 ) -> list[Seg] | None:
     """Three-segment route through a vertical bus channel on one layer."""
     lname = LAYERS[layer]
@@ -2280,10 +2368,16 @@ def repair_open_pcb(
                 open_nets.add(net)
     else:
         open_nets = only_nets
+    names = {n: plist[0].name for n, plist in by_net.items() if plist}
+    plane = {"GND", "+3V3", "+5V", "+24V", "+24V_PRE", "+24V_RAW"}
+    open_nets = {n for n in open_nets if names.get(n) not in plane}
+
+    from pin_row_keepout import pin_row_rects
 
     router = build_router_from_pcb(
         pads, segs, x0, y0, board_w, board_h, grid=grid, clearance=MAZE_CLEARANCE_MM,
         hole_sites=parse_hole_sites(pcb_text), vias=parse_kept_vias(pcb_text),
+        rect_keepouts=[b[:4] for b in pin_row_rects(pcb_text)],
     )
     result = RouteResult()
     n = _repair_open_nets(
@@ -2293,11 +2387,17 @@ def repair_open_pcb(
     print(f"Repair: {n} new connections, {len(result.segments)} segments, {len(result.failed)} failed")
     if not result.segments:
         return pcb_text, result
-    return inject_routes(pcb_text, format_routes(result, uid)), result
+    return inject_routes(pcb_text, format_routes(result, uid, names)), result
 
 
-def format_routes(result: RouteResult, uid_fn) -> list[str]:
+def format_routes(result: RouteResult, uid_fn, names: dict[int, str] | None = None) -> list[str]:
     lines: list[str] = []
+
+    def net_tok(n: int) -> str:
+        if names and n in names and names[n]:
+            return f'(net "{names[n]}")'
+        return f"(net {n})"
+
     for s in result.segments:
         if abs(s.x1 - s.x2) < 1e-9 and abs(s.y1 - s.y2) < 1e-9:
             continue
@@ -2307,7 +2407,7 @@ def format_routes(result: RouteResult, uid_fn) -> list[str]:
             f"\t\t(end {s.x2:.4f} {s.y2:.4f})",
             f"\t\t(width {s.width})",
             f'\t\t(layer "{s.layer}")',
-            f"\t\t(net {s.net})",
+            f"\t\t{net_tok(s.net)}",
             f'\t\t(uuid "{uid_fn()}")',
             "\t)",
         ]
@@ -2318,7 +2418,7 @@ def format_routes(result: RouteResult, uid_fn) -> list[str]:
             f"\t\t(size {v.size})",
             f"\t\t(drill {v.drill})",
             '\t\t(layers "F.Cu" "B.Cu")',
-            f"\t\t(net {v.net})",
+            f"\t\t{net_tok(v.net)}",
             f'\t\t(uuid "{uid_fn()}")',
             "\t)",
         ]
