@@ -54,7 +54,7 @@ LOCKED_REFS = frozenset({
     "U1", "J1", "J_USB", "D3", "F1",
     "J_MOT1", "J_MOT2", "U3", "U4",
     "U_PWR1", "U_PWR2", "U_VIB",
-    "J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_P24N", "J_P5N",
+    "J14", "J15", "J_IN2", "J_IN3", "J_CNT5",
     "J_KEY", "J_DISP", "J_P24S",
     "SW_BOOT", "SW_NRST",
 })
@@ -63,12 +63,12 @@ LOCKED_REFS = frozenset({
 EDGE_JACK_REFS = frozenset({
     "J1", "J_MOT1", "J_MOT2", "J_P24S",
     "U_PWR1", "U_PWR2", "U_VIB",
-    "J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_P24N", "J_P5N",
+    "J14", "J15", "J_IN2", "J_IN3", "J_CNT5",
     "J_KEY", "J_DISP", "J_USB",
 })
 
 NORTH_EDGE_JACKS = frozenset({
-    "J_P24N", "J14", "J15", "J_IN2", "J_IN3", "J_P5N", "J_CNT5",
+    "J14", "J15", "J_IN2", "J_IN3", "J_CNT5",
     "J_KEY", "J_DISP", "J_USB",
 })
 SOUTH_EDGE_JACKS = frozenset({
@@ -81,14 +81,14 @@ SOUTH_PACK_RIGHT = (
     "J_P24S",
 )
 NORTH_PACK_ORDER = (
-    "J_P24N", "J14", "J15", "J_IN2", "J_IN3",
-    "J_P5N", "J_CNT5", "J_KEY", "J_DISP", "J_USB",
+    "J14", "J15", "J_IN2", "J_IN3",
+    "J_CNT5", "J_KEY", "J_DISP", "J_USB",
 )
 HOLE_REFS = frozenset({"H1", "H2", "H3", "H4"})
 HOLE_INSET = 4.5  # M3 center from L/R Edge.Cuts (courtyard r=3.5)
 HOLE_NS_INSET = 20.0  # M3 center from N/S edges — inland of jack housings
 XH_EDGE_REFS = frozenset({
-    "J_P24N", "J14", "J15", "J_IN2", "J_IN3", "J_P5N", "J_CNT5", "J_DISP",
+    "J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_DISP",
     "J_MOT1", "J_MOT2", "J_P24S",
 })
 

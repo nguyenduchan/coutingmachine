@@ -230,8 +230,6 @@ def main() -> int:
     print("=== North XH pin1 ===")
     sec = "jack_n"
     north = {
-        "J_P24N": ("+24V_SNS", "GND"),
-        "J_P5N": ("+5V", "GND"),
         "J14": ("+24V_SNS", "GND"),
         "J15": ("+24V_SNS", "GND"),
         "J_IN2": ("+24V_SNS", "GND"),
@@ -246,6 +244,10 @@ def main() -> int:
         check(net_of(j, "1") == a and net_of(j, "2") == b,
               f"{ref} p1={net_of(j, '1')} p2={net_of(j, '2')}", sec)
         check(j["y"] < y0 + 0.45 * (y1 - y0), f"{ref} on north y={j['y']:.1f}", sec)
+    j14 = fp("J14", sec)
+    if j14:
+        check(net_of(j14, "3") == "/OPTO_IN_BUP" and net_of(j14, "4") == "+24V_SNS",
+              "J14 OUT + CTRL Light ON (+V)", sec)
 
     print("=== South power / motor ===")
     sec = "jack_s"

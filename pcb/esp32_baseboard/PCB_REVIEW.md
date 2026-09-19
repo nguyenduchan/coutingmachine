@@ -362,7 +362,7 @@ Audit pad trên PCB live (KiCad 10). **Bắt buộc / nên / cấm** — không 
 | **U44–U47 PC817** | Cả 4 chân dùng | LED R 2k2/1k + collector PU 10k | **Nên** 100 pF–1 nF collector→GND (`/BUP` `/IN2` `/IN3` `/CNT5`) — lọc burst IEC, P3.4 hiện chỉ C26 trên rail SNS. |
 | **U_PWR* / U_VIB** | FAULT | `R_PWR_FLT` / `R_VIB_FLT` 10k PU; PWM/EN/CTRL PD | Đủ. |
 | **J_USB.4 ID** | NC | OK USB device | Không nối. |
-| **J14.4** | silk cũ ENC_B | NC | Để NC (hoặc shield→GND nếu đổi giắc 4P có vỏ). Không phải chân IC. |
+| **J14.4** | BUP CTRL (White) | `+24V_SNS` | **Light ON** mặc định (Autonics: CTRL→+V). Dark ON = White→GND trên cáp. |
 
 **Firmware (cùng P9, không BOM):** GPIO NC = analog; GPIO DO = push-pull sau khi PD cứng đã kéo OFF; không `GPIO_PULLUP` trên PWM/EN/VIB.
 

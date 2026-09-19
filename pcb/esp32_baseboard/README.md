@@ -71,7 +71,7 @@ Opto: `PC817×4 + 2k2/10k` trên carrier. Panel: `modules/submodules_panel.kicad
 | **J1** | Screw 2P 5,0 | Silk + D3 điện | Dây **đỏ=+ / đen=−**; không đảo |
 | **F1** | Đế 5×20 PCB | — | Rút ống khi chảy |
 | J8/10/12 | **JST-XH 2P** | **Có** | Dry NC SIG/SNS |
-| J14 | **JST-XH 4P** | **Có** | BUP Brn/Blu/Blk/Wht |
+| J14 | **JST-XH 4P** | **Có** | BUP Brn/Blu/Blk/Wht — pin4 CTRL→+V (Light ON) |
 | J15/J16/J18 | **XH-3 / XH-4** | **Có** | Không hàn pin trần |
 | J17+J23 | TFT 9+5 @2.54 | Module 2 hàng cố định | Không đảo hàng |
 | J24/J25 | 595 CTRL+Q | Module Shopee cố định | Khớp silkscreen module |

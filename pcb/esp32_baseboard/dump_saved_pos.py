@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Copy footprint (x, y, rot) from the live PCB into placement_saved.py.
 
+Also dumps copper routes into routes_saved.sexpr (see dump_saved_routes.py).
+
 Run after hand-edits in pcbnew (save the board first):
 
   python dump_saved_pos.py
@@ -89,6 +91,10 @@ def main() -> int:
     lines.append("")
     OUT.write_text("\n".join(lines), encoding="utf-8")
     print(f"Wrote {OUT.name}: {len(pos)} parts, board {bw:.0f}x{bh:.0f} origin=({x0:g},{y0:g})")
+
+    from dump_saved_routes import main as dump_routes
+
+    dump_routes()
     return 0
 
 

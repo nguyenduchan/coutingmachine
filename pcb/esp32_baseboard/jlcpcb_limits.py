@@ -71,7 +71,7 @@ NPTH_M3_MM = 3.20
 NPTH_M3_COUNT = 4
 
 NORTH_JACKS = (
-    "J_P24N", "J14", "J15", "J_IN2", "J_IN3", "J_P5N",
+    "J14", "J15", "J_IN2", "J_IN3",
     "J_CNT5", "J_KEY", "J_DISP", "J_USB",
 )
 SOUTH_JACKS = ("J1", "J_MOT1", "J_MOT2", "U_PWR1", "U_PWR2", "U_VIB", "J_P24S")

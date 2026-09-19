@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Compact carrier — placement + nets only (NO tracks/vias).
+"""Compact carrier — sticky placement + optional sticky copper routes.
 
-  python gen_compact_carrier.py
+  python dump_saved_pos.py          # save poses + routes from pcbnew
+  python gen_compact_carrier.py     # rebuild PCB; re-injects routes_saved.sexpr
   python gen_schematic_from_pcb.py
   python verify_compact.py
 
 KiCad-valid S-expr; footprints copied from libraries/ESP32_Carrier.pretty.
-Placement pipeline (no routing) — full EDA guide:
+Placement pipeline (no autoroute) — full EDA guide:
   1) graph partition / min-cut (FM refine)
   2) analytical quadratic wirelength (Jacobi)
   3) force-directed springs
@@ -57,24 +58,25 @@ from placement_saved import SAVED_BOARD_H, SAVED_BOARD_W, SAVED_POS
 ROOT = Path(__file__).resolve().parent
 PRETTY = ROOT / "libraries" / "ESP32_Carrier.pretty"
 PCB = ROOT / "esp32_baseboard.kicad_pcb"
+ROUTES_SAVED = ROOT / "routes_saved.sexpr"
 
-# Commercial outline: 160×110 fits IP65 180×130 / 200×150 and cabinet backplates.
+# Commercial outline: 150×100 fits IP65 180×130 / 200×150 and cabinet backplates.
 # Not a 9TE slim DIN housing (those are ~151×82). L/R = DIN-clip / box-wall keep.
-COMMERCIAL_W = 180.0
-COMMERCIAL_H = 120.0
+COMMERCIAL_W = 150.0
+COMMERCIAL_H = 100.0
 # True: ignore live XY (needed when outline/keep/jack-pack change). False: min-disp vs PCB.
 FRESH_PACK = False
 BOARD_W = COMMERCIAL_W
 BOARD_H = COMMERCIAL_H
 TARGET_BOARD_MM = 100.0
-# Prefer commercial 160×110; grow if courtyard cannot clear.
+# Prefer commercial 150×100; grow if courtyard cannot clear.
 BOARD_CANDIDATES = (
-    (180.0, 120.0),
-    (185.0, 120.0),
-    (165.0, 110.0),
+    (150.0, 100.0),
+    (155.0, 100.0),
+    (160.0, 105.0),
+    (160.0, 110.0),
     (170.0, 110.0),
-    (170.0, 115.0),
-    (175.0, 115.0),
+    (180.0, 120.0),
 )
 BOARD_MAX_MM = 300.0  # hard cap while auto-growing
 BOARD_GROW_STEP_MM = 10.0
@@ -1197,8 +1199,6 @@ SILK_NAME = {
     "J_IN2": "IN2",
     "J_IN3": "IN3",
     "J_CNT5": "CNT 5V",
-    "J_P24N": "+24V",
-    "J_P5N": "+5V",
     "J_P24S": "+24V",
     "SW_BOOT": "BOOT",
     "SW_NRST": "RST",
@@ -1311,7 +1311,7 @@ def build_parts() -> list[Part]:
         P("J1", "TerminalBlock_2P_5.0mm", "24V_IN", "POWER", {"1": "+24V_RAW", "2": "GND"}),
         # Input protect: reverse (D3) → T2A fuse → TVS clamp (loads after F1 only)
         P("D3", "Diode_SMA", "SS54", "POWER", {"1": "+24V_RAW", "2": "+24V_PRE"}),
-        P("F1", "Fuse_2410", "T2A", "POWER", {"1": "+24V_PRE", "2": "+24V"}, rot=90),
+        P("F1", "Fuse_Holder_5x20_Open", "T2A", "POWER", {"1": "+24V_PRE", "2": "+24V"}, rot=0),
         P("D1", "Diode_SMB_TVS", "SMBJ26A", "POWER", {"1": "GND", "2": "+24V"}),  # A=GND K=+24V
         # Discrete buck 24V→5V: genuine MP1584EN SOIC-8-EP + L1 + D4 + Rfb + Cbst + Rfreq
         P("U2", "MP1584EN_SOIC-8-EP", "MP1584EN", "POWER", {
@@ -1374,8 +1374,9 @@ def build_parts() -> list[Part]:
             "5": "/KEY_C0", "6": "/KEY_C1", "7": "/KEY_C2", "8": "/KEY_C3",
         }),
         # Count sensors (install ONE of J14/J15)
+        # BUP-30S Autonics: 1=+V 2=0V 3=OUT 4=CTRL — CTRL→+V = Light ON default
         P("J14", "JST_XH_04_Socket", "BUP_U", "OPTO", {
-            "1": "+24V_SNS", "2": "GND", "3": "/OPTO_IN_BUP",
+            "1": "+24V_SNS", "2": "GND", "3": "/OPTO_IN_BUP", "4": "+24V_SNS",
         }),
         P("J15", "JST_XH_03_Socket", "FIBER", "OPTO", {
             "1": "+24V_SNS", "2": "GND", "3": "/OPTO_IN_BUP",
@@ -1414,13 +1415,7 @@ def build_parts() -> list[Part]:
         P("R47", "R_0805_1k", "1k", "OPTO", {"1": "+5V", "2": "/OPTO_IN_5V"}),
         P("R51", "R_0805_10k", "10k", "OPTO", {"1": "+3V3", "2": "/CNT5"}),
         P("C27", "C_0805_100n", "100n", "OPTO", {"1": "+5V", "2": "GND"}),
-        # Aux power next to field I/O (sensor / DO wiring convenience)
-        P("J_P24N", "JST_XH_02_Socket", "P24_N", "OPTO", {
-            "1": "+24V_SNS", "2": "GND",
-        }),
-        P("J_P5N", "JST_XH_02_Socket", "P5_N", "OPTO", {
-            "1": "+5V", "2": "GND",
-        }),
+        # Single aux 24V near power/motors (sensors already carry V on signal jacks)
         P("J_P24S", "JST_XH_02_Socket", "P24_S", "PWR", {
             "1": "+24V", "2": "GND",
         }),
@@ -1674,7 +1669,7 @@ def emit_pcb(parts: list[Part]) -> None:
     a(f'\t\t(uuid "{uid()}")')
     a("\t)")
 
-    a('\t(gr_text "COMPACT 100x100 — placement only (no copper routes)"')
+    a('\t(gr_text "COMPACT — sticky place + routes_saved.sexpr"')
     a(f"\t\t(at {OX + 4} {OY + 3.2} 0)")
     a('\t\t(layer "Cmts.User")')
     a("\t\t(effects (font (size 1.0 1.0) (thickness 0.15)) (justify left))")
@@ -1935,14 +1930,66 @@ def emit_pcb_v2(parts: list[Part]) -> None:
 
         a("\t)")
 
-    # NO segments, NO vias
+    # Sticky copper from routes_saved.sexpr (python dump_saved_routes.py)
+    n_seg = inject_saved_routes(a, net_ids)
     a(")")
     text = "\n".join(lines) + "\n"
     # validate parens
     if text.count("(") != text.count(")"):
         raise RuntimeError(f"paren mismatch {text.count('(')} vs {text.count(')')}")
     PCB.write_text(text, encoding="utf-8")
-    print(f"Wrote {PCB} ({BOARD_W}x{BOARD_H} mm, {len(parts)} footprints, 0 tracks)")
+    print(f"Wrote {PCB} ({BOARD_W}x{BOARD_H} mm, {len(parts)} footprints, {n_seg} route blocks)")
+
+
+def inject_saved_routes(a, net_ids: dict[str, int]) -> int:
+    """Append sticky segment/via/arc/zone blocks; remap net id by name."""
+    if not ROUTES_SAVED.exists():
+        return 0
+    raw = ROUTES_SAVED.read_text(encoding="utf-8")
+    blocks: list[str] = []
+    i = 0
+    while i < len(raw):
+        p = raw.find("(", i)
+        if p < 0:
+            break
+        # skip comment lines
+        line_start = raw.rfind("\n", 0, p) + 1
+        if raw[line_start:p].lstrip().startswith(";"):
+            i = p + 1
+            continue
+        d = 0
+        end = None
+        for j in range(p, len(raw)):
+            if raw[j] == "(":
+                d += 1
+            elif raw[j] == ")":
+                d -= 1
+                if d == 0:
+                    end = j
+                    break
+        if end is None:
+            break
+        blk = raw[p : end + 1]
+        i = end + 1
+        if not blk.startswith(("(segment", "(via", "(arc", "(zone")):
+            continue
+
+        def _remap(m: re.Match[str]) -> str:
+            name = m.group(1)
+            nid = net_ids.get(name)
+            if nid is None:
+                return m.group(0)
+            return f'(net {nid} "{name}")'
+
+        blk = re.sub(r'\(net(?:\s+\d+)?\s+"([^"]+)"\)', _remap, blk)
+        # normalize indent to one tab (board top-level)
+        if not blk.startswith("\t"):
+            blk = "\t" + blk.replace("\n", "\n\t")
+        a(blk)
+        blocks.append(blk)
+    if blocks:
+        print(f"  Injected {len(blocks)} sticky route blocks from {ROUTES_SAVED.name}")
+    return len(blocks)
 
 
 def iter_board_sizes():
@@ -1988,6 +2035,25 @@ def main() -> None:
         size_changed = (
             abs(live_w - COMMERCIAL_W) > 0.5 or abs(live_h - COMMERCIAL_H) > 0.5
         )
+    # Exact poses from placement_saved — no packer nudge (user: keep arrangement).
+    if loaded and not size_changed and not FRESH_PACK:
+        anchors, bw, bh = loaded
+        BOARD_W, BOARD_H = COMMERCIAL_W, COMMERCIAL_H
+        parts = build_parts()
+        missing = [p.ref for p in parts if p.ref not in anchors]
+        if missing:
+            print(f"  WARN missing anchors for {missing[:12]}… — fall through to min-disp")
+        else:
+            for p in parts:
+                x, y, r = anchors[p.ref]
+                p.x, p.y, p.rot = x, y, r
+            print(
+                f"Exact place from placement_saved.py ({len(anchors)} parts, "
+                f"{BOARD_W:.0f}x{BOARD_H:.0f} mm) — no rearrange"
+            )
+            emit_pcb_v2(parts)
+            print(f"Done. size={BOARD_W:.0f}x{BOARD_H:.0f} overlaps=skip gap={GAP} jack_pack={JACK_PACK}")
+            return
     # Fresh pack when adopting 8 mm L/R keep (sticky from 155/failed 160 leaves overlaps).
     if loaded and not size_changed and not FRESH_PACK:
         anchors, bw, bh = loaded

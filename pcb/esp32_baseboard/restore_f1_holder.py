@@ -14,8 +14,8 @@ PCB = HERE / "esp32_baseboard.kicad_pcb"
 SCH = HERE / "esp32_baseboard.kicad_sch"
 PRETTY = HERE / "libraries" / "ESP32_Carrier.pretty"
 FP = "Fuse_Holder_5x20_Open"
-# D3 courtyard ends ~68.3 at (65.5,142); holder courtyard ±13.45.
-F1_AT = "(at 93 151)"
+# Pose comes from placement_saved / live PCB — do not hardcode board-size coords.
+F1_AT = None  # filled from current F1 (at ...) when restoring
 
 
 def _block(text: str, start: int) -> str:
@@ -42,12 +42,16 @@ def restore_pcb() -> None:
     if hit is None:
         raise SystemExit("F1 not found on PCB")
     start, old = hit
+    at_m = re.search(r"\(at\s+[-\d.]+\s+[-\d.]+(?:\s+[-\d.]+)?\)", old)
+    f1_at = at_m.group(0) if at_m else "(at 75 123)"
     nets: dict[str, str] = {}
     starts = [m.start() for m in re.finditer(r'\(pad "', old)]
     for i, s in enumerate(starts):
         chunk = old[s : (starts[i + 1] if i + 1 < len(starts) else len(old))]
         num = re.match(r'\(pad "([^"]*)"', chunk)
-        net = re.search(r'\(net "([^"]*)"\)', chunk)
+        net = re.search(r'\(net\s+\d+\s+"([^"]*)"\)', chunk) or re.search(
+            r'\(net "([^"]*)"\)', chunk
+        )
         if num and net:
             nets[num.group(1)] = net.group(1)
     uid = re.search(r'\(uuid "[^"]+"\)', old)
@@ -69,7 +73,7 @@ def restore_pcb() -> None:
     for num, net in nets.items():
         inner = re.sub(
             rf'(\(pad "{re.escape(num)}"[\s\S]*?\(layers [^)]+\))',
-            rf'\1\n\t\t(net "{net}")',
+            rf'\1\n\t\t\t(net 0 "{net}")',
             inner,
             count=1,
         )
@@ -77,7 +81,7 @@ def restore_pcb() -> None:
         f'(footprint "ESP32_Carrier:{FP}"\n'
         f'\t\t(layer "F.Cu")\n'
         f"\t\t{uid_s}\n"
-        f"\t\t{F1_AT}\n"
+        f"\t\t{f1_at}\n"
         f'\t\t(property "Reference" "F1"\n'
         f'\t\t\t(at 0 -5.2 0)\n'
         f'\t\t\t(layer "F.SilkS")\n'
@@ -89,8 +93,7 @@ def restore_pcb() -> None:
         f"{inner}\n\t)"
     )
     PCB.write_text(text[:start] + new_blk + text[start + len(old) :], encoding="utf-8")
-    print(f"PCB F1 → {FP} at {F1_AT} nets={nets}")
-
+    print(f"PCB F1 → {FP} at {f1_at} nets={nets}")
 
 def restore_sch() -> None:
     text = SCH.read_text(encoding="utf-8")

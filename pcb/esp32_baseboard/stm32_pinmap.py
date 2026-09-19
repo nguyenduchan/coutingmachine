@@ -1,6 +1,8 @@
 """STM32G030C8T6 (LQFP48) pinmap for compact counting-machine carrier.
 
-Dual TMC sockets; opto IN (NPN only); pluggable power (MOSFET) + vibratory control sockets.
+Pin sides (package top view, pin1 NW, CCW):
+  W: 1–12   S: 13–24   E: 25–36   N: 37–48
+Route short: N→HMI, W→opto/count, S→TMC, E/SE→PWR/VIB/USB-UART.
 """
 
 from __future__ import annotations
@@ -58,43 +60,46 @@ LQFP48_PINS: list[tuple[int, str]] = [
 
 PIN_BY_NAME: dict[str, int] = {name: num for num, name in LQFP48_PINS}
 
-TMC_PINS = {"STEP": "PA0", "DIR": "PA1", "EN": "PA2"}
-TMC2_PINS = {"STEP": "PA6", "DIR": "PA7", "EN": "PA8"}
+# South edge — TMC inland / motors (LQFP south pads PA4–PB1)
+TMC_PINS = {"STEP": "PA4", "DIR": "PA5", "EN": "PA6"}
+TMC2_PINS = {"STEP": "PA7", "DIR": "PB0", "EN": "PB1"}
 
-BUP_PIN = "PA3"
-IN2_PIN = "PB15"
-IN3_PIN = "PB4"
-# Edge jack J_CNT5 — cheap 5V through-beam / IR (NPN or OC to GND)
-CNT5_PIN = "PD1"
+# West — opto cluster + north count jacks (PA0–PA3)
+BUP_PIN = "PA0"
+IN2_PIN = "PA1"
+IN3_PIN = "PA2"
+CNT5_PIN = "PA3"
 
-# One pluggable MOSFET module per 24V output channel (U_PWR1 / U_PWR2)
+# South→east wrap — U_PWR* / U_VIB on south-east
 PWR_PINS = {
-    "PWM1": "PA11",
-    "PWM2": "PA12",
-    "EN1": "PB5",
-    "EN2": "PB6",
-    "FAULT": "PB7",  # shared OD from either module
+    "PWM1": "PB10",
+    "PWM2": "PB11",
+    "EN1": "PB12",
+    "EN2": "PB13",
+    "FAULT": "PB14",
 }
-# Pluggable AC vibratory / SSR control (U_VIB) — SSR lives on module
 VIB_PINS = {
-    "CTRL": "PB8",
-    "FAULT": "PB9",  # input
+    "CTRL": "PB15",
+    "FAULT": "PA8",
 }
 
-TM1637_PINS = {"CLK": "PA4", "DIO": "PA5"}
+# North — TM1637 + keypad (toward J_DISP / J_KEY)
+# J_KEY rot90: pad1 west → pad8 east; LQFP north W→E: PB9…PB3, PD3 (match → 0 cross)
+TM1637_PINS = {"CLK": "PA15", "DIO": "PD0"}
 KEYPAD_PINS = {
-    "ROW0": "PB0",
-    "ROW1": "PB1",
-    "ROW2": "PB2",
-    "ROW3": "PB10",
-    "COL0": "PB11",
-    "COL1": "PB12",
-    "COL2": "PB13",
-    "COL3": "PB14",
+    "ROW0": "PB9",
+    "ROW1": "PB8",
+    "ROW2": "PB7",
+    "ROW3": "PB6",
+    "COL0": "PB5",
+    "COL1": "PB4",
+    "COL2": "PB3",
+    "COL3": "PD3",
 }
+
+# East — CH340 / USB (USART1 fixed)
 USART1_PINS = {"TX": "PA9", "RX": "PA10"}
-# SWDIO kept for factory pogo if needed; SWCLK=BOOT0 for USB-UART bootloader
-BOOT_PINS = {"SWDIO": "PA13", "SWCLK": "PA14"}  # no SWO / no J_DBG (USB nạp)
+BOOT_PINS = {"SWDIO": "PA13", "SWCLK": "PA14"}
 
 USED_GPIO = sorted(
     {

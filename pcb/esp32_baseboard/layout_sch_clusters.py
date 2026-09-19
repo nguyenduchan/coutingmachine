@@ -24,7 +24,7 @@ SHEET_UUID = "104f720f-6c0d-4cdd-b2ff-299bfce56fbe"
 CLUSTERS: list[tuple[str, float, float, list[str]]] = [
     ("24V IN / SNS", 25.4, 20.0, [
         "J1", "D3", "F1", "D1", "C21", "J_P24S",
-        "PTC_SNS", "R10", "C10", "C11", "C26", "J_P24N",
+        "PTC_SNS", "R10", "C10", "C11", "C26",
     ]),
     ("BUCK +5V", 250.0, 20.0, [
         "U2", "L1", "D4", "Cbst", "Cc", "R_FREQ", "Rfb1", "Rfb2",
@@ -56,7 +56,7 @@ CLUSTERS: list[tuple[str, float, float, list[str]]] = [
         "J14", "J15", "R1", "R44", "U44", "R48",
         "J_IN2", "R45", "U45", "R49",
         "J_IN3", "R46", "U46", "R50",
-        "J_CNT5", "J_P5N", "R47", "U47", "R51",
+        "J_CNT5", "R47", "U47", "R51",
     ]),
     ("HMI", 560.0, 440.0, [
         "J_KEY", "J_DISP",

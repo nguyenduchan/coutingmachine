@@ -16,7 +16,7 @@ from pcb_parse import NetTable, pad_net, seg_net
 HERE = Path(__file__).resolve().parent
 PCB = HERE / "esp32_baseboard.kicad_pcb"
 PRETTY = HERE / "libraries" / "ESP32_Carrier.pretty"
-OX, OY, BW, BH = 50.0, 50.0, 180.0, 120.0
+OX, OY, BW, BH = 50.0, 50.0, 150.0, 100.0
 
 U2_AT = (123.125, 102.125)
 R_FREQ_AT = (128.90, 106.80)

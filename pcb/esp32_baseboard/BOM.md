@@ -1,7 +1,7 @@
 # ESP32 Baseboard → STM32G030 carrier — BOM (2026-09-17)
 
 SoT mua hàng / ước giá.  
-**PCB SoT:** `python gen_compact_carrier.py` → board **180×120 mm** (`esp32_baseboard.kicad_pcb`) — giắc field chỉ N/S; W/E để gài DIN.  
+**PCB SoT:** `python gen_compact_carrier.py` → board **150×100 mm** (`esp32_baseboard.kicad_pcb`) — giắc field chỉ N/S; W/E để gài DIN.  
 **Pinmap:** `stm32_pinmap.py` · **Verify (fab):** `python verify_pre_fab.py`
 
 > **CHƯA MUA gì.**  
@@ -36,18 +36,20 @@ Nạp UART: giữ **BOOT0** (`PA14`/`SWCLK`) + `SW_BOOT` / `SW_NRST` · `R_BOOT`
 
 ## GPIO (STM32 ports)
 
+Pinmap rút ngắn dây theo cạnh LQFP (N=HMI, W=đếm/opto, S=TMC, E/SE=PWR/VIB/UART). Chi tiết: `stm32_pinmap.py`.
+
 | Chức năng | Pin |
 |-----------|-----|
-| TMC1 STEP / DIR / EN (U3) | PA0 / PA1 / PA2 |
-| TMC2 STEP / DIR / EN (U4) | PA6 / PA7 / PA8 |
-| Count opto `/BUP` | PA3 |
-| **Count 5V `/CNT5`** | **PD1** |
-| Input2 `/IN2` · Input3 `/IN3` | PB15 · PB4 |
-| **U_PWR1 / U_PWR2** PWM / EN / FAULT | PA11+PB5 · PA12+PB6 · PB7 shared |
-| **U_VIB** CTRL / FAULT | PB8 / PB9 |
-| TM1637 CLK / DIO (**J_DISP** → module) | PA4 / PA5 |
-| Keypad ROW0–3 | PB0 / PB1 / PB2 / PB10 |
-| Keypad COL0–3 | PB11 / PB12 / PB13 / PB14 |
+| TMC1 STEP / DIR / EN (U3) | PA4 / PA5 / PA6 |
+| TMC2 STEP / DIR / EN (U4) | PA7 / PB0 / PB1 |
+| Count opto `/BUP` | PA0 |
+| **Count 5V `/CNT5`** | **PA3** |
+| Input2 `/IN2` · Input3 `/IN3` | PA1 · PA2 |
+| **U_PWR1 / U_PWR2** PWM / EN / FAULT | PB10+PB12 · PB11+PB13 · PB14 shared |
+| **U_VIB** CTRL / FAULT | PB15 / PA8 |
+| TM1637 CLK / DIO (**J_DISP** → module) | PA15 / PD0 |
+| Keypad ROW0–3 | PB9 / PB8 / PB7 / PB6 |
+| Keypad COL0–3 | PB5 / PB4 / PB3 / PD3 |
 | USART1 TX / RX (CH340) | PA9 / PA10 |
 | SWDIO / SWCLK(BOOT0) | PA13 / PA14 (USB-UART boot; no SWO) |
 
@@ -57,7 +59,7 @@ Nạp UART: giữ **BOOT0** (`PA14`/`SWCLK`) + `SW_BOOT` / `SW_NRST` · `R_BOOT`
 
 | | |
 |--|--|
-| Kích thước | **180×120 mm** (auto-grow nếu giắc N/S khe &lt;5 mm; tối đa 300 mm) |
+| Kích thước | **150×100 mm** (auto-grow nếu giắc N/S khe &lt;5 mm; tối đa 300 mm) |
 | Generator | `gen_compact_carrier.py` (placement + nets, **no copper**) |
 | MCU | **STM32G030C8T6** LQFP48 SMT |
 | Hàn tay sau | **Chỉ hàn giắc/đế khi SKU cần** (pad đủ trên PCB). Luôn: J1, F1, J_USB, SW_*, J_DISP; tùy hạng: MOT/TMC/PWR/VIB/SNS/KEY/IN |
@@ -71,16 +73,14 @@ Nạp UART: giữ **BOOT0** (`PA14`/`SWCLK`) + `SW_BOOT` / `SW_NRST` · `R_BOOT`
 
 | # | Ref | Loại | Hướng | Pinout ngắn |
 |---|-----|------|-------|-------------|
-| 1 | **J_P24N** | XH-2 | Aux out | +24V_SNS · GND |
-| 2 | **J14** | XH-4 | IN đếm | +24V_SNS · GND · OUT (BUP) |
-| 3 | **J15** | XH-3 | IN đếm | +24V_SNS · GND · OUT (fiber) |
-| 4 | **J_IN2** | XH-3 | IN | +24V_SNS · GND · SIG (PLC start/jam) |
-| 5 | **J_IN3** | XH-3 | IN | +24V_SNS · GND · SIG (stop / dự phòng) |
-| 6 | **J_P5N** | XH-2 | Aux out | +5V · GND |
-| 7 | **J_CNT5** | XH-3 | IN đếm | +5V · GND · OUT (IR) |
-| 8 | **J_KEY** | 1×8 | IN | ROW0–3 · COL0–3 |
-| 9 | **J_DISP** | XH-4 | OUT | CLK · DIO · +5V · GND (TM1637) |
-| 10 | **J_USB** | Micro-B | I/O | Nạp / PC UART |
+| 1 | **J14** | XH-4 | IN đếm | +24V_SNS · GND · OUT · CTRL→+V (BUP Light ON) |
+| 2 | **J15** | XH-3 | IN đếm | +24V_SNS · GND · OUT (fiber) |
+| 3 | **J_IN2** | XH-3 | IN | +24V_SNS · GND · SIG (PLC start/jam) |
+| 4 | **J_IN3** | XH-3 | IN | +24V_SNS · GND · SIG (stop / dự phòng) |
+| 5 | **J_CNT5** | XH-3 | IN đếm | +5V · GND · OUT (IR) |
+| 6 | **J_KEY** | 1×8 | IN | ROW0–3 · COL0–3 |
+| 7 | **J_DISP** | XH-4 | OUT | CLK · DIO · +5V · GND (TM1637) |
+| 8 | **J_USB** | Micro-B | I/O | Nạp / PC UART |
 
 **Cạnh dưới (S) — W→E (mọi đế/giắc nối ngoài):**
 
@@ -157,17 +157,27 @@ PCB layout đủ mọi footprint. Mua/hàn theo SKU; ô trống = **DNP** (khôn
 | J15 | JST-XH 3P | Đếm fiber (**đắt**) |
 | **J_CNT5** | JST-XH 3P | Đếm IR 5V (**rẻ**) |
 | **J_IN2** / **J_IN3** | JST-XH 3P | Cảm biến phụ khi cần (`J_IN3` dự phòng) |
-| **J_P24N** / **J_P5N** / **J_P24S** | JST-XH 2P | Aux nguồn khi wiring tách (optional) |
+| **J_P24S** | JST-XH 2P | Aux +24V cạnh motor/PWR (optional) |
 
 ### Pinout aux power (XH-2)
 
 | Giắc | Pin1 | Pin2 | Vị trí |
 |------|------|------|--------|
-| **J_P24N** | +24V_SNS | GND | Cạnh trên, trước cụm đếm 24 V |
-| **J_P5N** | +5V | GND | Cạnh trên, trước J_CNT5 |
 | **J_P24S** | +24V | GND | Cạnh dưới, cạnh U_PWR / motor |
 
-> Dùng cấp LED phát / module ngoài khi tín hiệu đi giắc I/O riêng. `+24V_SNS` có PTC 0.1 A / 60 V; `+24V` sau F1.
+> Đã bỏ `J_P24N` / `J_P5N` — cảm biến lấy nguồn trên giắc tín hiệu (J14/J15/J_CNT5/J_DISP).
+
+### Pinout J14 (XH-4) — Autonics BUP-30S NPN
+
+| Pin | Net | Màu cáp | Autonics |
+|-----|-----|---------|----------|
+| 1 | `+24V_SNS` | Brown | +V |
+| 2 | `GND` | Blue | 0 V |
+| 3 | `/OPTO_IN_BUP` | Black | OUT (NPN OC) |
+| 4 | `+24V_SNS` | White | CTRL → +V = **Light ON** (mặc định) |
+
+> Dark ON: cắt pin 4 trên phích / nối White→Blue (GND) ở cáp — không đổi PCB.
+> Cáp XH: 1=Brn · 2=Blu · 3=Blk · 4=Wht.
 
 ### Pinout J_DISP (XH-4) — module TM1637
 
@@ -279,9 +289,9 @@ PSU 24 V, NEMA, cảm biến, keypad = **field**, ngoài ước giá board.
 | 5 | **SSR / module máng rung AC** | U_VIB | **50k** | 30–80k |
 | 6 | **TM1637** 4 số 0.36" | J_DISP | **15k** | 13–40k |
 | 7 | **Keypad** membrane 4×4 | J_KEY | **20k** | 10–40k |
-| 8 | **Cặp IR** thu–phát 5V (đếm rẻ) | J_CNT5 + J_P5N | **25k** | 15–40k |
-| 9 | **BUP-U / U-slot** NPN 24V | J14 + J_P24N | **120k** | 80–200k |
-| 10 | **Fiber** photo NPN 24V | J15 + J_P24N | **350k** | 250–550k |
+| 8 | **Cặp IR** thu–phát 5V (đếm rẻ) | J_CNT5 | **25k** | 15–40k |
+| 9 | **BUP-U / U-slot** NPN 24V | J14 | **120k** | 80–200k |
+| 10 | **Fiber** photo NPN 24V | J15 | **350k** | 250–550k |
 | 11 | **Cảm biến IN** NPN 24V (jam/hopper/gate) | J_IN2 / J_IN3 | **40k**/cái | 25–80k |
 | 12 | **PSU 24V** clone/LRS 50W | J1 | **150k** | 120–200k |
 | 13 | **PSU 24V** LRS-75/100 | J1 | **230k** | 180–300k |
@@ -291,7 +301,7 @@ PSU 24 V, NEMA, cảm biến, keypad = **field**, ngoài ước giá board.
 | 17 | **Ống cầu chì T2A** dự phòng | F1 | **5k** | 3–8k |
 | 18 | **USB Micro-B** cáp nạp | J_USB | **15k** | 10–25k |
 
-> Aux `J_P24N`/`J_P5N`/`J_P24S` chỉ là giắc trên board — nguồn đi kèm cảm biến/tải, không tính module riêng.
+> Aux `J_P24S` chỉ là giắc trên board — nguồn đi kèm cảm biến/tải trên giắc tín hiệu, không tính module riêng.
 
 ### E2) Ba hạng — SL × tiền (mid)
 
@@ -321,8 +331,8 @@ PSU 24 V, NEMA, cảm biến, keypad = **field**, ngoài ước giá board.
 | Ref | Rẻ | Trung | Đắt |
 |-----|----|-------|-----|
 | J1 · F1 · SW_* · J_DISP · J_KEY | hàn | hàn | hàn |
-| J_CNT5 · (J_P5N optional) | **hàn** | DNP | DNP |
-| J14 · (J_P24N optional) | DNP | **hàn** | DNP |
+| J_CNT5 | **hàn** | DNP | DNP |
+| J14 | DNP | **hàn** | DNP |
 | J15 | DNP | DNP | **hàn** |
 | J_IN2 | DNP | optional | **hàn** |
 | J_IN3 | DNP | DNP / dự phòng | optional |

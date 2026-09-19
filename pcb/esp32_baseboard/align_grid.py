@@ -9,7 +9,7 @@ PCB = Path(__file__).resolve().parent / "esp32_baseboard.kicad_pcb"
 GRID = 0.5
 SKIP = {"H1", "H2", "H3", "H4"}
 NORTH = {
-    "J_P24N", "J14", "J15", "J_IN2", "J_IN3", "J_P5N", "J_CNT5",
+    "J14", "J15", "J_IN2", "J_IN3", "J_CNT5",
     "J_KEY", "J_DISP",
 }
 NORTH_Y = 54.0

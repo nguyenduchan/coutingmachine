@@ -10,6 +10,20 @@ from pathlib import Path
 from pcb_parse import NetTable, pad_net
 import jlcpcb_limits as JLC
 from verify_jlcpcb import jack_row_gaps, parse_fps
+from stm32_pinmap import (
+    BUP_PIN,
+    CNT5_PIN,
+    IN2_PIN,
+    IN3_PIN,
+    KEYPAD_PINS,
+    PIN_BY_NAME,
+    PWR_PINS,
+    TM1637_PINS,
+    TMC2_PINS,
+    TMC_PINS,
+    USART1_PINS,
+    VIB_PINS,
+)
 
 ROOT = Path(__file__).resolve().parent
 PCB = ROOT / "esp32_baseboard.kicad_pcb"
@@ -71,6 +85,7 @@ def main() -> int:
         check(abs(x0 - 50.0) < 0.01 and abs(y0 - 50.0) < 0.01, ok, fail, "Edge.Cuts origin @50,50")
         check(bw >= 99.5 and bh >= 99.5, ok, fail, f"size {bw:.0f}x{bh:.0f} >= 100x100")
         check(bw <= 300.01 and bh <= 300.01, ok, fail, f"size {bw:.0f}x{bh:.0f} <= 300")
+        check(bw >= 149.0 and bh >= 99.0, ok, fail, f"target ~150x100 ({bw:.0f}x{bh:.0f})")
         check(bw >= bh - 0.01, ok, fail, f"wide board for DIN N/S edges ({bw:.0f}x{bh:.0f})")
     check("STM32G030C8T6_LQFP48" in text, ok, fail, "STM32 compact carrier board")
     check("U_PWR1" in text and "U_PWR2" in text and "U_VIB" in text, ok, fail, "power/vib socket silk or refs")
@@ -84,7 +99,7 @@ def main() -> int:
     for ref in (
         "U1", "U2", "U3", "U4", "U5", "U6", "U44", "U45", "U46", "U_PWR1", "U_PWR2", "U_VIB",
         "J1", "J_MOT1", "J_MOT2", "J_P24S",
-        "J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_P24N", "J_P5N",
+        "J14", "J15", "J_IN2", "J_IN3", "J_CNT5",
         "J_USB", "J_KEY", "J_DISP",
         "D3", "D1", "D4", "D5", "F1", "L1", "R2", "R2B", "R10", "R44", "R48", "Rfb1", "Rfb2",
         "PTC_SNS", "PTC_MOT", "PTC_MOT2",
@@ -111,7 +126,9 @@ def main() -> int:
     check(u1.get("10") == "/NRST", ok, fail, "U1 NRST")
     check(u1.get("29") == "/UART_TX" and u1.get("32") == "/UART_RX", ok, fail, "U1 USART1 PA9/PA10")
     check(u1.get("35") == "/SWDIO" and u1.get("36") == "/SWCLK", ok, fail, "U1 SWDIO/BOOT0 pins")
-    check("42" not in u1 or u1.get("42") != "/SWO", ok, fail, "PB3 free (no SWO)")
+    check("/SWO" not in u1.values(), ok, fail, "no SWO net on U1")
+    check(PIN_BY_NAME[USART1_PINS["TX"]] == 29 and PIN_BY_NAME[USART1_PINS["RX"]] == 32,
+          ok, fail, "USART1 still PA9/PA10")
     check(u5.get("7") == "/CH340_XI" and u5.get("8") == "/CH340_XO", ok, fail, "U5 XI/XO crystal")
     check("10" not in u5 and "15" not in u5, ok, fail, "U5 DTR/RTS not wired")
     check(u5.get("2") == "/UART_RX" and u5.get("3") == "/UART_TX", ok, fail, "CH340-USART cross nets")
@@ -167,14 +184,36 @@ def main() -> int:
     check("+24V_MOT2" in u4.values() and "+3V3" in u4.values(), ok, fail, "U4 VM2+VIO")
     check(pads.get("PTC_MOT2", {}).get("2") == "+24V_MOT2", ok, fail, "PTC_MOT2 to VM2")
     check(pads.get("R2B", {}).get("2") == "/EN_TMC2", ok, fail, "R2B EN2 pull-up")
-    check(u1.get("11") == "/STEP" and u1.get("12") == "/DIR" and u1.get("13") == "/EN_TMC", ok, fail, "U1 TMC1 on PA0-2")
-    check(u1.get("17") == "/STEP2" and u1.get("18") == "/DIR2" and u1.get("28") == "/EN_TMC2", ok, fail, "U1 TMC2 on PA6-8")
-    check(u1.get("14") == "/BUP", ok, fail, "U1 BUP PA3")
-    check(u1.get("27") == "/IN2" and u1.get("43") == "/IN3", ok, fail, "U1 IN2/IN3")
-    check(u1.get("33") == "/PWM_OUT1" and u1.get("34") == "/PWM_OUT2", ok, fail, "U1 PWM power outs")
-    check(u1.get("44") == "/PWR_EN1" and u1.get("45") == "/PWR_EN2", ok, fail, "U1 PWR EN1/EN2")
-    check(u1.get("46") == "/PWR_FAULT", ok, fail, "U1 PWR_FAULT")
-    check(u1.get("47") == "/VIB_CTRL" and u1.get("48") == "/VIB_FAULT", ok, fail, "U1 VIB CTRL/FAULT")
+    def u1_net(pin_name: str) -> str:
+        return u1.get(str(PIN_BY_NAME[pin_name]), "")
+
+    check(
+        u1_net(TMC_PINS["STEP"]) == "/STEP"
+        and u1_net(TMC_PINS["DIR"]) == "/DIR"
+        and u1_net(TMC_PINS["EN"]) == "/EN_TMC",
+        ok, fail, f"U1 TMC1 on {TMC_PINS['STEP']}/{TMC_PINS['DIR']}/{TMC_PINS['EN']}",
+    )
+    check(
+        u1_net(TMC2_PINS["STEP"]) == "/STEP2"
+        and u1_net(TMC2_PINS["DIR"]) == "/DIR2"
+        and u1_net(TMC2_PINS["EN"]) == "/EN_TMC2",
+        ok, fail, f"U1 TMC2 on {TMC2_PINS['STEP']}/{TMC2_PINS['DIR']}/{TMC2_PINS['EN']}",
+    )
+    check(u1_net(BUP_PIN) == "/BUP", ok, fail, f"U1 BUP {BUP_PIN}")
+    check(u1_net(IN2_PIN) == "/IN2" and u1_net(IN3_PIN) == "/IN3", ok, fail, f"U1 IN2/IN3 {IN2_PIN}/{IN3_PIN}")
+    check(
+        u1_net(PWR_PINS["PWM1"]) == "/PWM_OUT1" and u1_net(PWR_PINS["PWM2"]) == "/PWM_OUT2",
+        ok, fail, "U1 PWM power outs",
+    )
+    check(
+        u1_net(PWR_PINS["EN1"]) == "/PWR_EN1" and u1_net(PWR_PINS["EN2"]) == "/PWR_EN2",
+        ok, fail, "U1 PWR EN1/EN2",
+    )
+    check(u1_net(PWR_PINS["FAULT"]) == "/PWR_FAULT", ok, fail, "U1 PWR_FAULT")
+    check(
+        u1_net(VIB_PINS["CTRL"]) == "/VIB_CTRL" and u1_net(VIB_PINS["FAULT"]) == "/VIB_FAULT",
+        ok, fail, "U1 VIB CTRL/FAULT",
+    )
     up1 = pads.get("U_PWR1", {})
     up2 = pads.get("U_PWR2", {})
     check(up1.get("4") == "/PWM_OUT1" and up1.get("5") == "/PWR_EN1", ok, fail, "U_PWR1 PWM/EN")
@@ -188,6 +227,9 @@ def main() -> int:
     check(uv.get("3") == "/VIB_CTRL" and uv.get("1") == "+24V", ok, fail, "U_VIB CTRL/+24V")
     check("VibAC_Sock" in text, ok, fail, "VibAC socket footprint")
     check(pads.get("J14", {}).get("3") == "/OPTO_IN_BUP", ok, fail, "J14 U-slot OUT")
+    check(pads.get("J14", {}).get("4") == "+24V_SNS", ok, fail, "J14 CTRL→+V Light ON")
+    check(pads.get("J14", {}).get("1") == "+24V_SNS" and pads.get("J14", {}).get("2") == "GND",
+          ok, fail, "J14 +V/GND")
     check(pads.get("J15", {}).get("3") == "/OPTO_IN_BUP", ok, fail, "J15 fiber OUT shared")
     check(pads.get("U44", {}).get("4") == "/BUP", ok, fail, "PC817 count to /BUP")
     check(pads.get("J_IN2", {}).get("3") == "/OPTO_IN2" and pads.get("U45", {}).get("4") == "/IN2", ok, fail, "J_IN2 opto")
@@ -195,12 +237,15 @@ def main() -> int:
     check(pads.get("J_CNT5", {}).get("1") == "+5V" and pads.get("J_CNT5", {}).get("3") == "/OPTO_IN_5V", ok, fail, "J_CNT5 5V jack")
     check(pads.get("U47", {}).get("4") == "/CNT5" and pads.get("R47", {}).get("1") == "+5V", ok, fail, "U47/R47 5V opto")
     check(pads.get("R51", {}).get("2") == "/CNT5", ok, fail, "R51 CNT5 pull-up")
-    check(u1.get("39") == "/CNT5", ok, fail, "U1 CNT5 on PD1")
-    check(pads.get("J_P24N", {}).get("1") == "+24V_SNS" and pads.get("J_P24N", {}).get("2") == "GND", ok, fail, "J_P24N aux 24V")
-    check(pads.get("J_P5N", {}).get("1") == "+5V" and pads.get("J_P5N", {}).get("2") == "GND", ok, fail, "J_P5N aux 5V")
+    check(u1_net(CNT5_PIN) == "/CNT5", ok, fail, f"U1 CNT5 on {CNT5_PIN}")
     check(pads.get("J_P24S", {}).get("1") == "+24V" and pads.get("J_P24S", {}).get("2") == "GND", ok, fail, "J_P24S aux 24V")
-    check(u1.get("15") == "/TM_CLK" and u1.get("16") == "/TM_DIO", ok, fail, "U1 TM1637 PA4/5")
+    check("J_P24N" not in pads and "J_P5N" not in pads, ok, fail, "no redundant N aux power jacks")
+    check(
+        u1_net(TM1637_PINS["CLK"]) == "/TM_CLK" and u1_net(TM1637_PINS["DIO"]) == "/TM_DIO",
+        ok, fail, f"U1 TM1637 {TM1637_PINS['CLK']}/{TM1637_PINS['DIO']}",
+    )
     check(sum(1 for v in u1.values() if v.startswith("/KEY_")) >= 8, ok, fail, "U1 keypad 8")
+    check(u1_net(KEYPAD_PINS["ROW0"]) == "/KEY_R0", ok, fail, f"U1 KEY_R0 {KEYPAD_PINS['ROW0']}")
     jd = pads.get("J_DISP", {})
     check(jd.get("1") == "/TM_CLK" and jd.get("2") == "/TM_DIO", ok, fail, "J_DISP CLK/DIO")
     check(jd.get("3") == "+5V" and jd.get("4") == "GND", ok, fail, "J_DISP +5V/GND")
@@ -299,7 +344,7 @@ def main() -> int:
         check("+24V_RAW" not in vals and "+24V_PRE" not in vals, ok, fail, f"{ref} not on pre-fuse nets")
 
     print("=== D2c) Edge jack zones (S=MOT/PWR, N=SNS/HMI; TMC inland) ===")
-    if em and all(r in pos for r in ("J_MOT1", "J_MOT2", "J_P24S", "U3", "U4", "U_PWR1", "U_PWR2", "U_VIB", "J14", "J_CNT5", "J_P24N", "J_P5N", "J_KEY", "J_DISP")):
+    if em and all(r in pos for r in ("J_MOT1", "J_MOT2", "J_P24S", "U3", "U4", "U_PWR1", "U_PWR2", "U_VIB", "J14", "J_CNT5", "J_KEY", "J_DISP")):
         x0, y0, x1, y1 = map(float, em.groups())
         mid_y = y0 + 0.5 * bh
         for ref in ("J_MOT1", "J_MOT2", "J_P24S", "U_PWR1", "U_PWR2", "U_VIB"):
@@ -308,7 +353,7 @@ def main() -> int:
         for ref in ("U3", "U4"):
             _tx, ty, _ = pos[ref]
             check(ty > mid_y, ok, fail, f"{ref} TMC south inland band (y={ty:.1f})")
-        for ref in ("J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_P24N", "J_P5N", "J_KEY", "J_DISP"):
+        for ref in ("J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_KEY", "J_DISP"):
             if ref not in pos:
                 continue
             _nx, ny, _ = pos[ref]
@@ -317,7 +362,7 @@ def main() -> int:
         for a, b in zip(south_seq, south_seq[1:]):
             check(pos[a][0] < pos[b][0], ok, fail, f"{a} left of {b}")
         check(pos["U3"][0] < pos["U4"][0], ok, fail, "U3 left of U4")
-        north_seq = ("J_P24N", "J14", "J15", "J_IN2", "J_IN3", "J_P5N", "J_CNT5", "J_KEY", "J_DISP")
+        north_seq = ("J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_KEY", "J_DISP")
         for a, b in zip(north_seq, north_seq[1:]):
             check(pos[a][0] < pos[b][0], ok, fail, f"{a} left of {b}")
         check(pos["J_DISP"][0] < pos["J_USB"][0], ok, fail, "J_DISP left of J_USB")
@@ -362,7 +407,7 @@ def main() -> int:
     field_edge = (
         "J1", "J_MOT1", "J_MOT2", "J_P24S",
         "U_PWR1", "U_PWR2", "U_VIB",
-        "J_P24N", "J14", "J15", "J_IN2", "J_IN3", "J_P5N", "J_CNT5",
+        "J14", "J15", "J_IN2", "J_IN3", "J_CNT5",
         "J_KEY", "J_DISP", "J_USB",
     )
     field_all = field_edge
@@ -394,8 +439,8 @@ def main() -> int:
     row_along_y = {"J_KEY", "U_PWR1", "U_PWR2", "U_VIB"}
     row_along_x = {
         "J1": (0.0,), "J_USB": (180.0,),
-        "J_P24N": (0.0,), "J14": (0.0,), "J15": (0.0,),
-        "J_IN2": (0.0,), "J_IN3": (0.0,), "J_P5N": (0.0,),
+        "J14": (0.0,), "J15": (0.0,),
+        "J_IN2": (0.0,), "J_IN3": (0.0,),
         "J_CNT5": (0.0,), "J_DISP": (0.0,),
         "J_MOT1": (180.0,), "J_MOT2": (180.0,), "J_P24S": (180.0,),
     }
@@ -456,7 +501,7 @@ def main() -> int:
     edge_jacks = {
         "J1", "J_MOT1", "J_MOT2", "J_P24S",
         "U_PWR1", "U_PWR2", "U_VIB",
-        "J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_P24N", "J_P5N",
+        "J14", "J15", "J_IN2", "J_IN3", "J_CNT5",
         "J_KEY", "J_DISP", "J_USB",
     }
     min_gap = 2.5
@@ -522,7 +567,7 @@ def main() -> int:
                 bad_js.append(f"{ref}:{d:.2f}")
         check(not bad_js, ok, fail, f"jacks left/right clear≥{jack_side}mm ({bad_js[:12]})")
         n_jacks = [b for b in bodies if b[0] in (
-            "J_P24N", "J14", "J15", "J_IN2", "J_IN3", "J_P5N", "J_CNT5", "J_KEY", "J_DISP", "J_USB",
+            "J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_KEY", "J_DISP", "J_USB",
         )]
         s_jacks = [b for b in bodies if b[0] in (
             "J1", "J_MOT1", "J_MOT2", "J_P24S", "U_PWR1", "U_PWR2", "U_VIB",
