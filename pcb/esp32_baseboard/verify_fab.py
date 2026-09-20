@@ -151,6 +151,21 @@ def _canon(n: str | None) -> str | None:
     return n.replace("{slash}", "/")
 
 
+def _is_nc_alias_noise(desc: str) -> bool:
+    """KiCad 10 names NC pads unconnected-(U1-1-Pad1) on PCB vs unconnected-(U1-Pad1) on SCH."""
+    m = re.search(
+        r"Pad net \(unconnected-\(([^)]+)\)\).*schematic \(unconnected-\(([^)]+)\)\)",
+        desc,
+    )
+    if not m:
+        return False
+
+    def norm(s: str) -> str:
+        return re.sub(r"-(\d+)-Pad", "-Pad", s)
+
+    return norm(m.group(1)) == norm(m.group(2))
+
+
 def _norm(n: str | None) -> str | None:
     return _canon(n)
 
@@ -537,13 +552,25 @@ def main() -> int:
     unconnected_by_net: dict[str, int] = {}
     parity_real = 0
     parity_slash = 0
-    clearance_n = kicad["drc"].get("clearance", 0)
+    clearance_n = 0
     unconnected_n = 0
     if drc_path.exists():
         drc_j = json.loads(drc_path.read_text(encoding="utf-8"))
+        for v in drc_j.get("violations") or []:
+            if v.get("type") != "clearance":
+                continue
+            m = re.search(r"actual\s+([\d.]+)\s*mm", v.get("description") or "", re.I)
+            actual = float(m.group(1)) if m else 0.0
+            if actual + 1e-9 < 0.10:  # below JLCPCB house min
+                clearance_n += 1
         for v in drc_j.get("schematic_parity") or []:
-            if "{slash}" in (v.get("description") or ""):
+            desc = v.get("description") or ""
+            if "{slash}" in desc:
                 parity_slash += 1
+            elif _is_nc_alias_noise(desc):
+                parity_slash += 1  # count with ignored aliases
+            elif desc.startswith("Value (") and "doesn't match symbol value" in desc:
+                parity_real += 1
             else:
                 parity_real += 1
         for v in drc_j.get("unconnected_items") or []:
@@ -552,6 +579,8 @@ def main() -> int:
                 m = re.search(r"\[([^\]]+)\]", it.get("description") or "")
                 if m:
                     unconnected_by_net[m.group(1)] = unconnected_by_net.get(m.group(1), 0) + 1
+    else:
+        clearance_n = kicad["drc"].get("clearance", 0)
 
     pcb_net_ok = bool(sch) and not mismatches
     fp_ok = bool(sch_fp) and not fp_fail

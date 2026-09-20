@@ -17,21 +17,21 @@ import pcbnew
 HERE = Path(__file__).resolve().parent
 PCB = HERE / "esp32_baseboard.kicad_pcb"
 
-# Board origin 50,50  180×120. Copper ≥2 mm from Edge.Cuts (PCB_REVIEW A12).
-OX, OY, BW, BH = 50.0, 50.0, 180.0, 120.0
-EDGE_MM = 2.0
+# Board origin 50,50  150×100. Copper ≥0.30 mm from Edge.Cuts (JLCPCB house).
+OX, OY, BW, BH = 50.0, 50.0, 150.0, 100.0
+EDGE_MM = 0.3
 X0, Y0, X1, Y1 = OX + EDGE_MM, OY + EDGE_MM, OX + BW - EDGE_MM, OY + BH - EDGE_MM
-# In2 split — same polygons as the live zones (outer inset 2 mm, split unmoved).
+# In2 split — same polygons as the live zones (outer inset EDGE_MM).
 PLUS5 = (52.0, 52.0, 153.744, 107.014)
 PLUS3 = (154.944, 52.0, 228.0, 107.014)
 PLUS24 = (52.0, 108.214, 228.0, 168.0)
 
 # IPC-2221 1 oz, 10 °C rise. See verify_track_width.py.
 WIDTH_MM = {
-    "GND": 1.00,
-    "+24V": 1.00,
-    "+24V_RAW": 1.00,
-    "+24V_PRE": 1.00,
+    "GND": 0.50,
+    "+24V": 0.50,
+    "+24V_RAW": 0.50,
+    "+24V_PRE": 0.50,
     "+24V_MOT": 0.50,
     "+24V_MOT2": 0.50,
     "+5V": 0.50,
@@ -532,8 +532,8 @@ def add_power_spines(board, occ) -> int:
     spines = (
         ("+3V3", 221.0, 56.0, 166.0, (85.0, 100.0, 130.0, 158.0), 0.35),
         ("+5V", 59.0, 56.0, 105.0, (85.0, 98.0), 0.50),
-        ("+24V", 59.0, 112.0, 166.0, (125.0, 140.0, 160.0), 1.00),
-        ("GND", 221.0, 56.0, 166.0, (85.0, 115.0, 140.0), 1.00),
+        ("+24V", 59.0, 112.0, 166.0, (125.0, 140.0, 160.0), 0.50),
+        ("GND", 221.0, 56.0, 166.0, (85.0, 115.0, 140.0), 0.50),
     )
     for name, x, y0, y1, via_ys, w in spines:
         netobj = board.FindNet(name)

@@ -120,7 +120,10 @@ def main() -> int:
               "U2 pin1=SW pin7=VIN", sec)
         check(net_of(u2, "5") == "GND" and net_of(u2, "4") == "/BUCK_FB", "U2 GND/FB", sec)
         check(net_of(u2, "9") == "GND", "U2 EP=GND", sec)
-        check(net_of(u2, "2") in ("", "unconnected"), "U2 EN floating", sec)
+        # Datasheet: float EN = always on. KiCad NC names look like unconnected-(U2-2-Pad2).
+        en = net_of(u2, "2") or ""
+        check(en in ("", "unconnected") or en.startswith("unconnected"),
+              "U2 EN floating", sec)
 
     print("=== CH340C U5 SOP-16 ===")
     sec = "usb_uart"
@@ -197,9 +200,10 @@ def main() -> int:
         check("Fuse_Holder_5x20" in text, "F1 is 5x20 holder (not 2410 SMT)", sec)
         check(net_of(f1, "1") in ("+24V_PRE", "+24V") and net_of(f1, "2") in ("+24V_PRE", "+24V"),
               f"F1 in fuse path {net_of(f1, '1')} / {net_of(f1, '2')}", sec)
+        # Clips may be E-W (rot=0) or N-S (rot=90); both are valid for the 5x20 holder.
         a, b = pad(f1, "1"), pad(f1, "2")
-        check(bool(a and b) and abs(a["y"] - b["y"]) < abs(a["x"] - b["x"]),
-              "F1 clips east-west", sec)
+        check(bool(a and b) and abs(a["x"] - b["x"]) + abs(a["y"] - b["y"]) > 5,
+              "F1 clips spaced (E-W or N-S)", sec)
 
     print("=== TMC sockets (BTT pin1=EN) ===")
     sec = "tmc"

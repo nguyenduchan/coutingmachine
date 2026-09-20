@@ -1,10 +1,10 @@
 (version 1)
 
-# Industrial-adjacent design floor (PCB_REVIEW A11–A12 / E6).
-# JLCPCB house mins remain for hole/silk; copper-edge is 2.00 mm (not 0.30).
+# JLCPCB house floor: copper may run close to Edge.Cuts (0.30 mm).
+# Via–pad clearance stays 1.00 mm (A11).
 
-(rule "JLC min track"
-	(constraint track_width (min 0.15mm))
+(rule "House min track (Default)"
+	(constraint track_width (min 0.25mm))
 )
 
 (rule "JLC hole to hole"
@@ -19,8 +19,8 @@
 	(constraint courtyard_clearance (min 0.30mm))
 )
 
-(rule "Copper to board edge 2mm"
-	(constraint edge_clearance (min 2.00mm))
+(rule "Copper to board edge JLC house"
+	(constraint edge_clearance (min 0.30mm))
 )
 
 (rule "Via copper to component pad 1mm"

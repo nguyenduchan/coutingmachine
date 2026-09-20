@@ -34,7 +34,7 @@ DEFAULT_HALF_TRACK = 0.15
 # without breaking A6: grid pitch - TRACE_CLEARANCE_MM, minus a hair.
 # Bus lanes must be at least a grid pitch apart or the occupancy grid cannot
 # distinguish them; 0.7 also clears the widest A6 separation (0.65).
-EDGE_CLEARANCE_MM = 2.0  # copper (track/via) to Edge.Cuts
+EDGE_CLEARANCE_MM = 0.3  # copper (track/via) to Edge.Cuts (JLCPCB house)
 VIA_PAD_GAP_MM = 1.0  # via copper to any component pad copper
 LANE_MIN_SEP = 0.7
 # A hair of margin so a track that lands exactly on the A7 limit reads as
@@ -973,15 +973,15 @@ def _mst_edges(pads: list[Pad]) -> list[tuple[Pad, Pad]]:
 def net_width(net: int, name: str) -> float:
     """IPC-2221 1 oz, 10 °C: width must carry the net's fused / PTC current."""
     if name in ("+24V", "+24V_RAW", "+24V_PRE"):
-        return 1.00  # F1 T2A → ~2.5 A @ 1.0 mm
+        return 1.00  # prefer 1.0 mm on open bus; dense areas stay thinner
     if name == "GND":
-        return 1.00  # return of fused 24 V inlet
+        return 1.00
     if name in ("+24V_MOT", "+24V_MOT2"):
-        return 0.50  # PTC 1.1 A; 0.50 mm ≈ 1.5 A (TMC pin pitch forbids 0.70)
+        return 0.50  # PTC 1.1 A
     if name in ("+5V",):
-        return 0.50  # MP1584 / USB+display ~1.5 A
+        return 0.50
     if name in ("+3V3",):
-        return 0.35  # AMS1117 ≤ 0.8 A; 0.35 mm ≈ 1.15 A
+        return 0.35
     if name in ("+24V_SNS", "+24V_SNS_PRE", "+24V_SNS_PRE"):
         return 0.25  # PTC 0.2 A
     if name.startswith("/Mot") or name.startswith("Mot"):

@@ -238,14 +238,14 @@ def ensure_4layer_planes(board, force: bool = False) -> int:
 
     F.Cu and B.Cu stay signal (no pour) so the autorouter has room and via
     count stays low — power returns through the inner planes.
-    Outlines inset 2.0 mm from Edge.Cuts (A12 / E6).
+    Outlines inset 0.30 mm from Edge.Cuts (JLCPCB copper-edge house).
     """
     import pcbnew
 
     if force:
         _remove_inner_planes(board)
     existing = {(z.GetNetname(), z.GetLayer()) for z in _iter_zones(board)}
-    x0, y0, x1, y1 = _board_box_mm(board, 2.0)
+    x0, y0, x1, y1 = _board_box_mm(board, 0.3)
     fx0, fy0, fx1, fy1 = _board_box_mm(board, 0.0)
     mid_y = fy0 + int(0.48 * (fy1 - fy0))
     split_x = fx0 + int(0.58 * (fx1 - fx0))
@@ -347,7 +347,7 @@ def fanout_plane_vias(board) -> int:
         "GND": pcbnew.FromMM(0.50),
         "+3V3": pcbnew.FromMM(0.35),
         "+5V": pcbnew.FromMM(0.50),
-        "+24V": pcbnew.FromMM(1.00),
+        "+24V": pcbnew.FromMM(0.50),
     }
     occupied = []
     vias_now = []
@@ -486,7 +486,7 @@ def _patch_zone_nets_lines(text: str) -> str:
 # 700 um is the compromise -- still meaningfully wider than the 500 um floor.
 A7_CLEARANCE_UM = int(os.environ.get("FR_CLEAR_UM", "500"))
 VIA_PIN_CLEAR_UM = int(os.environ.get("FR_VIA_PIN_UM", "1000"))
-EDGE_KEEP_MM = 2.0
+EDGE_KEEP_MM = 0.3  # JLCPCB copper-to-edge house
 A7_TYPES = ("wire_pin", "via_pin", "wire_via", "via_via", "pin_pin")
 
 

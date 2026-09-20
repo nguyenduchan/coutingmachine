@@ -9,7 +9,7 @@
         "apply_defaults_to_fp_shapes": false,
         "apply_defaults_to_fp_text": false,
         "board_outline_line_width": 0.05,
-        "copper_line_width": 0.2,
+        "copper_line_width": 0.25,
         "copper_text_italic": false,
         "copper_text_size_h": 1.5,
         "copper_text_size_v": 1.5,
@@ -142,7 +142,7 @@
         "max_error": 0.005,
         "min_clearance": 0.15,
         "min_connection": 0.0,
-        "min_copper_edge_clearance": 2.0,
+        "min_copper_edge_clearance": 0.3,
         "min_groove_width": 0.0,
         "min_hole_clearance": 0.2,
         "min_hole_to_hole": 0.45,
@@ -153,7 +153,7 @@
         "min_text_height": 0.8,
         "min_text_thickness": 0.08,
         "min_through_hole_diameter": 0.3,
-        "min_track_width": 0.2,
+        "min_track_width": 0.25,
         "min_via_annular_width": 0.18,
         "min_via_diameter": 0.8,
         "solder_mask_to_copper_clearance": 0.0,
@@ -203,7 +203,13 @@
           "td_width_to_size_filter_ratio": 0.9
         }
       ],
-      "track_widths": [],
+      "track_widths": [
+        0.0,
+        0.25,
+        0.35,
+        0.5,
+        1.0
+      ],
       "tuning_pattern_settings": {
         "diff_pair_defaults": {
           "corner_radius_percentage": 80,
@@ -230,7 +236,16 @@
           "spacing": 0.6
         }
       },
-      "via_dimensions": [],
+      "via_dimensions": [
+        {
+          "diameter": 0.0,
+          "drill": 0.0
+        },
+        {
+          "diameter": 0.8,
+          "drill": 0.4
+        }
+      ],
       "zones_allow_external_fillets": false
     },
     "ipc2581": {
@@ -242,8 +257,53 @@
       "mpn": "",
       "sch_revision": ""
     },
-    "layer_pairs": [],
-    "layer_presets": [],
+    "layer_pairs": [
+      {
+        "bottomLayer": 2,
+        "enabled": true,
+        "name": "F.Cu → B.Cu",
+        "topLayer": 0
+      }
+    ],
+    "layer_presets": [
+      {
+        "activeLayer": 0,
+        "flipBoard": false,
+        "layers": [
+          0,
+          2,
+          25,
+          27,
+          29,
+          31
+        ],
+        "name": "Route F/B",
+        "renderLayers": [
+          "vias",
+          "footprint_text",
+          "footprint_anchors",
+          "ratsnest",
+          "grid",
+          "footprints_front",
+          "footprints_back",
+          "footprint_values",
+          "footprint_references",
+          "tracks",
+          "drc_errors",
+          "drawing_sheet",
+          "bitmaps",
+          "pads",
+          "zones",
+          "drc_warnings",
+          "drc_exclusions",
+          "locked_item_shadows",
+          "conflict_shadows",
+          "shapes",
+          "board_outline_area",
+          "ly_points"
+        ]
+      }
+    ],
     "viewports": []
   },
   "boards": [],
@@ -424,6 +484,10 @@
       {
         "netclass": "PowerMot",
         "pattern": "/Mot*"
+      },
+      {
+        "netclass": "PowerMot",
+        "pattern": "Mot*"
       },
       {
         "netclass": "Power5",

@@ -5,6 +5,43 @@
 	(uuid "3cbaf1f0-c85a-4e9f-abaa-9b70a700ba67")
 	(paper "A3")
 	(lib_symbols
+		(symbol "ESP32_Carrier:PWR_FLAG"
+			(exclude_from_sim no)
+			(in_bom no)
+			(on_board no)
+			(property "Reference" "#FLG"
+				(at 0 5.08 0)
+				(effects (font (size 1.27 1.27)) (hide yes))
+			)
+			(property "Value" "PWR_FLAG"
+				(at 0 3.81 0)
+				(effects (font (size 1.27 1.27)))
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(hide yes)
+				(effects (font (size 1.27 1.27)))
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(hide yes)
+				(effects (font (size 1.27 1.27)))
+			)
+			(property "Description" "Power flag for ERC"
+				(at 0 0 0)
+				(hide yes)
+				(effects (font (size 1.27 1.27)))
+			)
+			(symbol "PWR_FLAG_0_1"
+				(pin power_out line
+					(at 0 0 0)
+					(length 0)
+					(name "pwr" (effects (font (size 1.27 1.27))))
+					(number "1" (effects (font (size 1.27 1.27))))
+				)
+			)
+		)
+
 		(symbol "ESP32_Carrier:GEN_CP_SMD_D6_3x8"
 			(pin_numbers (hide no))
 			(pin_names (offset 0.508))
@@ -2565,7 +2602,7 @@
 		(uuid "2c995d40-88ab-4e24-92a5-ea0d0c23400b")
 		(property "Reference" "F1" (at 254.0 110.49000000000001 0)
 			(effects (font (size 1.27 1.27))))
-		(property "Value" "FUSE T2A" (at 254.0 123.19 0)
+		(property "Value" "T2A" (at 254.0 123.19 0)
 			(effects (font (size 1.27 1.27))))
 		(property "Footprint" "ESP32_Carrier:Fuse_Holder_5x20_Open" (at 254.0 116.84 0)
 			(effects (font (size 1.27 1.27)) (hide yes)))
@@ -5458,6 +5495,84 @@
 		(at 1010.92 69.85000000000001 180)
 		(effects (font (size 1.27 1.27)) (justify right))
 		(uuid "5fe9cc68-b0be-40cf-8a1b-5799659ac1a1")
+	)
+	(symbol (lib_id "ESP32_Carrier:PWR_FLAG") (at 40.0 40.0 0) (unit 1)
+		(exclude_from_sim no) (in_bom no) (on_board no) (dnp no)
+		(uuid "ebaf9e03-66bc-4a64-b3f3-e098692aead7")
+		(property "Reference" "#FLG_MOT" (at 40.0 45.08 0)
+			(effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Value" "PWR_FLAG" (at 40.0 43.81 0)
+			(effects (font (size 1.27 1.27))))
+		(property "Footprint" "" (at 40.0 40.0 0)
+			(effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Datasheet" "" (at 40.0 40.0 0)
+			(effects (font (size 1.27 1.27)) (hide yes)))
+		(pin "1" (uuid "518badae-f568-4d99-b735-17a4e4cbe5eb"))
+		(instances
+			(project "esp32_baseboard"
+				(path "/3cbaf1f0-c85a-4e9f-abaa-9b70a700ba67"
+					(reference "#FLG_MOT") (unit 1)
+				)
+			)
+		)
+	)
+	(global_label "+24V_MOT"
+		(shape input)
+		(at 40.0 40.0 0)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "ddd41545-32c1-49a8-8679-1b9aaaff6e1a")
+	)
+	(symbol (lib_id "ESP32_Carrier:PWR_FLAG") (at 55.0 40.0 0) (unit 1)
+		(exclude_from_sim no) (in_bom no) (on_board no) (dnp no)
+		(uuid "3b5f5a55-32dd-4dac-8c01-0fd5e214cca2")
+		(property "Reference" "#FLG_MOT2" (at 55.0 45.08 0)
+			(effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Value" "PWR_FLAG" (at 55.0 43.81 0)
+			(effects (font (size 1.27 1.27))))
+		(property "Footprint" "" (at 55.0 40.0 0)
+			(effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Datasheet" "" (at 55.0 40.0 0)
+			(effects (font (size 1.27 1.27)) (hide yes)))
+		(pin "1" (uuid "e5a10abf-2f48-4c82-8adc-cabece0d7758"))
+		(instances
+			(project "esp32_baseboard"
+				(path "/3cbaf1f0-c85a-4e9f-abaa-9b70a700ba67"
+					(reference "#FLG_MOT2") (unit 1)
+				)
+			)
+		)
+	)
+	(global_label "+24V_MOT2"
+		(shape input)
+		(at 55.0 40.0 0)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "c67d42e9-9a78-4b97-9830-d1662b375b5a")
+	)
+	(symbol (lib_id "ESP32_Carrier:PWR_FLAG") (at 70.0 40.0 0) (unit 1)
+		(exclude_from_sim no) (in_bom no) (on_board no) (dnp no)
+		(uuid "cff04e31-b17d-4907-9690-73ac224c762a")
+		(property "Reference" "#FLG_3V3" (at 70.0 45.08 0)
+			(effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Value" "PWR_FLAG" (at 70.0 43.81 0)
+			(effects (font (size 1.27 1.27))))
+		(property "Footprint" "" (at 70.0 40.0 0)
+			(effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Datasheet" "" (at 70.0 40.0 0)
+			(effects (font (size 1.27 1.27)) (hide yes)))
+		(pin "1" (uuid "e89f9712-9bac-4a58-bf56-d900d86b4627"))
+		(instances
+			(project "esp32_baseboard"
+				(path "/3cbaf1f0-c85a-4e9f-abaa-9b70a700ba67"
+					(reference "#FLG_3V3") (unit 1)
+				)
+			)
+		)
+	)
+	(global_label "+3V3"
+		(shape input)
+		(at 70.0 40.0 0)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "df27dc23-eb60-4c1e-9761-84776b147535")
 	)
 	(sheet_instances
 		(path "/" (page "1"))

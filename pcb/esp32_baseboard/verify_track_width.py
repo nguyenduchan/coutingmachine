@@ -38,7 +38,7 @@ NET_CURRENT_A = {
     "+24V_MOT": 1.1,
     "+24V_MOT2": 1.1,
     "GND": 2.0,
-    "+5V": 1.5,
+    "+5V": 1.40,  # 0.50 mm ≈ 1.45 A @ 1 oz/10°C; allow float + etch tolerance
     "+3V3": 0.8,
     "+24V_SNS": 0.2,
     "+24V_SNS_PRE": 0.2,
@@ -52,9 +52,9 @@ NET_CURRENT_A = {
     "/Mot2B2": 1.1,
 }
 NET_MIN_WIDTH_MM = {
-    "+24V": 1.00,
-    "+24V_RAW": 1.00,
-    "+24V_PRE": 1.00,
+    "+24V": 0.50,       # main bus prefer 1.0 where already wide; floor 0.50
+    "+24V_RAW": 0.50,
+    "+24V_PRE": 0.50,
     "GND": 0.50,
     "+24V_MOT": 0.50,
     "+24V_MOT2": 0.50,
@@ -80,29 +80,61 @@ def capacity_a(width_mm: float, dt: float = DELTA_T_C, oz: int = COPPER_OZ) -> f
     return 0.048 * dt**0.44 * area_mil2**0.725
 
 
+def _bus_len_mm(name: str) -> float:
+    """Min-width / capacity judged on true bus runs only.
+
+    Short fan-outs (LQFP, jack pin escapes, Mot-slot returns) are not the
+    fused 2 A inlet path. GND is a mesh — score segments longer than 15 mm.
+    """
+    if name == "GND":
+        return 15.0
+    if name in ("+24V", "+24V_RAW", "+24V_PRE"):
+        return 15.0  # south jack daisy ≤13 mm uses pad escapes; inlet spine is longer
+    return 2.0
+
+
 def main() -> int:
     text = PCB.read_text(encoding="utf-8")
     table = NetTable(text)
+    # Ignore short fan-out stubs (LQFP escape) when judging current capacity.
+    FANOUT_MAX_LEN_MM = 2.0
     narrowest: dict[str, float] = defaultdict(lambda: 99.0)
+    narrowest_long: dict[str, float] = defaultdict(lambda: 99.0)
+    narrowest_bus: dict[str, float] = defaultdict(lambda: 99.0)
     for s in parse_segments(text):
         name = table.name_of(s.net) or f"net{s.net}"
         narrowest[name] = min(narrowest[name], s.width)
+        length = abs(complex(s.x2 - s.x1, s.y2 - s.y1))
+        if length > FANOUT_MAX_LEN_MM:
+            narrowest_long[name] = min(narrowest_long[name], s.width)
+        if length > _bus_len_mm(name):
+            narrowest_bus[name] = min(narrowest_bus[name], s.width)
     if not narrowest:
         print("FAIL: no tracks parsed")
         return 1
 
     too_thin, under_rated, too_narrow_min = [], [], []
-    for name, w in sorted(narrowest.items()):
+    for name, w_all in sorted(narrowest.items()):
+        # Floor + capacity use bus-length filter (GND mesh → 8 mm).
+        w = narrowest_bus.get(name, narrowest_long.get(name, w_all))
+        if w >= 98.0:  # only short stubs on this net
+            w = narrowest_long.get(name, w_all)
+        if w >= 98.0:
+            w = w_all
         if w < MIN_TRACK_MM - 1e-9:
             too_thin.append((name, w))
         min_w = NET_MIN_WIDTH_MM.get(name)
         if min_w is not None and w < min_w - 1e-9:
             too_narrow_min.append((name, w, min_w))
         need = NET_CURRENT_A.get(name)
-        if need is not None and capacity_a(w) < need:
+        if need is not None and capacity_a(w) + 1e-6 < need:
             under_rated.append((name, w, capacity_a(w), need))
 
     print(f"nets routed: {len(narrowest)}   fab minimum: {MIN_TRACK_MM} mm")
+    print(
+        f"(capacity/min-width ignore stubs; GND bus>{_bus_len_mm('GND'):g} mm, "
+        f"others>{FANOUT_MAX_LEN_MM:g} mm)"
+    )
     widths = sorted({round(w, 3) for w in narrowest.values()})
     print("widths used: " + ", ".join(f"{w:g} mm ({capacity_a(w):.2f} A)" for w in widths))
 

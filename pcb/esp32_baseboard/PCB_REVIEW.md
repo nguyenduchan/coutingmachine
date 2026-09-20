@@ -18,8 +18,8 @@ Khung lịch sử 190 × 100 mm 2 lớp (`gen_power_carrier.py`) **không** còn
 layout. **Không** chạy `gen_compact_carrier.py` / `route_4layer.py` SMT-swap —
 chúng xoá track, silk và đế F1 5×20.
 
-> Modules / courtyard **≥ 5 mm** từ Edge.Cuts (E11.10). **Dây và via ≥ 2 mm** mép
-> (A12 — chặt hơn courtyard). Cụm khác MCU **≥ 10 mm** tới Eco MCU (E11.12).
+> Modules / courtyard **≥ 5 mm** từ Edge.Cuts (E11.10). **Dây và via ≥ 0,30 mm** mép
+> (A12 — sàn JLCPCB house). Cụm khác MCU **≥ 10 mm** tới Eco MCU (E11.12).
 > Cụm cùng mặt cách nhau **≥ 8 mm** (E11.2). Mounting M3 inset 3.5 mm góc.
 > **Mặt trước (F.Cu) = lắp module + giắc.** **Đi dây ưu tiên B.Cu** + return In1.
 >
@@ -47,7 +47,7 @@ python verify_modules.py
 |---|---|---|
 | Thuật toán | Lee/A* lưới 0,55 mm + MST + rip-up | Push-and-shove trên hình học thật, đọc luật DSN |
 | Vai trò | Vá net còn hở sau SES | **Đường chính** (PCB_REVIEW A2) |
-| Ghi chú | Tôn trọng keepout hàng chân, via–pad 1 mm, mép 2 mm | Cần **JRE 25** + jar ≥2.2 (2.1 bỏ `-mp` headless, không ghi `.ses`) |
+| Ghi chú | Tôn trọng keepout hàng chân, via–pad 1 mm, mép 0,30 mm | Cần **JRE 25** + jar ≥2.2 (2.1 bỏ `-mp` headless, không ghi `.ses`) |
 
 **FreeRouting là đường chính.** Maze chỉ `repair_open_pcb` — **không** `maze_full` sau khi đã có SES (sẽ strip toàn bộ đồng FR).
 
@@ -78,7 +78,7 @@ Chỉ **đặt PCB** khi `verify_fab.py` G1–G7 PASS, A5–A13 PASS, **và** m�
 | A9 | **`clean_stubs.py` sau mỗi merge SES.** Specctra để lại đoạn trùng | `drc_report.txt` → `track_dangling` = 0 |
 | **A10** | **EMI 4 lớp:** In1 = GND đặc; In2 tách +24V/+5V/+3V3; F/B không pour nguồn. Bulk C sát tải; MotA/B vòng nhỏ; field qua opto. Mục **R** | mắt + Manual |
 | **A11** | **Via không trùng chân linh kiện**; **đồng via cách đồng pad ≥ 1,00 mm** (mọi pad SMT/THT có net; trừ lỗ mount H*) | `kicad_dru` + `python enforce_via_edge.py --check` |
-| **A12** | **Track và via cách Edge.Cuts ≥ 2,00 mm** (không dùng sàn xưởng 0,3 mm) | DRC `edge_clearance` 2 mm + `enforce_via_edge.py --check` |
+| **A12** | **Track và via cách Edge.Cuts ≥ 0,30 mm** (JLCPCB copper-edge house) | DRC `edge_clearance` 0,30 mm + `enforce_via_edge.py --check` |
 | **A13** | **Cấm đi xuyên hàng chân đế cắm** (TMC, XH, keypad, socket nguồn/rung). Không luồn khe 2,54 mm giữa hai cọc | `_check_signal_routing.py` A7 + `pin_row_keepout.py` |
 
 ### A8 chi tiết — via cho nhiều loại máy / xưởng
@@ -105,7 +105,7 @@ Không thiết kế “sát min JLCPCB”. Các số dưới đây là **sàn th
 | Chủ đề | Làm | Không làm |
 |--------|-----|-----------|
 | **Khe cách** | Router ≥ **0,50 mm** đồng–đồng (`FR_CLEAR_UM=500`); DRC fab ≥ 0,20 mm | Đặt dây sát pad “vì DRC xanh” |
-| **Mép board** | Track/via **≥ 2 mm** Edge.Cuts (A12). Plane In1/In2 inset **2 mm** | Copper ra sát V-cut / khe kẹp 0,3 mm |
+| **Mép board** | Track/via **≥ 0,30 mm** Edge.Cuts (A12). Plane In1/In2 inset **0,30 mm** | Dưới sàn xưởng 0,20 mm |
 | **Via** | 0,8/0,4 through; **≥ 1 mm** tới mọi pad (A11); SMT fan-out rồi mới via | Via-in-pad, via dưới chân LQFP/XH |
 | **Hàng chân đế** | Đi **vòng** hàng 2,54 mm; keepout khe giữa cọc (`pin_row_keepout.py`, A13) | Luồn tín hiệu giữa hai pin socket / TMC |
 | **Lớp** | Pad SMT → stub F ngắn → via → **B.Cu** (A0). Return **In1 GND** ngay dưới | Bus dài F dưới module; cắt plane GND dưới USB/STEP |
@@ -251,7 +251,7 @@ Thứ tự đặt linh kiện = thứ tự kỹ sư PLC bố trí card:
 5. **Cạnh bắc (N) — sensor / điều khiển:** `J_P24N`, đếm BUP/fiber, IN start/stop,
    `J_CNT5` 5 V, USB. Khe housing **≥ 5 mm**.
 6. **Đông / tây:** **cấm giắc field** — khe DIN + ngón tay. Linh kiện không phải giắc
-   ngoài **≥ 4 mm** mép (BOM); track/via vẫn **≥ 2 mm** (A12).
+   ngoài **≥ 4 mm** mép (BOM); track/via **≥ 0,30 mm** (A12).
 
 `E11.1` (12 V star POWER∥OPTO∥TMC…) là cùng luật, viết cho rail cũ. **Rail sản xuất
 hiện tại = 24 V** (`BOM.md`). Đổi tên net không được đổi thứ tự vùng.
@@ -339,7 +339,7 @@ GPIO MCU **không** là đầu ra PLC.
 
 1. Tách vùng P1 (nới đai opto / đẩy MCU bắc).
 2. Đổi cạnh giắc (motor nam, sensor bắc) — E11.3.
-3. Mở board, **không** hạ 0,50 mm / 1 mm via–pad / 2 mm mép.
+3. Mở board, **không** hạ 0,50 mm / 1 mm via–pad / 0,30 mm mép.
 4. Chỉ sau đó mới thêm via fan-out (A0).
 
 **Cổng:** mắt P1–P6 + `verify_compact.py` (giắc N/S, 24 V) + A5–A13 + mục F (P).
@@ -449,7 +449,7 @@ IWDG + brownout (`PWR_CR3`); GPIO NC = analog; TM1637 OD; không ADC trên PA4/P
 | E3 | 4× M3 mounting inset 3.5 mm; keepout đầu vít ⌀7 mm | KiCad + silk |
 | E4 | Không footprint module chồng nhau (kể cả TOP↔BOTTOM) | `_check_overlaps.py` |
 | E5 | **A5–A7 bắt buộc trên carrier và M1/M2** | `_check_signal_routing.py` + `verify_modules.py` / `_check_a5a7_all.py` |
-| E6 | **Đồng (track / via / plane) cách mép ≥ 2,00 mm** (A12). DRC `min_copper_edge_clearance=2.0`; custom rule 2 mm — **không** giữ rule JLC 0,30 mm cạnh | DRC `copper_edge_clearance` + `enforce_via_edge.py --check` |
+| E6 | **Đồng (track / via / plane) cách mép ≥ 0,30 mm** (A12). DRC `min_copper_edge_clearance=0.3`; custom rule 0,30 mm | DRC `copper_edge_clearance` + `enforce_via_edge.py --check` |
 | E7 | Đổi lớp chỉ tại pad THT hoặc via thật | DRC |
 | E8 | **Silk ≥ 0.8 mm**, chữ B mirror | DRC E2c |
 
@@ -458,14 +458,14 @@ IWDG + brownout (`PWR_CR3`); GPIO NC = analog; TM1637 OD; không ADC trên PA4/P
 `route_freerouting.py` nâng mọi `(clearance …)` trong DSN lên **`A7_CLEARANCE_UM`**
 (mặc định **500 µm = 0,50 mm**) — không dừng ở sàn DRC 0,20 mm. Riêng
 `(clearance type via_pin)` = **`VIA_PIN_CLEAR_UM=1000`** (A11). DSN còn
-keepout hàng chân (`pin_row_keepout.py`) và bốn rect mép 2 mm.
+keepout hàng chân (`pin_row_keepout.py`) và bốn rect mép 0,30 mm.
 
 **2026-09-17 — carrier 4 lớp 180×120:** `FR_CLEAR_UM=500` là sàn **công nghiệp**
-(không hạ xuống 250 để “đủ net”). `maze_router` dùng cùng `EDGE_CLEARANCE_MM=2.0`
+(không hạ xuống 250 để “đủ net”). `maze_router` dùng cùng `EDGE_CLEARANCE_MM=0.3`
 và `VIA_PAD_GAP_MM=1.0`.
 
 **Không pour GND trên F.Cu/B.Cu** — return là **In1 plane**. Zone In1/In2 inset
-**2 mm** mép. Fill sau route với `SKIP_FANOUT=1` (fan-out via không chiếm track
+**0,30 mm** mép. Fill sau route với `SKIP_FANOUT=1` (fan-out via không chiếm track
 → short). Bug Specctra “mất kiểu BOARD” (A9) vẫn đúng: refill zone ở **tiến trình mới**.
 
 ## E9. Quy tắc bề rộng dây — fab tiêu chuẩn + dòng tải
@@ -478,7 +478,7 @@ và `VIA_PAD_GAP_MM=1.0`.
 | Clearance | 0.127 mm | **0.20 mm** (Power 0.25) |
 | Via drill / pad | 0.3 / 0.5–0.6 | **0.4 / 0.8** (A8 — một cỡ, through only) |
 | Annular ring | 0.13 mm | **≥ 0.15 mm** |
-| Copper–edge | 0.3–0.5 mm (xưởng) | **≥ 2,00 mm** (A12 / E6) — plane inset 2 mm |
+| Copper–edge | 0.20 mm (xưởng min) | **≥ 0,30 mm** (A12 / E6 house) — plane inset 0,30 mm |
 
 → **Không có dây “quá nhỏ” so với fab** nếu mọi track ≥ 0.25 mm. Cổng `track_width` trong DRC phải = 0.
 
@@ -597,7 +597,7 @@ Maze lưới **0.55 mm**: `0.28+0.28@0.20=0.48` OK; `0.34+0.34@0.20=0.54` OK; ng
 | E10.14 | Nhiệt: ULN mát hơn DRV; TMC vẫn cần khe thoáng | |
 | E10.15 | **28BYJ-48 bản 12V** (R~150–300Ω); VCC module ULN = +12V; motor cắm JST trên module | R-8 MODULES |
 | E10.16 | **R4** bắt buộc — `/OE` Hi-Z lúc boot | verify §D |
-| E10.17 | **GND = In1 plane** (không pour F/B). Track GND chỉ stitch / thermal. Via–pad ≥1 mm; mép ≥2 mm (A11–A12) | mắt + `enforce_via_edge.py --check` |
+| E10.17 | **GND = In1 plane** (không pour F/B). Track GND chỉ stitch / thermal. Via–pad ≥1 mm; mép ≥0,30 mm (A11–A12) | mắt + `enforce_via_edge.py --check` |
 
 ---
 
@@ -613,11 +613,11 @@ Maze lưới **0.55 mm**: `0.28+0.28@0.20=0.48` OK; `0.34+0.34@0.20=0.54` OK; ng
 - [ ] **A0**: bus dài trên **B.Cu**; F.Cu chỉ fan-out pad→via (mặt trước = module + giắc)
 - [ ] **A8**: mọi via = **through 0,4/0,8**; không blind/buried/microvia/via-in-pad
 - [ ] **A11**: via không trùng pad; đồng via–pad ≥ 1 mm (`enforce_via_edge.py --check`)
-- [ ] **A12**: track/via/plane ≥ 2 mm Edge.Cuts
+- [ ] **A12**: track/via/plane ≥ 0,30 mm Edge.Cuts
 - [ ] **A13**: không đi xuyên hàng chân đế 2,54 mm
 - [ ] **A10 / R**: In1 GND đặc; In2 tách nguồn; không bus F dưới module; Mot/USB theo bảng R
 - [ ] **A5–A7**: không tín hiệu cắt nhau cùng mặt; không track cắt lỗ
-- [ ] DRC: clearance ≥ 0.2, track ≥ 0.25, **edge ≥ 2,0**, via–pad ≥ 1,0
+- [ ] DRC: clearance ≥ 0.2, track ≥ 0.25, **edge ≥ 0,30**, via–pad ≥ 1,0
 - [ ] 3D: MCU, TMC, ULN, F1 5×20, jack hướng đúng + silk pin1 / mục đích giắc
 - [ ] Mọi footprint có **tên (Reference)** nhìn thấy
 - [ ] Gerber: **180 × 120 mm**, **4 layer**, 1.6 mm, HASL/ENIG, không impedance controlled
@@ -654,7 +654,7 @@ python _check_cluster_cover.py
 ## H. Khi FAIL
 
 1. **Schematic là nguồn chân / net.** PCB phải khớp pin map schematic — không bịa LCSC / không `gen_compact_carrier.py`.
-2. A11 (via–pad < 1 mm) / A12 (dây sát mép): chạy `enforce_via_edge.py` rồi `repair_open_pcb` — **không** hạ 1 mm / 2 mm.
+2. A11 (via–pad < 1 mm) / A12 (dây sát mép dưới 0,30 mm): chạy `enforce_via_edge.py` rồi `repair_open_pcb` — **không** hạ via–pad 1 mm / mép dưới sàn JLC.
 3. A13 / A7 (xuyên hàng chân): keepout `pin_row_keepout.py`; đi vòng, không luồn 2,54 mm.
 4. OPEN > 0: FreeRouting leftover → maze **repair** (không `maze_full` sau SES). Tắc thì nới placement (E11.3).
 5. A5/A6 fail: đổi lớp / tách kênh / mở board.
