@@ -35,6 +35,7 @@ from stm32_pinmap import (
     IN2_PIN,
     IN3_PIN,
     KEYPAD_PINS,
+    LED_PINS,
     LQFP48_PINS,
     PWR_PINS,
     TM1637_PINS,
@@ -447,6 +448,7 @@ def attach_board_3d_models() -> None:
         "R_0805_4k7": [r0805],
         "R_0805_2k2": [r0805],
         "R_0805_1k": [r0805],
+        "LED_0805": [_kicad_model("LED_SMD.3dshapes/LED_0805_2012Metric.step")],
         "R_0805_100k": [r0805],
         "R_1206_22R": [_kicad_model("Resistor_SMD.3dshapes/R_1206_3216Metric.step")],
         "PTC_1812": [_kicad_model("Resistor_SMD.3dshapes/R_1812_4532Metric.step")],
@@ -821,6 +823,30 @@ def ensure_extra_footprints() -> None:
 	(pad "8" thru_hole circle (at -7.62 -6.5) (size 1.5 1.5) (drill 0.9) (layers "*.Cu" "*.Mask"))
 	(pad "9" thru_hole circle (at -5.08 -6.5) (size 1.5 1.5) (drill 0.9) (layers "*.Cu" "*.Mask"))
 	(pad "10" thru_hole circle (at -2.54 -6.5) (size 1.5 1.5) (drill 0.9) (layers "*.Cu" "*.Mask"))
+)
+""",
+        force=True,
+    )
+    write(
+        "LED_0805",
+        """
+(footprint "LED_0805"
+	(version 20240108)
+	(generator "gen_compact_carrier.py")
+	(layer "F.Cu")
+	(descr "0805 LED — pad1=A pad2=K")
+	(tags "LED 0805")
+	(attr smd)
+	(fp_line (start -0.6 -0.85) (end -0.6 0.85)
+		(stroke (width 0.12) (type solid)) (layer "F.SilkS"))
+	(fp_rect (start -1.1 -0.7) (end 1.1 0.7)
+		(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
+	(pad "1" smd rect (at -0.95 0) (size 0.7 1.2) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "2" smd rect (at 0.95 0) (size 0.7 1.2) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(model "${KICAD10_3DMODEL_DIR}/LED_SMD.3dshapes/LED_0805_2012Metric.step"
+		(offset (xyz 0 0 0))
+		(scale (xyz 1 1 1))
+		(rotate (xyz 0 0 0)))
 )
 """,
         force=True,
@@ -1257,6 +1283,8 @@ def build_parts() -> list[Part]:
         USART1_PINS["RX"]: "/UART_RX",
         BOOT_PINS["SWDIO"]: "/SWDIO",
         BOOT_PINS["SWCLK"]: "/SWCLK",
+        LED_PINS["RUN"]: "/LED_RUN",
+        LED_PINS["ERR"]: "/LED_ERR",
         "NRST": "/NRST",
         "VBAT": "+3V3",
         "VREF+": "+3V3",
@@ -1444,6 +1472,24 @@ def build_parts() -> list[Part]:
             "1": "+24V", "2": "GND", "3": "/VIB_CTRL", "4": "/VIB_FAULT",
         }),
         P("R_VIB_FLT", "R_0805_10k", "10k", "PWR", {"1": "+3V3", "2": "/VIB_FAULT"}),
+        # Status LEDs (hand-route on live PCB; SoT nets for regen)
+        P("R_LED24", "R_0805_2k2", "2k2", "LED", {"1": "+24V", "2": "/LED24_A"}),
+        P("D_LED24", "LED_0805", "LED_AMB", "LED", {"1": "/LED24_A", "2": "GND"}),
+        P("R_LED33", "R_0805_1k", "1k", "LED", {"1": "+3V3", "2": "/LED33_A"}),
+        P("D_LED3V3", "LED_0805", "LED_GRN", "LED", {"1": "/LED33_A", "2": "GND"}),
+        P("R_LEDRUN", "R_0805_1k", "1k", "LED", {"1": "/LED_RUN", "2": "/LEDRUN_A"}),
+        P("D_LEDRUN", "LED_0805", "LED_GRN", "LED", {"1": "/LEDRUN_A", "2": "GND"}),
+        P("R_LEDERR", "R_0805_1k", "1k", "LED", {"1": "/LED_ERR", "2": "/LEDERR_A"}),
+        P("D_LEDERR", "LED_0805", "LED_RED", "LED", {"1": "/LEDERR_A", "2": "GND"}),
+        # Sensor activity (passive): +3V3 → R → LED → collector; ON when opto sinks
+        P("R_LEDBUP", "R_0805_1k", "1k", "LED", {"1": "+3V3", "2": "/LEDBUP_A"}),
+        P("D_LEDBUP", "LED_0805", "LED_YEL", "LED", {"1": "/LEDBUP_A", "2": "/BUP"}),
+        P("R_LEDCNT5", "R_0805_1k", "1k", "LED", {"1": "+3V3", "2": "/LEDCNT5_A"}),
+        P("D_LEDCNT5", "LED_0805", "LED_YEL", "LED", {"1": "/LEDCNT5_A", "2": "/CNT5"}),
+        P("R_LEDIN2", "R_0805_1k", "1k", "LED", {"1": "+3V3", "2": "/LEDIN2_A"}),
+        P("D_LEDIN2", "LED_0805", "LED_YEL", "LED", {"1": "/LEDIN2_A", "2": "/IN2"}),
+        P("R_LEDIN3", "R_0805_1k", "1k", "LED", {"1": "+3V3", "2": "/LEDIN3_A"}),
+        P("D_LEDIN3", "LED_0805", "LED_YEL", "LED", {"1": "/LEDIN3_A", "2": "/IN3"}),
     ]
     return parts
 

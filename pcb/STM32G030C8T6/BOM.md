@@ -52,6 +52,23 @@ Pinmap rút ngắn dây theo cạnh LQFP (N=HMI, W=đếm/opto, S=TMC, E/SE=PWR/
 | Keypad COL0–3 | PB5 / PB4 / PB3 / PD3 |
 | USART1 TX / RX (CH340) | PA9 / PA10 |
 | SWDIO / SWCLK(BOOT0) | PA13 / PA14 (USB-UART boot; no SWO) |
+| **LED RUN / ERR** | **PB2 / PC6** (active-high → R → LED → GND) |
+
+### LED trạng thái (SMT, đi dây tay)
+
+| Ref | Màu | Mạch | Ý nghĩa |
+|-----|-----|------|---------|
+| D_LED24 + R_LED24 2k2 | Amber | `+24V → R → LED → GND` | Nguồn 24 V có điện |
+| D_LED3V3 + R_LED33 1k | Green | `+3V3 → R → LED → GND` | Logic 3V3 OK |
+| D_LEDRUN + R_LEDRUN 1k | Green | `PB2 /LED_RUN → R → LED → GND` | FW heartbeat (nháy) |
+| D_LEDERR + R_LEDERR 1k | Red | `PC6 /LED_ERR → R → LED → GND` | Fault (PWR/VIB/SW) |
+| D_LEDBUP + R_LEDBUP 1k | Yellow | `+3V3 → R → LED → /BUP` | **Đếm BUP/fiber** — sáng khi có vật (opto sink) |
+| D_LEDCNT5 + R_LEDCNT5 1k | Yellow | `+3V3 → R → LED → /CNT5` | **Đếm IR 5 V** — sáng khi có vật |
+| D_LEDIN2 + R_LEDIN2 1k | Yellow | `+3V3 → R → LED → /IN2` | DI2 active |
+| D_LEDIN3 + R_LEDIN3 1k | Yellow | `+3V3 → R → LED → /IN3` | DI3 active |
+
+> LED cảm biến **thụ động** (không GPIO): song song hướng với pull-up collector — sáng khi opto kéo net thấp. Pad đã gán net; **chưa có track** — đi dây tay.
+> LED RUN/ERR: Hi-Z lúc boot = tắt. Silk cụm `STATUS` (gần USB) và `SNS LED` (gần opto).
 
 ---
 

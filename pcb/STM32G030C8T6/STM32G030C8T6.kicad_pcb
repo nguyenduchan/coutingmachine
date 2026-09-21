@@ -8521,7 +8521,7 @@
 			(size 0.3 1.475)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
-			(net "unconnected-(U1-21-Pad21)")
+			(net "/LED_RUN")
 			(uuid "ae64d403-3728-407b-bfc5-2b713fffa1a9")
 		)
 		(pad "22" smd roundrect
@@ -8593,7 +8593,7 @@
 			(size 1.475 0.3)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
-			(net "unconnected-(U1-30-Pad30)")
+			(net "/LED_ERR")
 			(uuid "a52a3e13-9204-42b0-a0fc-4e462333c3bc")
 		)
 		(pad "31" smd roundrect
@@ -20392,4 +20392,1654 @@
 		(uuid "109489cd-2a65-4721-a9f9-4970b4fd85a2")
 	)
 	(embedded_fonts no)
+	(gr_text "STATUS"
+		(at 177.0 54.5)
+		(layer "F.SilkS")
+		(uuid "d7747642-00bb-4975-ac59-fbb679bbd454")
+		(effects
+			(font
+				(size 0.9 0.9)
+				(thickness 0.135)
+			)
+			(justify left bottom)
+		)
+	)
+
+	(gr_text "24V"
+		(at 172.5 58.25)
+		(layer "F.SilkS")
+		(uuid "84ea66e3-3171-4f41-a703-84afc3b47ff2")
+		(effects
+			(font
+				(size 0.65 0.65)
+				(thickness 0.098)
+			)
+			(justify left bottom)
+		)
+	)
+
+	(footprint "STM32G030C8T6:R_0805_2k2"
+		(layer "F.Cu")
+		(uuid "9b920d6e-c8eb-4f3c-a35d-a264e0e41f68")
+		(at 178.0 58.0 0.0)
+		(property "Reference" "R_LED24"
+			(at 0 -1.35 0)
+			(layer "F.SilkS")
+			(uuid "a72dbfdb-dd95-412d-a3e8-11923b2335af")
+			(effects
+				(font
+					(size 0.7 0.7)
+					(thickness 0.1)
+				)
+			)
+		)
+		(property "Value" "2k2"
+			(at 0 1.35 0)
+			(layer "F.Fab")
+			(uuid "8e996761-46f1-4181-abb0-ce52543130bb")
+			(effects
+				(font
+					(size 0.6 0.6)
+					(thickness 0.09)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "40e2a9fe-0cbe-4da2-9653-15b9f1ae2250")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Description" "Status LED series"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "9668d713-ae1d-46ca-97ac-30f55f03ace2")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(attr smd)
+		(fp_rect
+			(start -1.1 -0.7)
+			(end 1.1 0.7)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill none)
+			(layer "F.CrtYd")
+			(uuid "439e9e80-142b-40e2-8ef4-79e97160c3a1")
+		)
+		(pad "1" smd rect
+			(at -0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "+24V")
+			(uuid "6b68385d-a804-463f-8865-f87675568417")
+		)
+		(pad "2" smd rect
+			(at 0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "/LED24_A")
+			(uuid "c50e8a36-11aa-4299-982b-27b2738e0d9c")
+		)
+		(embedded_fonts no)
+		(model "${KICAD10_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0805_2012Metric.step"
+			(offset
+				(xyz 0 0 0)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz 0 0 0)
+			)
+		)
+	)
+
+	(footprint "STM32G030C8T6:LED_0805"
+		(layer "F.Cu")
+		(uuid "dc3b3657-93db-4b76-a55c-b17a34a79b4d")
+		(at 182.0 58.0 0.0)
+		(property "Reference" "D_LED24"
+			(at 0 -1.35 0)
+			(layer "F.SilkS")
+			(uuid "eab37552-f0ff-4e2e-8a9f-eee02327026a")
+			(effects
+				(font
+					(size 0.7 0.7)
+					(thickness 0.1)
+				)
+			)
+		)
+		(property "Value" "LED_AMB"
+			(at 0 1.35 0)
+			(layer "F.Fab")
+			(uuid "2c7eb9e4-ef32-47f7-aea4-83821dcf92fb")
+			(effects
+				(font
+					(size 0.55 0.55)
+					(thickness 0.08)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "658c7ecd-f4ad-49a2-84fd-41d61386e180")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Description" "Status / sensor LED"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "29027ca3-0455-4625-8055-f6dc4f68e42e")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(attr smd)
+		(fp_line
+			(start -0.6 -0.85)
+			(end -0.6 0.85)
+			(stroke
+				(width 0.12)
+				(type solid)
+			)
+			(layer "F.SilkS")
+			(uuid "f38b3cf9-5fe5-438a-91b7-e2cced34bb6c")
+		)
+		(fp_rect
+			(start -1.1 -0.7)
+			(end 1.1 0.7)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill none)
+			(layer "F.CrtYd")
+			(uuid "59b57ad7-7d9b-4b04-b9d8-856427827c6d")
+		)
+		(pad "1" smd rect
+			(at -0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "/LED24_A")
+			(uuid "8958a9df-8eeb-4f19-a460-8bfb7bf2d9d3")
+		)
+		(pad "2" smd rect
+			(at 0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "GND")
+			(uuid "b2e14e8b-cd34-4b88-bfdc-d38691fc0727")
+		)
+		(embedded_fonts no)
+		(model "${KICAD10_3DMODEL_DIR}/LED_SMD.3dshapes/LED_0805_2012Metric.step"
+			(offset
+				(xyz 0 0 0)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz 0 0 0)
+			)
+		)
+	)
+
+	(gr_text "3V3"
+		(at 172.5 61.45)
+		(layer "F.SilkS")
+		(uuid "a6364495-b261-4188-87e7-168e047e8347")
+		(effects
+			(font
+				(size 0.65 0.65)
+				(thickness 0.098)
+			)
+			(justify left bottom)
+		)
+	)
+
+	(footprint "STM32G030C8T6:R_0805_1k"
+		(layer "F.Cu")
+		(uuid "57ce6ac1-98f8-4c86-8cd4-aa5dc7f9dc21")
+		(at 178.0 61.2 0.0)
+		(property "Reference" "R_LED33"
+			(at 0 -1.35 0)
+			(layer "F.SilkS")
+			(uuid "0beafc53-9b03-4bf5-8e16-46c063a16fe4")
+			(effects
+				(font
+					(size 0.7 0.7)
+					(thickness 0.1)
+				)
+			)
+		)
+		(property "Value" "1k"
+			(at 0 1.35 0)
+			(layer "F.Fab")
+			(uuid "0e293d90-4eb1-412d-8920-fa8bd558092d")
+			(effects
+				(font
+					(size 0.6 0.6)
+					(thickness 0.09)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "0768f4b6-80da-4563-ae50-cb9e0c3bbcbe")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Description" "Status LED series"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "5e41de36-d1d9-47a4-88f0-7cb98551a688")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(attr smd)
+		(fp_rect
+			(start -1.1 -0.7)
+			(end 1.1 0.7)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill none)
+			(layer "F.CrtYd")
+			(uuid "41f949ee-7c8d-4e1a-bfda-d2cb633748c4")
+		)
+		(pad "1" smd rect
+			(at -0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "+3V3")
+			(uuid "eef43e74-d0bc-48a9-8b76-2b2fbf8a4d6f")
+		)
+		(pad "2" smd rect
+			(at 0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "/LED33_A")
+			(uuid "d5e56c27-e1f5-493b-912e-96f05eddbd0f")
+		)
+		(embedded_fonts no)
+		(model "${KICAD10_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0805_2012Metric.step"
+			(offset
+				(xyz 0 0 0)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz 0 0 0)
+			)
+		)
+	)
+
+	(footprint "STM32G030C8T6:LED_0805"
+		(layer "F.Cu")
+		(uuid "bd924261-ab99-4ee5-aa5f-f87a941c9f26")
+		(at 182.0 61.2 0.0)
+		(property "Reference" "D_LED3V3"
+			(at 0 -1.35 0)
+			(layer "F.SilkS")
+			(uuid "acb27662-7029-46d5-a379-f777b688624e")
+			(effects
+				(font
+					(size 0.7 0.7)
+					(thickness 0.1)
+				)
+			)
+		)
+		(property "Value" "LED_GRN"
+			(at 0 1.35 0)
+			(layer "F.Fab")
+			(uuid "6b5eace9-7b46-476f-a395-e206d42f3ba4")
+			(effects
+				(font
+					(size 0.55 0.55)
+					(thickness 0.08)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "8dbf96a8-75a3-4fe6-9aae-516e482cf791")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Description" "Status / sensor LED"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "07888ccd-fb56-4b8c-af34-2f8c236bacfa")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(attr smd)
+		(fp_line
+			(start -0.6 -0.85)
+			(end -0.6 0.85)
+			(stroke
+				(width 0.12)
+				(type solid)
+			)
+			(layer "F.SilkS")
+			(uuid "b8ef61c0-a491-47cc-9068-8dc162d3b113")
+		)
+		(fp_rect
+			(start -1.1 -0.7)
+			(end 1.1 0.7)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill none)
+			(layer "F.CrtYd")
+			(uuid "74503ce9-7d9f-4fa5-9184-11f8c37c9a56")
+		)
+		(pad "1" smd rect
+			(at -0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "/LED33_A")
+			(uuid "93dc98df-00b6-402e-8a6a-b5f32525078d")
+		)
+		(pad "2" smd rect
+			(at 0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "GND")
+			(uuid "af6cb85b-b423-4771-b187-f9e08e41dc00")
+		)
+		(embedded_fonts no)
+		(model "${KICAD10_3DMODEL_DIR}/LED_SMD.3dshapes/LED_0805_2012Metric.step"
+			(offset
+				(xyz 0 0 0)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz 0 0 0)
+			)
+		)
+	)
+
+	(gr_text "RUN"
+		(at 172.5 64.65)
+		(layer "F.SilkS")
+		(uuid "83992f28-960f-4aa8-9188-f58cb6a16dc6")
+		(effects
+			(font
+				(size 0.65 0.65)
+				(thickness 0.098)
+			)
+			(justify left bottom)
+		)
+	)
+
+	(footprint "STM32G030C8T6:R_0805_1k"
+		(layer "F.Cu")
+		(uuid "b15b7ab6-8213-4b3f-bf9e-522ae5404cfa")
+		(at 178.0 64.4 0.0)
+		(property "Reference" "R_LEDRUN"
+			(at 0 -1.35 0)
+			(layer "F.SilkS")
+			(uuid "ed16d202-0635-4c10-91c0-ced634358166")
+			(effects
+				(font
+					(size 0.7 0.7)
+					(thickness 0.1)
+				)
+			)
+		)
+		(property "Value" "1k"
+			(at 0 1.35 0)
+			(layer "F.Fab")
+			(uuid "3fd0652b-19c0-4871-9e40-25d62fbe1f67")
+			(effects
+				(font
+					(size 0.6 0.6)
+					(thickness 0.09)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "b5099a95-6c2c-485d-b56d-8d90a57eaba2")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Description" "Status LED series"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "b2e8ad44-3dc3-43c6-a9f5-29ae1ed0fcf4")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(attr smd)
+		(fp_rect
+			(start -1.1 -0.7)
+			(end 1.1 0.7)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill none)
+			(layer "F.CrtYd")
+			(uuid "084fcafc-340d-43b5-9d03-b305ca4ef0b0")
+		)
+		(pad "1" smd rect
+			(at -0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "/LED_RUN")
+			(uuid "5c634d2d-0108-4383-81d9-b240582ce30e")
+		)
+		(pad "2" smd rect
+			(at 0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "/LEDRUN_A")
+			(uuid "b0c29696-91a2-41e6-b352-06421ecf4a14")
+		)
+		(embedded_fonts no)
+		(model "${KICAD10_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0805_2012Metric.step"
+			(offset
+				(xyz 0 0 0)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz 0 0 0)
+			)
+		)
+	)
+
+	(footprint "STM32G030C8T6:LED_0805"
+		(layer "F.Cu")
+		(uuid "8395f405-eea0-4b28-8468-f367874ee8c0")
+		(at 182.0 64.4 0.0)
+		(property "Reference" "D_LEDRUN"
+			(at 0 -1.35 0)
+			(layer "F.SilkS")
+			(uuid "88a778d1-1428-45de-b105-e0717890713a")
+			(effects
+				(font
+					(size 0.7 0.7)
+					(thickness 0.1)
+				)
+			)
+		)
+		(property "Value" "LED_GRN"
+			(at 0 1.35 0)
+			(layer "F.Fab")
+			(uuid "98cf8420-8e9b-4615-8ccb-8d9b2273a413")
+			(effects
+				(font
+					(size 0.55 0.55)
+					(thickness 0.08)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "d44eba64-01f9-4522-8ab3-3886d3596fee")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Description" "Status / sensor LED"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "3448b976-2645-4802-a569-f90681bd1de0")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(attr smd)
+		(fp_line
+			(start -0.6 -0.85)
+			(end -0.6 0.85)
+			(stroke
+				(width 0.12)
+				(type solid)
+			)
+			(layer "F.SilkS")
+			(uuid "46617f25-3f62-44cf-bf06-0c5c4984f3c3")
+		)
+		(fp_rect
+			(start -1.1 -0.7)
+			(end 1.1 0.7)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill none)
+			(layer "F.CrtYd")
+			(uuid "aa8549a0-29cc-4a4e-8733-7f96a22dbbbc")
+		)
+		(pad "1" smd rect
+			(at -0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "/LEDRUN_A")
+			(uuid "4c4aa30a-1287-4a20-bfb6-3e813193d7ef")
+		)
+		(pad "2" smd rect
+			(at 0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "GND")
+			(uuid "897cf7bb-5ec7-40d8-8366-69dac4bd592f")
+		)
+		(embedded_fonts no)
+		(model "${KICAD10_3DMODEL_DIR}/LED_SMD.3dshapes/LED_0805_2012Metric.step"
+			(offset
+				(xyz 0 0 0)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz 0 0 0)
+			)
+		)
+	)
+
+	(gr_text "ERR"
+		(at 172.5 67.85)
+		(layer "F.SilkS")
+		(uuid "4b53713c-68b4-4111-8524-4347d8a3be1e")
+		(effects
+			(font
+				(size 0.65 0.65)
+				(thickness 0.098)
+			)
+			(justify left bottom)
+		)
+	)
+
+	(footprint "STM32G030C8T6:R_0805_1k"
+		(layer "F.Cu")
+		(uuid "071672a0-219a-4f6e-8cf9-00fca2e16e79")
+		(at 178.0 67.6 0.0)
+		(property "Reference" "R_LEDERR"
+			(at 0 -1.35 0)
+			(layer "F.SilkS")
+			(uuid "aeabe344-af29-4af1-a264-264ee8d7f71b")
+			(effects
+				(font
+					(size 0.7 0.7)
+					(thickness 0.1)
+				)
+			)
+		)
+		(property "Value" "1k"
+			(at 0 1.35 0)
+			(layer "F.Fab")
+			(uuid "6d60037e-7191-4e40-ac47-8b5ffa61b144")
+			(effects
+				(font
+					(size 0.6 0.6)
+					(thickness 0.09)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "97ee02ef-5401-43aa-b626-54301507668f")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Description" "Status LED series"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "d3c673c1-938b-4853-bc90-b1f96d57406a")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(attr smd)
+		(fp_rect
+			(start -1.1 -0.7)
+			(end 1.1 0.7)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill none)
+			(layer "F.CrtYd")
+			(uuid "d14d4616-b419-464b-81b5-d1dfb9eee1e9")
+		)
+		(pad "1" smd rect
+			(at -0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "/LED_ERR")
+			(uuid "0ffa024b-7403-4c76-9cf1-4c67d616a218")
+		)
+		(pad "2" smd rect
+			(at 0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "/LEDERR_A")
+			(uuid "988739dc-d7dc-4eb8-8e09-7d4f4adbfdbf")
+		)
+		(embedded_fonts no)
+		(model "${KICAD10_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0805_2012Metric.step"
+			(offset
+				(xyz 0 0 0)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz 0 0 0)
+			)
+		)
+	)
+
+	(footprint "STM32G030C8T6:LED_0805"
+		(layer "F.Cu")
+		(uuid "12e04fcf-0c09-4840-88ba-3d9be2af5a7c")
+		(at 182.0 67.6 0.0)
+		(property "Reference" "D_LEDERR"
+			(at 0 -1.35 0)
+			(layer "F.SilkS")
+			(uuid "f613c7a1-7583-47fb-8cb4-cfb8ce142a7c")
+			(effects
+				(font
+					(size 0.7 0.7)
+					(thickness 0.1)
+				)
+			)
+		)
+		(property "Value" "LED_RED"
+			(at 0 1.35 0)
+			(layer "F.Fab")
+			(uuid "ad889f7a-5791-4350-9c29-bf12e6eb9275")
+			(effects
+				(font
+					(size 0.55 0.55)
+					(thickness 0.08)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "3abbee16-328b-4dd6-9853-b992e9539fa5")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Description" "Status / sensor LED"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "f3ed93f2-fc3f-48eb-914b-88a40255d58d")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(attr smd)
+		(fp_line
+			(start -0.6 -0.85)
+			(end -0.6 0.85)
+			(stroke
+				(width 0.12)
+				(type solid)
+			)
+			(layer "F.SilkS")
+			(uuid "b4df569f-cd34-44ab-839b-d8ee1bc90de0")
+		)
+		(fp_rect
+			(start -1.1 -0.7)
+			(end 1.1 0.7)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill none)
+			(layer "F.CrtYd")
+			(uuid "100ef68c-45d7-44d0-acad-c946f62be06c")
+		)
+		(pad "1" smd rect
+			(at -0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "/LEDERR_A")
+			(uuid "41c719aa-b686-4a5d-97e0-903d621323e9")
+		)
+		(pad "2" smd rect
+			(at 0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "GND")
+			(uuid "a98c4afe-b0af-4ea4-986e-b9ab9f94ed27")
+		)
+		(embedded_fonts no)
+		(model "${KICAD10_3DMODEL_DIR}/LED_SMD.3dshapes/LED_0805_2012Metric.step"
+			(offset
+				(xyz 0 0 0)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz 0 0 0)
+			)
+		)
+	)
+
+	(gr_text "SNS LED"
+		(at 111.0 68.5)
+		(layer "F.SilkS")
+		(uuid "88a28dfb-5f99-42ee-9bf9-b89fec4ed427")
+		(effects
+			(font
+				(size 0.9 0.9)
+				(thickness 0.135)
+			)
+			(justify left bottom)
+		)
+	)
+
+	(gr_text "BUP"
+		(at 106.8 72.25)
+		(layer "F.SilkS")
+		(uuid "eb108615-92c4-4237-a8fe-66df5496777f")
+		(effects
+			(font
+				(size 0.65 0.65)
+				(thickness 0.098)
+			)
+			(justify left bottom)
+		)
+	)
+
+	(footprint "STM32G030C8T6:R_0805_1k"
+		(layer "F.Cu")
+		(uuid "2e715732-855c-4c90-bb29-536613fbb985")
+		(at 112.0 72.0 0.0)
+		(property "Reference" "R_LEDBUP"
+			(at 0 -1.35 0)
+			(layer "F.SilkS")
+			(uuid "af45e0df-2eef-4e5d-b24d-4f956223c965")
+			(effects
+				(font
+					(size 0.7 0.7)
+					(thickness 0.1)
+				)
+			)
+		)
+		(property "Value" "1k"
+			(at 0 1.35 0)
+			(layer "F.Fab")
+			(uuid "d4546a36-768b-4b18-8561-c659dd67a801")
+			(effects
+				(font
+					(size 0.6 0.6)
+					(thickness 0.09)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "a1797ddc-03bb-469d-9d9f-425b586c080b")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Description" "Status LED series"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "e57faf43-c4a5-41e1-ae14-5277ac6316cf")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(attr smd)
+		(fp_rect
+			(start -1.1 -0.7)
+			(end 1.1 0.7)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill none)
+			(layer "F.CrtYd")
+			(uuid "6a4b7d92-1489-41fb-9aa9-527409ffbfb7")
+		)
+		(pad "1" smd rect
+			(at -0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "+3V3")
+			(uuid "43e7b267-52d9-4d16-8aab-d98933da9cfb")
+		)
+		(pad "2" smd rect
+			(at 0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "/LEDBUP_A")
+			(uuid "901114e0-5edb-461b-853b-4f7420e8df40")
+		)
+		(embedded_fonts no)
+		(model "${KICAD10_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0805_2012Metric.step"
+			(offset
+				(xyz 0 0 0)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz 0 0 0)
+			)
+		)
+	)
+
+	(footprint "STM32G030C8T6:LED_0805"
+		(layer "F.Cu")
+		(uuid "e936f879-ed82-4a29-964b-1f083881c9c6")
+		(at 116.0 72.0 0.0)
+		(property "Reference" "D_LEDBUP"
+			(at 0 -1.35 0)
+			(layer "F.SilkS")
+			(uuid "b876101d-fc92-45c3-9288-60e691cb2a6c")
+			(effects
+				(font
+					(size 0.7 0.7)
+					(thickness 0.1)
+				)
+			)
+		)
+		(property "Value" "LED_YEL"
+			(at 0 1.35 0)
+			(layer "F.Fab")
+			(uuid "52379ac3-a9df-4153-abff-adbe609e8a32")
+			(effects
+				(font
+					(size 0.55 0.55)
+					(thickness 0.08)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "172ab4c1-53e8-475f-b0eb-b1af173128af")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Description" "Status / sensor LED"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "4a69da3f-3cfb-41cf-aea3-84f48c7865f9")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(attr smd)
+		(fp_line
+			(start -0.6 -0.85)
+			(end -0.6 0.85)
+			(stroke
+				(width 0.12)
+				(type solid)
+			)
+			(layer "F.SilkS")
+			(uuid "a1452333-0890-4090-9372-a234c1038f18")
+		)
+		(fp_rect
+			(start -1.1 -0.7)
+			(end 1.1 0.7)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill none)
+			(layer "F.CrtYd")
+			(uuid "f9aabd44-f358-4550-bc8c-124a56f19c5a")
+		)
+		(pad "1" smd rect
+			(at -0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "/LEDBUP_A")
+			(uuid "f2283ff6-7214-432b-b478-e7020fcc649c")
+		)
+		(pad "2" smd rect
+			(at 0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "/BUP")
+			(uuid "3ae65db6-c3d8-4cdc-b3ed-2452e7566cd3")
+		)
+		(embedded_fonts no)
+		(model "${KICAD10_3DMODEL_DIR}/LED_SMD.3dshapes/LED_0805_2012Metric.step"
+			(offset
+				(xyz 0 0 0)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz 0 0 0)
+			)
+		)
+	)
+
+	(gr_text "CNT5"
+		(at 106.8 75.45)
+		(layer "F.SilkS")
+		(uuid "81eef291-ab14-42fe-9bff-87f6c1984738")
+		(effects
+			(font
+				(size 0.65 0.65)
+				(thickness 0.098)
+			)
+			(justify left bottom)
+		)
+	)
+
+	(footprint "STM32G030C8T6:R_0805_1k"
+		(layer "F.Cu")
+		(uuid "4fa06d21-8c40-4511-8dd5-750f7343b494")
+		(at 112.0 75.2 0.0)
+		(property "Reference" "R_LEDCNT5"
+			(at 0 -1.35 0)
+			(layer "F.SilkS")
+			(uuid "66010286-b831-46ee-9761-757420fc9096")
+			(effects
+				(font
+					(size 0.7 0.7)
+					(thickness 0.1)
+				)
+			)
+		)
+		(property "Value" "1k"
+			(at 0 1.35 0)
+			(layer "F.Fab")
+			(uuid "aa0eb9b5-5392-43a7-ac25-8bd9a64fad79")
+			(effects
+				(font
+					(size 0.6 0.6)
+					(thickness 0.09)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "62bce30c-1ce2-4884-a541-160830b70f39")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Description" "Status LED series"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "50470ae5-56e4-4680-a1ef-4302cb780173")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(attr smd)
+		(fp_rect
+			(start -1.1 -0.7)
+			(end 1.1 0.7)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill none)
+			(layer "F.CrtYd")
+			(uuid "0c55eb78-640a-49bf-a59b-9dfaed5499d1")
+		)
+		(pad "1" smd rect
+			(at -0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "+3V3")
+			(uuid "b290908b-cb2d-44e9-b80c-54f94a327d83")
+		)
+		(pad "2" smd rect
+			(at 0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "/LEDCNT5_A")
+			(uuid "2343201c-7c08-4b87-b044-59d3bb4a2707")
+		)
+		(embedded_fonts no)
+		(model "${KICAD10_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0805_2012Metric.step"
+			(offset
+				(xyz 0 0 0)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz 0 0 0)
+			)
+		)
+	)
+
+	(footprint "STM32G030C8T6:LED_0805"
+		(layer "F.Cu")
+		(uuid "2d140462-a325-49d3-b1ef-b2dad2125b1a")
+		(at 116.0 75.2 0.0)
+		(property "Reference" "D_LEDCNT5"
+			(at 0 -1.35 0)
+			(layer "F.SilkS")
+			(uuid "0a09429f-e263-45af-9f58-f5c95d1f823b")
+			(effects
+				(font
+					(size 0.7 0.7)
+					(thickness 0.1)
+				)
+			)
+		)
+		(property "Value" "LED_YEL"
+			(at 0 1.35 0)
+			(layer "F.Fab")
+			(uuid "6ef4dc19-604f-4524-836f-c1b162a7bf9a")
+			(effects
+				(font
+					(size 0.55 0.55)
+					(thickness 0.08)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "67afbc19-6dd0-4f44-aa3d-6000aa9bfa1c")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Description" "Status / sensor LED"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "cbe10a7d-59b8-4ecf-bb78-a2253c162949")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(attr smd)
+		(fp_line
+			(start -0.6 -0.85)
+			(end -0.6 0.85)
+			(stroke
+				(width 0.12)
+				(type solid)
+			)
+			(layer "F.SilkS")
+			(uuid "1a1467cc-4e50-4ec9-b3b6-a2a47012375f")
+		)
+		(fp_rect
+			(start -1.1 -0.7)
+			(end 1.1 0.7)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill none)
+			(layer "F.CrtYd")
+			(uuid "9223cfcf-b8db-467f-8174-071ebaf8c241")
+		)
+		(pad "1" smd rect
+			(at -0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "/LEDCNT5_A")
+			(uuid "b146ca06-8167-4f79-b6e2-523db6b821ff")
+		)
+		(pad "2" smd rect
+			(at 0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "/CNT5")
+			(uuid "081ec7f0-9a65-468d-9cd0-7f9e4e791380")
+		)
+		(embedded_fonts no)
+		(model "${KICAD10_3DMODEL_DIR}/LED_SMD.3dshapes/LED_0805_2012Metric.step"
+			(offset
+				(xyz 0 0 0)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz 0 0 0)
+			)
+		)
+	)
+
+	(gr_text "IN2"
+		(at 106.8 78.65)
+		(layer "F.SilkS")
+		(uuid "a5a773f4-6d94-4db2-962d-ec6d86b70e8a")
+		(effects
+			(font
+				(size 0.65 0.65)
+				(thickness 0.098)
+			)
+			(justify left bottom)
+		)
+	)
+
+	(footprint "STM32G030C8T6:R_0805_1k"
+		(layer "F.Cu")
+		(uuid "cf0d1585-e851-487c-9ccb-ccf3afa8369e")
+		(at 112.0 78.4 0.0)
+		(property "Reference" "R_LEDIN2"
+			(at 0 -1.35 0)
+			(layer "F.SilkS")
+			(uuid "b9160c0a-71a6-4a4f-a748-a5041dc1f51f")
+			(effects
+				(font
+					(size 0.7 0.7)
+					(thickness 0.1)
+				)
+			)
+		)
+		(property "Value" "1k"
+			(at 0 1.35 0)
+			(layer "F.Fab")
+			(uuid "332f8a23-4ea1-4a38-94a8-4d817a461c17")
+			(effects
+				(font
+					(size 0.6 0.6)
+					(thickness 0.09)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "ff35cb69-b618-4a0f-9c4f-bbb022c8e944")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Description" "Status LED series"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "c2126ec8-de78-496a-abe3-b4a27390f961")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(attr smd)
+		(fp_rect
+			(start -1.1 -0.7)
+			(end 1.1 0.7)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill none)
+			(layer "F.CrtYd")
+			(uuid "84990e0d-823b-4798-99cc-22b44a10df0d")
+		)
+		(pad "1" smd rect
+			(at -0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "+3V3")
+			(uuid "cb8d52aa-a1db-4866-bcb6-c4537040803f")
+		)
+		(pad "2" smd rect
+			(at 0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "/LEDIN2_A")
+			(uuid "a7a08a62-d68f-48e7-8981-600922d38e3e")
+		)
+		(embedded_fonts no)
+		(model "${KICAD10_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0805_2012Metric.step"
+			(offset
+				(xyz 0 0 0)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz 0 0 0)
+			)
+		)
+	)
+
+	(footprint "STM32G030C8T6:LED_0805"
+		(layer "F.Cu")
+		(uuid "7d438d5c-1878-4cc3-a3be-c8142aed7ba6")
+		(at 116.0 78.4 0.0)
+		(property "Reference" "D_LEDIN2"
+			(at 0 -1.35 0)
+			(layer "F.SilkS")
+			(uuid "c2bcf1b1-a5b8-4127-8dba-798a45a37a8c")
+			(effects
+				(font
+					(size 0.7 0.7)
+					(thickness 0.1)
+				)
+			)
+		)
+		(property "Value" "LED_YEL"
+			(at 0 1.35 0)
+			(layer "F.Fab")
+			(uuid "dcf28b7a-700a-474f-9c95-afa3296d98ec")
+			(effects
+				(font
+					(size 0.55 0.55)
+					(thickness 0.08)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "e91f3bbb-9a1f-4e0b-a2f5-4e1ddcf8680a")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Description" "Status / sensor LED"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "41054e74-8158-48da-aa73-2da11d046ec8")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(attr smd)
+		(fp_line
+			(start -0.6 -0.85)
+			(end -0.6 0.85)
+			(stroke
+				(width 0.12)
+				(type solid)
+			)
+			(layer "F.SilkS")
+			(uuid "810b2f22-e21f-44bb-bc30-fa516d63f59f")
+		)
+		(fp_rect
+			(start -1.1 -0.7)
+			(end 1.1 0.7)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill none)
+			(layer "F.CrtYd")
+			(uuid "69811b48-950b-4f90-a36e-167ef2ea1040")
+		)
+		(pad "1" smd rect
+			(at -0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "/LEDIN2_A")
+			(uuid "c2bb1692-10b2-436d-b504-a34153a927df")
+		)
+		(pad "2" smd rect
+			(at 0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "/IN2")
+			(uuid "3e20eda6-d917-48fa-a8ac-f91a8cd33492")
+		)
+		(embedded_fonts no)
+		(model "${KICAD10_3DMODEL_DIR}/LED_SMD.3dshapes/LED_0805_2012Metric.step"
+			(offset
+				(xyz 0 0 0)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz 0 0 0)
+			)
+		)
+	)
+
+	(gr_text "IN3"
+		(at 106.8 81.85)
+		(layer "F.SilkS")
+		(uuid "79712b8d-1fef-449f-a9e0-5dc9744a7061")
+		(effects
+			(font
+				(size 0.65 0.65)
+				(thickness 0.098)
+			)
+			(justify left bottom)
+		)
+	)
+
+	(footprint "STM32G030C8T6:R_0805_1k"
+		(layer "F.Cu")
+		(uuid "5673fa30-0add-45ec-b3a7-c452ac215bc7")
+		(at 112.0 81.6 0.0)
+		(property "Reference" "R_LEDIN3"
+			(at 0 -1.35 0)
+			(layer "F.SilkS")
+			(uuid "4688de48-fd5c-429e-8bad-9f2a861049ba")
+			(effects
+				(font
+					(size 0.7 0.7)
+					(thickness 0.1)
+				)
+			)
+		)
+		(property "Value" "1k"
+			(at 0 1.35 0)
+			(layer "F.Fab")
+			(uuid "c231f1b4-5357-405a-9938-8e002d68899a")
+			(effects
+				(font
+					(size 0.6 0.6)
+					(thickness 0.09)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "4fefc8ef-6966-4187-9ddf-d546bf31d5f8")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Description" "Status LED series"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "4080771c-2667-4adc-95e8-54844213427b")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(attr smd)
+		(fp_rect
+			(start -1.1 -0.7)
+			(end 1.1 0.7)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill none)
+			(layer "F.CrtYd")
+			(uuid "1c0e5cdf-8477-4291-8252-b9aea58bddc3")
+		)
+		(pad "1" smd rect
+			(at -0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "+3V3")
+			(uuid "f7f3c444-2cf0-4150-844d-a1afb2fb08c0")
+		)
+		(pad "2" smd rect
+			(at 0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "/LEDIN3_A")
+			(uuid "6c1fc931-18db-49bf-a1d3-90fe951d6728")
+		)
+		(embedded_fonts no)
+		(model "${KICAD10_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0805_2012Metric.step"
+			(offset
+				(xyz 0 0 0)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz 0 0 0)
+			)
+		)
+	)
+
+	(footprint "STM32G030C8T6:LED_0805"
+		(layer "F.Cu")
+		(uuid "8935c3dd-3b61-42c9-b0eb-ba3c85abc3f7")
+		(at 116.0 81.6 0.0)
+		(property "Reference" "D_LEDIN3"
+			(at 0 -1.35 0)
+			(layer "F.SilkS")
+			(uuid "3ce7da8e-bd71-40a4-8003-32973027fac3")
+			(effects
+				(font
+					(size 0.7 0.7)
+					(thickness 0.1)
+				)
+			)
+		)
+		(property "Value" "LED_YEL"
+			(at 0 1.35 0)
+			(layer "F.Fab")
+			(uuid "b3f5b4f5-5fad-4800-92aa-f87ae1d38ef8")
+			(effects
+				(font
+					(size 0.55 0.55)
+					(thickness 0.08)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "5914befd-53d8-4c02-b08a-5ca4548c5130")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Description" "Status / sensor LED"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "9cbed9cd-38e0-4388-80c5-12bb292b9f07")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(attr smd)
+		(fp_line
+			(start -0.6 -0.85)
+			(end -0.6 0.85)
+			(stroke
+				(width 0.12)
+				(type solid)
+			)
+			(layer "F.SilkS")
+			(uuid "aebadf96-f6a4-4f74-b5e4-4512501fb835")
+		)
+		(fp_rect
+			(start -1.1 -0.7)
+			(end 1.1 0.7)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill none)
+			(layer "F.CrtYd")
+			(uuid "c0b433de-4d38-484a-9938-ca8f980faa6a")
+		)
+		(pad "1" smd rect
+			(at -0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "/LEDIN3_A")
+			(uuid "1912c952-5502-48bb-ac2c-5f2ccab71583")
+		)
+		(pad "2" smd rect
+			(at 0.95 0)
+			(size 0.7 1.2)
+			(layers "F.Cu" "F.Paste" "F.Mask")
+			(net "/IN3")
+			(uuid "1e8fd2ee-f6f9-4e3f-a07c-71c2396cac21")
+		)
+		(embedded_fonts no)
+		(model "${KICAD10_3DMODEL_DIR}/LED_SMD.3dshapes/LED_0805_2012Metric.step"
+			(offset
+				(xyz 0 0 0)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz 0 0 0)
+			)
+		)
+	)
+
 )

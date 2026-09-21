@@ -126,6 +126,16 @@ NET_FN: dict[str, tuple[str, str]] = {
     "/NRST": ("MCU", "STM32 NRST + SW_NRST + R_NRST PU + C_NRST"),
     "/SWDIO": ("MCU", "STM32 PA13 SWDIO + R_SWDIO PU"),
     "/SWCLK": ("MCU", "STM32 PA14 SWCLK/BOOT0 + SW_BOOT + R_BOOT PD"),
+    "/LED_RUN": ("LED", "STM32 PB2 → R_LEDRUN → D_LEDRUN → GND (heartbeat)"),
+    "/LED_ERR": ("LED", "STM32 PC6 → R_LEDERR → D_LEDERR → GND (fault)"),
+    "/LED24_A": ("LED", "R_LED24 ↔ D_LED24 anode (+24V status)"),
+    "/LED33_A": ("LED", "R_LED33 ↔ D_LED3V3 anode (+3V3 status)"),
+    "/LEDRUN_A": ("LED", "R_LEDRUN ↔ D_LEDRUN anode"),
+    "/LEDERR_A": ("LED", "R_LEDERR ↔ D_LEDERR anode"),
+    "/LEDBUP_A": ("LED", "R_LEDBUP ↔ D_LEDBUP anode (count BUP activity)"),
+    "/LEDCNT5_A": ("LED", "R_LEDCNT5 ↔ D_LEDCNT5 anode (count 5V activity)"),
+    "/LEDIN2_A": ("LED", "R_LEDIN2 ↔ D_LEDIN2 anode"),
+    "/LEDIN3_A": ("LED", "R_LEDIN3 ↔ D_LEDIN3 anode"),
 }
 
 FATAL_DRC = {

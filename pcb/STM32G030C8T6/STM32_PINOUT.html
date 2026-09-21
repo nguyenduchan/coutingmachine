@@ -176,7 +176,7 @@
     <span class="tag"><strong>U1</strong> STM32G030C8T6</span>
     <span class="tag"><strong>Package</strong> LQFP-48 · 7×7 mm</span>
     <span class="tag"><strong>LCSC</strong> C529329</span>
-    <span class="tag"><strong>GPIO dùng</strong> 31 / 48 pad</span>
+    <span class="tag"><strong>GPIO dùng</strong> 33 / 48 pad</span>
     <span class="tag"><strong>Clock</strong> HSI (không crystal MCU)</span>
     <span class="tag"><strong>Nạp</strong> USB-UART CH340 + BOOT0</span>
   </div>
@@ -215,9 +215,9 @@
   <p>Nguồn SoT project: <code>stm32_pinmap.py</code>. AF general theo datasheet / RM STM32G0.</p>
   <div class="stats">
     <div class="stat"><div class="n">48</div><div class="l">Pad LQFP</div></div>
-    <div class="stat"><div class="n" style="color:var(--ok)">31</div><div class="l">GPIO tín hiệu dùng</div></div>
+    <div class="stat"><div class="n" style="color:var(--ok)">33</div><div class="l">GPIO tín hiệu dùng</div></div>
     <div class="stat"><div class="n">5</div><div class="l">Nguồn / reset</div></div>
-    <div class="stat"><div class="n" style="color:#b0b8c8">12</div><div class="l">Không dùng (NC)</div></div>
+    <div class="stat"><div class="n" style="color:#b0b8c8">10</div><div class="l">Không dùng (NC)</div></div>
   </div>
   <div class="legend">
     <span class="leg"><span class="badge badge-use">DÙNG</span> có net trên PCB</span>
@@ -422,13 +422,13 @@
           <div class="cell-p"><span class="lbl">Project</span>TMC2 EN. <strong>Vì sao PB1:</strong> kết thúc cụm TMC trên cạnh S; R2B PU giống TMC1.</div>
         </td>
       </tr>
-      <tr class="row-nc">
+      <tr>
         <td>21</td><td>S</td><td><span class="pin">PB2</span></td>
-        <td><span class="badge badge-nc">KHÔNG DÙNG</span></td>
-        <td>—</td>
+        <td><span class="badge badge-use">DÙNG</span></td>
+        <td><code>/LED_RUN</code> → R → D_LEDRUN → GND</td>
         <td>
-          <div class="cell-g"><span class="lbl">General</span>GPIO “trung tính” (ít AF đặc biệt trên G030). Thường LED, DI phụ, flag phần mềm.</div>
-          <div class="cell-p"><span class="lbl">Project</span><strong>Không dùng.</strong> Nằm giữa TMC và PWR nhưng hết tín hiệu; giữ spare.</div>
+          <div class="cell-g"><span class="lbl">General</span>GPIO “trung tính” (ít AF). Thường LED status / heartbeat / flag phần mềm.</div>
+          <div class="cell-p"><span class="lbl">Project</span>LED RUN (xanh), active-high. <strong>Vì sao PB2:</strong> spare giữa TMC/PWR; Hi-Z boot = LED tắt. FW nháy ~1–2 Hz.</div>
         </td>
       </tr>
       <tr>
@@ -503,13 +503,13 @@
           <div class="cell-p"><span class="lbl">Project</span>TX → CH340. <strong>Vì sao PA9:</strong> bắt buộc USART1 cho USB-UART boot; không remap tự do như một số dòng khác.</div>
         </td>
       </tr>
-      <tr class="row-nc">
+      <tr>
         <td>30</td><td>E</td><td><span class="pin">PC6</span></td>
-        <td><span class="badge badge-nc">KHÔNG DÙNG</span></td>
-        <td>—</td>
+        <td><span class="badge badge-use">DÙNG</span></td>
+        <td><code>/LED_ERR</code> → R → D_LEDERR → GND</td>
         <td>
-          <div class="cell-g"><span class="lbl">General</span>GPIO / <strong>TIM3_CH1</strong>… PWM, capture, hoặc DI.</div>
-          <div class="cell-p"><span class="lbl">Project</span><strong>Không dùng.</strong> Đã có USART1 + PWM trên PB10/11. Spare cạnh UART.</div>
+          <div class="cell-g"><span class="lbl">General</span>GPIO / <strong>TIM3_CH1</strong>… PWM, capture, hoặc DI/LED.</div>
+          <div class="cell-p"><span class="lbl">Project</span>LED ERR (đỏ). <strong>Vì sao PC6:</strong> cạnh E gần USB/STATUS silk; báo PWR_FAULT / VIB_FAULT / lỗi SW.</div>
         </td>
       </tr>
       <tr class="row-nc">
@@ -518,7 +518,7 @@
         <td>—</td>
         <td>
           <div class="cell-g"><span class="lbl">General</span>GPIO / TIM3_CH2… Cặp timer với PC6.</div>
-          <div class="cell-p"><span class="lbl">Project</span><strong>Không dùng.</strong> Cùng lý do PC6.</div>
+          <div class="cell-p"><span class="lbl">Project</span><strong>Không dùng.</strong> PC6 đã lấy cho ERR; giữ spare.</div>
         </td>
       </tr>
       <tr>
@@ -684,12 +684,24 @@
       <tr><td>PC13</td><td>1</td><td>RTC_OUT, WKUP2, GPIO status</td><td>Không Standby/RTC lịch</td></tr>
       <tr><td>PC14, PC15</td><td>2–3</td><td>Thạch anh LSE 32 kHz cho RTC</td><td>Không cần giờ tuyệt đối; HSI đủ</td></tr>
       <tr><td>PF0, PF1</td><td>8–9</td><td>Thạch anh HSE clock chính</td><td>HSI; Y1 chỉ cho CH340</td></tr>
-      <tr><td>PB2</td><td>21</td><td>GPIO phụ / LED</td><td>Hết tín hiệu giữa TMC và PWR</td></tr>
-      <tr><td>PC6, PC7</td><td>30–31</td><td>TIM3 PWM / capture</td><td>PWM đã ở PB10/11; USART1 đủ</td></tr>
+      <tr><td>PC7</td><td>31</td><td>TIM3 PWM / capture</td><td>PC6 đã dùng LED ERR</td></tr>
       <tr><td>PA11, PA12</td><td>33–34</td><td>USART1 CTS/RTS, TIM1; <em>không</em> USB trên G030</td><td>USB=CH340; không flow-control</td></tr>
       <tr><td>PD1, PD2</td><td>39–40</td><td>GPIO / timer ETR</td><td>Spare HMI; CNT5 = PA3</td></tr>
     </tbody>
   </table>
+
+  <h3>LED ngoài GPIO (thụ động)</h3>
+  <p>
+    Ngoài RUN/ERR trên PB2/PC6, board có LED nguồn và LED hoạt động cảm biến
+    <strong>không tốn GPIO</strong>:
+  </p>
+  <ul>
+    <li><strong>D_LED24 / D_LED3V3</strong> — rail +24V / +3V3 có điện.</li>
+    <li><strong>D_LEDBUP / D_LEDCNT5</strong> — đếm: <code>+3V3 → R → LED → /BUP</code> hoặc <code>/CNT5</code>;
+      sáng khi opto kéo collector thấp (có vật chắn).</li>
+    <li><strong>D_LEDIN2 / D_LEDIN3</strong> — cùng kiểu cho DI phụ.</li>
+  </ul>
+  <p>Pad đã gán net trên PCB; track để đi dây tay.</p>
 </section>
 
 <!-- ========== OVERVIEW ========== -->
@@ -1291,8 +1303,7 @@
       <tr><td>PC13</td><td>1</td><td>RTC_OUT / WKUP2 / GPIO</td><td>Không Standby, không RTC lịch</td></tr>
       <tr><td>PC14, PC15</td><td>2–3</td><td>LSE 32 kHz</td><td>HSI đủ; không cần giờ tuyệt đối</td></tr>
       <tr><td>PF0, PF1</td><td>8–9</td><td>HSE crystal</td><td>HSI; Y1 chỉ nuôi CH340</td></tr>
-      <tr><td>PB2</td><td>21</td><td>GPIO / LED phụ</td><td>Hết tín hiệu giữa TMC và PWR</td></tr>
-      <tr><td>PC6, PC7</td><td>30–31</td><td>TIM3 PWM / capture</td><td>PWM đã PB10/11</td></tr>
+      <tr><td>PC7</td><td>31</td><td>TIM3 PWM / capture</td><td>PC6 đã dùng LED ERR</td></tr>
       <tr><td>PA11, PA12</td><td>33–34</td><td>USART1 CTS/RTS (không phải USB)</td><td>USB = CH340; không flow-control</td></tr>
       <tr><td>PD1, PD2</td><td>39–40</td><td>GPIO / TIM3_ETR</td><td>Spare HMI; CNT5 = PA3</td></tr>
     </tbody>

@@ -101,6 +101,9 @@ KEYPAD_PINS = {
 USART1_PINS = {"TX": "PA9", "RX": "PA10"}
 BOOT_PINS = {"SWDIO": "PA13", "SWCLK": "PA14"}
 
+# Status LEDs (active-high: GPIO → R → LED → GND); Hi-Z boot = OFF
+LED_PINS = {"RUN": "PB2", "ERR": "PC6"}
+
 USED_GPIO = sorted(
     {
         *TMC_PINS.values(),
@@ -115,7 +118,8 @@ USED_GPIO = sorted(
         *KEYPAD_PINS.values(),
         *USART1_PINS.values(),
         *BOOT_PINS.values(),
+        *LED_PINS.values(),
     }
 )
-assert len(USED_GPIO) == 31, USED_GPIO
-assert len(set(USED_GPIO)) == 31, USED_GPIO
+assert len(USED_GPIO) == 33, USED_GPIO
+assert len(set(USED_GPIO)) == 33, USED_GPIO

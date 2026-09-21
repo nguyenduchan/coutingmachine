@@ -3,6 +3,9 @@
 Board: **2 lớp FR-4 1.6 mm, 1 oz, 180×120 mm**, HASL chì-free. Gia công sai + dán
 SMT rất đắt — **không upload Gerber** nếu `verify_pre_fab.py` không PASS toàn bộ.
 
+**Sign-off (hardware-only, LLM checklist):** [`SIGN_OFF_REVIEW.md`](SIGN_OFF_REVIEW.md)
+— quy trình 6 bước SCH↔PCB / footprint / DRC / nguồn / cơ khí / DFM nhà máy + kết quả review hiện tại.
+
 Hạn mức: [JLCPCB capabilities](https://jlcpcb.com/capabilities/pcb-capabilities)
 + [assembly rails/fiducials](https://jlcpcb.com/help/article/how-to-add-edge-rails-fiducials-for-pcb-assembly-order)
 + [assembly T&C](https://jlcpcb.com/help/article/terms-and-conditions-of-jlcpcb-assembly-service).
