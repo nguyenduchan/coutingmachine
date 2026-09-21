@@ -35,7 +35,7 @@ Desktop.ini
 **/.history/
 
 # Local generator scratch
-pcb/esp32_baseboard/_place_log.txt
+pcb/STM32G030C8T6/_place_log.txt
 
 # KiCad local state / locks / caches (never fab SoT)
 *.kicad_prl

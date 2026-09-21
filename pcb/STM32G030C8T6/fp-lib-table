@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "STM32G030C8T6")(type "KiCad")(uri "${KIPRJMOD}/libraries/STM32G030C8T6.pretty")(options "")(descr "STM32G030C8T6 footprints"))
+)

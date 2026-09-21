@@ -7,9 +7,9 @@ alwaysApply: true
 
 **Mandatory last step of the turn** — do not wait for the user to ask.
 
-Whenever this turn **changes or regenerates** the ESP32 baseboard PCB / schematic
-(`pcb/esp32_baseboard/esp32_baseboard.kicad_pcb`, `.kicad_sch`, `gen_power_carrier.py`
-output, footprints under `pcb/esp32_baseboard/libraries/`), **before finishing the
+Whenever this turn **changes or regenerates** the STM32G030C8T6 PCB / schematic
+(`pcb/STM32G030C8T6/STM32G030C8T6.kicad_pcb`, `.kicad_sch`, `gen_power_carrier.py`
+output, footprints under `pcb/STM32G030C8T6/libraries/`), **before finishing the
 user-facing answer**:
 
 1. Finish generator / file edits first.
@@ -20,7 +20,7 @@ Do this at the **end of every such answer** so the user never stares at a stale 
 
 ## Paths
 
-- PCB: `d:\Project\coutingmachine\pcb\esp32_baseboard\esp32_baseboard.kicad_pcb`
+- PCB: `d:\Project\coutingmachine\pcb\STM32G030C8T6\STM32G030C8T6.kicad_pcb`
 - Prefer opening the `.kicad_pcb` with **pcbnew.exe** (layout editor).
 - Exe on this machine:  
   `%LOCALAPPDATA%\Programs\KiCad\10.0\bin\pcbnew.exe`  
@@ -29,7 +29,7 @@ Do this at the **end of every such answer** so the user never stares at a stale 
 ## PowerShell
 
 ```powershell
-$pcb = "d:\Project\coutingmachine\pcb\esp32_baseboard\esp32_baseboard.kicad_pcb"
+$pcb = "d:\Project\coutingmachine\pcb\STM32G030C8T6\STM32G030C8T6.kicad_pcb"
 Get-Process -Name kicad,pcbnew,KiCad -ErrorAction SilentlyContinue | Stop-Process -Force
 $kicad = @(
   "$env:LOCALAPPDATA\Programs\KiCad\10.0\bin\pcbnew.exe",
@@ -43,5 +43,5 @@ Start-Process -FilePath $kicad -ArgumentList "`"$pcb`""
 
 ## When it does NOT apply
 
-- Pure docs / git / non-PCB work with no `esp32_baseboard` layout change
+- Pure docs / git / non-PCB work with no `STM32G030C8T6` layout change
 - User explicitly says not to reopen KiCad
