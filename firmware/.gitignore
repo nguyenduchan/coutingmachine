@@ -1,0 +1,25 @@
+# STM32CubeIDE / CubeMX generated packs — do not hand-edit
+Drivers/CMSIS/
+Drivers/STM32G0xx_HAL_Driver/
+Drivers/CMSIS_RTOS/
+Middlewares/
+
+# Eclipse / CubeIDE project metadata (local)
+.settings/
+Debug/
+Release/
+*.o
+*.d
+*.elf
+*.bin
+*.hex
+*.map
+*.list
+*.su
+*.cyclo
+.mxproject
+.vscode/
+
+# Backup from Generate Code
+*.bak
+*~

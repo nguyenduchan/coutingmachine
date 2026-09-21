@@ -112,3 +112,16 @@ _autosave-*
 # Preview renders
 3d_model/preview/
 3d_model/preview_cq/
+
+# Firmware build artifacts (PlatformIO / CMake / CubeIDE)
+firmware/.pio/
+firmware/.vscode/
+firmware/build/
+firmware/Debug/
+firmware/Release/
+firmware/*.elf
+firmware/*.bin
+firmware/*.hex
+firmware/*.map
+firmware/*.o
+firmware/*.d
