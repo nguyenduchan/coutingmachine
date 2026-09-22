@@ -47,10 +47,9 @@ CLUSTERS: list[tuple[str, float, float, list[str]]] = [
     ("TMC2", 470.0, 160.0, [
         "U4", "PTC_MOT2", "C20B", "C24B", "J_MOT2",
     ]),
-    ("DO / VIB", 640.0, 160.0, [
-        "U_PWR1", "U_PWR2", "U_VIB",
-        "R_PD_PWM1", "R_PD_EN1", "R_PD_PWM2", "R_PD_EN2", "R_PD_VIB",
-        "R_PWR_FLT", "R_VIB_FLT",
+    ("DO 24V", 640.0, 160.0, [
+        "J_DO1", "Q_DO1", "R_DO1", "R_PD_DO1", "D_DO1",
+        "J_DO2", "Q_DO2", "R_DO2", "R_PD_DO2", "D_DO2",
     ]),
     ("OPTO IN", 25.4, 440.0, [
         "J14", "J15", "R1", "R44", "U44", "R48",
@@ -195,7 +194,7 @@ def place_cluster_refs(refs: list[str], ox: float, oy: float, meta, lib_pins, pa
     hub_names = {
         "U1", "U2", "U3", "U4", "U5", "U6",
         "U44", "U45", "U46", "U47",
-        "U_PWR1", "U_PWR2", "U_VIB",
+        "J_DO1", "J_DO2", "Q_DO1", "Q_DO2",
     }
     hubs = [r for r in refs if r in hub_names]
     # Prefer the largest pin-count hub.

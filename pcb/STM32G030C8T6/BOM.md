@@ -10,7 +10,7 @@ SoT mua hàng / ước giá.
 > **Chưa upload JLC:** DRC còn net hở + U2 footprint SOT-23-8 vs MP1584EN SOIC-8-EP.  
 > Nạp: **USB (CH340)** + nút **BOOT0 / NRST** — **không** giắc J_DBG (lot nhỏ).  
 > **Layout DIN (bắt buộc):**  
-> - **Cạnh dưới (S):** `J1` 24V → `J_MOT1`/`J_MOT2` (XH-4) + đế TMC/**U_PWR1+U_PWR2** — **không** kéo motor từ giắc sẵn trên module.  
+> - **Cạnh dưới (S):** `J1` 24V → `J_MOT1`/`J_MOT2` (XH-4) + **`J_DO1`/`J_DO2`** (XH-3 MOSFET out) + `J_P24S`.
 > - **Cạnh trên (N):** cảm biến đếm → IN → keypad → TM1637 (gần MCU) · USB · debug.  
 > - **Trái/phải:** không giắc field (DIN). Linh kiện không phải giắc ngoài: **cách Edge.Cuts ≥4 mm**.  
 > - **Giắc N/S:** hàng chân **song song cạnh** (rot 90° / ngang) — không đặt dọc.  
@@ -45,8 +45,8 @@ Pinmap rút ngắn dây theo cạnh LQFP (N=HMI, W=đếm/opto, S=TMC, E/SE=PWR/
 | Count opto `/BUP` | PA0 |
 | **Count 5V `/CNT5`** | **PA3** |
 | Input2 `/IN2` · Input3 `/IN3` | PA1 · PA2 |
-| **U_PWR1 / U_PWR2** PWM / EN / FAULT | PB10+PB12 · PB11+PB13 · PB14 shared |
-| **U_VIB** CTRL / FAULT | PB15 / PA8 |
+| **J_DO1 / J_DO2** gate (low-side OUT) | PB10 / PB11 |
+
 | TM1637 CLK / DIO (**J_DISP** → module) | PA15 / PD0 |
 | Keypad ROW0–3 | PB9 / PB8 / PB7 / PB6 |
 | Keypad COL0–3 | PB5 / PB4 / PB3 / PD3 |
@@ -80,7 +80,7 @@ Pinmap rút ngắn dây theo cạnh LQFP (N=HMI, W=đếm/opto, S=TMC, E/SE=PWR/
 | Generator | `gen_compact_carrier.py` (placement + nets, **no copper**) |
 | MCU | **STM32G030C8T6** LQFP48 SMT |
 | Hàn tay sau | **Chỉ hàn giắc/đế khi SKU cần** (pad đủ trên PCB). Luôn: J1, F1, J_USB, SW_*, J_DISP; tùy hạng: MOT/TMC/PWR/VIB/SNS/KEY/IN |
-| Module socket | U3/U4 TMC · **U_PWR1+U_PWR2 MOSFET 1CH** · U_VIB SSR — cắm khi cần |
+| Module / DO | U3/U4 TMC · **J_DO1+J_DO2 MOSFET SMT** (XH-3) — van / Enable CUH |
 | Motor field | **J_MOT1 / J_MOT2** XH-4 cạnh dưới — không dùng giắc Mot trên StepStick |
 | Sensor | **NPN only** — 24 V: J14/J15/IN2/IN3 · **5 V count: J_CNT5** |
 
@@ -108,9 +108,9 @@ Pinmap rút ngắn dây theo cạnh LQFP (N=HMI, W=đếm/opto, S=TMC, E/SE=PWR/
 | 3 | **U3** | Đế StepStick | Module TMC1 | STEP/DIR/EN · VM · pha |
 | 4 | **J_MOT2** | XH-4 | OUT | A2 · A1 · B1 · B2 |
 | 5 | **U4** | Đế StepStick | Module TMC2 | STEP/DIR/EN · VM · pha |
-| 6 | **U_PWR1** | Đế 1×6 | Module MOSFET 1 | +24V · GND · 3V3 · PWM · EN · FAULT |
-| 7 | **U_PWR2** | Đế 1×6 | Module MOSFET 2 | như trên |
-| 8 | **U_VIB** | Đế 1×4 | Module SSR rung | +24V · GND · CTRL · FAULT |
+| 6 | **J_DO1** | XH-3 | DO 24 V ch1 | +24V · GND · OUT (low-side) |
+| 7 | **J_DO2** | XH-3 | DO 24 V ch2 | như trên |
+
 | 9 | **J_P24S** | XH-2 | Aux out | +24V · GND |
 
 **Trên board (không ra cạnh — không phải giắc field):** `F1` đế cầu chì · `SW_BOOT`/`SW_NRST` **cạnh J_USB** (phía trong) · linh kiện SMT.
@@ -217,10 +217,16 @@ PCB layout đủ mọi footprint. Mua/hàn theo SKU; ô trống = **DNP** (khôn
 
 > MCU đọc `/CNT5` (PD1) qua PC817. Không cắm chung lúc chạy với BUP 24 V trừ khi firmware chọn kênh. Module TTL active-high cần transistor OC ngoài.
 
-### Pinout U_PWR1 / U_PWR2 (1×6) — mỗi kênh 1 module MOSFET
+### Pinout J_DO1 / J_DO2 (XH-3) — MOSFET low-side 24 V
 
-| Pin | Net U_PWR1 | Net U_PWR2 |
-|-----|------------|------------|
+| Pin | Net |
+|-----|-----|
+| 1 | +24V |
+| 2 | GND |
+| 3 | /DOx_OUT (kéo GND khi GPIO ON) |
+
+> Tải / Enable CUH: giữa +24V và OUT, hoặc chỉ OUT+GND nếu NPN Enable. Flyback SS24 trên board.
+
 | 1 | +24V | +24V |
 | 2 | GND | GND |
 | 3 | +3V3 | +3V3 |

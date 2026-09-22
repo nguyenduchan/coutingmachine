@@ -22,9 +22,8 @@ PURPOSE = {
     "J_IN3": "IN 3",
     "J_CNT5": "COUNT 5V",
     "J_P24S": "24V AUX",
-    "U_PWR1": "MOSFET 1",
-    "U_PWR2": "MOSFET 2",
-    "U_VIB": "VIB SSR",
+    "J_DO1": "DO 1",
+    "J_DO2": "DO 2",
     "SW_BOOT": "BOOT",
     "SW_NRST": "RESET",
     "F1": "FUSE T2A",
@@ -46,9 +45,8 @@ OLD_PURPOSE = {
     "J_CNT5": "CNT 5V",
     "J_IN2": "IN2",
     "J_IN3": "IN3",
-    "U_PWR1": "MOSFET",
-    "U_PWR2": "MOSFET",
-    "U_VIB": "SSR",
+    "J_DO1": "DO1",
+    "J_DO2": "DO2",
     "U3": "TMC2209",
     "U4": "TMC2209",
     "F1": "RUT ONG",
@@ -135,7 +133,7 @@ def label_pcb() -> None:
         blk = _set_prop(blk, "Reference", show=show_ref, silk=True)
         purpose = PURPOSE.get(ref)
         is_jack = (
-            ref.startswith("J") or ref.startswith("U_PWR") or ref.startswith("U_VIB")
+            ref.startswith("J")
             or ref.startswith("SW") or ref in {"U3", "U4"}
         )
         if is_jack and purpose:
@@ -186,7 +184,7 @@ def label_sch() -> None:
         purpose = PURPOSE.get(ref)
         if not purpose:
             continue
-        if not (ref.startswith("J") or ref.startswith("U_PWR") or ref.startswith("U_VIB")
+        if not (ref.startswith("J")
                 or ref.startswith("SW") or ref in {"F1", "U3", "U4"}):
             continue
         vm = re.search(r'\(property "Value" "([^"]+)"', blk)

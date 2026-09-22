@@ -53,7 +53,7 @@ REGION_ORDER = ("POWER", "TMC", "OPTO", "PWR", "MCU", "HMI")
 LOCKED_REFS = frozenset({
     "U1", "J1", "J_USB", "D3", "F1",
     "J_MOT1", "J_MOT2", "U3", "U4",
-    "U_PWR1", "U_PWR2", "U_VIB",
+    "J_DO1", "J_DO2",
     "J14", "J15", "J_IN2", "J_IN3", "J_CNT5",
     "J_KEY", "J_DISP", "J_P24S",
     "SW_BOOT", "SW_NRST",
@@ -62,7 +62,7 @@ LOCKED_REFS = frozenset({
 # Field cable jacks on N/S only — keypad + TM1637 sit on the north panel edge.
 EDGE_JACK_REFS = frozenset({
     "J1", "J_MOT1", "J_MOT2", "J_P24S",
-    "U_PWR1", "U_PWR2", "U_VIB",
+    "J_DO1", "J_DO2",
     "J14", "J15", "J_IN2", "J_IN3", "J_CNT5",
     "J_KEY", "J_DISP", "J_USB",
 })
@@ -73,11 +73,11 @@ NORTH_EDGE_JACKS = frozenset({
 })
 SOUTH_EDGE_JACKS = frozenset({
     "J1", "J_MOT1", "J_MOT2",
-    "U_PWR1", "U_PWR2", "U_VIB", "J_P24S",
+    "J_DO1", "J_DO2", "J_P24S",
 })
 SOUTH_PACK_RIGHT = (
     "J_MOT1", "J_MOT2",
-    "U_PWR1", "U_PWR2", "U_VIB",
+    "J_DO1", "J_DO2",
     "J_P24S",
 )
 NORTH_PACK_ORDER = (
@@ -254,7 +254,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42, anchors: dict | None 
             # Pads along local +X; extra housing toward +Y.
             # North: rot 0 (body inland). South: rot 180 (body inland).
             rot = 180.0 if p.ref in SOUTH_EDGE_JACKS else 0.0
-        elif p.ref in ("J_KEY", "U_PWR1", "U_PWR2", "U_VIB"):
+        elif p.ref in ("J_KEY", "J_DO1", "J_DO2"):
             # Native pad row is local +Y → rot 90 = pin row || N/S edge
             rot = 90.0
         elif p.ref in ("U3", "U4"):
@@ -577,7 +577,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42, anchors: dict | None 
             if ref not in by_ref:
                 continue
             p = by_ref[ref]
-            if ref in ("U_PWR1", "U_PWR2", "U_VIB"):
+            if ref in ("J_DO1", "J_DO2"):
                 set_rot(p, 90.0)
             else:
                 set_rot(p, 180.0)
@@ -678,7 +678,7 @@ def pack_parts(parts: list, cfg: PlaceCfg, seed: int = 42, anchors: dict | None 
             if ref not in by_ref:
                 continue
             p = by_ref[ref]
-            if ref in ("U_PWR1", "U_PWR2", "U_VIB"):
+            if ref in ("J_DO1", "J_DO2"):
                 set_rot(p, 90.0)
             else:
                 set_rot(p, 180.0)

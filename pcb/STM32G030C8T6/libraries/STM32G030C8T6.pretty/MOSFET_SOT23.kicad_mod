@@ -1,0 +1,18 @@
+(footprint "MOSFET_SOT23"
+	(version 20240108)
+	(generator "gen_compact_carrier.py")
+	(layer "F.Cu")
+	(descr "N-CH MOSFET SOT-23 AO3400 — G S D")
+	(attr smd)
+	(fp_rect (start -2.0 -1.6) (end 2.0 1.6)
+		(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
+	(fp_line (start -0.7 -1.0) (end 0.7 -1.0)
+		(stroke (width 0.12) (type solid)) (layer "F.SilkS"))
+	(pad "1" smd rect (at -0.9375 -0.95) (size 1.475 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "2" smd rect (at -0.9375 0.95) (size 1.475 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(pad "3" smd rect (at 0.9375 0) (size 1.475 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+	(model "${KICAD10_3DMODEL_DIR}/Package_TO_SOT_SMD.3dshapes/SOT-23.step"
+		(offset (xyz 0 0 0))
+		(scale (xyz 1 1 1))
+		(rotate (xyz 0 0 0)))
+)

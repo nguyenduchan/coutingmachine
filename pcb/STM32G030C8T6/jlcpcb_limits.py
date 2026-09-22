@@ -74,11 +74,12 @@ NORTH_JACKS = (
     "J14", "J15", "J_IN2", "J_IN3",
     "J_CNT5", "J_KEY", "J_DISP", "J_USB",
 )
-SOUTH_JACKS = ("J1", "J_MOT1", "J_MOT2", "U_PWR1", "U_PWR2", "U_VIB", "J_P24S")
+SOUTH_JACKS = ("J1", "J_MOT1", "J_MOT2", "J_DO1", "J_DO2", "J_P24S")
 POLARIZED_REFS = (
     "U1", "U2", "U5", "U6", "J_USB",
-    "D1", "D3", "D4", "D5",
+    "D1", "D3", "D4", "D5", "D_DO1", "D_DO2",
     "Y1", "F1",
     "U44", "U45", "U46", "U47",
+    "Q_DO1", "Q_DO2",
     "C3", "C5", "C10", "C20", "C20B", "C21",
 )

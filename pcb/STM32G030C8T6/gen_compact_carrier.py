@@ -37,12 +37,11 @@ from stm32_pinmap import (
     KEYPAD_PINS,
     LED_PINS,
     LQFP48_PINS,
-    PWR_PINS,
+    DO_PINS,
     TM1637_PINS,
     TMC2_PINS,
     TMC_PINS,
     USART1_PINS,
-    VIB_PINS,
 )
 
 from placement_full import (
@@ -411,11 +410,8 @@ def attach_board_3d_models() -> None:
         "PinHeader_1x08_Keypad": [_kicad_model(
             "Connector_PinSocket_2.54mm.3dshapes/PinSocket_1x08_P2.54mm_Vertical.step",
         )],
-        "PowerMod_1CH_Sock": [_kicad_model(
-            "Connector_PinSocket_2.54mm.3dshapes/PinSocket_1x06_P2.54mm_Vertical.step",
-        )],
-        "VibAC_Sock": [_kicad_model(
-            "Connector_PinSocket_2.54mm.3dshapes/PinSocket_1x04_P2.54mm_Vertical.step",
+        "MOSFET_SOT23": [_kicad_model(
+            "Package_TO_SOT_SMD.3dshapes/SOT-23.step",
         )],
         "SW_Push_6mm_SMD": [_kicad_model(
             "Button_Switch_SMD.3dshapes/SW_SPST_PTS645.step",
@@ -506,10 +502,27 @@ def ensure_extra_footprints() -> None:
     write("TerminalBlock_2P_5.0mm", make_kf301_2p(), force=True)
     write("USB_MicroB", make_usb_microb(), force=True)
     write("PinHeader_1x08_Keypad", make_keypad_kk8(), force=True)
-    write("PowerMod_1CH_Sock", make_female_1xn(
-        "PowerMod_1CH_Sock", 6, "1x6 2.54 female — MOSFET 1CH module", "MOSFET"), force=True)
-    write("VibAC_Sock", make_female_1xn(
-        "VibAC_Sock", 4, "1x4 2.54 female — SSR vibratory module", "SSR"), force=True)
+    # AO3400 / similar N-CH: 1=G 2=S 3=D (SOT-23)
+    write(
+        "MOSFET_SOT23",
+        """
+(footprint "MOSFET_SOT23"
+\t(version 20240108)
+\t(generator "gen_compact_carrier.py")
+\t(layer "F.Cu")
+\t(descr "N-CH MOSFET SOT-23 AO3400 — G S D")
+\t(attr smd)
+\t(fp_rect (start -2.0 -1.6) (end 2.0 1.6)
+\t\t(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))
+\t(fp_line (start -0.7 -1.0) (end 0.7 -1.0)
+\t\t(stroke (width 0.12) (type solid)) (layer "F.SilkS"))
+\t(pad "1" smd rect (at -0.9375 -0.95) (size 1.475 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "2" smd rect (at -0.9375 0.95) (size 1.475 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+\t(pad "3" smd rect (at 0.9375 0) (size 1.475 0.6) (layers "F.Cu" "F.Paste" "F.Mask"))
+)
+""",
+        force=True,
+    )
 
     # STM32G030C8T6 — LQFP48 7×7 mm, 0.5 mm pitch (KiCad LQFP-48_7x7mm_P0.5mm)
     pads = []
@@ -1211,9 +1224,6 @@ SILK_NAME = {
     "U6": "AMS1117",
     "U3": "TMC2209",
     "U4": "TMC2209",
-    "U_PWR1": "MOSFET",
-    "U_PWR2": "MOSFET",
-    "U_VIB": "SSR",
     "J1": "24V IN",
     "J_USB": "USB",
     "J_MOT1": "MOT1",
@@ -1226,12 +1236,14 @@ SILK_NAME = {
     "J_IN3": "IN3",
     "J_CNT5": "CNT 5V",
     "J_P24S": "+24V",
+    "J_DO1": "DO1",
+    "J_DO2": "DO2",
     "SW_BOOT": "BOOT",
     "SW_NRST": "RST",
 }
 # Generator tags — not real module names.
 HIDE_FP_TEXT = frozenset({
-    "THAY TMC2209", "NEMA=Mot pins", "FET 1CH", "U_VIB", "DBG",
+    "THAY TMC2209", "NEMA=Mot pins", "DBG",
 })
 
 
@@ -1262,13 +1274,8 @@ def build_parts() -> list[Part]:
         IN2_PIN: "/IN2",
         IN3_PIN: "/IN3",
         CNT5_PIN: "/CNT5",
-        PWR_PINS["PWM1"]: "/PWM_OUT1",
-        PWR_PINS["PWM2"]: "/PWM_OUT2",
-        PWR_PINS["EN1"]: "/PWR_EN1",
-        PWR_PINS["EN2"]: "/PWR_EN2",
-        PWR_PINS["FAULT"]: "/PWR_FAULT",
-        VIB_PINS["CTRL"]: "/VIB_CTRL",
-        VIB_PINS["FAULT"]: "/VIB_FAULT",
+        DO_PINS["DO1"]: "/DO1",
+        DO_PINS["DO2"]: "/DO2",
         TM1637_PINS["CLK"]: "/TM_CLK",
         TM1637_PINS["DIO"]: "/TM_DIO",
         KEYPAD_PINS["ROW0"]: "/KEY_R0",
@@ -1447,31 +1454,31 @@ def build_parts() -> list[Part]:
         P("J_P24S", "JST_XH_02_Socket", "P24_S", "PWR", {
             "1": "+24V", "2": "GND",
         }),
-        # One pluggable MOSFET module per 24V channel
-        P("U_PWR1", "PowerMod_1CH_Sock", "MOSFET", "PWR", {
-            "1": "+24V", "2": "GND", "3": "+3V3",
-            "4": "/PWM_OUT1", "5": "/PWR_EN1", "6": "/PWR_FAULT",
+        # Dual onboard low-side MOSFET 24 V DO (SMT) — CUH Enable / van / solenoid
+        # Jack: 1=+24V  2=GND  3=OUT (open-drain to GND when GPIO high)
+        P("J_DO1", "JST_XH_03_Socket", "DO1", "PWR", {
+            "1": "+24V", "2": "GND", "3": "/DO1_OUT",
         }),
-        P("U_PWR2", "PowerMod_1CH_Sock", "MOSFET", "PWR", {
-            "1": "+24V", "2": "GND", "3": "+3V3",
-            "4": "/PWM_OUT2", "5": "/PWR_EN2", "6": "/PWR_FAULT",
+        P("Q_DO1", "MOSFET_SOT23", "AO3400", "PWR", {
+            "1": "/DO1_G", "2": "GND", "3": "/DO1_OUT",
         }),
-        P("R_PWR_FLT", "R_0805_10k", "10k", "PWR", {"1": "+3V3", "2": "/PWR_FAULT"}),
-        # P4.5 / P9 fail-safe: Hi-Z MCU boot must leave MOSFET/SSR/TMC STEP-DIR OFF
-        P("R_PD_PWM1", "R_0805_10k", "10k", "PWR", {"1": "/PWM_OUT1", "2": "GND"}),
-        P("R_PD_PWM2", "R_0805_10k", "10k", "PWR", {"1": "/PWM_OUT2", "2": "GND"}),
-        P("R_PD_EN1", "R_0805_10k", "10k", "PWR", {"1": "/PWR_EN1", "2": "GND"}),
-        P("R_PD_EN2", "R_0805_10k", "10k", "PWR", {"1": "/PWR_EN2", "2": "GND"}),
-        P("R_PD_VIB", "R_0805_10k", "10k", "PWR", {"1": "/VIB_CTRL", "2": "GND"}),
+        P("R_DO1", "R_0805_1k", "1k", "PWR", {"1": "/DO1", "2": "/DO1_G"}),
+        P("R_PD_DO1", "R_0805_10k", "10k", "PWR", {"1": "/DO1", "2": "GND"}),
+        P("D_DO1", "Diode_SMA", "SS24", "PWR", {"1": "/DO1_OUT", "2": "+24V"}),
+        P("J_DO2", "JST_XH_03_Socket", "DO2", "PWR", {
+            "1": "+24V", "2": "GND", "3": "/DO2_OUT",
+        }),
+        P("Q_DO2", "MOSFET_SOT23", "AO3400", "PWR", {
+            "1": "/DO2_G", "2": "GND", "3": "/DO2_OUT",
+        }),
+        P("R_DO2", "R_0805_1k", "1k", "PWR", {"1": "/DO2", "2": "/DO2_G"}),
+        P("R_PD_DO2", "R_0805_10k", "10k", "PWR", {"1": "/DO2", "2": "GND"}),
+        P("D_DO2", "Diode_SMA", "SS24", "PWR", {"1": "/DO2_OUT", "2": "+24V"}),
+        # P4.5 fail-safe: Hi-Z MCU boot → STEP/DIR OFF
         P("R_PD_STEP", "R_0805_10k", "10k", "TMC", {"1": "/STEP", "2": "GND"}),
         P("R_PD_DIR", "R_0805_10k", "10k", "TMC", {"1": "/DIR", "2": "GND"}),
         P("R_PD_STEP2", "R_0805_10k", "10k", "TMC", {"1": "/STEP2", "2": "GND"}),
         P("R_PD_DIR2", "R_0805_10k", "10k", "TMC", {"1": "/DIR2", "2": "GND"}),
-        # Pluggable AC vibratory SSR control — socket only
-        P("U_VIB", "VibAC_Sock", "SSR", "PWR", {
-            "1": "+24V", "2": "GND", "3": "/VIB_CTRL", "4": "/VIB_FAULT",
-        }),
-        P("R_VIB_FLT", "R_0805_10k", "10k", "PWR", {"1": "+3V3", "2": "/VIB_FAULT"}),
         # Status LEDs (hand-route on live PCB; SoT nets for regen)
         P("R_LED24", "R_0805_2k2", "2k2", "LED", {"1": "+24V", "2": "/LED24_A"}),
         P("D_LED24", "LED_0805", "LED_AMB", "LED", {"1": "/LED24_A", "2": "GND"}),
@@ -1643,13 +1650,22 @@ NETS = {
     65: "/OPTO_IN2",
     66: "/IN3",
     67: "/OPTO_IN3",
-    68: "/PWM_OUT1",
-    69: "/PWM_OUT2",
-    70: "/PWR_EN1",
-    71: "/PWR_EN2",
-    72: "/PWR_FAULT",
-    73: "/VIB_CTRL",
-    74: "/VIB_FAULT",
+    68: "/DO1",
+    69: "/DO2",
+    70: "/DO1_OUT",
+    71: "/DO2_OUT",
+    72: "/DO1_G",
+    73: "/DO2_G",
+    74: "/LED_RUN",
+    75: "/LED_ERR",
+    76: "/LED24_A",
+    77: "/LED33_A",
+    78: "/LEDRUN_A",
+    82: "/LEDERR_A",
+    83: "/LEDBUP_A",
+    84: "/LEDCNT5_A",
+    85: "/LEDIN2_A",
+    86: "/LEDIN3_A",
     79: "/CNT5",
     80: "/OPTO_IN_5V",
     81: "/CH340_V3",
@@ -1876,7 +1892,7 @@ def emit_pcb_v2(parts: list[Part]) -> None:
     a("\t\t(effects (font (size 0.9 0.9) (thickness 0.12)) (justify left))")
     a(f'\t\t(uuid "{uid()}")')
     a("\t)")
-    a('\t(gr_text "N: SNS/HMI/USB | S: J1 MOT1 MOT2 PWR1 PWR2 VIB P24 | TMC inland"')
+    a('\t(gr_text "N: SNS/HMI/USB | S: J1 MOT1 MOT2 DO1 DO2 P24 | TMC inland"')
     a(f"\t\t(at {OX + 4} {OY + BOARD_H - 3.5} 0)")
     a('\t\t(layer "Cmts.User")')
     a("\t\t(effects (font (size 0.75 0.75) (thickness 0.1)) (justify left))")
@@ -2019,18 +2035,26 @@ def inject_saved_routes(a, net_ids: dict[str, int]) -> int:
         i = end + 1
         if not blk.startswith(("(segment", "(via", "(arc", "(zone")):
             continue
+        nm = re.search(r'\(net(?:\s+\d+)?\s+"([^"]+)"\)', blk)
+        if nm and nm.group(1) not in net_ids:
+            continue  # retired nets (old module sockets)
 
         def _remap(m: re.Match[str]) -> str:
             name = m.group(1)
             nid = net_ids.get(name)
             if nid is None:
                 return m.group(0)
-            return f'(net {nid} "{name}")'
+            # KiCad 8+/10: copper items use (net N) only — name is illegal here
+            return f"(net {nid})"
 
         blk = re.sub(r'\(net(?:\s+\d+)?\s+"([^"]+)"\)', _remap, blk)
+        # also collapse already-numeric (net N "name") left from remap miss
+        blk = re.sub(r'\(net\s+(\d+)\s+"[^"]*"\)', r"(net \1)", blk)
         # normalize indent to one tab (board top-level)
         if not blk.startswith("\t"):
             blk = "\t" + blk.replace("\n", "\n\t")
+        # strip accidental extra indent on closing paren from dumps
+        blk = re.sub(r"\n\t\t\)$", "\n\t)", blk)
         a(blk)
         blocks.append(blk)
     if blocks:
@@ -2087,12 +2111,26 @@ def main() -> None:
         BOARD_W, BOARD_H = COMMERCIAL_W, COMMERCIAL_H
         parts = build_parts()
         missing = [p.ref for p in parts if p.ref not in anchors]
-        if missing:
-            print(f"  WARN missing anchors for {missing[:12]}… — fall through to min-disp")
+        # Status LEDs often absent from sticky file — still keep exact poses
+        missing_crit = [r for r in missing if not r.startswith(("R_LED", "D_LED"))]
+        if missing_crit:
+            print(f"  WARN missing anchors for {missing_crit[:12]}… — fall through to min-disp")
         else:
+            if missing:
+                print(f"  note: placing without LED anchors {missing[:8]}… (keep sticky pose)")
             for p in parts:
-                x, y, r = anchors[p.ref]
-                p.x, p.y, p.rot = x, y, r
+                if p.ref in anchors:
+                    x, y, r = anchors[p.ref]
+                    p.x, p.y, p.rot = x, y, r
+                else:
+                    # park status LEDs inland (spread so courtyards do not stack)
+                    i = sum(1 for q in parts if q.ref.startswith(("R_LED", "D_LED")) and q.x)
+                    idx = len([q for q in parts if q.ref.startswith(("R_LED", "D_LED")) and (q.x, q.y) != (0.0, 0.0)])
+                    # simpler: hash by ref
+                    n = abs(hash(p.ref)) % 16
+                    p.x = 168.0 + (n % 4) * 4.0
+                    p.y = 52.0 + (n // 4) * 4.0
+                    p.rot = 0.0
             print(
                 f"Exact place from placement_saved.py ({len(anchors)} parts, "
                 f"{BOARD_W:.0f}x{BOARD_H:.0f} mm) — no rearrange"

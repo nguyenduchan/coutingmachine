@@ -2,7 +2,7 @@
 
 Pin sides (package top view, pin1 NW, CCW):
   W: 1–12   S: 13–24   E: 25–36   N: 37–48
-Route short: N→HMI, W→opto/count, S→TMC, E/SE→PWR/VIB/USB-UART.
+Route short: N→HMI, W→opto/count, S→TMC, E/SE→DO 24V/USB-UART.
 """
 
 from __future__ import annotations
@@ -70,17 +70,11 @@ IN2_PIN = "PA1"
 IN3_PIN = "PA2"
 CNT5_PIN = "PA3"
 
-# South→east wrap — U_PWR* / U_VIB on south-east
-PWR_PINS = {
-    "PWM1": "PB10",
-    "PWM2": "PB11",
-    "EN1": "PB12",
-    "EN2": "PB13",
-    "FAULT": "PB14",
-}
-VIB_PINS = {
-    "CTRL": "PB15",
-    "FAULT": "PA8",
+# South→east — onboard low-side MOSFET DO (24 V out / CUH Enable)
+# PB12–PB15, PA8 freed (were module PWM/EN/FAULT/VIB)
+DO_PINS = {
+    "DO1": "PB10",  # J_DO1 — máng rung Enable / out 1
+    "DO2": "PB11",  # J_DO2 — van / out 2
 }
 
 # North — TM1637 + keypad (toward J_DISP / J_KEY)
@@ -112,8 +106,7 @@ USED_GPIO = sorted(
         IN2_PIN,
         IN3_PIN,
         CNT5_PIN,
-        *PWR_PINS.values(),
-        *VIB_PINS.values(),
+        *DO_PINS.values(),
         *TM1637_PINS.values(),
         *KEYPAD_PINS.values(),
         *USART1_PINS.values(),
@@ -121,5 +114,5 @@ USED_GPIO = sorted(
         *LED_PINS.values(),
     }
 )
-assert len(USED_GPIO) == 33, USED_GPIO
-assert len(set(USED_GPIO)) == 33, USED_GPIO
+assert len(USED_GPIO) == 28, USED_GPIO
+assert len(set(USED_GPIO)) == 28, USED_GPIO

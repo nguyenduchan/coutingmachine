@@ -58,9 +58,7 @@ static void Board_Extra_GPIO_Init(void)
     g.Mode = GPIO_MODE_OUTPUT_PP;
     g.Pull = GPIO_NOPULL;
     g.Speed = GPIO_SPEED_FREQ_LOW;
-    g.Pin = PIN_PWR_PWM1_Pin | PIN_PWR_PWM2_Pin
-          | PIN_PWR_EN1_Pin | PIN_PWR_EN2_Pin
-          | PIN_VIB_CTRL_Pin | PIN_LED_RUN_Pin;
+    g.Pin = PIN_DO1_Pin | PIN_DO2_Pin | PIN_LED_RUN_Pin;
     HAL_GPIO_Init(GPIOB, &g);
 
     g.Pin = PIN_LED_ERR_Pin;
@@ -68,19 +66,14 @@ static void Board_Extra_GPIO_Init(void)
 
     g.Mode = GPIO_MODE_INPUT;
     g.Pull = GPIO_PULLUP;
-    g.Pin = PIN_BUP_Pin | PIN_IN2_Pin | PIN_IN3_Pin | PIN_CNT5_Pin
-          | PIN_VIB_FAULT_Pin;
+    g.Pin = PIN_BUP_Pin | PIN_IN2_Pin | PIN_IN3_Pin | PIN_CNT5_Pin;
     HAL_GPIO_Init(GPIOA, &g);
-
-    g.Pin = PIN_PWR_FAULT_Pin;
-    HAL_GPIO_Init(GPIOB, &g);
 }
 
 static void Board_SafeDefaults(void)
 {
-    HAL_GPIO_WritePin(PIN_PWR_EN1_Port, PIN_PWR_EN1_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(PIN_PWR_EN2_Port, PIN_PWR_EN2_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(PIN_VIB_CTRL_Port, PIN_VIB_CTRL_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(PIN_DO1_Port, PIN_DO1_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(PIN_DO2_Port, PIN_DO2_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(PIN_LED_RUN_Port, PIN_LED_RUN_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(PIN_LED_ERR_Port, PIN_LED_ERR_Pin, GPIO_PIN_RESET);
 }

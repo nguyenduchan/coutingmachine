@@ -16,7 +16,7 @@ NORTH_Y = 54.0
 USB_Y = 55.0
 SOUTH_MOT = {"J_MOT1", "J_MOT2"}
 SOUTH_MOT_Y = 166.0
-SOUTH_PWR = {"U_PWR1", "U_PWR2", "U_VIB", "J_P24S"}
+SOUTH_PWR = {"J_DO1", "J_DO2", "J_P24S"}
 SOUTH_PWR_Y = 167.0
 # Visible 5×20 holder, east of D3, west of motors, silk on.
 F1_XY = (93.0, 151.0)

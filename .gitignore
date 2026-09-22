@@ -125,3 +125,46 @@ firmware/*.hex
 firmware/*.map
 firmware/*.o
 firmware/*.d
+
+# --- PCB: agent scratch, logs, CAM dumps, autorouter (not fab SoT) ---
+# One-off probe / fix scripts under STM32 carrier
+pcb/STM32G030C8T6/_*.py
+pcb/STM32G030C8T6/_*.txt
+pcb/STM32G030C8T6/_*.log
+pcb/STM32G030C8T6/_*.json
+
+# Esp32 / shared PCB scratch prefixes
+pcb/**/_*.log
+pcb/**/_*.txt
+pcb/**/_*.json
+pcb/**/*.bak
+pcb/**/*.bak_*
+pcb/**/*.py.bak*
+pcb/**/_ok_*.kicad_pcb
+pcb/**/_test_*.kicad_pro
+pcb/**/*.kicad_pcb.bak*
+pcb/**/*.kicad_sch.bak*
+
+# Scrape / DRC / ERC dumps
+pcb/**/_595mod_scrape/
+pcb/**/drc_*.txt
+pcb/**/drc_*.json
+pcb/**/drc_*.rpt
+pcb/**/erc_*.json
+pcb/**/erc_*.rpt
+pcb/**/drc_now.txt
+pcb/**/drc_report.txt
+
+# Generated CAM / preview / freerouting / bundled JRE
+pcb/**/out/
+pcb/**/out_*/
+pcb/**/out_freerouting/
+pcb/**/modules/out_freerouting/
+pcb/**/out_preview/
+pcb/**/tools/jre*/
+pcb/**/tools/*.jar
+pcb/**/tools/*.jar.bak
+pcb/**/tools/*.zip
+pcb/**/*.dsn
+pcb/**/*.ses
+pcb/**/*.err

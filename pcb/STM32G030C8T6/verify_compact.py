@@ -13,16 +13,15 @@ from verify_jlcpcb import jack_row_gaps, parse_fps
 from stm32_pinmap import (
     BUP_PIN,
     CNT5_PIN,
+    DO_PINS,
     IN2_PIN,
     IN3_PIN,
     KEYPAD_PINS,
     PIN_BY_NAME,
-    PWR_PINS,
     TM1637_PINS,
     TMC2_PINS,
     TMC_PINS,
     USART1_PINS,
-    VIB_PINS,
 )
 
 ROOT = Path(__file__).resolve().parent
@@ -99,7 +98,7 @@ def main() -> int:
         check(bw >= 149.0 and bh >= 99.0, ok, fail, f"target ~150x100 ({bw:.0f}x{bh:.0f})")
         check(bw >= bh - 0.01, ok, fail, f"wide board for DIN N/S edges ({bw:.0f}x{bh:.0f})")
     check("STM32G030C8T6_LQFP48" in text, ok, fail, "STM32 compact carrier board")
-    check("U_PWR1" in text and "U_PWR2" in text and "U_VIB" in text, ok, fail, "power/vib socket silk or refs")
+    check("J_DO1" in text and "J_DO2" in text and "Q_DO1" in text, ok, fail, "DO jacks + MOSFET")
     check("J_MOT1" in text and "J_MOT2" in text, ok, fail, "edge motor jacks J_MOT1/2")
     check("Mot_XH_04_Socket" in text, ok, fail, "Mot_XH_04 footprint")
     check("ANT KEEPOUT" not in text, ok, fail, "no ESP antenna keepout")
@@ -108,7 +107,8 @@ def main() -> int:
     print("=== B) Required refs ===")
     pads = pad_table(text)
     for ref in (
-        "U1", "U2", "U3", "U4", "U5", "U6", "U44", "U45", "U46", "U_PWR1", "U_PWR2", "U_VIB",
+        "U1", "U2", "U3", "U4", "U5", "U6", "U44", "U45", "U46",
+        "J_DO1", "J_DO2", "Q_DO1", "Q_DO2", "D_DO1", "D_DO2",
         "J1", "J_MOT1", "J_MOT2", "J_P24S",
         "J14", "J15", "J_IN2", "J_IN3", "J_CNT5",
         "J_USB", "J_KEY", "J_DISP",
@@ -118,12 +118,16 @@ def main() -> int:
         "C5", "C51", "C3", "C31", "C_MCU", "C_MCU2",
         "Y1", "C_XI", "C_XO", "C52", "C53",
         "R_NRST", "C_NRST", "R_BOOT", "R_SWDIO", "SW_BOOT", "SW_NRST",
-        "R45", "R49", "R46", "R50", "R47", "R51", "C27", "U47", "R_PWR_FLT", "R_VIB_FLT",
-        "R_PD_PWM1", "R_PD_PWM2", "R_PD_EN1", "R_PD_EN2", "R_PD_VIB",
+        "R45", "R49", "R46", "R50", "R47", "R51", "C27", "U47",
+        "R_DO1", "R_DO2", "R_PD_DO1", "R_PD_DO2",
         "R_PD_STEP", "R_PD_DIR", "R_PD_STEP2", "R_PD_DIR2", "C_V3",
     ):
         check(ref in pads, ok, fail, f"ref {ref}")
-    for gone in ("Q1", "Q2", "R_DTR", "R_RTS", "C_DTR", "C_RTS", "R_EN", "R_IO0", "R_IO2", "SW_EN", "J_SWD", "U7"):
+    for gone in (
+        "Q1", "Q2", "R_DTR", "R_RTS", "C_DTR", "C_RTS", "R_EN", "R_IO0", "R_IO2", "SW_EN",
+        "J_SWD", "U7", "U_PWR1", "U_PWR2", "U_VIB",
+        "R_PD_PWM1", "R_PD_EN1", "R_PD_VIB", "R_PWR_FLT", "R_VIB_FLT",
+    ):
         check(gone not in pads, ok, fail, f"removed legacy part {gone}")
 
     print("=== B2) STM32 + USB-UART boot (no J_DBG) ===")
@@ -146,16 +150,10 @@ def main() -> int:
     check(u5.get("4") == "/CH340_V3", ok, fail, "U5 V3 isolated from AMS1117")
     check(pads.get("C_V3", {}).get("1") == "/CH340_V3" and pads.get("C_V3", {}).get("2") == "GND",
           ok, fail, "C_V3 on CH340 V3")
-    check(pads.get("R_PD_PWM1", {}).get("1") == "/PWM_OUT1" and pads.get("R_PD_PWM1", {}).get("2") == "GND",
-          ok, fail, "R_PD_PWM1 fail-safe PD")
-    check(pads.get("R_PD_PWM2", {}).get("1") == "/PWM_OUT2" and pads.get("R_PD_PWM2", {}).get("2") == "GND",
-          ok, fail, "R_PD_PWM2 fail-safe PD")
-    check(pads.get("R_PD_EN1", {}).get("1") == "/PWR_EN1" and pads.get("R_PD_EN1", {}).get("2") == "GND",
-          ok, fail, "R_PD_EN1 fail-safe PD")
-    check(pads.get("R_PD_EN2", {}).get("1") == "/PWR_EN2" and pads.get("R_PD_EN2", {}).get("2") == "GND",
-          ok, fail, "R_PD_EN2 fail-safe PD")
-    check(pads.get("R_PD_VIB", {}).get("1") == "/VIB_CTRL" and pads.get("R_PD_VIB", {}).get("2") == "GND",
-          ok, fail, "R_PD_VIB fail-safe PD")
+    check(pads.get("R_PD_DO1", {}).get("1") == "/DO1" and pads.get("R_PD_DO1", {}).get("2") == "GND",
+          ok, fail, "R_PD_DO1 fail-safe PD")
+    check(pads.get("R_PD_DO2", {}).get("1") == "/DO2" and pads.get("R_PD_DO2", {}).get("2") == "GND",
+          ok, fail, "R_PD_DO2 fail-safe PD")
     check(pads.get("R_PD_STEP", {}).get("1") == "/STEP" and pads.get("R_PD_STEP", {}).get("2") == "GND",
           ok, fail, "R_PD_STEP PD")
     check(pads.get("R_PD_DIR", {}).get("1") == "/DIR" and pads.get("R_PD_DIR", {}).get("2") == "GND",
@@ -213,30 +211,21 @@ def main() -> int:
     check(u1_net(BUP_PIN) == "/BUP", ok, fail, f"U1 BUP {BUP_PIN}")
     check(u1_net(IN2_PIN) == "/IN2" and u1_net(IN3_PIN) == "/IN3", ok, fail, f"U1 IN2/IN3 {IN2_PIN}/{IN3_PIN}")
     check(
-        u1_net(PWR_PINS["PWM1"]) == "/PWM_OUT1" and u1_net(PWR_PINS["PWM2"]) == "/PWM_OUT2",
-        ok, fail, "U1 PWM power outs",
+        u1_net(DO_PINS["DO1"]) == "/DO1" and u1_net(DO_PINS["DO2"]) == "/DO2",
+        ok, fail, "U1 DO1/DO2 gates",
     )
-    check(
-        u1_net(PWR_PINS["EN1"]) == "/PWR_EN1" and u1_net(PWR_PINS["EN2"]) == "/PWR_EN2",
-        ok, fail, "U1 PWR EN1/EN2",
-    )
-    check(u1_net(PWR_PINS["FAULT"]) == "/PWR_FAULT", ok, fail, "U1 PWR_FAULT")
-    check(
-        u1_net(VIB_PINS["CTRL"]) == "/VIB_CTRL" and u1_net(VIB_PINS["FAULT"]) == "/VIB_FAULT",
-        ok, fail, "U1 VIB CTRL/FAULT",
-    )
-    up1 = pads.get("U_PWR1", {})
-    up2 = pads.get("U_PWR2", {})
-    check(up1.get("4") == "/PWM_OUT1" and up1.get("5") == "/PWR_EN1", ok, fail, "U_PWR1 PWM/EN")
-    check(up2.get("4") == "/PWM_OUT2" and up2.get("5") == "/PWR_EN2", ok, fail, "U_PWR2 PWM/EN")
-    check(up1.get("1") == "+24V" and up1.get("3") == "+3V3", ok, fail, "U_PWR1 supplies")
-    check(up2.get("1") == "+24V" and up2.get("6") == "/PWR_FAULT", ok, fail, "U_PWR2 +24V/FAULT")
-    check("PowerMod_1CH_Sock" in text, ok, fail, "PowerMod 1CH socket footprint")
-    check("PowerMod_2CH_Sock" not in text, ok, fail, "no legacy 2CH power sock")
-    check("U_PWR\"" not in text.replace("U_PWR1", "").replace("U_PWR2", ""), ok, fail, "no bare U_PWR ref")
-    uv = pads.get("U_VIB", {})
-    check(uv.get("3") == "/VIB_CTRL" and uv.get("1") == "+24V", ok, fail, "U_VIB CTRL/+24V")
-    check("VibAC_Sock" in text, ok, fail, "VibAC socket footprint")
+    jd1 = pads.get("J_DO1", {})
+    jd2 = pads.get("J_DO2", {})
+    check(jd1.get("1") == "+24V" and jd1.get("2") == "GND" and jd1.get("3") == "/DO1_OUT",
+          ok, fail, "J_DO1 +24V/GND/OUT")
+    check(jd2.get("1") == "+24V" and jd2.get("2") == "GND" and jd2.get("3") == "/DO2_OUT",
+          ok, fail, "J_DO2 +24V/GND/OUT")
+    check(pads.get("Q_DO1", {}).get("3") == "/DO1_OUT" and pads.get("Q_DO1", {}).get("2") == "GND",
+          ok, fail, "Q_DO1 drain/source")
+    check(pads.get("Q_DO2", {}).get("3") == "/DO2_OUT" and pads.get("Q_DO2", {}).get("2") == "GND",
+          ok, fail, "Q_DO2 drain/source")
+    check("MOSFET_SOT23" in text, ok, fail, "MOSFET_SOT23 footprint")
+    check("PowerMod_1CH_Sock" not in text and "VibAC_Sock" not in text, ok, fail, "no module socks")
     check(pads.get("J14", {}).get("3") == "/OPTO_IN_BUP", ok, fail, "J14 U-slot OUT")
     check(pads.get("J14", {}).get("4") == "+24V_SNS", ok, fail, "J14 CTRL→+V Light ON")
     check(pads.get("J14", {}).get("1") == "+24V_SNS" and pads.get("J14", {}).get("2") == "GND",
@@ -335,7 +324,7 @@ def main() -> int:
         edge_ok = {
             "J1", "D3", "F1",
             "J_MOT1", "J_MOT2", "U3", "U4",
-            "U_PWR1", "U_PWR2", "U_VIB", "J_P24S",
+            "J_DO1", "J_DO2", "J_DO2", "J_P24S",
         }
         bad = []
         for ref, nets in pads.items():
@@ -356,10 +345,10 @@ def main() -> int:
         check("+24V_RAW" not in vals and "+24V_PRE" not in vals, ok, fail, f"{ref} not on pre-fuse nets")
 
     print("=== D2c) Edge jack zones (S=MOT/PWR, N=SNS/HMI; TMC inland) ===")
-    if em and all(r in pos for r in ("J_MOT1", "J_MOT2", "J_P24S", "U3", "U4", "U_PWR1", "U_PWR2", "U_VIB", "J14", "J_CNT5", "J_KEY", "J_DISP")):
+    if em and all(r in pos for r in ("J_MOT1", "J_MOT2", "J_P24S", "U3", "U4", "J_DO1", "J_DO2", "J_DO2", "J14", "J_CNT5", "J_KEY", "J_DISP")):
         x0, y0, x1, y1 = map(float, em.groups())
         mid_y = y0 + 0.5 * bh
-        for ref in ("J_MOT1", "J_MOT2", "J_P24S", "U_PWR1", "U_PWR2", "U_VIB"):
+        for ref in ("J_MOT1", "J_MOT2", "J_P24S", "J_DO1", "J_DO2", "J_DO2"):
             _mx, my, _ = pos[ref]
             check(my > mid_y, ok, fail, f"{ref} south half (y={my:.1f})")
         for ref in ("U3", "U4"):
@@ -370,7 +359,7 @@ def main() -> int:
                 continue
             _nx, ny, _ = pos[ref]
             check(ny < mid_y, ok, fail, f"{ref} north half (y={ny:.1f})")
-        south_seq = ("J_MOT1", "J_MOT2", "U_PWR1", "U_PWR2", "U_VIB", "J_P24S")
+        south_seq = ("J_MOT1", "J_MOT2", "J_DO1", "J_DO2", "J_DO2", "J_P24S")
         for a, b in zip(south_seq, south_seq[1:]):
             check(pos[a][0] < pos[b][0], ok, fail, f"{a} left of {b}")
         check(pos["U3"][0] < pos["U4"][0], ok, fail, "U3 left of U4")
@@ -418,7 +407,7 @@ def main() -> int:
     print("=== D3b) Field jacks only on north/south edges ===")
     field_edge = (
         "J1", "J_MOT1", "J_MOT2", "J_P24S",
-        "U_PWR1", "U_PWR2", "U_VIB",
+        "J_DO1", "J_DO2", "J_DO2",
         "J14", "J15", "J_IN2", "J_IN3", "J_CNT5",
         "J_KEY", "J_DISP", "J_USB",
     )
@@ -448,7 +437,7 @@ def main() -> int:
 
     print("=== D3c) Field jacks pin-row || N/S edge (ngang, not dọc) ===")
     # Pads along local Y → rot 90/270. Pads along local X (XH, USB, J1, TMC) → 0/180.
-    row_along_y = {"J_KEY", "U_PWR1", "U_PWR2", "U_VIB"}
+    row_along_y = {"J_KEY", "J_DO1", "J_DO2", "J_DO2"}
     row_along_x = {
         "J1": (0.0,), "J_USB": (180.0,),
         "J14": (0.0,), "J15": (0.0,),
@@ -512,7 +501,7 @@ def main() -> int:
         bodies.append((ref_m.group(1), cx, cy, hw, hh))
     edge_jacks = {
         "J1", "J_MOT1", "J_MOT2", "J_P24S",
-        "U_PWR1", "U_PWR2", "U_VIB",
+        "J_DO1", "J_DO2", "J_DO2",
         "J14", "J15", "J_IN2", "J_IN3", "J_CNT5",
         "J_KEY", "J_DISP", "J_USB",
     }
@@ -582,7 +571,7 @@ def main() -> int:
             "J14", "J15", "J_IN2", "J_IN3", "J_CNT5", "J_KEY", "J_DISP", "J_USB",
         )]
         s_jacks = [b for b in bodies if b[0] in (
-            "J1", "J_MOT1", "J_MOT2", "J_P24S", "U_PWR1", "U_PWR2", "U_VIB",
+            "J1", "J_MOT1", "J_MOT2", "J_P24S", "J_DO1", "J_DO2", "J_DO2",
         )]
         row_sep = 3.0
         hole_aabb = []
