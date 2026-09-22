@@ -2,20 +2,24 @@
  * Count UI — state machine (switch/case).
  *
  *   Giữ D ≥800ms → nhập RPM (≤ COUNT_UI_RPM_MAX), hiện TM1637, A=lưu
- *   Thả D sớm     → SET target
+ *   Thả D sớm     → SET target: digit → chuỗi; A=START mới parse + lưu Flash
  *   C=XẢ · A=START · B=STOP · #=xem set · *=xem tổng
+ *   Target/RPM giữ sau tắt nguồn (nv_settings).
  */
 #include "app_count_ui.h"
 #include "board_config.h"
 #include "board_motors.h"
 #include "board_pins.h"
 #include "count_sensor.h"
+#include "nv_settings.h"
 #include "tm1637.h"
 #include "stm32g0xx_hal.h"
 
 #ifndef COUNT_UI_BLINK_MS
 #define COUNT_UI_BLINK_MS  400u
 #endif
+
+#define ENTRY_STR_MAX  4u
 
 typedef enum {
     ST_IDLE = 0,
@@ -31,7 +35,9 @@ typedef enum {
 static ui_state_t s_state;
 static ui_state_t s_peek_return;
 static uint32_t   s_target;
-static uint32_t   s_entry;
+static uint32_t   s_entry;          /* RPM entry only */
+static char       s_set_str[ENTRY_STR_MAX + 1u];
+static uint8_t    s_set_len;
 static bool       s_entry_fresh;
 static uint32_t   s_total;
 static uint32_t   s_last_run;
@@ -50,6 +56,10 @@ static void disc_stop(void);
 static void disc_run_rpm(uint32_t rpm);
 static void apply_speed_for_remaining(uint32_t remaining);
 static uint32_t clamp_rpm(uint32_t rpm);
+static void persist_settings(void);
+static void set_str_from_uint(uint32_t v);
+static uint32_t set_str_parse(void);
+static void set_str_show(void);
 static void display_for_state(void);
 static void goto_state(ui_state_t next);
 static void begin_peek(ui_state_t peek, uint32_t value);
@@ -86,6 +96,61 @@ static uint32_t clamp_rpm(uint32_t rpm)
         return COUNT_UI_RPM_ENTRY_MIN;
     }
     return rpm;
+}
+
+static void persist_settings(void)
+{
+    nv_settings_t nv;
+    nv.target = s_target;
+    nv.rpm = s_rpm_fast;
+    (void)nv_settings_save(&nv);
+}
+
+static void set_str_from_uint(uint32_t v)
+{
+    if (v > 9999u) {
+        v = 9999u;
+    }
+    if (v == 0u) {
+        s_set_str[0] = '\0';
+        s_set_len = 0;
+        return;
+    }
+
+    char tmp[ENTRY_STR_MAX + 1u];
+    uint8_t n = 0;
+    uint32_t x = v;
+    do {
+        tmp[n++] = (char)('0' + (x % 10u));
+        x /= 10u;
+    } while (x != 0u && n < ENTRY_STR_MAX);
+
+    for (uint8_t i = 0; i < n; i++) {
+        s_set_str[i] = tmp[n - 1u - i];
+    }
+    s_set_str[n] = '\0';
+    s_set_len = n;
+}
+
+static uint32_t set_str_parse(void)
+{
+    uint32_t n = 0;
+    for (uint8_t i = 0; i < s_set_len; i++) {
+        char c = s_set_str[i];
+        if (c < '0' || c > '9') {
+            break;
+        }
+        n = n * 10u + (uint32_t)(c - '0');
+        if (n > 9999u) {
+            return 9999u;
+        }
+    }
+    return n;
+}
+
+static void set_str_show(void)
+{
+    tm1637_show_uint(set_str_parse(), false);
 }
 
 static void disc_stop(void)
@@ -154,7 +219,7 @@ static void display_for_state(void)
 {
     switch (s_state) {
     case ST_SET:
-        tm1637_show_uint(s_entry, false);
+        set_str_show();
         break;
     case ST_RPM:
         tm1637_show_uint(s_entry, false);
@@ -166,6 +231,8 @@ static void display_for_state(void)
         tm1637_show_uint(s_total % 10000u, false);
         break;
     case ST_IDLE:
+        tm1637_show_uint(s_target, false);
+        break;
     case ST_RUN:
     case ST_DUMP:
     case ST_DONE:
@@ -207,8 +274,12 @@ static void end_peek(void)
 static void action_start(void)
 {
     if (s_state == ST_SET) {
-        s_target = s_entry;
+        /* Chuỗi số chỉ commit khi bấm START */
+        s_target = set_str_parse();
         s_entry_fresh = true;
+        if (s_target != 0u) {
+            persist_settings();
+        }
     }
     if (s_target == 0u) {
         goto_state(ST_IDLE);
@@ -246,7 +317,7 @@ static void action_stop(void)
 static void action_enter_set(void)
 {
     disc_stop();
-    s_entry = s_target;
+    set_str_from_uint(s_target);
     s_entry_fresh = true;
     goto_state(ST_SET);
 }
@@ -264,6 +335,7 @@ static void action_save_rpm(void)
     s_rpm_fast = clamp_rpm(s_entry);
     s_entry = s_rpm_fast;
     s_entry_fresh = true;
+    persist_settings();
     tm1637_show_uint(s_rpm_fast, false);
     goto_state(ST_IDLE);
     tm1637_show_uint(s_rpm_fast, false); /* flash giá trị đã lưu */
@@ -271,6 +343,13 @@ static void action_save_rpm(void)
 
 static void action_clear_entry(void)
 {
+    if (s_state == ST_SET) {
+        s_set_str[0] = '\0';
+        s_set_len = 0;
+        s_entry_fresh = true;
+        set_str_show();
+        return;
+    }
     s_entry = 0;
     s_entry_fresh = true;
     tm1637_show_uint(0, false);
@@ -278,22 +357,37 @@ static void action_clear_entry(void)
 
 static void action_digit(char ch)
 {
+    if (ch < '0' || ch > '9') {
+        return;
+    }
+
+    if (s_state == ST_SET) {
+        if (s_entry_fresh) {
+            s_set_str[0] = ch;
+            s_set_str[1] = '\0';
+            s_set_len = 1;
+            s_entry_fresh = false;
+        } else if (s_set_len < ENTRY_STR_MAX) {
+            s_set_str[s_set_len++] = ch;
+            s_set_str[s_set_len] = '\0';
+        }
+        set_str_show();
+        return;
+    }
+
+    /* ST_RPM */
     uint8_t d = (uint8_t)(ch - '0');
     if (s_entry_fresh) {
         s_entry = d;
         s_entry_fresh = false;
     } else {
         uint32_t n = s_entry * 10u + d;
-        if (s_state == ST_RPM) {
-            if (n > COUNT_UI_RPM_MAX) {
-                n = COUNT_UI_RPM_MAX;
-            }
-        } else if (n > 9999u) {
-            n = 9999u;
+        if (n > COUNT_UI_RPM_MAX) {
+            n = COUNT_UI_RPM_MAX;
         }
         s_entry = n;
     }
-    if (s_state == ST_RPM && s_entry > COUNT_UI_RPM_MAX) {
+    if (s_entry > COUNT_UI_RPM_MAX) {
         s_entry = COUNT_UI_RPM_MAX;
     }
     tm1637_show_uint(s_entry, false);
@@ -406,10 +500,10 @@ static void on_key_set(const keypad_event_t *ev)
         action_start();
         break;
     case KEY_FN_B:
-        action_stop();
+        action_stop(); /* hủy nhập — không ghi Flash */
         break;
     case KEY_FN_HASH:
-        begin_peek(ST_PEEK_SET, s_entry);
+        begin_peek(ST_PEEK_SET, set_str_parse());
         break;
     case KEY_FN_STAR:
         begin_peek(ST_PEEK_TOTAL, s_total % 10000u);
@@ -464,7 +558,7 @@ static void on_key_run(const keypad_event_t *ev)
         action_dump();
         break;
     case KEY_FN_D:
-        on_key_d_press(); /* long có thể bỏ; short release → SET sau khi dừng? */
+        on_key_d_press();
         action_enter_set();
         s_d_down = false;
         break;
@@ -595,6 +689,8 @@ void count_ui_init(void)
     s_peek_return = ST_IDLE;
     s_target = 0;
     s_entry = 0;
+    s_set_str[0] = '\0';
+    s_set_len = 0;
     s_entry_fresh = true;
     s_total = 0;
     s_last_run = 0;
@@ -607,9 +703,16 @@ void count_ui_init(void)
     s_d_down = false;
     s_d_down_ms = 0;
     s_d_long_fired = false;
+
+    nv_settings_t nv;
+    if (nv_settings_load(&nv)) {
+        s_target = nv.target;
+        s_rpm_fast = clamp_rpm(nv.rpm);
+    }
+
     disc_stop();
     tm1637_display_on(true);
-    tm1637_show_uint(0, false);
+    tm1637_show_uint(s_target, false);
 }
 
 void count_ui_tick(void)

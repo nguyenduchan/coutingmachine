@@ -23,10 +23,26 @@ firmware/
 | `Core/Src/board_motors.c` | 1–2 trục độc lập |
 | `Core/Src/count_*.c` | Đếm BUP / FIBER / CNT5 + chống nhiễu |
 | `Core/Src/keypad_4x4.c` | Bàn phím dán 4×4 (J_KEY) |
-| `Core/Src/app_count_ui.c` | State machine switch/case: SET/START/STOP/#/* |
+| `Core/Src/app_count_ui.c` | State machine: SET (chuỗi số) / START commit / STOP / # / * |
+| `Core/Src/nv_settings.c` | Lưu target + RPM vào Flash page cuối (giữ sau tắt nguồn) |
 | `Core/Src/tm1637.c` | Module LED 7 đoạn 4 số TM1637 (J_DISP) |
 
-## Mở & build lần đầu
+## Build nhanh (Makefile — không cần Generate Code)
+
+Toolchain lấy từ STM32CubeIDE đã cài. Lần đầu clone HAL vào `_lib/` (đã gitignore):
+
+```powershell
+cd firmware
+# nếu chưa có _lib:
+git clone --depth 1 https://github.com/STMicroelectronics/stm32g0xx_hal_driver.git _lib/hal
+git clone --depth 1 https://github.com/STMicroelectronics/cmsis_device_g0.git _lib/cmsis_device
+git clone --depth 1 https://github.com/STMicroelectronics/cmsis_core.git _lib/cmsis_core
+
+mingw32-make -j4
+# → build/CountingMachine_G030.elf /.hex /.bin
+```
+
+## Mở & build lần đầu (CubeIDE GUI)
 
 1. Cài [STM32CubeIDE](https://www.st.com/en/development-tools/stm32cubeide.html) (kèm CubeMX + FW_G0).
 2. **File → Open Projects from File System…** → chọn thư mục `firmware/`  
@@ -76,9 +92,9 @@ Tốc độ đĩa/bánh răng **tăng/giảm dần** (`MOTOR_ACCEL_RPM_S` / `MOT
 App phím:
 | Phím | Chức năng |
 |------|-----------|
-| **D** ngắn | SET — nhập **số lượng** target |
-| **D** giữ ≥0,8 s | Nhập **RPM** đĩa (15…**80** max), hiện TM1637 → **A** lưu · **B** hủy |
-| **A** START | Đếm theo target; gần đích chậm dần |
+| **D** ngắn | SET — nhập **số lượng** dạng chuỗi (chưa ghi); **A** mới parse + lưu Flash |
+| **D** giữ ≥0,8 s | Nhập **RPM** đĩa (15…**80** max) → **A** lưu Flash · **B** hủy |
+| **A** START | Commit set (nếu đang SET) rồi đếm; bật nguồn dùng lại target đã lưu |
 | **C** XẢ | Xả hết, bỏ qua set |
 | **B** STOP | Dừng |
 | **#** / **\*** | Hiện set / tổng |

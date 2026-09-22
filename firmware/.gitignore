@@ -4,6 +4,11 @@ Drivers/STM32G0xx_HAL_Driver/
 Drivers/CMSIS_RTOS/
 Middlewares/
 
+# Local HAL fetch + Makefile build output
+_lib/
+_cube_g0/
+build/
+
 # Eclipse / CubeIDE project metadata (local)
 .settings/
 Debug/
